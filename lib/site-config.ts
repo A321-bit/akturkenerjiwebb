@@ -229,6 +229,8 @@ export const references: Reference[] = [
     capacity: "10 kWp",
     year: "2024",
     summary: "Müstakil villa çatısına kurulan, yıllık tüketimin tamamına yakınını karşılayan sistem.",
+    description:
+      "Çankaya'da bulunan müstakil bir villanın çatısına kurduğumuz 10 kWp gücündeki güneş enerjisi sistemi (GES), hanenin yıllık elektrik tüketiminin tamamına yakınını karşılıyor. Proje kapsamında çatı statiği incelendi, elektrik projesi çizildi ve EDAŞ bağlantı anlaşması Aktürk Enerji tarafından yürütüldü. Çankaya ve çevresinde villa çatı GES kurulumu düşünen ev sahipleri için benzer sistemleri anahtar teslim olarak kuruyoruz.",
   },
   {
     slug: "referans-2",
@@ -238,6 +240,8 @@ export const references: Reference[] = [
     capacity: "180 kWp",
     year: "2023",
     summary: "Müteahhit firmayla ortak yürütülen, 40 konutluk sitede blok bazlı kurulum.",
+    description:
+      "Etimesgut'ta 40 konuttan oluşan bir toplu konut projesinde, müteahhit firmayla birlikte yürüttüğümüz 180 kWp kapasiteli güneş enerjisi sistemi, blok blok kurulum takvimiyle teslim tarihini aksatmadan tamamlandı. Etimesgut ve Ankara genelinde müteahhit firmalarla ortak yürüttüğümüz GES projelerinde toplu malzeme tedariği ve saha koordinasyonunu Aktürk Enerji üstleniyor.",
   },
   {
     slug: "referans-3",
@@ -247,6 +251,8 @@ export const references: Reference[] = [
     capacity: "15 kWp",
     year: "2023",
     summary: "Şebeke bağlantısı olmayan arazide güneş destekli dalgıç pompa sistemi.",
+    description:
+      "Polatlı'da şebeke bağlantısı bulunmayan bir tarım arazisinde kurduğumuz 15 kWp güç kapasiteli güneş enerjisi destekli dalgıç pompa sistemi, sulama ihtiyacını dizel jeneratöre ya da şebeke yatırımına gerek kalmadan karşılıyor. Polatlı ve Ankara'nın tarım bölgelerinde çiftçilere özel tarımsal sulama GES sistemleri kuruyoruz.",
   },
   {
     slug: "referans-4",
@@ -256,6 +262,8 @@ export const references: Reference[] = [
     capacity: "3 kWp",
     year: "2024",
     summary: "Aydınlatma, sulama pompası ve priz ihtiyacını karşılayan kompakt sistem.",
+    description:
+      "Gölbaşı'ndaki bir hobi bahçesinde aydınlatma, sulama pompası ve priz ihtiyacını karşılayan 3 kWp'lik kompakt güneş enerjisi sistemi kurduk. Gölbaşı ve Ankara çevresindeki hobi bahçesi sahiplerine bütçeye uygun, kolay taşınabilir ve ihtiyaca göre sonradan genişletilebilir GES çözümleri sunuyoruz.",
   },
   {
     slug: "referans-5",
@@ -265,6 +273,8 @@ export const references: Reference[] = [
     capacity: "8 kWp",
     year: "2022",
     summary: "Şebekeden bağımsız çalışan iletişim istasyonu için hibrit güneş/batarya sistemi.",
+    description:
+      "Ankara'da şebekeden bağımsız çalışan bir telekomünikasyon saha istasyonu için 8 kWp güç kapasiteli hibrit güneş/batarya sistemi kurduk. Kesintisiz iletişim altyapısı gerektiren telekomünikasyon ve savunma sanayi projelerinde Ankara genelinde saha tecrübemizle hizmet veriyoruz.",
   },
   {
     slug: "referans-6",
@@ -274,6 +284,8 @@ export const references: Reference[] = [
     capacity: "1,2 kWp",
     year: "2024",
     summary: "Esnek panel ve lityum batarya ile yolda kesintisiz enerji.",
+    description:
+      "Ankara merkezli bir karavan sahibi için esnek panel ve lityum batarya ile donattığımız 1,2 kWp'lik mobil enerji sistemi, yolda şebekeden bağımsız kesintisiz enerji sağlıyor. Ankara ve Türkiye genelinde karavan sahiplerine özel kompakt GES ve batarya paketleri kuruyoruz.",
   },
 ];
 
