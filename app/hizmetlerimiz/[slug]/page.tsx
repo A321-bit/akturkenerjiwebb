@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Check } from "lucide-react";
 import { services, site, whatsappLink } from "@/lib/site-config";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
 
@@ -18,11 +19,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const service = services.find((s) => s.slug === slug);
   if (!service) return {};
-  return {
+  return buildMetadata({
     title: service.title,
     description: service.summary,
-    alternates: { canonical: `/hizmetlerimiz/${service.slug}` },
-  };
+    path: `/hizmetlerimiz/${service.slug}`,
+    keywords: [service.title, service.eyebrow, "güneş enerjisi", "GES", site.city],
+  });
 }
 
 export default async function ServiceDetailPage({
@@ -36,12 +38,21 @@ export default async function ServiceDetailPage({
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Service",
-    name: service.title,
-    description: service.description,
-    provider: { "@type": "LocalBusiness", name: site.name, url: site.url },
-    areaServed: "TR",
-    audience: service.audience,
+    "@graph": [
+      {
+        "@type": "Service",
+        name: service.title,
+        description: service.description,
+        provider: { "@type": "LocalBusiness", name: site.name, url: site.url },
+        areaServed: "TR",
+        audience: service.audience,
+      },
+      breadcrumbJsonLd([
+        { name: "Anasayfa", path: "/" },
+        { name: "Hizmetlerimiz", path: "/hizmetlerimiz" },
+        { name: service.title, path: `/hizmetlerimiz/${service.slug}` },
+      ]),
+    ],
   };
 
   const others = services.filter((s) => s.slug !== service.slug).slice(0, 3);
@@ -72,9 +83,9 @@ export default async function ServiceDetailPage({
       />
 
       <div className="mt-8 rounded-2xl border border-line bg-paper-raised p-6">
-        <p className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
+        <h2 className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
           Bu hizmet kapsamında
-        </p>
+        </h2>
         <ul className="mt-4 space-y-3">
           {service.bullets.map((b) => (
             <li key={b} className="flex items-start gap-2.5 text-[14.5px] text-ink">
@@ -104,9 +115,9 @@ export default async function ServiceDetailPage({
       </div>
 
       <div className="mt-16">
-        <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+        <h2 className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
           İlginizi çekebilir
-        </p>
+        </h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-3">
           {others.map((s) => (
             <ServiceCard key={s.slug} service={s} />

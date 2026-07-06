@@ -2,12 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getAllPosts } from "@/lib/blog";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Blog",
   description:
     "Güneş enerjisi sistemleri hakkında teknik rehberler, sektör bilgileri ve sıkça sorulan sorular.",
-  alternates: { canonical: "/blog" },
+  path: "/blog",
+  keywords: ["güneş enerjisi rehberi", "GES blog", "solar enerji makaleleri"],
+});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  ...breadcrumbJsonLd([
+    { name: "Anasayfa", path: "/" },
+    { name: "Blog", path: "/blog" },
+  ]),
 };
 
 export default function BlogPage() {
@@ -15,6 +25,10 @@ export default function BlogPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Blog</p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
         Güneş enerjisi hakkında bilmeniz gerekenler

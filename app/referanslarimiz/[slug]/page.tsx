@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, MapPin, Zap, Calendar } from "lucide-react";
 import { references, whatsappLink } from "@/lib/site-config";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 
 export function generateStaticParams() {
@@ -18,11 +19,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const reference = references.find((r) => r.slug === slug);
   if (!reference) return {};
-  return {
+  return buildMetadata({
     title: `${reference.title} | Referanslarımız`,
-    description: reference.summary,
-    alternates: { canonical: `/referanslarimiz/${reference.slug}` },
-  };
+    description: reference.description ?? reference.summary,
+    path: `/referanslarimiz/${reference.slug}`,
+    keywords: [reference.title, reference.category, reference.location, "güneş enerjisi sistemi", "GES"],
+  });
 }
 
 export default async function ReferenceDetailPage({
@@ -36,11 +38,20 @@ export default async function ReferenceDetailPage({
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Project",
-    name: reference.title,
-    description: reference.summary,
-    locationCreated: reference.location,
-    dateCreated: reference.year,
+    "@graph": [
+      {
+        "@type": "Project",
+        name: reference.title,
+        description: reference.description ?? reference.summary,
+        locationCreated: reference.location,
+        dateCreated: reference.year,
+      },
+      breadcrumbJsonLd([
+        { name: "Anasayfa", path: "/" },
+        { name: "Referanslarımız", path: "/referanslarimiz" },
+        { name: reference.title, path: `/referanslarimiz/${reference.slug}` },
+      ]),
+    ],
   };
 
   const others = references.filter((r) => r.slug !== reference.slug).slice(0, 3);
@@ -79,9 +90,9 @@ export default async function ReferenceDetailPage({
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         <div className="overflow-hidden rounded-2xl border border-line bg-paper-raised">
-          <p className="border-b border-line px-6 py-3.5 font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
+          <h2 className="border-b border-line px-6 py-3.5 font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
             Teknik Detaylar
-          </p>
+          </h2>
           <table className="w-full text-[14px]">
             <tbody>
               <tr className="border-b border-line">
@@ -137,9 +148,9 @@ export default async function ReferenceDetailPage({
 
       {reference.gallery && reference.gallery.length > 0 && (
         <div className="mt-10">
-          <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+          <h2 className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
             Saha ve Drone Görüntüleri
-          </p>
+          </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {reference.gallery.map((src) => (
               <div key={src} className="relative aspect-[4/3] overflow-hidden rounded-2xl">
@@ -169,9 +180,9 @@ export default async function ReferenceDetailPage({
       </div>
 
       <div className="mt-16">
-        <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+        <h2 className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
           Diğer referanslar
-        </p>
+        </h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-3">
           {others.map((r) => (
             <Link

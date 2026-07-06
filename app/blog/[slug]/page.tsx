@@ -5,6 +5,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowLeft } from "lucide-react";
 import { getAllPosts, getPostContent } from "@/lib/blog";
 import { site } from "@/lib/site-config";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
@@ -18,11 +19,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPostContent(slug);
   if (!post) return {};
-  return {
+  return buildMetadata({
     title: post.meta.title,
     description: post.meta.description,
-    alternates: { canonical: `/blog/${post.meta.slug}` },
-  };
+    path: `/blog/${post.meta.slug}`,
+    keywords: [post.meta.category, "güneş enerjisi", "GES", site.city],
+    type: "article",
+  });
 }
 
 export default async function BlogPostPage({
@@ -36,12 +39,27 @@ export default async function BlogPostPage({
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.meta.title,
-    description: post.meta.description,
-    datePublished: post.meta.date,
-    author: { "@type": "Organization", name: site.name },
-    publisher: { "@type": "Organization", name: site.name },
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        headline: post.meta.title,
+        description: post.meta.description,
+        datePublished: post.meta.date,
+        dateModified: post.meta.date,
+        mainEntityOfPage: `${site.url}/blog/${post.meta.slug}`,
+        author: { "@type": "Organization", name: site.name, url: site.url },
+        publisher: {
+          "@type": "Organization",
+          name: site.name,
+          logo: { "@type": "ImageObject", url: `${site.url}/logo.svg` },
+        },
+      },
+      breadcrumbJsonLd([
+        { name: "Anasayfa", path: "/" },
+        { name: "Blog", path: "/blog" },
+        { name: post.meta.title, path: `/blog/${post.meta.slug}` },
+      ]),
+    ],
   };
 
   return (

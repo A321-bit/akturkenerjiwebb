@@ -1,16 +1,31 @@
 import type { Metadata } from "next";
+import { site } from "@/lib/site-config";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ReferenceGrid from "@/components/ReferenceGrid";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Referanslarımız",
   description:
     "Ankara ve çevresinde tamamladığımız villa, müteahhit, tarımsal ve hobi bahçesi güneş enerjisi projelerinden referanslar.",
-  alternates: { canonical: "/referanslarimiz" },
+  path: "/referanslarimiz",
+  keywords: ["güneş enerjisi referansları", "GES projeleri Ankara", "solar enerji örnekleri", site.city],
+});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  ...breadcrumbJsonLd([
+    { name: "Anasayfa", path: "/" },
+    { name: "Referanslarımız", path: "/referanslarimiz" },
+  ]),
 };
 
 export default function ReferencesPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
         Referanslarımız
       </p>

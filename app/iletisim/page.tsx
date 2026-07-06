@@ -1,18 +1,32 @@
 import type { Metadata } from "next";
 import { MapPin, Mail, Phone, Clock, MessageCircle } from "lucide-react";
 import { site, whatsappLink } from "@/lib/site-config";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ContactForm from "@/components/ContactForm";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "İletişim",
   description:
     "Ücretsiz keşif talebi için formu doldurun ya da doğrudan WhatsApp'tan yazın. Aktürk Enerji Teknolojileri, Ankara.",
-  alternates: { canonical: "/iletisim" },
+  path: "/iletisim",
+  keywords: ["Aktürk Enerji iletişim", "Ankara güneş enerjisi teklif", site.city],
+});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  ...breadcrumbJsonLd([
+    { name: "Anasayfa", path: "/" },
+    { name: "İletişim", path: "/iletisim" },
+  ]),
 };
 
 export default function ContactPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
         İletişim
       </p>

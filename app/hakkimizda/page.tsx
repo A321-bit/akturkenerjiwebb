@@ -1,13 +1,23 @@
 import type { Metadata } from "next";
 import { site, stats } from "@/lib/site-config";
+import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import Reveal from "@/components/Reveal";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Hakkımızda",
   description:
     "2016'dan beri Ankara merkezli faaliyet gösteren Aktürk Enerji Teknolojileri hakkında — hikayemiz, çalışma alanlarımız ve mühendislik yaklaşımımız.",
-  alternates: { canonical: "/hakkimizda" },
+  path: "/hakkimizda",
+  keywords: ["Aktürk Enerji hakkında", "Ankara güneş enerjisi firması", site.city],
+});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  ...breadcrumbJsonLd([
+    { name: "Anasayfa", path: "/" },
+    { name: "Hakkımızda", path: "/hakkimizda" },
+  ]),
 };
 
 const timeline = [
@@ -32,6 +42,10 @@ const timeline = [
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
         Hakkımızda
       </p>
