@@ -1,5 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
+console.log(
+  "[DEBUG env]",
+  JSON.stringify({
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    urlLen: process.env.NEXT_PUBLIC_SUPABASE_URL?.length ?? 0,
+    hasAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    anonLen: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length ?? 0,
+    keys: Object.keys(process.env).filter((k) => k.includes("SUPABASE")),
+  })
+);
+
 // Herkese açık okuma için — tarayıcıda da güvenle kullanılabilir (RLS: sadece select).
 export const supabasePublic = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
