@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { site, services } from "@/lib/site-config";
 import { Mail, MapPin, Phone } from "lucide-react";
 
@@ -24,6 +27,9 @@ function LinkedinIcon() {
 }
 
 export default function Footer() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
+
   return (
     <footer className="border-t border-line-dark bg-ink text-paper">
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">

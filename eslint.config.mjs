@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bir defalık kullanılan CommonJS script'ler — uygulama kodunun parçası değil.
+    "scripts/**",
   ]),
 ]);
 

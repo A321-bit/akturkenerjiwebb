@@ -46,6 +46,20 @@
   border-color: var(--line);
 }
 
+.admin-input {
+  border-radius: 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 0.625rem 0.875rem;
+  font-size: 14.5px;
+  outline: none;
+  min-height: 44px;
+}
+.admin-input:focus {
+  border-color: var(--sun);
+  box-shadow: 0 0 0 1px var(--sun);
+}
+
 html {
   scroll-behavior: smooth;
 }

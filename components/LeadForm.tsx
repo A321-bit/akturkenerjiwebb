@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { z } from "zod";
+import { trackEvent } from "@/lib/track";
 import {
   Home,
   Trees,
@@ -47,6 +49,7 @@ const leadSchema = z.object({
 type LeadFormValues = z.infer<typeof leadSchema>;
 
 export default function LeadForm() {
+  const pathname = usePathname();
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<LeadFormValues>({
     needType: "",
@@ -89,6 +92,7 @@ export default function LeadForm() {
       });
       if (!res.ok) throw new Error("failed");
       setStatus("sent");
+      trackEvent("click", pathname ?? "/", "lead_form_submit");
     } catch {
       setStatus("error");
     }
