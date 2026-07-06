@@ -15,14 +15,13 @@ export const site = {
   description:
     "2016'dan beri Ankara merkezli; villa, hobi bahçesi, tarımsal sulama ve müteahhit projeleri için anahtar teslim güneş enerjisi (GES) sistemleri kuran mühendislik firması.",
 
-  // [PLACEHOLDER] Gerçek iletişim bilgilerinizi girin
   contact: {
-    phoneDisplay: "0 (5XX) XXX XX XX", // [PLACEHOLDER]
-    phoneHref: "tel:+905XXXXXXXXX", // [PLACEHOLDER]
-    whatsappNumber: "905XXXXXXXXX", // [PLACEHOLDER] — başında ülke kodu, + ve boşluk olmadan
-    email: "info@akturkenerji.com", // [PLACEHOLDER]
-    addressLine: "Örnek Mahallesi, Enerji Caddesi No: 1, Çankaya/Ankara", // [PLACEHOLDER]
-    mapsEmbedUrl: "", // [PLACEHOLDER] Google Maps embed linki
+    phoneDisplay: "0 (312) 988 03 88",
+    phoneHref: "tel:+903129880388",
+    whatsappNumber: "905335591469",
+    email: "info@akturkenerji.com",
+    addressLine: "Esertepe Mahallesi, 314. Cadde No: 12/B, Keçiören/Ankara",
+    mapsEmbedUrl: "https://share.google/QPVYFonxgGEjpNrXe",
     workingHours: "Pazartesi–Cumartesi, 09:00–18:30",
   },
 
