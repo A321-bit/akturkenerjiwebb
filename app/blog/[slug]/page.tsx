@@ -3,13 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowLeft } from "lucide-react";
-import { getBlogPosts, getBlogPostBySlug, SITE_URL, SITE_NAME } from "@/lib/data";
+import { getBlogPostBySlug, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
-
-export async function generateStaticParams() {
-  const posts = await getBlogPosts();
-  return posts.map((p) => ({ slug: p.slug }));
-}
 
 export async function generateMetadata({
   params,

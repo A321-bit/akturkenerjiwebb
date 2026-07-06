@@ -7,11 +7,6 @@ import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink } from
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 
-export async function generateStaticParams() {
-  const references = await getReferences();
-  return references.map((r) => ({ slug: r.slug }));
-}
-
 export async function generateMetadata({
   params,
 }: {

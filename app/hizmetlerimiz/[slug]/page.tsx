@@ -7,11 +7,6 @@ import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
 
-export async function generateStaticParams() {
-  const services = await getServices();
-  return services.map((s) => ({ slug: s.slug }));
-}
-
 export async function generateMetadata({
   params,
 }: {

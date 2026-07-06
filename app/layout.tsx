@@ -7,6 +7,13 @@ import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
 import Analytics from "@/components/Analytics";
 
+// Build sırasında Vercel'in build makinesinden Supabase'e yapılan istekler
+// tutarsız şekilde "fetch failed" ile başarısız oluyor (yerelde ve runtime'da
+// sorun yok). force-dynamic ile tüm sayfalar yalnızca request anında,
+// dağıtılmış fonksiyon ortamında render edilir — hem build hatasını ortadan
+// kaldırır hem de admin panel değişikliklerinin anında yansımasını sağlar.
+export const dynamic = "force-dynamic";
+
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
