@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import type { Service } from "@/lib/site-config";
+import type { Service } from "@/lib/data";
 import CoverMedia from "@/components/CoverMedia";
 
 export default function ServiceCard({ service }: { service: Service }) {

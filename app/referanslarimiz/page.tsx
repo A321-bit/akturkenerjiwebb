@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { site } from "@/lib/site-config";
+import { getReferences } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ReferenceGrid from "@/components/ReferenceGrid";
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Ankara ve çevresinde tamamladığımız villa, müteahhit, tarımsal ve hobi bahçesi güneş enerjisi projelerinden referanslar.",
   path: "/referanslarimiz",
-  keywords: ["güneş enerjisi referansları", "GES projeleri Ankara", "solar enerji örnekleri", site.city],
+  keywords: ["güneş enerjisi referansları", "GES projeleri Ankara", "solar enerji örnekleri", "Ankara"],
 });
 
 const jsonLd = {
@@ -19,7 +19,9 @@ const jsonLd = {
   ]),
 };
 
-export default function ReferencesPage() {
+export default async function ReferencesPage() {
+  const references = await getReferences();
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
       <script
@@ -38,7 +40,7 @@ export default function ReferencesPage() {
         bulabilirsiniz — proje fotoğrafları ve daha fazla referans için bizimle
         iletişime geçin.
       </p>
-      <ReferenceGrid />
+      <ReferenceGrid references={references} />
     </div>
   );
 }

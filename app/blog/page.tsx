@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { getAllPosts } from "@/lib/blog";
+import { getBlogPosts } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 
@@ -21,8 +21,8 @@ const jsonLd = {
   ]),
 };
 
-export default function BlogPage() {
-  const posts = getAllPosts();
+export default async function BlogPage() {
+  const posts = await getBlogPosts();
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
@@ -58,7 +58,7 @@ export default function BlogPage() {
             </h2>
             <p className="mt-2 text-[13.5px] leading-relaxed text-slate">{post.description}</p>
             <div className="mt-4 flex items-center justify-between border-t border-line pt-3 text-[12.5px] text-slate-soft">
-              <time>{formatDate(post.date)}</time>
+              <time>{formatDate(post.publishedAt)}</time>
               <span className="flex items-center gap-1.5 font-semibold text-ink">
                 Detayları gör
                 <ArrowUpRight

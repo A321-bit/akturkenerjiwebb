@@ -1,18 +1,18 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { site, whatsappLink } from "@/lib/site-config";
+import { whatsappLink, type SiteSettings } from "@/lib/data";
 import { MessageCircle, Phone } from "lucide-react";
 import { trackEvent } from "@/lib/track";
 
-export default function FloatingActions() {
+export default function FloatingActions({ settings }: { settings: SiteSettings }) {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 sm:bottom-7 sm:right-7">
       <a
-        href={site.contact.phoneHref}
+        href={settings.contact.phoneHref}
         aria-label="Hemen ara"
         onClick={() => trackEvent("click", pathname ?? "/", "call_button")}
         className="flex items-center gap-2 rounded-full bg-ink px-5 py-3.5 text-paper shadow-[0_10px_32px_rgba(0,0,0,0.35)] ring-2 ring-sun/40 transition-transform hover:scale-105"
@@ -21,7 +21,10 @@ export default function FloatingActions() {
         <span className="text-[14px] font-semibold whitespace-nowrap">Hemen Ara</span>
       </a>
       <a
-        href={whatsappLink("Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum.")}
+        href={whatsappLink(
+          settings.contact.whatsappNumber,
+          "Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum."
+        )}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="WhatsApp'tan yazın"

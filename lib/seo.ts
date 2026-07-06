@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { site } from "./site-config";
+import { SITE_URL, SITE_NAME } from "./data";
 
 export function buildMetadata({
   title,
@@ -14,8 +14,8 @@ export function buildMetadata({
   keywords?: string[];
   type?: "website" | "article";
 }): Metadata {
-  const url = `${site.url}${path}`;
-  const images = [{ url: "/opengraph-image", width: 1200, height: 630, alt: site.name }];
+  const url = `${SITE_URL}${path}`;
+  const images = [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_NAME }];
   return {
     title,
     description,
@@ -25,7 +25,7 @@ export function buildMetadata({
       type,
       locale: "tr_TR",
       url,
-      siteName: site.name,
+      siteName: SITE_NAME,
       title,
       description,
       images,
@@ -48,7 +48,7 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
       "@type": "ListItem",
       position: i + 1,
       name: item.name,
-      item: `${site.url}${item.path}`,
+      item: `${SITE_URL}${item.path}`,
     })),
   };
 }

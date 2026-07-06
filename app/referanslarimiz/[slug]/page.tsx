@@ -3,11 +3,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, MapPin, Zap, Calendar } from "lucide-react";
-import { references, whatsappLink } from "@/lib/site-config";
+import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const references = await getReferences();
   return references.map((r) => ({ slug: r.slug }));
 }
 
@@ -17,7 +18,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const reference = references.find((r) => r.slug === slug);
+  const reference = await getReferenceBySlug(slug);
   if (!reference) return {};
   return buildMetadata({
     title: `${reference.title} | Referanslarımız`,
@@ -33,8 +34,9 @@ export default async function ReferenceDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const reference = references.find((r) => r.slug === slug);
+  const reference = await getReferenceBySlug(slug);
   if (!reference) notFound();
+  const site = await getSiteSettings();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -54,7 +56,8 @@ export default async function ReferenceDetailPage({
     ],
   };
 
-  const others = references.filter((r) => r.slug !== reference.slug).slice(0, 3);
+  const allReferences = await getReferences();
+  const others = allReferences.filter((r) => r.slug !== reference.slug).slice(0, 3);
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-20">
@@ -163,7 +166,10 @@ export default async function ReferenceDetailPage({
 
       <div className="mt-8 flex flex-wrap gap-3">
         <a
-          href={whatsappLink(`Merhaba, "${reference.title}" projesi gibi bir sistem hakkında bilgi almak istiyorum.`)}
+          href={whatsappLink(
+            site.contact.whatsappNumber,
+            `Merhaba, "${reference.title}" projesi gibi bir sistem hakkında bilgi almak istiyorum.`
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[14.5px] font-semibold text-paper transition-colors hover:bg-sun hover:text-ink"

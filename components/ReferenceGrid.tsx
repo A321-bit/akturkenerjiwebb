@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { references } from "@/lib/site-config";
+import type { Reference } from "@/lib/data";
 import CoverMedia from "@/components/CoverMedia";
 
-const categories = ["Tümü", ...Array.from(new Set(references.map((r) => r.category)))];
-
-export default function ReferenceGrid() {
+export default function ReferenceGrid({ references }: { references: Reference[] }) {
+  const categories = ["Tümü", ...Array.from(new Set(references.map((r) => r.category)))];
   const [active, setActive] = useState("Tümü");
   const filtered =
     active === "Tümü" ? references : references.filter((r) => r.category === active);

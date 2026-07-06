@@ -1,8 +1,13 @@
 import type { MetadataRoute } from "next";
-import { site, services, references } from "@/lib/site-config";
-import { getAllPosts } from "@/lib/blog";
+import { SITE_URL, getServices, getReferences, getBlogPosts } from "@/lib/data";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [services, references, posts] = await Promise.all([
+    getServices(),
+    getReferences(),
+    getBlogPosts(),
+  ]);
+
   const staticRoutes = [
     "",
     "/hizmetlerimiz",
@@ -11,23 +16,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/blog",
     "/iletisim",
   ].map((route) => ({
-    url: `${site.url}${route}`,
+    url: `${SITE_URL}${route}`,
     lastModified: new Date(),
   }));
 
   const serviceRoutes = services.map((s) => ({
-    url: `${site.url}/hizmetlerimiz/${s.slug}`,
+    url: `${SITE_URL}/hizmetlerimiz/${s.slug}`,
     lastModified: new Date(),
   }));
 
   const referenceRoutes = references.map((r) => ({
-    url: `${site.url}/referanslarimiz/${r.slug}`,
+    url: `${SITE_URL}/referanslarimiz/${r.slug}`,
     lastModified: new Date(),
   }));
 
-  const postRoutes = getAllPosts().map((p) => ({
-    url: `${site.url}/blog/${p.slug}`,
-    lastModified: new Date(p.date),
+  const postRoutes = posts.map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: new Date(p.publishedAt),
   }));
 
   return [...staticRoutes, ...serviceRoutes, ...referenceRoutes, ...postRoutes];

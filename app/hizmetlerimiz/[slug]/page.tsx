@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, Check } from "lucide-react";
-import { services, site, whatsappLink } from "@/lib/site-config";
+import { getServices, getServiceBySlug, getSiteSettings, whatsappLink, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const services = await getServices();
   return services.map((s) => ({ slug: s.slug }));
 }
 
@@ -17,13 +18,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const service = services.find((s) => s.slug === slug);
+  const service = await getServiceBySlug(slug);
   if (!service) return {};
   return buildMetadata({
     title: service.title,
     description: service.summary,
     path: `/hizmetlerimiz/${service.slug}`,
-    keywords: [service.title, service.eyebrow, "güneş enerjisi", "GES", site.city],
+    keywords: [service.title, service.eyebrow, "güneş enerjisi", "GES", "Ankara"],
   });
 }
 
@@ -33,7 +34,7 @@ export default async function ServiceDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const service = services.find((s) => s.slug === slug);
+  const service = await getServiceBySlug(slug);
   if (!service) notFound();
 
   const jsonLd = {
@@ -43,7 +44,7 @@ export default async function ServiceDetailPage({
         "@type": "Service",
         name: service.title,
         description: service.description,
-        provider: { "@type": "LocalBusiness", name: site.name, url: site.url },
+        provider: { "@type": "LocalBusiness", name: SITE_NAME, url: SITE_URL },
         areaServed: "TR",
         audience: service.audience,
       },
@@ -55,7 +56,9 @@ export default async function ServiceDetailPage({
     ],
   };
 
-  const others = services.filter((s) => s.slug !== service.slug).slice(0, 3);
+  const allServices = await getServices();
+  const others = allServices.filter((s) => s.slug !== service.slug).slice(0, 3);
+  const site = await getSiteSettings();
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-20">
@@ -98,7 +101,10 @@ export default async function ServiceDetailPage({
 
       <div className="mt-8 flex flex-wrap gap-3">
         <a
-          href={whatsappLink(`Merhaba, "${service.title}" hakkında bilgi almak istiyorum.`)}
+          href={whatsappLink(
+            site.contact.whatsappNumber,
+            `Merhaba, "${service.title}" hakkında bilgi almak istiyorum.`
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-3 text-[14.5px] font-semibold text-paper transition-colors hover:bg-sun hover:text-ink"

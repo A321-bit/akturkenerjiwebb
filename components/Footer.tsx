@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { site, services } from "@/lib/site-config";
+import { SITE_DOMAIN, type SiteSettings, type Service } from "@/lib/data";
 import { Mail, MapPin, Phone } from "lucide-react";
 
 function InstagramIcon() {
@@ -26,7 +26,13 @@ function LinkedinIcon() {
   );
 }
 
-export default function Footer() {
+export default function Footer({
+  settings,
+  services,
+}: {
+  settings: SiteSettings;
+  services: Service[];
+}) {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
 
@@ -35,27 +41,27 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Image src="/logo-light.svg" alt={site.name} width={168} height={109} className="h-20 w-auto" />
+            <Image src="/logo-light.svg" alt={settings.name} width={168} height={109} className="h-20 w-auto" />
             <p className="mt-2 font-mono-data text-[11px] uppercase tracking-[0.16em] text-slate-soft">
-              {site.foundedYear}&apos;dan beri {site.city}&apos;da
+              {settings.foundedYear}&apos;dan beri {settings.city}&apos;da
             </p>
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-slate-soft">
-              {site.city} merkezli, villa, hobi bahçesi, tarım ve müteahhit
+              {settings.city} merkezli, villa, hobi bahçesi, tarım ve müteahhit
               projelerine anahtar teslim güneş enerjisi sistemleri.
             </p>
             <div className="mt-5 flex gap-3">
-              {site.social.instagram && (
+              {settings.social.instagram && (
                 <a
-                  href={site.social.instagram}
+                  href={settings.social.instagram}
                   aria-label="Instagram"
                   className="rounded-full border border-line-dark p-2 text-slate-soft hover:text-brand"
                 >
                   <InstagramIcon />
                 </a>
               )}
-              {site.social.linkedin && (
+              {settings.social.linkedin && (
                 <a
-                  href={site.social.linkedin}
+                  href={settings.social.linkedin}
                   aria-label="LinkedIn"
                   className="rounded-full border border-line-dark p-2 text-slate-soft hover:text-brand"
                 >
@@ -118,15 +124,15 @@ export default function Footer() {
             <ul className="mt-4 space-y-3 text-[14px] text-slate-soft">
               <li className="flex items-start gap-2">
                 <Phone size={15} className="mt-0.5 shrink-0 text-brand" />
-                <a href={site.contact.phoneHref}>{site.contact.phoneDisplay}</a>
+                <a href={settings.contact.phoneHref}>{settings.contact.phoneDisplay}</a>
               </li>
               <li className="flex items-start gap-2">
                 <Mail size={15} className="mt-0.5 shrink-0 text-brand" />
-                <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
+                <a href={`mailto:${settings.contact.email}`}>{settings.contact.email}</a>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={15} className="mt-0.5 shrink-0 text-brand" />
-                <span>{site.contact.addressLine}</span>
+                <span>{settings.contact.addressLine}</span>
               </li>
             </ul>
           </div>
@@ -134,9 +140,9 @@ export default function Footer() {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-line-dark pt-6 text-[12.5px] text-slate-soft sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {site.name}. Tüm hakları saklıdır.
+            © {new Date().getFullYear()} {settings.name}. Tüm hakları saklıdır.
           </p>
-          <p className="font-mono-data">{site.domain}</p>
+          <p className="font-mono-data">{SITE_DOMAIN}</p>
         </div>
       </div>
     </footer>

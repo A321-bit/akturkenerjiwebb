@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X, ArrowUpRight } from "lucide-react";
-import { site } from "@/lib/site-config";
+import type { SiteSettings } from "@/lib/data";
 
 const nav = [
   { href: "/", label: "Anasayfa" },
@@ -16,7 +16,7 @@ const nav = [
   { href: "/iletisim", label: "İletişim" },
 ];
 
-export default function Header() {
+export default function Header({ settings }: { settings: SiteSettings }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
@@ -27,7 +27,7 @@ export default function Header() {
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <Image
             src="/logo.svg"
-            alt={site.name}
+            alt={settings.name}
             width={168}
             height={109}
             priority
@@ -49,10 +49,10 @@ export default function Header() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <a
-            href={site.contact.phoneHref}
+            href={settings.contact.phoneHref}
             className="font-mono-data text-[13.5px] text-slate hover:text-ink"
           >
-            {site.contact.phoneDisplay}
+            {settings.contact.phoneDisplay}
           </a>
           <Link
             href="/iletisim"

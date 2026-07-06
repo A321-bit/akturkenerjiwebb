@@ -3,12 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowLeft } from "lucide-react";
-import { getAllPosts, getPostContent } from "@/lib/blog";
-import { site } from "@/lib/site-config";
+import { getBlogPosts, getBlogPostBySlug, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
-export function generateStaticParams() {
-  return getAllPosts().map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const posts = await getBlogPosts();
+  return posts.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({
@@ -17,13 +17,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostContent(slug);
+  const post = await getBlogPostBySlug(slug);
   if (!post) return {};
   return buildMetadata({
-    title: post.meta.title,
-    description: post.meta.description,
-    path: `/blog/${post.meta.slug}`,
-    keywords: [post.meta.category, "güneş enerjisi", "GES", site.city],
+    title: post.title,
+    description: post.description,
+    path: `/blog/${post.slug}`,
+    keywords: [post.category, "güneş enerjisi", "GES", "Ankara"],
     type: "article",
   });
 }
@@ -34,7 +34,7 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostContent(slug);
+  const post = await getBlogPostBySlug(slug);
   if (!post) notFound();
 
   const jsonLd = {
@@ -42,22 +42,22 @@ export default async function BlogPostPage({
     "@graph": [
       {
         "@type": "BlogPosting",
-        headline: post.meta.title,
-        description: post.meta.description,
-        datePublished: post.meta.date,
-        dateModified: post.meta.date,
-        mainEntityOfPage: `${site.url}/blog/${post.meta.slug}`,
-        author: { "@type": "Organization", name: site.name, url: site.url },
+        headline: post.title,
+        description: post.description,
+        datePublished: post.publishedAt,
+        dateModified: post.publishedAt,
+        mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+        author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
         publisher: {
           "@type": "Organization",
-          name: site.name,
-          logo: { "@type": "ImageObject", url: `${site.url}/logo.svg` },
+          name: SITE_NAME,
+          logo: { "@type": "ImageObject", url: `${SITE_URL}/logo.svg` },
         },
       },
       breadcrumbJsonLd([
         { name: "Anasayfa", path: "/" },
         { name: "Blog", path: "/blog" },
-        { name: post.meta.title, path: `/blog/${post.meta.slug}` },
+        { name: post.title, path: `/blog/${post.slug}` },
       ]),
     ],
   };
@@ -77,16 +77,16 @@ export default async function BlogPostPage({
 
       <div className="mt-6 flex items-center gap-3 text-[12px] text-slate-soft">
         <span className="font-mono-data uppercase tracking-[0.1em] text-brand">
-          {post.meta.category}
+          {post.category}
         </span>
         <span>·</span>
-        <time>{formatDate(post.meta.date)}</time>
+        <time>{formatDate(post.publishedAt)}</time>
         <span>·</span>
-        <span>{post.meta.readingTime}</span>
+        <span>{post.readingTime}</span>
       </div>
 
       <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-        {post.meta.title}
+        {post.title}
       </h1>
 
       <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl">

@@ -1,7 +1,9 @@
+import { cache } from "react";
 import { supabasePublic, supabaseAdmin } from "./supabase";
 
 export const SITE_URL = "https://akturkenerji.com";
 export const SITE_DOMAIN = "akturkenerji.com";
+export const SITE_NAME = "Aktürk Enerji Teknolojileri";
 
 export function whatsappLink(whatsappNumber: string, message: string) {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -115,7 +117,7 @@ function mapSiteSettings(row: SiteSettingsRow): SiteSettings {
   };
 }
 
-export async function getSiteSettings(): Promise<SiteSettings> {
+export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   const { data, error } = await supabasePublic
     .from("site_settings")
     .select("*")
@@ -125,7 +127,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     throw new Error("site_settings okunamadı: " + (error?.message ?? "kayıt yok"));
   }
   return mapSiteSettings(data as SiteSettingsRow);
-}
+});
 
 type ServiceRow = {
   id: number;
@@ -153,16 +155,16 @@ function mapService(row: ServiceRow): Service {
   };
 }
 
-export async function getServices(): Promise<Service[]> {
+export const getServices = cache(async (): Promise<Service[]> => {
   const { data, error } = await supabasePublic.from("services").select("*").order("sort_order");
   if (error) throw new Error(error.message);
   return (data as ServiceRow[]).map(mapService);
-}
+});
 
-export async function getServiceBySlug(slug: string): Promise<Service | null> {
+export const getServiceBySlug = cache(async (slug: string): Promise<Service | null> => {
   const { data } = await supabasePublic.from("services").select("*").eq("slug", slug).maybeSingle();
   return data ? mapService(data as ServiceRow) : null;
-}
+});
 
 type ReferenceRow = {
   id: number;
@@ -196,29 +198,29 @@ function mapReference(row: ReferenceRow): Reference {
   };
 }
 
-export async function getReferences(): Promise<Reference[]> {
+export const getReferences = cache(async (): Promise<Reference[]> => {
   const { data, error } = await supabasePublic
     .from("project_references")
     .select("*")
     .order("sort_order");
   if (error) throw new Error(error.message);
   return (data as ReferenceRow[]).map(mapReference);
-}
+});
 
-export async function getReferenceBySlug(slug: string): Promise<Reference | null> {
+export const getReferenceBySlug = cache(async (slug: string): Promise<Reference | null> => {
   const { data } = await supabasePublic
     .from("project_references")
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
   return data ? mapReference(data as ReferenceRow) : null;
-}
+});
 
-export async function getTestimonials(): Promise<Testimonial[]> {
+export const getTestimonials = cache(async (): Promise<Testimonial[]> => {
   const { data, error } = await supabasePublic.from("testimonials").select("*").order("sort_order");
   if (error) throw new Error(error.message);
   return data as Testimonial[];
-}
+});
 
 type BlogPostRow = {
   id: number;
@@ -248,19 +250,19 @@ function mapBlogPost(row: BlogPostRow): BlogPost {
   };
 }
 
-export async function getBlogPosts(): Promise<BlogPost[]> {
+export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
   const { data, error } = await supabasePublic
     .from("blog_posts")
     .select("*")
     .order("published_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data as BlogPostRow[]).map(mapBlogPost);
-}
+});
 
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+export const getBlogPostBySlug = cache(async (slug: string): Promise<BlogPost | null> => {
   const { data } = await supabasePublic.from("blog_posts").select("*").eq("slug", slug).maybeSingle();
   return data ? mapBlogPost(data as BlogPostRow) : null;
-}
+});
 
 // ── Admin (secret anahtar, sadece sunucu tarafı route'larda kullanılır) ──
 

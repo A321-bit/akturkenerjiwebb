@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { services, site } from "@/lib/site-config";
+import { getServices } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Villa çatı GES, müteahhit projeleri, tarımsal sulama, rüzgar-hibrit sistemler, lityum batarya depolama ve daha fazlası — Aktürk Enerji hizmetleri.",
   path: "/hizmetlerimiz",
-  keywords: ["güneş enerjisi hizmetleri", "GES kurulumu", "villa çatı GES", "tarımsal sulama GES", site.city],
+  keywords: ["güneş enerjisi hizmetleri", "GES kurulumu", "villa çatı GES", "tarımsal sulama GES", "Ankara"],
 });
 
 const jsonLd = {
@@ -19,7 +19,9 @@ const jsonLd = {
   ]),
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const services = await getServices();
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
       <script

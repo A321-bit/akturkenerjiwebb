@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MapPin, Mail, Phone, Clock, MessageCircle } from "lucide-react";
-import { site, whatsappLink } from "@/lib/site-config";
+import { getSiteSettings, whatsappLink } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import LeadForm from "@/components/LeadForm";
 
@@ -9,7 +9,7 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Ücretsiz keşif talebi için formu doldurun ya da doğrudan WhatsApp'tan yazın. Aktürk Enerji Teknolojileri, Ankara.",
   path: "/iletisim",
-  keywords: ["Aktürk Enerji iletişim", "Ankara güneş enerjisi teklif", site.city],
+  keywords: ["Aktürk Enerji iletişim", "Ankara güneş enerjisi teklif", "Ankara"],
 });
 
 const jsonLd = {
@@ -20,7 +20,9 @@ const jsonLd = {
   ]),
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const site = await getSiteSettings();
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
       <script
@@ -41,7 +43,10 @@ export default function ContactPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.2fr]">
         <div className="flex flex-col gap-4">
           <a
-            href={whatsappLink("Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum.")}
+            href={whatsappLink(
+              site.contact.whatsappNumber,
+              "Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum."
+            )}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 rounded-2xl border border-line bg-paper-raised p-5 transition-colors hover:border-[#25D366]/60"

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
-import { site } from "@/lib/site-config";
+import { SITE_NAME } from "@/lib/data";
 
-export const alt = site.name;
+export const alt = SITE_NAME;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { site, stats } from "@/lib/site-config";
+import { getSiteSettings } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import Reveal from "@/components/Reveal";
@@ -9,7 +9,7 @@ export const metadata: Metadata = buildMetadata({
   description:
     "2016'dan beri Ankara merkezli faaliyet gösteren Aktürk Enerji Teknolojileri hakkında — hikayemiz, çalışma alanlarımız ve mühendislik yaklaşımımız.",
   path: "/hakkimizda",
-  keywords: ["Aktürk Enerji hakkında", "Ankara güneş enerjisi firması", site.city],
+  keywords: ["Aktürk Enerji hakkında", "Ankara güneş enerjisi firması", "Ankara"],
 });
 
 const jsonLd = {
@@ -39,7 +39,10 @@ const timeline = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const site = await getSiteSettings();
+  const stats = site.stats;
+
   return (
     <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-20">
       <script

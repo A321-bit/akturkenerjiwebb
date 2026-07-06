@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck, Wrench, FileCheck2 } from "lucide-react";
-import { services, references, testimonials, stats, site, whatsappLink } from "@/lib/site-config";
+import { getServices, getReferences, getTestimonials, getSiteSettings, whatsappLink } from "@/lib/data";
 import SavingsCalculator from "@/components/SavingsCalculator";
 import ServiceCard from "@/components/ServiceCard";
 import Reveal from "@/components/Reveal";
@@ -10,7 +10,15 @@ import HowItWorks from "@/components/HowItWorks";
 import CoverMedia from "@/components/CoverMedia";
 import LeadForm from "@/components/LeadForm";
 
-export default function Home() {
+export default async function Home() {
+  const [services, references, testimonials, site] = await Promise.all([
+    getServices(),
+    getReferences(),
+    getTestimonials(),
+    getSiteSettings(),
+  ]);
+  const stats = site.stats;
+
   return (
     <>
       {/* HERO */}
@@ -63,7 +71,7 @@ export default function Home() {
           </div>
 
           <div className="lg:pt-2">
-            <SavingsCalculator />
+            <SavingsCalculator whatsappNumber={site.contact.whatsappNumber} />
           </div>
         </div>
       </section>
@@ -219,7 +227,10 @@ export default function Home() {
                 size özel sistem boyutu ve fiyat teklifiyle 15 dakika içinde dönüş yapsın.
               </p>
               <a
-                href={whatsappLink("Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum.")}
+                href={whatsappLink(
+                  site.contact.whatsappNumber,
+                  "Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum."
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-6 inline-flex items-center gap-2 rounded-full border border-line-dark px-5 py-3 text-[14.5px] font-semibold text-paper hover:border-sun/60"

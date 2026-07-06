@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { whatsappLink } from "@/lib/site-config";
+import { whatsappLink } from "@/lib/data";
 
 // Ankara ortalama tepe güneşlenme saati ~4,5 saat/gün kabul edilmiştir.
 // Birim elektrik fiyatı ve verim katsayısı güncel tarifeye göre ayarlanmalıdır.
@@ -17,7 +17,7 @@ const roofTypes = [
   { id: "muteahhit", label: "Müteahhit / Toplu Proje" },
 ] as const;
 
-export default function SavingsCalculator() {
+export default function SavingsCalculator({ whatsappNumber }: { whatsappNumber: string }) {
   const [roofType, setRoofType] = useState<(typeof roofTypes)[number]["id"]>("villa");
   const [monthlyBill, setMonthlyBill] = useState(2500);
 
@@ -113,7 +113,7 @@ export default function SavingsCalculator() {
       </div>
 
       <a
-        href={whatsappLink(waMessage)}
+        href={whatsappLink(whatsappNumber, waMessage)}
         target="_blank"
         rel="noopener noreferrer"
         className="group mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-sun px-5 py-3 text-[14px] font-semibold text-ink transition-colors hover:bg-sun-soft"
