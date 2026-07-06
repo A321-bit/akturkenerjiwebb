@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { site, stats } from "@/lib/site-config";
+import AnimatedCounter from "@/components/AnimatedCounter";
+import Reveal from "@/components/Reveal";
 
 export const metadata: Metadata = {
   title: "Hakkımızda",
@@ -45,25 +47,29 @@ export default function AboutPage() {
         sonrası desteğe kadar sürecin tamamını kendi ekibimizle yürütüyoruz.
       </p>
 
-      <div className="mt-10 grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-4">
-        {stats.map((s) => (
-          <div key={s.label}>
-            <p className="font-mono-data text-lg font-semibold text-ink sm:text-xl">{s.value}</p>
-            <p className="mt-1 text-[12.5px] text-slate">{s.label}</p>
-          </div>
-        ))}
-      </div>
+      <Reveal>
+        <div className="mt-10 grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-4">
+          {stats.map((s) => (
+            <div key={s.label}>
+              <p className="font-mono-data text-lg font-semibold text-ink sm:text-xl">
+                <AnimatedCounter value={s.value} />
+              </p>
+              <p className="mt-1 text-[12.5px] text-slate">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </Reveal>
 
       <h2 className="mt-14 font-display text-2xl font-semibold tracking-tight">
         Yolculuğumuz
       </h2>
       <ol className="mt-6 space-y-6 border-l border-line pl-6">
-        {timeline.map((t) => (
-          <li key={t.year} className="relative">
+        {timeline.map((t, i) => (
+          <Reveal as="li" key={t.year} delay={i * 80} className="relative">
             <span className="absolute -left-[27px] top-1 h-2.5 w-2.5 rounded-full bg-brand" />
             <p className="font-mono-data text-[12.5px] font-semibold text-brand">{t.year}</p>
             <p className="mt-1 text-[15px] leading-relaxed text-ink">{t.text}</p>
-          </li>
+          </Reveal>
         ))}
       </ol>
 
@@ -88,11 +94,11 @@ export default function AboutPage() {
             title: "Tedarik gücü",
             text: "Toptan/perakende tedarik ve distribütörlük ağımızla rekabetçi fiyat ve stok garantisi sunuyoruz.",
           },
-        ].map((f) => (
-          <div key={f.title} className="rounded-2xl border border-line bg-paper-raised p-6">
+        ].map((f, i) => (
+          <Reveal key={f.title} delay={i * 60} className="rounded-2xl border border-line bg-paper-raised p-6">
             <h3 className="font-display text-[16px] font-semibold">{f.title}</h3>
             <p className="mt-2 text-[14px] leading-relaxed text-slate">{f.text}</p>
-          </div>
+          </Reveal>
         ))}
       </div>
     </div>
