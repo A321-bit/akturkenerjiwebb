@@ -1,0 +1,91 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  /* Aktürk Enerji token system — derived from brand logo (blue #3f74c4 + charcoal) */
+  --ink: #0e1626;          /* deep navy-black — primary dark surface / text on light */
+  --ink-soft: #16223c;     /* raised panel on dark */
+  --paper: #f5f6f8;        /* cool neutral light surface */
+  --paper-raised: #ffffff;
+  --brand: #3f74c4;        /* logo blue — primary accent */
+  --brand-deep: #2c5490;   /* darker blue for hover / emphasis */
+  --sun: #eea23a;          /* warm gold — secondary "sunlight" accent for CTAs */
+  --sun-soft: #f5be6f;
+  --volt: #2e6f6b;         /* muted teal — success / confirmation states */
+  --slate: #4b5768;        /* body copy on light */
+  --slate-soft: #8b93a1;
+  --line: #dde1e8;         /* hairline on light */
+  --line-dark: #223252;    /* hairline on dark */
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-sun: var(--sun);
+  --color-sun-soft: var(--sun-soft);
+  --color-volt: var(--volt);
+  --color-slate: var(--slate);
+  --color-slate-soft: var(--slate-soft);
+  --color-line: var(--line);
+  --color-line-dark: var(--line-dark);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-plex-mono);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), sans-serif;
+}
+
+.font-mono-data {
+  font-family: var(--font-mono), monospace;
+}
+
+/* circuit-grid texture used behind dark hero/CTA sections */
+.grid-texture {
+  background-image:
+    linear-gradient(var(--line-dark) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-dark) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise {
+  animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
