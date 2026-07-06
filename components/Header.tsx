@@ -22,7 +22,7 @@ export default function Header() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <Image
-            src="/logo.png"
+            src="/logo.svg"
             alt={site.name}
             width={168}
             height={109}

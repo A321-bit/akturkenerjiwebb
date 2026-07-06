@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { site, services } from "@/lib/site-config";
+import { site, services, references } from "@/lib/site-config";
 import { getAllPosts } from "@/lib/blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -20,10 +20,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
   }));
 
+  const referenceRoutes = references.map((r) => ({
+    url: `${site.url}/referanslarimiz/${r.slug}`,
+    lastModified: new Date(),
+  }));
+
   const postRoutes = getAllPosts().map((p) => ({
     url: `${site.url}/blog/${p.slug}`,
     lastModified: new Date(p.date),
   }));
 
-  return [...staticRoutes, ...serviceRoutes, ...postRoutes];
+  return [...staticRoutes, ...serviceRoutes, ...referenceRoutes, ...postRoutes];
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { Service } from "@/lib/site-config";
+import CoverMedia from "@/components/CoverMedia";
 
 export default function ServiceCard({ service }: { service: Service }) {
   const ref = useRef<HTMLAnchorElement>(null);
@@ -32,10 +33,17 @@ export default function ServiceCard({ service }: { service: Service }) {
         transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(0)`,
         transition: "transform 150ms ease-out",
       }}
-      className="group flex flex-col justify-between rounded-2xl border border-line bg-paper-raised p-6 will-change-transform hover:border-sun/60 hover:shadow-[0_20px_44px_-24px_rgba(11,20,32,0.45)]"
+      className="group flex flex-col justify-between rounded-2xl border border-line bg-paper-raised p-4 will-change-transform hover:border-sun/60 hover:shadow-[0_20px_44px_-24px_rgba(11,20,32,0.45)]"
     >
       <div>
-        <p className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
+        <CoverMedia
+          src={service.image}
+          alt={service.title}
+          label={service.eyebrow}
+          aspect="aspect-[16/11]"
+          iconSize={40}
+        />
+        <p className="mt-4 font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
           {service.eyebrow}
         </p>
         <h3 className="mt-2 font-display text-lg font-semibold leading-snug text-ink">

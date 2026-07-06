@@ -4,17 +4,19 @@ import { notFound } from "next/navigation";
 import { ArrowUpRight, Check } from "lucide-react";
 import { services, site, whatsappLink } from "@/lib/site-config";
 import ServiceCard from "@/components/ServiceCard";
+import CoverMedia from "@/components/CoverMedia";
 
 export function generateStaticParams() {
   return services.map((s) => ({ slug: s.slug }));
 }
 
-export function generateMetadata({
+export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
-}): Metadata {
-  const service = services.find((s) => s.slug === params.slug);
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const service = services.find((s) => s.slug === slug);
   if (!service) return {};
   return {
     title: service.title,
@@ -23,12 +25,13 @@ export function generateMetadata({
   };
 }
 
-export default function ServiceDetailPage({
+export default async function ServiceDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const service = services.find((s) => s.slug === params.slug);
+  const { slug } = await params;
+  const service = services.find((s) => s.slug === slug);
   if (!service) notFound();
 
   const jsonLd = {
@@ -58,6 +61,15 @@ export default function ServiceDetailPage({
       <p className="mt-4 text-[16px] leading-relaxed text-slate">
         {service.description}
       </p>
+
+      <CoverMedia
+        src={service.image}
+        alt={service.title}
+        label={service.eyebrow}
+        aspect="aspect-[16/9]"
+        iconSize={72}
+        className="mt-8"
+      />
 
       <div className="mt-8 rounded-2xl border border-line bg-paper-raised p-6">
         <p className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">

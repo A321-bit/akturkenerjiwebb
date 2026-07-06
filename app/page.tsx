@@ -7,6 +7,7 @@ import Reveal from "@/components/Reveal";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import SunGlow from "@/components/SunGlow";
 import HowItWorks from "@/components/HowItWorks";
+import CoverMedia from "@/components/CoverMedia";
 
 export default function Home() {
   return (
@@ -144,8 +145,12 @@ export default function Home() {
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {references.slice(0, 3).map((r, i) => (
               <Reveal key={r.slug} delay={i * 60}>
-                <div className="rounded-2xl border border-line bg-paper p-6 transition-transform duration-300 hover:-translate-y-1">
-                  <div className="flex items-center justify-between">
+                <Link
+                  href={`/referanslarimiz/${r.slug}`}
+                  className="group flex flex-col rounded-2xl border border-line bg-paper p-4 transition-transform duration-300 hover:-translate-y-1"
+                >
+                  <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={40} />
+                  <div className="flex items-center justify-between pt-4">
                     <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
                       {r.category}
                     </span>
@@ -159,7 +164,7 @@ export default function Home() {
                     <span>{r.location}</span>
                     <span className="font-mono-data font-semibold text-ink">{r.capacity}</span>
                   </div>
-                </div>
+                </Link>
               </Reveal>
             ))}
           </div>
@@ -179,7 +184,7 @@ export default function Home() {
 
         <div className="mt-10 grid gap-5 sm:grid-cols-3">
           {testimonials.map((t, i) => (
-            <Reveal key={t.name} delay={i * 60}>
+            <Reveal key={`${t.name}-${i}`} delay={i * 60}>
               <figure className="rounded-2xl border border-line bg-paper-raised p-6">
                 <blockquote className="text-[14.5px] leading-relaxed text-ink">
                   &ldquo;{t.quote}&rdquo;

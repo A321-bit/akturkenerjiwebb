@@ -44,6 +44,7 @@ export type Service = {
   description: string;
   bullets: string[];
   audience: string;
+  image?: string; // gerçek proje/hizmet fotoğrafı geldiğinde buraya path girin (örn. "/services/villa-cati-ges.jpg")
 };
 
 export const services: Service[] = [
@@ -207,10 +208,13 @@ export type Reference = {
   title: string;
   category: string;
   location: string;
+  address?: string; // tam açık adres (varsa) — detay sayfasında gösterilir
   capacity: string; // e.g. "24,6 kWp"
   year: string;
   summary: string;
-  image?: string;
+  description?: string; // detay sayfası için daha uzun anlatım
+  image?: string; // kapak görseli, örn. "/references/referans-1/kapak.jpg"
+  gallery?: string[]; // drone görüntüleri ve diğer saha fotoğrafları
 };
 
 // [PLACEHOLDER] Aşağıdaki referanslar örnek amaçlıdır.

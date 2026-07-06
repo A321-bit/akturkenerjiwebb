@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { references } from "@/lib/site-config";
+import CoverMedia from "@/components/CoverMedia";
 
 const categories = ["Tümü", ...Array.from(new Set(references.map((r) => r.category)))];
 
@@ -30,8 +33,13 @@ export default function ReferenceGrid() {
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((r) => (
-          <div key={r.slug} className="rounded-2xl border border-line bg-paper-raised p-6">
-            <div className="flex items-center justify-between">
+          <Link
+            key={r.slug}
+            href={`/referanslarimiz/${r.slug}`}
+            className="group flex flex-col rounded-2xl border border-line bg-paper-raised p-4 transition-colors hover:border-sun/60 hover:shadow-[0_20px_44px_-24px_rgba(11,20,32,0.45)]"
+          >
+            <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={40} />
+            <div className="flex items-center justify-between pt-4">
               <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
                 {r.category}
               </span>
@@ -45,7 +53,14 @@ export default function ReferenceGrid() {
               <span>{r.location}</span>
               <span className="font-mono-data font-semibold text-ink">{r.capacity}</span>
             </div>
-          </div>
+            <div className="mt-4 flex items-center gap-1.5 text-[13.5px] font-semibold text-ink">
+              Detayları gör
+              <ArrowUpRight
+                size={15}
+                className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </div>
+          </Link>
         ))}
       </div>
     </>
