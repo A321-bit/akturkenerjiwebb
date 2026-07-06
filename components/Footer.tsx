@@ -29,7 +29,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <Image src="/logo-light.svg" alt={site.name} width={168} height={109} className="h-14 w-auto" />
+            <Image src="/logo-light.svg" alt={site.name} width={168} height={109} className="h-20 w-auto" />
             <p className="mt-2 font-mono-data text-[11px] uppercase tracking-[0.16em] text-slate-soft">
               {site.foundedYear}&apos;dan beri {site.city}&apos;da
             </p>

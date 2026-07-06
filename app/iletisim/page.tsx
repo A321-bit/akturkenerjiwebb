@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MapPin, Mail, Phone, Clock, MessageCircle } from "lucide-react";
 import { site, whatsappLink } from "@/lib/site-config";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
-import ContactForm from "@/components/ContactForm";
+import LeadForm from "@/components/LeadForm";
 
 export const metadata: Metadata = buildMetadata({
   title: "İletişim",
@@ -102,7 +102,7 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <ContactForm />
+        <LeadForm />
       </div>
     </div>
   );

@@ -45,17 +45,16 @@ Yazı içeriği buradan itibaren normal Markdown ile yazılır.
 
 Yeni bir `.md` dosyası eklemeniz yeterli — blog listesine otomatik dahil olur.
 
-## 4. İletişim formu
+## 4. Teklif formu (LeadForm)
 
-Form şu anda `/api/contact` route'una gönderiliyor ve veriler sunucu
-loguna yazılıyor (Vercel dashboard → Project → Logs). Formdan gelen
-taleplerin doğrudan e-postanıza düşmesini isterseniz:
+Ana sayfadaki ve `/iletisim` sayfasındaki çok adımlı teklif formu
+`/api/lead` route'una gönderiliyor. Veriler her zaman sunucu loguna
+yazılıyor (Vercel dashboard → Project → Logs); ayrıca aşağıdaki ortam
+değişkenleri tanımlıysa Supabase ve/veya Google Sheets'e de kaydediliyor:
 
-1. [Resend](https://resend.com) gibi bir e-posta servisinde ücretsiz hesap açın
-2. API anahtarınızı Vercel projenizde **Settings → Environment Variables**
-   kısmına `RESEND_API_KEY` adıyla ekleyin
-3. `app/api/contact/route.ts` içindeki yorum satırındaki örnek kodu aktif hale
-   getirin
+- `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — bkz. `app/api/lead/route.ts`
+  başındaki yorum için önerilen tablo şeması
+- `GOOGLE_SHEETS_WEBHOOK_URL` — bir Google Apps Script Web App URL'i
 
 ## 5. Yerelde çalıştırma
 
@@ -83,7 +82,7 @@ app/                     Sayfalar ve rotalar (App Router)
   referanslarimiz/       Referans/proje listesi
   blog/                  Blog listesi + yazı detay sayfası
   hakkimizda/, iletisim/ Kurumsal sayfalar
-  api/contact/           Form gönderim endpoint'i
+  api/lead/              Teklif formu gönderim endpoint'i (Supabase + Google Sheets)
   sitemap.ts, robots.ts  SEO dosyaları
 components/              Header, Footer, form, hesaplayıcı gibi bileşenler
 content/blog/            Blog yazıları (Markdown)

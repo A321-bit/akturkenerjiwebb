@@ -20,7 +20,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2 sm:px-8 sm:py-2.5">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <Image
             src="/logo.svg"
@@ -28,7 +28,7 @@ export default function Header() {
             width={168}
             height={109}
             priority
-            className="h-12 w-auto sm:h-16"
+            className="h-16 w-auto sm:h-24"
           />
         </Link>
 

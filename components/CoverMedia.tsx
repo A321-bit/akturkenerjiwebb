@@ -30,6 +30,7 @@ const ICONS: Record<string, LucideIcon> = {
   Telekomünikasyon: Radio,
 };
 
+
 export default function CoverMedia({
   src,
   alt,
@@ -45,7 +46,8 @@ export default function CoverMedia({
   aspect?: string;
   iconSize?: number;
 }) {
-  const Icon = ICONS[label] ?? Sun;
+  const matchedKey = label in ICONS ? label : Object.keys(ICONS).find((key) => label.includes(key));
+  const Icon = matchedKey ? ICONS[matchedKey] : Sun;
 
   if (src) {
     return (
