@@ -77,32 +77,63 @@ export default async function ReferenceDetailPage({
         className="mt-8"
       />
 
-      <div className="mt-8 grid grid-cols-3 gap-3 rounded-2xl border border-line bg-paper-raised p-6">
-        <div>
-          <p className="flex items-center gap-1.5 font-mono-data text-[11px] uppercase tracking-[0.1em] text-slate-soft">
-            <MapPin size={13} className="text-brand" /> Konum
+      <div className="mt-8 grid gap-5 lg:grid-cols-2">
+        <div className="overflow-hidden rounded-2xl border border-line bg-paper-raised">
+          <p className="border-b border-line px-6 py-3.5 font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
+            Teknik Detaylar
           </p>
-          <p className="mt-1.5 text-[14.5px] font-semibold text-ink">{reference.location}</p>
+          <table className="w-full text-[14px]">
+            <tbody>
+              <tr className="border-b border-line">
+                <th className="w-1/3 px-6 py-3 text-left font-medium text-slate-soft">Kategori</th>
+                <td className="px-6 py-3 font-semibold text-ink">{reference.category}</td>
+              </tr>
+              <tr className="border-b border-line">
+                <th className="px-6 py-3 text-left font-medium text-slate-soft">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin size={13} className="text-brand" /> Konum
+                  </span>
+                </th>
+                <td className="px-6 py-3 font-semibold text-ink">{reference.location}</td>
+              </tr>
+              {reference.address && (
+                <tr className="border-b border-line">
+                  <th className="px-6 py-3 text-left font-medium text-slate-soft">Açık Adres</th>
+                  <td className="px-6 py-3 font-semibold text-ink">{reference.address}</td>
+                </tr>
+              )}
+              <tr className="border-b border-line">
+                <th className="px-6 py-3 text-left font-medium text-slate-soft">
+                  <span className="flex items-center gap-1.5">
+                    <Zap size={13} className="text-brand" /> Kurulu Güç
+                  </span>
+                </th>
+                <td className="px-6 py-3 font-semibold text-ink">{reference.capacity}</td>
+              </tr>
+              <tr>
+                <th className="px-6 py-3 text-left font-medium text-slate-soft">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar size={13} className="text-brand" /> Kurulum Yılı
+                  </span>
+                </th>
+                <td className="px-6 py-3 font-semibold text-ink">{reference.year}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div>
-          <p className="flex items-center gap-1.5 font-mono-data text-[11px] uppercase tracking-[0.1em] text-slate-soft">
-            <Zap size={13} className="text-brand" /> Kurulu Güç
-          </p>
-          <p className="mt-1.5 text-[14.5px] font-semibold text-ink">{reference.capacity}</p>
-        </div>
-        <div>
-          <p className="flex items-center gap-1.5 font-mono-data text-[11px] uppercase tracking-[0.1em] text-slate-soft">
-            <Calendar size={13} className="text-brand" /> Yıl
-          </p>
-          <p className="mt-1.5 text-[14.5px] font-semibold text-ink">{reference.year}</p>
+
+        <div className="overflow-hidden rounded-2xl border border-line bg-paper-raised">
+          <iframe
+            title={`${reference.title} konumu`}
+            src={`https://www.google.com/maps?q=${encodeURIComponent(
+              reference.address || reference.location
+            )}&output=embed`}
+            className="h-full min-h-[220px] w-full border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
         </div>
       </div>
-
-      {reference.address && (
-        <p className="mt-4 text-[13.5px] text-slate-soft">
-          <span className="font-semibold text-ink">Açık adres:</span> {reference.address}
-        </p>
-      )}
 
       {reference.gallery && reference.gallery.length > 0 && (
         <div className="mt-10">

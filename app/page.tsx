@@ -8,6 +8,7 @@ import AnimatedCounter from "@/components/AnimatedCounter";
 import SunGlow from "@/components/SunGlow";
 import HowItWorks from "@/components/HowItWorks";
 import CoverMedia from "@/components/CoverMedia";
+import LeadForm from "@/components/LeadForm";
 
 export default function Home() {
   return (
@@ -34,13 +35,13 @@ export default function Home() {
               anahtar teslim güneş enerjisi sistemleri kuruyoruz.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                href="/iletisim"
-                className="group inline-flex items-center gap-2 rounded-full bg-sun px-5 py-3 text-[14.5px] font-semibold text-ink transition-colors hover:bg-sun-soft"
+              <a
+                href="#teklif-formu"
+                className="group inline-flex items-center gap-2 rounded-full bg-sun px-6 py-3.5 text-[15px] font-bold text-ink shadow-[0_10px_30px_-8px_rgba(238,162,58,0.6)] transition-transform hover:scale-[1.03] hover:bg-sun-soft"
               >
-                Ücretsiz Keşif Talep Et
+                Ücretsiz Keşif & Teklif Al
                 <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
+              </a>
               <Link
                 href="/referanslarimiz"
                 className="inline-flex items-center gap-2 rounded-full border border-line-dark px-5 py-3 text-[14.5px] font-semibold text-paper transition-colors hover:border-sun/60"
@@ -200,40 +201,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="relative overflow-hidden bg-ink text-paper">
+      {/* LEAD FORM */}
+      <section id="teklif-formu" className="relative scroll-mt-20 overflow-hidden bg-ink text-paper">
         <div className="grid-texture absolute inset-0" />
         <SunGlow className="pointer-events-none absolute -left-20 -bottom-24 h-[400px] w-[400px] opacity-50" />
-        <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-6 px-5 py-16 sm:px-8 sm:py-20 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <Reveal>
             <div>
-              <h2 className="max-w-lg font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                Projenizi konuşalım — ücretsiz keşif ile başlayın
+              <p className="font-mono-data text-[12px] uppercase tracking-[0.18em] text-sun-soft">
+                Ücretsiz Keşif & Teklif
+              </p>
+              <h2 className="mt-3 max-w-lg font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                Projenizi konuşalım — 3 adımda teklifinizi alın
               </h2>
               <p className="mt-3 max-w-md text-[14.5px] text-slate-soft">
-                Form doldurun ya da doğrudan WhatsApp&apos;tan yazın, size en uygun
-                sistemi birlikte belirleyelim.
+                İhtiyacınızı seçin, birkaç soruyu yanıtlayın; uzman mühendisimiz
+                size özel sistem boyutu ve fiyat teklifiyle 15 dakika içinde dönüş yapsın.
               </p>
-            </div>
-          </Reveal>
-          <Reveal delay={120}>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/iletisim"
-                className="inline-flex items-center gap-2 rounded-full bg-sun px-5 py-3 text-[14.5px] font-semibold text-ink transition-colors hover:bg-sun-soft"
-              >
-                Form Doldur
-                <ArrowUpRight size={16} />
-              </Link>
               <a
                 href={whatsappLink("Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum.")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-line-dark px-5 py-3 text-[14.5px] font-semibold text-paper hover:border-sun/60"
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-line-dark px-5 py-3 text-[14.5px] font-semibold text-paper hover:border-sun/60"
               >
-                WhatsApp&apos;tan Yaz
+                Ya da WhatsApp&apos;tan Yaz
               </a>
             </div>
+          </Reveal>
+          <Reveal delay={120}>
+            <LeadForm />
           </Reveal>
         </div>
       </section>

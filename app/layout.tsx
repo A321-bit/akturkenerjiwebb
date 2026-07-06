@@ -67,36 +67,72 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const sameAs = [site.social.instagram, site.social.linkedin, site.social.youtube, site.social.facebook].filter(
+    Boolean
+  );
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "@id": `${site.url}/#organization`,
-    name: site.name,
-    url: site.url,
-    description: site.description,
-    foundingDate: String(site.foundedYear),
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: site.contact.addressLine,
-      addressLocality: site.city,
-      addressCountry: "TR",
-    },
-    telephone: site.contact.phoneHref.replace("tel:", ""),
-    email: site.contact.email,
-    areaServed: "TR",
-    knowsAbout: [
-      "Güneş enerjisi sistemleri",
-      "Çatı GES kurulumu",
-      "Tarımsal sulama sistemleri",
-      "Rüzgar ve hibrit enerji sistemleri",
-      "Lityum batarya depolama",
-      "Elektrik mühendisliği ve proje başvuruları",
+    "@graph": [
+      {
+        "@type": "LocalBusiness",
+        "@id": `${site.url}/#localbusiness`,
+        name: site.name,
+        url: site.url,
+        description: site.description,
+        foundingDate: String(site.foundedYear),
+        image: `${site.url}/logo.svg`,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: site.contact.addressLine,
+          addressLocality: site.city,
+          addressCountry: "TR",
+        },
+        telephone: site.contact.phoneHref.replace("tel:", ""),
+        email: site.contact.email,
+        areaServed: "TR",
+        priceRange: "$$",
+        sameAs,
+        knowsAbout: [
+          "Güneş enerjisi sistemleri",
+          "Çatı GES kurulumu",
+          "Tarımsal sulama sistemleri",
+          "Rüzgar ve hibrit enerji sistemleri",
+          "Lityum batarya depolama",
+          "Elektrik mühendisliği ve proje başvuruları",
+        ],
+      },
+      {
+        "@type": "Organization",
+        "@id": `${site.url}/#organization`,
+        name: site.name,
+        legalName: site.name,
+        url: site.url,
+        logo: `${site.url}/logo.svg`,
+        foundingDate: String(site.foundedYear),
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: site.contact.addressLine,
+          addressLocality: site.city,
+          addressCountry: "TR",
+        },
+        contactPoint: {
+          "@type": "ContactPoint",
+          telephone: site.contact.phoneHref.replace("tel:", ""),
+          email: site.contact.email,
+          contactType: "customer service",
+          areaServed: "TR",
+          availableLanguage: "Turkish",
+        },
+        sameAs,
+      },
     ],
   };
 
   return (
     <html
       lang="tr"
+      data-scroll-behavior="smooth"
       className={`${spaceGrotesk.variable} ${inter.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-paper text-ink">

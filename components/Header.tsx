@@ -7,6 +7,7 @@ import { Menu, X, ArrowUpRight } from "lucide-react";
 import { site } from "@/lib/site-config";
 
 const nav = [
+  { href: "/", label: "Anasayfa" },
   { href: "/hizmetlerimiz", label: "Hizmetlerimiz" },
   { href: "/referanslarimiz", label: "Referanslarımız" },
   { href: "/blog", label: "Blog" },
