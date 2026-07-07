@@ -24,7 +24,7 @@ export default function Header({ settings }: { settings: SiteSettings }) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-2 sm:px-8 sm:py-2.5">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-2 sm:px-8 sm:py-2.5">
         <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
           <Image
             src="/logo.svg"
@@ -36,7 +36,7 @@ export default function Header({ settings }: { settings: SiteSettings }) {
           />
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex">
+        <nav className="hidden items-center gap-5 xl:gap-7 lg:flex">
           {nav.map((item) => (
             <Link
               key={item.href}
