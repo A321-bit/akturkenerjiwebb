@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
+  { href: "/admin/talepler", label: "Talepler", icon: Inbox },
   { href: "/admin/hizmetler", label: "Hizmetler", icon: Wrench },
   { href: "/admin/referanslar", label: "Referanslar", icon: MapPin },
   { href: "/admin/blog", label: "Blog", icon: Newspaper },

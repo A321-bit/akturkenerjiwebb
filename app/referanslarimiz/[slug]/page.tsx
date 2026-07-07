@@ -6,6 +6,7 @@ import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink } from
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 import MediaCarousel from "@/components/MediaCarousel";
+import QuoteModal from "@/components/QuoteModal";
 
 export async function generateMetadata({
   params,
@@ -76,6 +77,13 @@ export default async function ReferenceDetailPage({
       <p className="mt-4 text-[16px] leading-relaxed text-slate">
         {reference.description ?? reference.summary}
       </p>
+
+      <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl border border-sun/40 bg-sun/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-display text-[16px] font-semibold leading-snug text-ink">
+          Sizde çatınızdan bedava elektrik üretmek için şimdi ücretsiz teklif alın.
+        </p>
+        <QuoteModal defaultPurpose={reference.category} className="shrink-0" />
+      </div>
 
       <CoverMedia
         src={reference.image}
