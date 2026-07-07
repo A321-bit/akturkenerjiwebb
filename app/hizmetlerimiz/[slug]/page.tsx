@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, Check, ChevronDown, MessageCircle } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Check, ChevronDown, MessageCircle } from "lucide-react";
 import {
   getServices,
   getServiceBySlug,
@@ -115,7 +115,11 @@ export default async function ServiceDetailPage({
             <p className="mt-5 font-mono-data text-[12px] uppercase tracking-[0.18em] text-sun-soft">
               {service.eyebrow} · {service.title}
             </p>
-            <h1 className="mt-3 font-display text-[2rem] font-semibold leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.75rem]">
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sun/40 bg-sun/10 px-4 py-1.5 text-[13px] font-semibold text-sun-soft">
+              <BadgeCheck size={16} />
+              Anahtar Teslim Kurulum Hizmeti
+            </div>
+            <h1 className="mt-4 font-display text-[2rem] font-semibold leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.75rem]">
               {content.hero.headline}
             </h1>
             <p className="mt-4 max-w-xl text-[15.5px] leading-relaxed text-slate-soft">
@@ -183,6 +187,62 @@ export default async function ServiceDetailPage({
               </Reveal>
             );
           })}
+        </div>
+      </section>
+
+      {/* REFERANSLAR — fayda kartlarının hemen altında, güven kanıtı erken gösterilsin */}
+      <section className="border-y border-line bg-paper-raised">
+        <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+          <Reveal>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+                  Referanslarımız
+                </p>
+                <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Son Tamamlanan Projelerimiz
+                </h2>
+              </div>
+              <Link
+                href="/referanslarimiz"
+                className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-brand"
+              >
+                Tüm referanslar
+                <ArrowUpRight size={15} />
+              </Link>
+            </div>
+          </Reveal>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {references.map((r, i) => (
+              <Reveal key={r.slug} delay={i * 60}>
+                <Link
+                  href={`/referanslarimiz/${r.slug}`}
+                  className="group flex h-full flex-col rounded-2xl border border-line bg-paper p-4 transition-transform duration-300 hover:-translate-y-1"
+                >
+                  <CoverMedia
+                    src={r.image}
+                    alt={r.title}
+                    label={r.category}
+                    aspect="aspect-[16/11]"
+                    iconSize={40}
+                  />
+                  <div className="flex items-center justify-between pt-4">
+                    <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
+                      {r.category}
+                    </span>
+                    <span className="font-mono-data text-[11px] text-slate-soft">{r.year}</span>
+                  </div>
+                  <h3 className="mt-3 font-display text-[16px] font-semibold leading-snug">
+                    {r.title}
+                  </h3>
+                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[12.5px] text-slate-soft">
+                    <span>{r.location}</span>
+                    <span className="font-mono-data font-semibold text-ink">{r.capacity}</span>
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -322,62 +382,6 @@ export default async function ServiceDetailPage({
           </div>
         </section>
       )}
-
-      {/* REFERANSLAR */}
-      <section className="border-y border-line bg-paper-raised">
-        <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
-          <Reveal>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
-                  Referanslarımız
-                </p>
-                <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                  Bu alandaki projelerimizden
-                </h2>
-              </div>
-              <Link
-                href="/referanslarimiz"
-                className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-brand"
-              >
-                Tüm referanslar
-                <ArrowUpRight size={15} />
-              </Link>
-            </div>
-          </Reveal>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {references.map((r, i) => (
-              <Reveal key={r.slug} delay={i * 60}>
-                <Link
-                  href={`/referanslarimiz/${r.slug}`}
-                  className="group flex h-full flex-col rounded-2xl border border-line bg-paper p-4 transition-transform duration-300 hover:-translate-y-1"
-                >
-                  <CoverMedia
-                    src={r.image}
-                    alt={r.title}
-                    label={r.category}
-                    aspect="aspect-[16/11]"
-                    iconSize={40}
-                  />
-                  <div className="flex items-center justify-between pt-4">
-                    <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
-                      {r.category}
-                    </span>
-                    <span className="font-mono-data text-[11px] text-slate-soft">{r.year}</span>
-                  </div>
-                  <h3 className="mt-3 font-display text-[16px] font-semibold leading-snug">
-                    {r.title}
-                  </h3>
-                  <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-[12.5px] text-slate-soft">
-                    <span>{r.location}</span>
-                    <span className="font-mono-data font-semibold text-ink">{r.capacity}</span>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* GÜVEN ŞERİDİ */}
       <section className="mx-auto max-w-6xl px-5 pt-16 sm:px-8">
