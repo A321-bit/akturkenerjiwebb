@@ -87,15 +87,26 @@ async function sendToSupabase(lead: {
   if (!url || !key) return; // yapılandırılmamış — sessizce atla
 
   const supabase = createClient(url, key);
-  const { error } = await supabase.from("leads").insert({
+  const record: Record<string, unknown> = {
     need_type: lead.needType,
     bill_range: lead.billRange,
     fullname: lead.fullname,
     phone: lead.phone,
     email: lead.email,
-    province: lead.province ?? null,
     source: lead.source,
-  });
+  };
+  if (lead.province) record.province = lead.province;
+
+  let { error } = await supabase.from("leads").insert(record);
+
+  // "province" kolonu veya "bill_range" nullable migration'ı henüz canlıya
+  // uygulanmadıysa talep tamamen kaybolmasın diye, eksik/uyumsuz alanları
+  // çıkarıp bir kez daha deniyoruz.
+  if (error) {
+    if ("province" in record) delete record.province;
+    if (record.bill_range === null) record.bill_range = "Belirtilmedi";
+    ({ error } = await supabase.from("leads").insert(record));
+  }
   if (error) throw error;
 }
 

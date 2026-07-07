@@ -49,12 +49,6 @@ export default function Header({ settings }: { settings: SiteSettings }) {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <a
-            href={settings.contact.phoneHref}
-            className="font-mono-data text-[13.5px] text-slate hover:text-ink"
-          >
-            {settings.contact.phoneDisplay}
-          </a>
           <Link
             href="/iletisim"
             className="group inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[13.5px] font-semibold text-paper transition-colors hover:bg-sun hover:text-ink"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import MarkdownEditorField from "./MarkdownEditorField";
 
 export type BlogPostFormValues = {
   id?: number;
@@ -81,14 +82,8 @@ export default function BlogPostForm({ initial }: { initial: BlogPostFormValues 
           className="admin-input"
         />
       </Field>
-      <Field label="İçerik (Markdown — ## ile alt başlık açın)">
-        <textarea
-          required
-          rows={16}
-          value={values.content}
-          onChange={(e) => set("content", e.target.value)}
-          className="admin-input font-mono text-[13.5px]"
-        />
+      <Field label="İçerik (araç çubuğundan görsel ve bağlantı ekleyebilirsiniz)">
+        <MarkdownEditorField value={values.content} onChange={(v) => set("content", v)} />
       </Field>
 
       {error && <p className="text-[13px] text-red-600">{error}</p>}

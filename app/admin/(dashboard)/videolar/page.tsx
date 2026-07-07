@@ -8,16 +8,31 @@ type VideoRow = { id: number; title: string; youtube_url: string };
 
 export default function AdminVideosPage() {
   const [items, setItems] = useState<VideoRow[] | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/videos")
-      .then((r) => r.json())
-      .then(setItems);
+      .then(async (r) => {
+        const body = await r.json().catch(() => null);
+        if (!r.ok || !Array.isArray(body)) {
+          setError(body?.error ?? "Videolar yüklenemedi.");
+          setItems([]);
+          return;
+        }
+        setItems(body);
+      });
   }, []);
 
   async function refresh() {
     const res = await fetch("/api/admin/videos");
-    setItems(await res.json());
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !Array.isArray(body)) {
+      setError(body?.error ?? "Videolar yüklenemedi.");
+      setItems([]);
+      return;
+    }
+    setError("");
+    setItems(body);
   }
 
   async function handleDelete(id: number) {
@@ -40,6 +55,12 @@ export default function AdminVideosPage() {
           <Plus size={16} /> Yeni Video
         </Link>
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-[13.5px] text-red-600">
+          {error}
+        </p>
+      )}
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-paper-raised">
         {items === null ? (
