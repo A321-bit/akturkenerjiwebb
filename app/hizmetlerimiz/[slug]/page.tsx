@@ -116,10 +116,12 @@ export default async function ServiceDetailPage({
             <p className="mt-5 font-mono-data text-[12px] uppercase tracking-[0.18em] text-sun-soft">
               {service.eyebrow} · {service.title}
             </p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sun/40 bg-sun/10 px-4 py-1.5 text-[13px] font-semibold text-sun-soft">
-              <BadgeCheck size={16} />
-              Anahtar Teslim Kurulum Hizmeti
-            </div>
+            {content.turnkeyInstall !== false && (
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sun/40 bg-sun/10 px-4 py-1.5 text-[13px] font-semibold text-sun-soft">
+                <BadgeCheck size={16} />
+                Anahtar Teslim Kurulum Hizmeti
+              </div>
+            )}
             <h1 className="mt-4 font-display text-[2rem] font-semibold leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.75rem]">
               {content.hero.headline}
             </h1>

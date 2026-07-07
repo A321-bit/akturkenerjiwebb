@@ -58,6 +58,9 @@ export type ServiceContent = {
   faqs: { q: string; a: string }[];
   closing: { title: string; text: string };
   referenceCategories: string[];
+  /** Kurulum içermeyen hizmetlerde (tedarik, bayilik, sadece mühendislik/başvuru)
+   * "Anahtar Teslim Kurulum Hizmeti" rozetini gizlemek için false yapılır. */
+  turnkeyInstall?: boolean;
 };
 
 const INSTALL_STEPS: ServiceContent["steps"] = [
@@ -609,6 +612,7 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "İhtiyaç listenizi gönderin; stok durumu ve size özel fiyat teklifini aynı gün iletelim.",
     },
     referenceCategories: [],
+    turnkeyInstall: false,
   },
 
   "distributorluk-bayilik": {
@@ -674,6 +678,7 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Firmanızı ve bölgenizi kısaca anlatın; size uygun modeli ve koşulları birlikte değerlendirelim.",
     },
     referenceCategories: [],
+    turnkeyInstall: false,
   },
 
   "projelendirme-muhendislik-basvuru": {
@@ -739,6 +744,7 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Sahanızın veya çatınızın bilgilerini iletin; kapsamı ve süreci netleştirip teklifimizi hızlıca sunalım.",
     },
     referenceCategories: ["Telekomünikasyon", "Müteahhit"],
+    turnkeyInstall: false,
   },
 };
 
