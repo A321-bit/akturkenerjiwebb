@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ShieldCheck, Wrench, FileCheck2, CreditCard, Award } from "lucide-react";
+import { ArrowUpRight, ShieldCheck, CreditCard, Award } from "lucide-react";
 import { getServices, getReferences, getTestimonials, getSiteSettings, whatsappLink } from "@/lib/data";
 import SavingsCalculator from "@/components/SavingsCalculator";
 import ServiceCard from "@/components/ServiceCard";
@@ -83,22 +83,6 @@ export default async function Home() {
       <Reveal>
         <HowItWorks />
       </Reveal>
-
-      {/* TRUST STRIP */}
-      <section className="border-y border-line bg-paper-raised">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-5 py-6 text-center sm:px-8">
-          {[
-            { icon: ShieldCheck, label: "Garantili ekipman ve işçilik" },
-            { icon: Wrench, label: "Anahtar teslim kurulum" },
-            { icon: FileCheck2, label: "Proje & EDAŞ başvurusu dahil" },
-          ].map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-2 text-[13.5px] font-medium text-slate">
-              <Icon size={17} className="text-brand" />
-              {label}
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* ÖDEME / GARANTİ / STANDARTLAR */}
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">

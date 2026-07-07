@@ -12,11 +12,11 @@ const steps = [
   {
     n: "03",
     title: "İnvertör Dönüşümü",
-    text: "İnvertör, doğru akımı evinizin kullandığı alternatif akıma çevirir.",
+    text: "İnvertör, doğru akımı tesisinizin kullandığı alternatif akıma çevirir.",
   },
   {
     n: "04",
-    title: "Ev & Batarya",
+    title: "Kullanım & Batarya",
     text: "Enerji anında kullanılır, fazlası bataryada depolanır ya da şebekeye verilir.",
   },
 ];
