@@ -746,6 +746,144 @@ export const serviceContent: Record<string, ServiceContent> = {
     referenceCategories: ["Telekomünikasyon", "Müteahhit"],
     turnkeyInstall: false,
   },
+
+  "fabrika-cati-ges": {
+    hero: {
+      headline: "Fabrikanızın çatısı, en büyük enerji kaynağınız olsun.",
+      sub: "Üretim tesisinizin geniş çatı alanını, gündüz yoğun elektrik tüketiminizi karşılayan büyük ölçekli bir güneş enerjisi santraline dönüştürün — üretim durmadan, vardiya planınıza uygun kurulumla.",
+    },
+    benefits: [
+      {
+        icon: Gauge,
+        title: "Yüksek tüketimde belirgin tasarruf",
+        text: "Endüstriyel tesislerde gündüz tüketimi zaten yüksek olduğu için üretilen enerjinin büyük bölümü anında tüketilir, tasarruf doğrudan yansır.",
+      },
+      {
+        icon: TrendingUp,
+        title: "Kısa amortisman, uzun kazanç",
+        text: "Yüksek gündüz tüketimi sayesinde geri ödeme süresi konut projelerine göre kısalır; panellerin 25+ yıllık ömrü boyunca üretim kâra döner.",
+      },
+      {
+        icon: ShieldCheck,
+        title: "Üretim durmadan kurulum",
+        text: "Kurulumu vardiya ve bakım planınıza göre programlıyor, çatı üzerindeki çalışmaları üretim hattınızı etkilemeyecek şekilde yürütüyoruz.",
+      },
+      {
+        icon: Zap,
+        title: "Üç faz, yüksek kapasiteli sistem",
+        text: "Tesisinizin üç faz elektrik altyapısına uygun invertör ve panel dizilimiyle yüksek kapasiteli sistemler kuruyoruz.",
+      },
+    ],
+    table: {
+      title: "Tesis ölçeğine göre sistem",
+      columns: ["Tesis ölçeği", "Tipik sistem gücü", "Tahmini geri ödeme"],
+      rows: [
+        ["Küçük/orta ölçekli atölye", "50-150 kWp", "4-6 yıl"],
+        ["Orta ölçekli üretim tesisi", "150-500 kWp", "5-7 yıl"],
+        ["Büyük ölçekli fabrika/OSB", "500 kWp ve üzeri", "6-8 yıl"],
+      ],
+      note: "Rakamlar tesisinizin çatı alanına, elektrik tüketim profiline ve OSB/EDAŞ bağlantı kapasitesine göre keşif sonrası netleşir.",
+    },
+    steps: [
+      { title: "Ücretsiz Keşif & Tüketim Analizi", text: "Çatı alanınızı, statik durumunu ve son 12 aylık elektrik faturalarınızı yerinde inceliyoruz." },
+      { title: "Sistem Tasarımı & Fizibilite", text: "Üç faz altyapınıza uygun kapasiteyi belirliyor, yatırım geri dönüş analizini çıkarıyoruz." },
+      { title: "Proje & OSB/EDAŞ Başvurusu", text: "Statik rapor, elektrik projesi ve bağlantı anlaşması sürecini sizin adınıza yürütüyoruz." },
+      { title: "Üretimi Aksatmayan Kurulum", text: "Kurulumu vardiya ve üretim planınıza göre programlıyor, tesis faaliyetinizi durdurmuyoruz." },
+      { title: "Devreye Alma & Raporlama", text: "Sistemi devreye alıyor, üretim/tüketim verilerinizi anlık izleyebileceğiniz bir takip paneli kuruyoruz." },
+    ],
+    faqs: [
+      {
+        q: "Üretim durmadan kurulum yapılabilir mi?",
+        a: "Evet — kurulumu vardiya planınıza göre programlıyor, çatı üzerindeki çalışmaları üretim hattınızı etkilemeyecek şekilde yürütüyoruz.",
+      },
+      {
+        q: "Sistem kaç yılda kendini amorti eder?",
+        a: "Tesisin tüketim profiline göre değişir; yüksek gündüz tüketimi olan fabrikalarda genellikle 4-7 yıl arasında amorti sağlanır.",
+      },
+      {
+        q: "Üç faz elektrik altyapımıza uygun mu?",
+        a: "Evet, endüstriyel tesisler için üç faz invertör ve sistemler kuruyoruz; mevcut pano ve trafo kapasitenizi keşifte kontrol ediyoruz.",
+      },
+      {
+        q: "OSB içindeyiz, bağlantı süreci farklı mı işliyor?",
+        a: "OSB'lerde bağlantı süreci kendi müdürlüğü üzerinden yürüyebilir; bu süreci de sizin adınıza takip ediyoruz.",
+      },
+    ],
+    closing: {
+      title: "Fabrikanız için ücretsiz keşif planlayalım",
+      text: "Çatı alanınızı ve elektrik faturalarınızı inceleyelim; size özel sistem boyutu ve yatırım geri dönüş analizini hızlıca sunalım.",
+    },
+    referenceCategories: ["Fabrika"],
+  },
+
+  "taahhut-isletme-bakim": {
+    hero: {
+      headline: "Kurulum bitince iş bitmiyor — biz orada da yanınızdayız.",
+      sub: "Kurumsal ve kamu projelerinde taahhüt yüklenimi, devreye alınmış sistemlerde ise düzenli işletme ve bakım. Sisteminizi başka bir firma kurmuş olsa bile bakımını devralabiliriz.",
+    },
+    benefits: [
+      {
+        icon: Briefcase,
+        title: "Anahtar teslim taahhüt yüklenimi",
+        text: "İhale şartnamesine uygun mühendislik, tedarik ve kurulumu sözleşme kapsamında uçtan uca üstleniyoruz.",
+      },
+      {
+        icon: Wrench,
+        title: "Periyodik bakım ve temizlik",
+        text: "Panel temizliği, bağlantı kontrolü ve ekipman sağlık taramasını düzenli ziyaretlerle yapıyoruz.",
+      },
+      {
+        icon: Gauge,
+        title: "Uzaktan izleme ile erken teşhis",
+        text: "Üretim verimliliğini sürekli izliyor, düşüş tespit ettiğimizde sahaya çıkmadan önce arızayı teşhis etmeye çalışıyoruz.",
+      },
+      {
+        icon: LifeBuoy,
+        title: "Başka firmanın sistemine de bakım",
+        text: "Sisteminizi başka bir firma kurmuş olsa bile bakım ve işletme sürecini devralabiliriz.",
+      },
+    ],
+    table: {
+      title: "Hizmet kapsamı",
+      columns: ["Hizmet", "İçerik", "Periyot"],
+      rows: [
+        ["Taahhüt yüklenimi", "Mühendislik + tedarik + kurulum + devreye alma", "Proje bazlı"],
+        ["Periyodik bakım", "Panel temizliği, ekipman kontrolü, bağlantı taraması", "3-6 ayda bir (öneri)"],
+        ["Uzaktan izleme", "Üretim verimliliği takibi ve raporlama", "Sürekli"],
+      ],
+      note: "Bakım periyodu tesisin konumuna, tozlanma yoğunluğuna ve sistem ölçeğine göre keşif sonrası birlikte belirlenir.",
+    },
+    steps: [
+      { title: "Keşif & Kapsam Belirleme", text: "Taahhüt mü yoksa mevcut sisteme bakım mı ihtiyacınız olduğunu, sahayı yerinde inceleyerek netleştiriyoruz." },
+      { title: "Teklif & Sözleşme", text: "İhale şartnamesi ya da bakım kapsamına uygun teklif ve sözleşmeyi hazırlıyoruz." },
+      { title: "Uygulama / İlk Bakım", text: "Taahhüt işini devreye alıyor ya da mevcut sisteminizde ilk kapsamlı bakımı yapıyoruz." },
+      { title: "Periyodik Ziyaretler", text: "Belirlenen periyotta panel temizliği ve ekipman kontrolünü düzenli olarak tekrarlıyoruz." },
+      { title: "Raporlama & Uzaktan Destek", text: "Her ziyaret sonrası performans raporu paylaşıyor, aralarda uzaktan izlemeyle takip ediyoruz." },
+    ],
+    faqs: [
+      {
+        q: "Sistemimi başka bir firma kurdu, yine de bakımını üstlenebilir misiniz?",
+        a: "Evet — marka ve kurulumu kim yaptıysa yapsın, mevcut sisteminizin bakım ve işletme sürecini devralabiliriz. İlk ziyarette sistemin genel durumunu ücretsiz değerlendiriyoruz.",
+      },
+      {
+        q: "Taahhüt hizmeti tam olarak neyi kapsıyor?",
+        a: "İhale veya kurumsal proje şartnamesine göre mühendislik, malzeme tedariki, kurulum ve devreye almayı sözleşme kapsamında uçtan uca üstleniyoruz.",
+      },
+      {
+        q: "Bakım periyodu ne sıklıkla olmalı?",
+        a: "Tesisin tozlanma yoğunluğuna ve ölçeğine göre değişir; genellikle 3-6 ayda bir periyodik ziyaret öneriyoruz, keşif sonrası size özel bir plan çıkarıyoruz.",
+      },
+      {
+        q: "Arıza durumunda müdahale süresi nedir?",
+        a: "Uzaktan izleme sayesinde çoğu arızayı sahaya çıkmadan önce teşhis etmeye çalışıyoruz; müdahale süresi sözleşme kapsamında ve tesisin konumuna göre netleşir.",
+      },
+    ],
+    closing: {
+      title: "İşletme ve bakım ihtiyacınızı konuşalım",
+      text: "Mevcut sisteminizin durumunu ya da taahhüt kapsamınızı kısaca anlatın; size özel bir bakım planı veya teklif çıkaralım.",
+    },
+    referenceCategories: [],
+  },
 };
 
 // Admin panelden eklenen ve bu haritada karşılığı olmayan yeni hizmetler için

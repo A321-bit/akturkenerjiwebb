@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
 import GalleryUploadField from "./GalleryUploadField";
 
-const KNOWN_CATEGORIES = ["Villa", "Müteahhit", "Tarım", "Telekomünikasyon", "Hobi Bahçesi", "Karavan"];
+const KNOWN_CATEGORIES = ["Villa", "Müteahhit", "Tarım", "Telekomünikasyon", "Hobi Bahçesi", "Karavan", "Fabrika"];
 
 export type ReferenceFormValues = {
   id?: number;
