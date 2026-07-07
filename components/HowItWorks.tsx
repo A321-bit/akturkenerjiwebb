@@ -31,8 +31,21 @@ export default function HowItWorks() {
         Güneşten prize giden yol
       </h2>
 
-      <div className="relative mt-14">
-        {/* connecting flow line (desktop) */}
+      {/* Mobil: kompakt dikey zaman çizelgesi */}
+      <ol className="relative mt-10 space-y-7 border-l border-line pl-7 sm:hidden">
+        {steps.map((s) => (
+          <li key={s.n} className="relative">
+            <span className="absolute -left-[38px] top-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-brand bg-paper font-mono-data text-[12px] font-semibold text-brand">
+              {s.n}
+            </span>
+            <h3 className="font-display text-[15.5px] font-semibold text-ink">{s.title}</h3>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-slate">{s.text}</p>
+          </li>
+        ))}
+      </ol>
+
+      {/* Tablet & masaüstü: yatay akış çizgili grid */}
+      <div className="relative mt-14 hidden sm:block">
         <svg
           className="pointer-events-none absolute left-0 top-[26px] hidden w-full lg:block"
           height="4"
