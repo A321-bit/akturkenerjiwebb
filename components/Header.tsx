@@ -25,18 +25,18 @@ export default function Header({ settings }: { settings: SiteSettings }) {
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-2 sm:px-8 sm:py-2.5">
-        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+        <Link href="/" className="shrink-0" onClick={() => setOpen(false)}>
           <Image
             src="/logo.svg"
             alt={settings.name}
-            width={168}
-            height={109}
+            width={281}
+            height={50}
             priority
-            className="h-16 w-auto sm:h-24"
+            className="h-10 w-auto sm:h-12 lg:h-10 xl:h-11"
           />
         </Link>
 
-        <nav className="hidden items-center gap-5 xl:gap-7 lg:flex">
+        <nav className="hidden items-center gap-4 xl:gap-5 lg:flex">
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -48,10 +48,10 @@ export default function Header({ settings }: { settings: SiteSettings }) {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-3 xl:flex">
           <Link
             href="/iletisim"
-            className="group inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[13.5px] font-semibold text-paper transition-colors hover:bg-sun hover:text-ink"
+            className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-4 py-2 text-[13.5px] font-semibold text-paper transition-colors hover:bg-sun hover:text-ink"
           >
             Ücretsiz Keşif Talep Et
             <ArrowUpRight

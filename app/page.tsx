@@ -29,8 +29,9 @@ export default async function Home() {
         <SunGlow className="pointer-events-none absolute -right-24 -top-24 h-[520px] w-[520px] opacity-70 lg:-right-10 lg:top-[-140px]" />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div className="animate-rise">
-            <p className="font-mono-data text-[12px] uppercase tracking-[0.18em] text-sun-soft">
-              {site.city} Merkezli · {site.foundedYear}&apos;dan beri
+            <p className="font-mono-data text-[13px] uppercase tracking-[0.18em] text-sun-soft">
+              <span className="font-semibold text-sun">Aktürk Enerji</span> · {site.city} Merkezli ·{" "}
+              {site.foundedYear}&apos;dan beri
             </p>
             <h1 className="mt-4 font-display text-[2.35rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
               Çatınızdan araziye,
