@@ -61,7 +61,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-line-dark pt-8 sm:grid-cols-4">
+            <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-line-dark pt-8 sm:grid-cols-3">
               {stats.map((s) => (
                 <div key={s.label}>
                   <dt className="text-[11.5px] text-slate-soft">{s.label}</dt>

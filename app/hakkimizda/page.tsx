@@ -65,7 +65,7 @@ export default async function AboutPage() {
       </p>
 
       <Reveal>
-        <div className="mt-10 grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-4">
+        <div className="mt-10 grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-3">
           {stats.map((s) => (
             <div key={s.label}>
               <p className="font-mono-data text-lg font-semibold text-ink sm:text-xl">

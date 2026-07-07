@@ -387,7 +387,7 @@ export default async function ServiceDetailPage({
 
       {/* GÜVEN ŞERİDİ */}
       <section className="mx-auto max-w-6xl px-5 pt-16 sm:px-8">
-        <div className="grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-3">
           {site.stats.map((s) => (
             <div key={s.label}>
               <p className="font-mono-data text-lg font-semibold text-ink sm:text-xl">{s.value}</p>
