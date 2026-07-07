@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
   { href: "/admin/hizmetler", label: "Hizmetler", icon: Wrench },
   { href: "/admin/referanslar", label: "Referanslar", icon: MapPin },
   { href: "/admin/blog", label: "Blog", icon: Newspaper },
+  { href: "/admin/videolar", label: "Videolar", icon: Video },
   { href: "/admin/ayarlar", label: "Site Ayarları", icon: Settings },
 ];
 

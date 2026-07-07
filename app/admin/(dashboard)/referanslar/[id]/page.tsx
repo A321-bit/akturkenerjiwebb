@@ -29,6 +29,7 @@ export default async function EditReferencePage({
           description: data.description,
           image: data.image,
           gallery: data.gallery ?? [],
+          video_url: data.video_url ?? null,
           sort_order: data.sort_order,
         }}
       />

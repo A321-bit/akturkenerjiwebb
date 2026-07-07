@@ -53,6 +53,7 @@ create table if not exists project_references (
   description text,
   image text,
   gallery text[] not null default '{}',
+  video_url text,
   sort_order int not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -94,13 +95,22 @@ create index if not exists analytics_events_created_at_idx on analytics_events (
 create index if not exists analytics_events_type_idx on analytics_events (type);
 create index if not exists analytics_events_path_idx on analytics_events (path);
 
+create table if not exists site_videos (
+  id bigint generated always as identity primary key,
+  title text not null,
+  youtube_url text not null,
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists leads (
   id bigint generated always as identity primary key,
   need_type text not null,
-  bill_range text not null,
+  bill_range text,
   fullname text not null,
   phone text not null,
   email text,
+  province text,
   source text not null default 'website',
   created_at timestamptz not null default now()
 );
@@ -113,6 +123,7 @@ alter table services enable row level security;
 alter table project_references enable row level security;
 alter table blog_posts enable row level security;
 alter table testimonials enable row level security;
+alter table site_videos enable row level security;
 alter table leads enable row level security;
 alter table analytics_events enable row level security;
 
@@ -121,6 +132,7 @@ create policy "public read" on services for select using (true);
 create policy "public read" on project_references for select using (true);
 create policy "public read" on blog_posts for select using (true);
 create policy "public read" on testimonials for select using (true);
+create policy "public read" on site_videos for select using (true);
 -- leads tablosuna herkese açık okuma YOK — sadece secret anahtarla yazılıp okunur.
 
 -- Görsel yükleme için storage bucket (herkese açık okuma, yazma sadece secret anahtarla)

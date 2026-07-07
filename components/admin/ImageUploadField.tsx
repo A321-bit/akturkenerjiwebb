@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
-import { Loader2, X } from "lucide-react";
+import { ImageUp, Loader2, X } from "lucide-react";
+import { supabasePublic } from "@/lib/supabase";
 
 export default function ImageUploadField({
   value,
@@ -13,21 +14,31 @@ export default function ImageUploadField({
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
     setUploading(true);
     setError("");
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(body.error ?? "Yükleme başarısız.");
+    try {
+      const urlRes = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name }),
+      });
+      const urlBody = await urlRes.json().catch(() => ({}));
+      if (!urlRes.ok) throw new Error(urlBody.error ?? "Yükleme başlatılamadı.");
+
+      const { error: uploadError } = await supabasePublic.storage
+        .from("media")
+        .uploadToSignedUrl(urlBody.path, urlBody.token, file);
+      if (uploadError) throw uploadError;
+
+      onChange(urlBody.publicUrl);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Yükleme başarısız.");
+    } finally {
       setUploading(false);
-      return;
     }
-    onChange(body.url);
-    setUploading(false);
   }
 
   return (
@@ -46,6 +57,7 @@ export default function ImageUploadField({
         </div>
       )}
       <input
+        ref={inputRef}
         type="file"
         accept="image/*"
         disabled={uploading}
@@ -53,13 +65,24 @@ export default function ImageUploadField({
           const file = e.target.files?.[0];
           if (file) handleFile(file);
         }}
-        className="text-[13px]"
+        className="hidden"
       />
-      {uploading && (
-        <p className="flex items-center gap-1.5 text-[12.5px] text-slate-soft">
-          <Loader2 size={13} className="animate-spin" /> Yükleniyor...
-        </p>
-      )}
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+        className="flex min-h-[46px] w-fit items-center gap-2 rounded-lg border-2 border-dashed border-brand/40 bg-brand/5 px-4 py-2.5 text-[13.5px] font-semibold text-brand transition-colors hover:border-brand hover:bg-brand/10 disabled:opacity-60"
+      >
+        {uploading ? (
+          <>
+            <Loader2 size={16} className="animate-spin" /> Yükleniyor...
+          </>
+        ) : (
+          <>
+            <ImageUp size={16} /> {value ? "Görseli değiştir" : "Görsel seç"}
+          </>
+        )}
+      </button>
       {error && <p className="text-[12.5px] text-red-600">{error}</p>}
     </div>
   );

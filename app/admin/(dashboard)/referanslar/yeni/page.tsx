@@ -20,6 +20,7 @@ export default function NewReferencePage() {
           description: null,
           image: null,
           gallery: [],
+          video_url: null,
           sort_order: 0,
         }}
       />

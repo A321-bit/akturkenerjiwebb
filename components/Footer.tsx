@@ -110,6 +110,11 @@ export default function Footer({
                 </Link>
               </li>
               <li>
+                <Link href="/hizmetlerimiz/distributorluk-bayilik" className="text-[14px] text-slate-soft hover:text-paper">
+                  Bayilik
+                </Link>
+              </li>
+              <li>
                 <Link href="/iletisim" className="text-[14px] text-slate-soft hover:text-paper">
                   İletişim
                 </Link>

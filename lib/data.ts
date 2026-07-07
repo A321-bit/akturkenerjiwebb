@@ -54,6 +54,7 @@ export type Reference = {
   description?: string;
   image?: string;
   gallery?: string[];
+  video?: string;
 };
 
 export type Testimonial = { id?: number; name: string; role: string; quote: string };
@@ -179,6 +180,7 @@ type ReferenceRow = {
   description: string | null;
   image: string | null;
   gallery: string[] | null;
+  video_url: string | null;
 };
 
 function mapReference(row: ReferenceRow): Reference {
@@ -195,6 +197,7 @@ function mapReference(row: ReferenceRow): Reference {
     description: row.description ?? undefined,
     image: row.image ?? undefined,
     gallery: row.gallery ?? [],
+    video: row.video_url ?? undefined,
   };
 }
 
@@ -220,6 +223,26 @@ export const getTestimonials = cache(async (): Promise<Testimonial[]> => {
   const { data, error } = await supabasePublic.from("testimonials").select("*").order("sort_order");
   if (error) throw new Error(error.message);
   return data as Testimonial[];
+});
+
+export type SiteVideo = { id?: number; title: string; youtubeUrl: string };
+
+type SiteVideoRow = { id: number; title: string; youtube_url: string; sort_order: number };
+
+export const getVideos = cache(async (): Promise<SiteVideo[]> => {
+  // "site_videos" tablosu yeni eklendi — Supabase'de migration henüz
+  // çalıştırılmamışsa (veya geçici bir hata olursa) ana sayfa çökmesin diye
+  // bu bölüm sessizce boş liste döndürür.
+  const { data, error } = await supabasePublic.from("site_videos").select("*").order("sort_order");
+  if (error) {
+    console.error("[getVideos] site_videos okunamadı:", error.message);
+    return [];
+  }
+  return (data as SiteVideoRow[]).map((row) => ({
+    id: row.id,
+    title: row.title,
+    youtubeUrl: row.youtube_url,
+  }));
 });
 
 type BlogPostRow = {

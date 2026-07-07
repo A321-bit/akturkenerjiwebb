@@ -9,11 +9,12 @@ import type { SiteSettings } from "@/lib/data";
 
 const nav = [
   { href: "/", label: "Anasayfa" },
+  { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/hizmetlerimiz", label: "Hizmetlerimiz" },
   { href: "/referanslarimiz", label: "Referanslarımız" },
   { href: "/blog", label: "Blog" },
-  { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/iletisim", label: "İletişim" },
+  { href: "/hizmetlerimiz/distributorluk-bayilik", label: "Bayilik" },
 ];
 
 export default function Header({ settings }: { settings: SiteSettings }) {

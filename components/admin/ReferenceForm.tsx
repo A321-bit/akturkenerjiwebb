@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
 import GalleryUploadField from "./GalleryUploadField";
 
+const KNOWN_CATEGORIES = ["Villa", "Müteahhit", "Tarım", "Telekomünikasyon", "Hobi Bahçesi", "Karavan"];
+
 export type ReferenceFormValues = {
   id?: number;
   slug: string;
@@ -19,6 +21,7 @@ export type ReferenceFormValues = {
   description: string | null;
   image: string | null;
   gallery: string[];
+  video_url: string | null;
   sort_order: number;
 };
 
@@ -27,6 +30,9 @@ export default function ReferenceForm({ initial }: { initial: ReferenceFormValue
   const [values, setValues] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [customCategory, setCustomCategory] = useState(
+    initial.category && !KNOWN_CATEGORIES.includes(initial.category)
+  );
 
   function set<K extends keyof ReferenceFormValues>(key: K, value: ReferenceFormValues[K]) {
     setValues((v) => ({ ...v, [key]: value }));
@@ -61,13 +67,53 @@ export default function ReferenceForm({ initial }: { initial: ReferenceFormValue
       <Field label="Proje adı">
         <input required value={values.title} onChange={(e) => set("title", e.target.value)} className="admin-input" />
       </Field>
-      <Field label="Kategori (örn. Villa, Müteahhit, Tarım)">
-        <input
-          required
-          value={values.category}
-          onChange={(e) => set("category", e.target.value)}
-          className="admin-input"
-        />
+      <Field label="Kategori">
+        {customCategory ? (
+          <div className="flex gap-2">
+            <input
+              required
+              autoFocus
+              placeholder="Yeni kategori adı"
+              value={values.category}
+              onChange={(e) => set("category", e.target.value)}
+              className="admin-input"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setCustomCategory(false);
+                set("category", KNOWN_CATEGORIES[0]);
+              }}
+              className="shrink-0 rounded-lg border border-line px-3 text-[13px] font-medium text-slate hover:text-ink"
+            >
+              Listeden seç
+            </button>
+          </div>
+        ) : (
+          <select
+            required
+            value={values.category}
+            onChange={(e) => {
+              if (e.target.value === "__custom__") {
+                setCustomCategory(true);
+                set("category", "");
+              } else {
+                set("category", e.target.value);
+              }
+            }}
+            className="admin-input"
+          >
+            <option value="" disabled>
+              Seçin...
+            </option>
+            {KNOWN_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+            <option value="__custom__">+ Yeni kategori ekle</option>
+          </select>
+        )}
       </Field>
       <Field label="Konum (örn. Çankaya, Ankara)">
         <input
@@ -119,6 +165,15 @@ export default function ReferenceForm({ initial }: { initial: ReferenceFormValue
       </Field>
       <Field label="Drone / saha galerisi (birden fazla görsel seçebilirsiniz)">
         <GalleryUploadField value={values.gallery} onChange={(urls) => set("gallery", urls)} />
+      </Field>
+      <Field label="Drone videosu (YouTube linki, opsiyonel)">
+        <input
+          type="url"
+          placeholder="https://www.youtube.com/watch?v=..."
+          value={values.video_url ?? ""}
+          onChange={(e) => set("video_url", e.target.value || null)}
+          className="admin-input"
+        />
       </Field>
       <Field label="Sıra (küçük sayı önce gösterilir)">
         <input

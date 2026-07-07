@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowUpRight, ShieldCheck, Wrench, FileCheck2 } from "lucide-react";
-import { getServices, getReferences, getTestimonials, getSiteSettings, whatsappLink } from "@/lib/data";
+import { ArrowUpRight, ShieldCheck, Wrench, FileCheck2, CreditCard, Award } from "lucide-react";
+import { getServices, getReferences, getTestimonials, getSiteSettings, getVideos, whatsappLink } from "@/lib/data";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import SavingsCalculator from "@/components/SavingsCalculator";
 import ServiceCard from "@/components/ServiceCard";
 import Reveal from "@/components/Reveal";
@@ -11,11 +12,12 @@ import CoverMedia from "@/components/CoverMedia";
 import LeadForm from "@/components/LeadForm";
 
 export default async function Home() {
-  const [services, references, testimonials, site] = await Promise.all([
+  const [services, references, testimonials, site, videos] = await Promise.all([
     getServices(),
     getReferences(),
     getTestimonials(),
     getSiteSettings(),
+    getVideos(),
   ]);
   const stats = site.stats;
 
@@ -93,6 +95,47 @@ export default async function Home() {
               <Icon size={17} className="text-brand" />
               {label}
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ÖDEME / GARANTİ / STANDARTLAR */}
+      <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+        <Reveal>
+          <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+            Güvenle Yatırım Yapın
+          </p>
+          <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+            Ödeme, garanti ve kalite güvencemiz
+          </h2>
+        </Reveal>
+        <div className="mt-8 grid gap-5 sm:grid-cols-3">
+          {[
+            {
+              icon: CreditCard,
+              title: "Kredi Kartına Taksit İmkanı",
+              text: "Anlaşmalı bankalarla kredi kartına taksit imkanı sunuyoruz; size uygun ödeme planını keşif sonrası birlikte netleştiriyoruz.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Uzun Yıllar Ürün Garantisi",
+              text: "Kullandığımız panel ve invertörler 10+ yıla varan ürün garantisiyle geliyor; garanti süresi marka/modele göre değişebilir.",
+            },
+            {
+              icon: Award,
+              title: "Sertifikalı Ekipman",
+              text: "Panel, invertör ve batarya seçimlerimizde uluslararası kalite ve güvenlik standartlarını gözeten, garantili markaları tercih ediyoruz.",
+            },
+          ].map((item, i) => (
+            <Reveal key={item.title} delay={i * 60}>
+              <div className="h-full rounded-2xl border border-line bg-paper-raised p-6">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand/10 text-brand">
+                  <item.icon size={21} />
+                </span>
+                <h3 className="mt-4 font-display text-[15.5px] font-semibold text-ink">{item.title}</h3>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-slate">{item.text}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -179,6 +222,43 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* VİDEOLAR */}
+      {videos.length > 0 && (
+        <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+          <Reveal>
+            <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+              Videolarımız
+            </p>
+            <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              Sahadan ve projelerimizden görüntüler
+            </h2>
+          </Reveal>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {videos.map((v, i) => {
+              const embedUrl = getYouTubeEmbedUrl(v.youtubeUrl);
+              if (!embedUrl) return null;
+              return (
+                <Reveal key={v.id ?? v.title} delay={i * 60}>
+                  <div className="overflow-hidden rounded-2xl border border-line bg-paper-raised">
+                    <div className="aspect-video w-full">
+                      <iframe
+                        src={embedUrl}
+                        title={v.title}
+                        className="h-full w-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        loading="lazy"
+                      />
+                    </div>
+                    <p className="px-4 py-3 text-[14px] font-semibold text-ink">{v.title}</p>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* TESTIMONIALS */}
       <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">

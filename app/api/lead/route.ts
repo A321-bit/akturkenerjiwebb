@@ -29,6 +29,8 @@ export async function POST(req: Request) {
     fullname?: string;
     phone?: string;
     email?: string;
+    province?: string;
+    source?: string;
   };
 
   try {
@@ -37,19 +39,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
 
-  const { needType, billRange, fullname, phone, email } = body;
+  const { needType, billRange, fullname, phone, email, province, source } = body;
 
-  if (!needType || !billRange || !fullname || !phone) {
+  if (!needType || !fullname || !phone) {
     return NextResponse.json({ error: "Zorunlu alanlar eksik." }, { status: 400 });
   }
 
   const lead = {
     needType,
-    billRange,
+    billRange: billRange || null,
     fullname,
     phone,
     email: email || null,
-    source: "website",
+    province: province || null,
+    source: source || "website",
     receivedAt: new Date().toISOString(),
   };
 
@@ -71,10 +74,11 @@ export async function POST(req: Request) {
 
 async function sendToSupabase(lead: {
   needType: string;
-  billRange: string;
+  billRange: string | null;
   fullname: string;
   phone: string;
   email: string | null;
+  province?: string | null;
   source: string;
   receivedAt: string;
 }) {
@@ -89,6 +93,7 @@ async function sendToSupabase(lead: {
     fullname: lead.fullname,
     phone: lead.phone,
     email: lead.email,
+    province: lead.province ?? null,
     source: lead.source,
   });
   if (error) throw error;
@@ -96,10 +101,11 @@ async function sendToSupabase(lead: {
 
 async function sendToGoogleSheets(lead: {
   needType: string;
-  billRange: string;
+  billRange: string | null;
   fullname: string;
   phone: string;
   email: string | null;
+  province?: string | null;
   source: string;
   receivedAt: string;
 }) {

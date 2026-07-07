@@ -17,6 +17,7 @@ import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
 import SunGlow from "@/components/SunGlow";
 import Reveal from "@/components/Reveal";
+import QuoteModal from "@/components/QuoteModal";
 
 export async function generateMetadata({
   params,
@@ -126,6 +127,7 @@ export default async function ServiceDetailPage({
               {content.hero.sub}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
+              <QuoteModal defaultPurpose={service.title} />
               <Link
                 href="/iletisim"
                 className="group inline-flex items-center gap-2 rounded-full bg-sun px-6 py-3.5 text-[15px] font-bold text-ink shadow-[0_10px_30px_-8px_rgba(238,162,58,0.6)] transition-transform hover:scale-[1.03] hover:bg-sun-soft"
@@ -408,6 +410,7 @@ export default async function ServiceDetailPage({
               {content.closing.text}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
+              <QuoteModal defaultPurpose={service.title} />
               <Link
                 href="/iletisim"
                 className="group inline-flex items-center gap-2 rounded-full bg-sun px-6 py-3.5 text-[15px] font-bold text-ink transition-transform hover:scale-[1.03] hover:bg-sun-soft"

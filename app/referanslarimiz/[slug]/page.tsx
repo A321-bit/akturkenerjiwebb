@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowUpRight, MapPin, Zap, Calendar } from "lucide-react";
 import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
+import MediaCarousel from "@/components/MediaCarousel";
 
 export async function generateMetadata({
   params,
@@ -144,17 +144,17 @@ export default async function ReferenceDetailPage({
         </div>
       </div>
 
-      {reference.gallery && reference.gallery.length > 0 && (
+      {((reference.gallery && reference.gallery.length > 0) || reference.video) && (
         <div className="mt-10">
           <h2 className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
             Saha ve Drone Görüntüleri
           </h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {reference.gallery.map((src) => (
-              <div key={src} className="relative aspect-[4/3] overflow-hidden rounded-2xl">
-                <Image src={src} alt={reference.title} fill className="object-cover" />
-              </div>
-            ))}
+          <div className="mt-4">
+            <MediaCarousel
+              images={reference.gallery ?? []}
+              videoUrl={reference.video}
+              title={reference.title}
+            />
           </div>
         </div>
       )}
