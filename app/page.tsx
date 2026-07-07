@@ -1,7 +1,7 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck, Wrench, FileCheck2, CreditCard, Award } from "lucide-react";
-import { getServices, getReferences, getTestimonials, getSiteSettings, getVideos, whatsappLink } from "@/lib/data";
-import { getYouTubeEmbedUrl } from "@/lib/youtube";
+import { getServices, getReferences, getTestimonials, getSiteSettings, whatsappLink } from "@/lib/data";
 import SavingsCalculator from "@/components/SavingsCalculator";
 import ServiceCard from "@/components/ServiceCard";
 import Reveal from "@/components/Reveal";
@@ -10,14 +10,14 @@ import SunGlow from "@/components/SunGlow";
 import HowItWorks from "@/components/HowItWorks";
 import CoverMedia from "@/components/CoverMedia";
 import LeadForm from "@/components/LeadForm";
+import VideosSection from "@/components/VideosSection";
 
 export default async function Home() {
-  const [services, references, testimonials, site, videos] = await Promise.all([
+  const [services, references, testimonials, site] = await Promise.all([
     getServices(),
     getReferences(),
     getTestimonials(),
     getSiteSettings(),
-    getVideos(),
   ]);
   const stats = site.stats;
 
@@ -224,41 +224,9 @@ export default async function Home() {
       </section>
 
       {/* VİDEOLAR */}
-      {videos.length > 0 && (
-        <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
-          <Reveal>
-            <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
-              Videolarımız
-            </p>
-            <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-              Sahadan ve projelerimizden görüntüler
-            </h2>
-          </Reveal>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {videos.map((v, i) => {
-              const embedUrl = getYouTubeEmbedUrl(v.youtubeUrl);
-              if (!embedUrl) return null;
-              return (
-                <Reveal key={v.id ?? v.title} delay={i * 60}>
-                  <div className="overflow-hidden rounded-2xl border border-line bg-paper-raised">
-                    <div className="aspect-video w-full">
-                      <iframe
-                        src={embedUrl}
-                        title={v.title}
-                        className="h-full w-full border-0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        loading="lazy"
-                      />
-                    </div>
-                    <p className="px-4 py-3 text-[14px] font-semibold text-ink">{v.title}</p>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      <Suspense fallback={null}>
+        <VideosSection />
+      </Suspense>
 
       {/* TESTIMONIALS */}
       <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
