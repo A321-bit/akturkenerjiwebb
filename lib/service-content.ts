@@ -59,6 +59,13 @@ export type ServiceContent = {
   /** Kurulum içermeyen hizmetlerde (tedarik, bayilik, sadece mühendislik/başvuru)
    * "Anahtar Teslim Kurulum Hizmeti" rozetini gizlemek için false yapılır. */
   turnkeyInstall?: boolean;
+  /** Arama niyetine göre yazılmış, meta title/description'da kullanılan
+   * ek anahtar kelimeler (service.title/eyebrow'a ek olarak eklenir). */
+  seoKeywords?: string[];
+  /** blog_posts.category ile eşleşen etiket — "İlgili Yazılar" bölümünü besler. */
+  blogCategory?: string;
+  /** "İlginizi çekebilir" bölümünde rastgele değil, kürasyonlu hizmetler göstermek için slug listesi. */
+  relatedServiceSlugs?: string[];
 };
 
 const INSTALL_STEPS: ServiceContent["steps"] = [
@@ -143,6 +150,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Çatınızı görelim, faturanızı inceleyelim; size özel sistem boyutunu ve net teklifi hızlıca önünüze koyalım.",
     },
     referenceCategories: ["Villa"],
+    seoKeywords: ["villa çatı güneş paneli fiyatları", "villa GES kaç kWp", "villa çatısına güneş enerjisi kurulumu Ankara"],
+    blogCategory: "Villa GES",
+    relatedServiceSlugs: ["off-grid-sebekeden-bagimsiz", "lityum-batarya-depolama", "elektrikli-arac-sarj-istasyonu"],
   },
 
   "muteahhit-ges": {
@@ -212,6 +222,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Vaziyet planınızı paylaşın; blok bazlı ön fizibiliteyi ve takvim önerisini ücretsiz hazırlayalım.",
     },
     referenceCategories: ["Müteahhit"],
+    seoKeywords: ["toplu konut güneş enerjisi sistemi", "site GES kurulumu", "müteahhit firmalarla güneş paneli iş birliği"],
+    blogCategory: "Müteahhit GES",
+    relatedServiceSlugs: ["fabrika-cati-ges", "projelendirme-muhendislik-basvuru", "taahhut-isletme-bakim"],
   },
 
   "tarimsal-sulama": {
@@ -281,6 +294,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Arazinizi görelim, debinizi ölçelim; mazot masrafınızla karşılaştırmalı net tabloyu önünüze koyalım.",
     },
     referenceCategories: ["Tarım"],
+    seoKeywords: ["tarımsal sulama güneş enerjisi sistemi", "güneş enerjili su pompası fiyatları", "şebekesiz arazide sulama sistemi"],
+    blogCategory: "Tarımsal Sulama",
+    relatedServiceSlugs: ["off-grid-sebekeden-bagimsiz", "ruzgar-hibrit", "malzeme-tedarik-toptan-perakende"],
   },
 
   "ruzgar-hibrit": {
@@ -346,6 +362,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Konumunuzu paylaşın; rüzgar-güneş verisine dayalı ön fizibiliteyi ücretsiz çıkaralım.",
     },
     referenceCategories: ["Telekomünikasyon"],
+    seoKeywords: ["rüzgar güneş hibrit enerji sistemi", "hibrit invertör kurulumu", "şebekeden bağımsız hibrit enerji"],
+    blogCategory: "Rüzgar & Hibrit",
+    relatedServiceSlugs: ["lityum-batarya-depolama", "off-grid-sebekeden-bagimsiz", "tarimsal-sulama"],
   },
 
   "lityum-batarya-depolama": {
@@ -415,6 +434,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Faturanızı ve kesinti sıklığınızı konuşalım; size uygun batarya kapasitesini birlikte belirleyelim.",
     },
     referenceCategories: ["Telekomünikasyon", "Villa"],
+    seoKeywords: ["lityum batarya depolama sistemi fiyatları", "güneş enerjisi batarya entegrasyonu", "kesintisiz güç için güneş bataryası"],
+    blogCategory: "Batarya Depolama",
+    relatedServiceSlugs: ["villa-cati-ges", "ruzgar-hibrit", "elektrikli-arac-sarj-istasyonu"],
   },
 
   "off-grid-sebekeden-bagimsiz": {
@@ -482,6 +504,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Hobi bahçeniz, karavanınız ya da uzak tesisiniz için neleri çalıştırmak istediğinizi yazın; size uygun sistemi ve net fiyatı hızlıca iletelim.",
     },
     referenceCategories: ["Hobi Bahçesi", "Karavan"],
+    seoKeywords: ["off grid güneş enerjisi sistemi", "karavan güneş paneli kurulumu", "hobi bahçesi güneş enerjisi sistemi"],
+    blogCategory: "Off-Grid Sistemler",
+    relatedServiceSlugs: ["lityum-batarya-depolama", "ruzgar-hibrit", "villa-cati-ges"],
   },
 
   "elektrikli-arac-sarj-istasyonu": {
@@ -551,6 +576,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Villanız, işletmeniz veya siteniz için ihtiyacınızı anlatın; size uygun şarj istasyonu çözümünü ve teklifi hızlıca sunalım.",
     },
     referenceCategories: [],
+    seoKeywords: ["elektrikli araç şarj istasyonu kurulumu", "ev tipi araç şarj cihazı fiyatları", "güneş enerjisiyle araç şarjı"],
+    blogCategory: "Elektrikli Araç Şarjı",
+    relatedServiceSlugs: ["villa-cati-ges", "lityum-batarya-depolama", "fabrika-cati-ges"],
   },
 
   "malzeme-tedarik-toptan-perakende": {
@@ -621,6 +649,9 @@ export const serviceContent: Record<string, ServiceContent> = {
     },
     referenceCategories: [],
     turnkeyInstall: false,
+    seoKeywords: ["güneş paneli toptan satış", "invertör fiyatları Ankara", "solar panel bayi fiyat listesi"],
+    blogCategory: "Malzeme Tedariği",
+    relatedServiceSlugs: ["distributorluk-bayilik", "villa-cati-ges", "projelendirme-muhendislik-basvuru"],
   },
 
   "distributorluk-bayilik": {
@@ -687,6 +718,9 @@ export const serviceContent: Record<string, ServiceContent> = {
     },
     referenceCategories: [],
     turnkeyInstall: false,
+    seoKeywords: ["güneş enerjisi bayilik başvurusu", "solar distribütörlük şartları", "GES bayilik iş ortaklığı"],
+    blogCategory: "Bayilik",
+    relatedServiceSlugs: ["malzeme-tedarik-toptan-perakende", "taahhut-isletme-bakim", "muteahhit-ges"],
   },
 
   "projelendirme-muhendislik-basvuru": {
@@ -753,6 +787,9 @@ export const serviceContent: Record<string, ServiceContent> = {
     },
     referenceCategories: ["Telekomünikasyon", "Müteahhit"],
     turnkeyInstall: false,
+    seoKeywords: ["EDAŞ bağlantı anlaşması başvurusu", "güneş enerjisi elektrik projesi", "lisanssız üretim başvurusu nasıl yapılır"],
+    blogCategory: "Mühendislik & Başvuru",
+    relatedServiceSlugs: ["villa-cati-ges", "muteahhit-ges", "fabrika-cati-ges"],
   },
 
   "fabrika-cati-ges": {
@@ -822,6 +859,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Çatı alanınızı ve elektrik faturalarınızı inceleyelim; size özel sistem boyutu ve yatırım geri dönüş analizini hızlıca sunalım.",
     },
     referenceCategories: ["Fabrika"],
+    seoKeywords: ["fabrika çatısına güneş enerjisi sistemi", "endüstriyel GES kurulumu", "OSB güneş enerjisi santrali"],
+    blogCategory: "Fabrika GES",
+    relatedServiceSlugs: ["taahhut-isletme-bakim", "projelendirme-muhendislik-basvuru", "muteahhit-ges"],
   },
 
   "taahhut-isletme-bakim": {
@@ -891,6 +931,9 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Mevcut sisteminizin durumunu ya da taahhüt kapsamınızı kısaca anlatın; size özel bir bakım planı veya teklif çıkaralım.",
     },
     referenceCategories: [],
+    seoKeywords: ["güneş enerjisi sistemi bakımı", "GES işletme bakım hizmeti", "solar panel taahhüt ihalesi"],
+    blogCategory: "Taahhüt & Bakım",
+    relatedServiceSlugs: ["fabrika-cati-ges", "distributorluk-bayilik", "projelendirme-muhendislik-basvuru"],
   },
 };
 

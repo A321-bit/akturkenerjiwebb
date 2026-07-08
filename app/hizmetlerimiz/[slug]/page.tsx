@@ -7,6 +7,7 @@ import {
   getServiceBySlug,
   getReferences,
   getSiteSettings,
+  getBlogPosts,
   whatsappLink,
   SITE_URL,
   SITE_NAME,
@@ -34,11 +35,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const service = await getServiceBySlug(slug);
   if (!service) return {};
+  const content = getServiceContent(service);
   return buildMetadata({
-    title: service.title,
+    title: `${service.title} | Ankara Güneş Enerjisi Sistemleri`,
     description: service.summary,
     path: `/hizmetlerimiz/${service.slug}`,
-    keywords: [service.title, service.eyebrow, "güneş enerjisi", "GES", "Ankara"],
+    keywords: [
+      service.title,
+      service.eyebrow,
+      ...(content.seoKeywords ?? []),
+      "güneş enerjisi",
+      "GES",
+      "Ankara",
+    ],
   });
 }
 
@@ -55,18 +64,27 @@ export default async function ServiceDetailPage({
   if (!service) notFound();
 
   const content = getServiceContent(service);
-  const [site, allServices, allReferences] = await Promise.all([
+  const [site, allServices, allReferences, allPosts] = await Promise.all([
     getSiteSettings(),
     getServices(),
     getReferences(),
+    getBlogPosts(),
   ]);
 
-  const others = allServices.filter((s) => s.slug !== service.slug).slice(0, 3);
+  const others = content.relatedServiceSlugs
+    ? (content.relatedServiceSlugs
+        .map((s) => allServices.find((svc) => svc.slug === s))
+        .filter((s): s is NonNullable<typeof s> => Boolean(s)))
+    : allServices.filter((s) => s.slug !== service.slug).slice(0, 3);
 
   const matchingRefs = allReferences.filter((r) =>
     content.referenceCategories.includes(r.category)
   );
   const references = (matchingRefs.length > 0 ? matchingRefs : allReferences).slice(0, 3);
+
+  const relatedPosts = content.blogCategory
+    ? allPosts.filter((p) => p.category === content.blogCategory).slice(0, 3)
+    : [];
 
   const waHref = whatsappLink(
     site.contact.whatsappNumber,
@@ -395,6 +413,42 @@ export default async function ServiceDetailPage({
                 <p className="mt-3 text-[14px] leading-relaxed text-slate">{f.a}</p>
               </details>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* İLGİLİ YAZILAR */}
+      {relatedPosts.length > 0 && (
+        <section className="border-y border-line bg-paper-raised">
+          <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+            <Reveal>
+              <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+                Blog
+              </p>
+              <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                İlgili Yazılar
+              </h2>
+            </Reveal>
+            <div className="mt-8 grid gap-5 sm:grid-cols-3">
+              {relatedPosts.map((p, i) => (
+                <Reveal key={p.slug} delay={i * 60}>
+                  <Link
+                    href={`/blog/${p.slug}`}
+                    className="group flex h-full flex-col rounded-2xl border border-line bg-paper p-5 transition-transform duration-300 hover:-translate-y-1"
+                  >
+                    <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
+                      {p.category}
+                    </span>
+                    <h3 className="mt-2 font-display text-[15.5px] font-semibold leading-snug text-ink group-hover:text-brand">
+                      {p.title}
+                    </h3>
+                    <p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-slate">
+                      {p.description}
+                    </p>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
       )}
