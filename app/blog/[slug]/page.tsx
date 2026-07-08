@@ -5,6 +5,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowLeft } from "lucide-react";
 import { getBlogPostBySlug, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
+import QuoteModal from "@/components/QuoteModal";
 
 export async function generateMetadata({
   params,
@@ -84,6 +85,13 @@ export default async function BlogPostPage({
         {post.title}
       </h1>
 
+      <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl border border-sun/40 bg-sun/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-display text-[15px] font-semibold leading-snug text-ink">
+          Bu konuyla ilgili size özel bir fiyat teklifi ister misiniz?
+        </p>
+        <QuoteModal defaultPurpose={post.category} className="shrink-0" />
+      </div>
+
       <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl">
         <MDXRemote source={post.content} />
       </div>
@@ -95,12 +103,15 @@ export default async function BlogPostPage({
         <p className="mt-1.5 text-[14px] text-slate">
           Size özel sistem boyutu ve fiyat teklifi için bizimle iletişime geçin.
         </p>
-        <Link
-          href="/iletisim"
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-sun hover:text-ink"
-        >
-          İletişime Geç
-        </Link>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <QuoteModal defaultPurpose={post.category} />
+          <Link
+            href="/iletisim"
+            className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-sun hover:text-ink"
+          >
+            İletişime Geç
+          </Link>
+        </div>
       </div>
     </div>
   );

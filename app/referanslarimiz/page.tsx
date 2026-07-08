@@ -6,9 +6,9 @@ import ReferenceGrid from "@/components/ReferenceGrid";
 export const metadata: Metadata = buildMetadata({
   title: "Referanslarımız",
   description:
-    "Ankara ve çevresinde tamamladığımız villa, müteahhit, tarımsal ve hobi bahçesi güneş enerjisi projelerinden referanslar.",
+    "Türkiye genelinde tamamladığımız villa, müteahhit, tarımsal ve fabrika çatı güneş enerjisi projelerinden referanslar.",
   path: "/referanslarimiz",
-  keywords: ["güneş enerjisi referansları", "GES projeleri Ankara", "solar enerji örnekleri", "Ankara"],
+  keywords: ["güneş enerjisi referansları", "GES projeleri Türkiye", "solar enerji örnekleri", "Ankara"],
 });
 
 const jsonLd = {
@@ -35,8 +35,8 @@ export default async function ReferencesPage() {
         Tamamladığımız projelerden bir kesit
       </h1>
       <p className="mt-4 max-w-2xl text-[15.5px] leading-relaxed text-slate">
-        2016&apos;dan bu yana Ankara ve çevresinde villa, hobi bahçesi, tarımsal
-        ve müteahhit projelerinde yüzlerce sistem kurduk. Aşağıda bir seçkisini
+        2016&apos;dan bu yana Türkiye genelinde villa, tarımsal, fabrika ve
+        müteahhit projelerinde yüzlerce sistem kurduk. Aşağıda bir seçkisini
         bulabilirsiniz — proje fotoğrafları ve daha fazla referans için bizimle
         iletişime geçin.
       </p>

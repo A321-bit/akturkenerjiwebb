@@ -192,7 +192,7 @@ export default async function Home() {
                   Referanslarımız
                 </p>
                 <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-                  Ankara ve çevresinde tamamladığımız projelerden
+                  Son Tamamlanan Projelerimiz
                 </h2>
               </div>
               <Link
