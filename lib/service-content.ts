@@ -6,9 +6,7 @@ import {
   CalendarCheck,
   Car,
   Check,
-  Droplets,
   Expand,
-  Feather,
   FileCheck2,
   FileX,
   Flame,
@@ -419,21 +417,21 @@ export const serviceContent: Record<string, ServiceContent> = {
     referenceCategories: ["Telekomünikasyon", "Villa"],
   },
 
-  "hobi-bahcesi": {
+  "off-grid-sebekeden-bagimsiz": {
     hero: {
-      headline: "Bahçenizde şehir konforu — abonelik, direk, fatura olmadan.",
-      sub: "Hobi bahçenize kompakt bir güneş sistemi kurun: aydınlatma, sulama pompası ve prizleriniz çalışsın; EDAŞ başvurusu, abonelik ve fatura hiç gündeme gelmesin.",
+      headline: "Şebeke yoksa sorun yok — güneş her yerde var.",
+      sub: "Hobi bahçenizden karavanınıza, şebekenin ulaşmadığı her noktaya kompakt ve taşınabilir güneş enerjisi sistemleri kuruyoruz — EDAŞ başvurusu ya da hat çekme derdi olmadan.",
     },
     benefits: [
       {
         icon: Lightbulb,
-        title: "Işık, priz, konfor",
-        text: "Akşam oturmaları için aydınlatma, telefon şarjı, küçük ev aletleri — hepsi güneşten.",
+        title: "Hobi bahçenizde tam bağımsızlık",
+        text: "Aydınlatma, su pompası ve küçük ev aletleriniz için şebeke bağlantısı çekmeden elektrik sağlıyoruz.",
       },
       {
-        icon: Droplets,
-        title: "Sulama derdi biter",
-        text: "Küçük pompanız bataryadan beslenir; damlama sisteminiz siz bahçede yokken de çalışır.",
+        icon: Route,
+        title: "Karavanınızda yolda enerji",
+        text: "Buzdolabı, aydınlatma ve elektronik cihazlarınızı güneş olduğu sürece şarj eden kompakt sistemler kuruyoruz.",
       },
       {
         icon: FileX,
@@ -442,107 +440,117 @@ export const serviceContent: Record<string, ServiceContent> = {
       },
       {
         icon: Expand,
-        title: "İhtiyaç arttıkça büyür",
-        text: "Bugün aydınlatmayla başlayın; yarın buzdolabı ekleyin — sistem modüler olarak büyür.",
+        title: "İhtiyaca göre büyüyen sistem",
+        text: "Bugün aydınlatmayla başlayın; yarın buzdolabı veya batarya ekleyin — sistem modüler olarak büyür.",
       },
     ],
     table: {
-      title: "Paket rehberi",
-      columns: ["Paket", "Neler çalışır", "Kurulum süresi"],
+      title: "Kullanım alanına göre sistem",
+      columns: ["Kullanım alanı", "Tipik sistem", "Kurulum süresi"],
       rows: [
-        ["Başlangıç", "Aydınlatma + telefon şarjı + priz", "Aynı gün"],
-        ["Konfor", "+ su pompası + küçük buzdolabı", "1 gün"],
-        ["Tam bağımsız", "+ TV, küçük ısıtıcı/soğutucu", "1-2 gün"],
+        ["Hobi bahçesi (aydınlatma + pompa)", "0,5-2 kWp + küçük batarya", "Aynı gün"],
+        ["Karavan (buzdolabı + elektronik)", "200-600W esnek/sert panel", "1 gün"],
+        ["Uzak tesis / kulübe", "1-5 kWp + batarya paketi", "1-3 gün"],
       ],
-      note: "Paket içerikleri örnektir; bahçenizdeki gerçek ihtiyaca göre birlikte şekillendiririz.",
+      note: "Sistem boyutu kullanım profilinize göre keşif ya da telefon görüşmesi sonrası netleşir.",
     },
     steps: OFFGRID_STEPS,
     faqs: [
       {
-        q: "Buzdolabı çalıştırabilir miyim?",
-        a: "Evet — düşük tüketimli küçük tip bir buzdolabı, doğru boyutlanmış panel ve bataryayla 7/24 çalışır. Keşifte tüketimine göre kapasiteyi hesaplıyoruz.",
+        q: "Hobi bahçemde buzdolabı çalıştırabilir miyim?",
+        a: "Evet — düşük tüketimli küçük tip bir buzdolabı, doğru boyutlanmış panel ve bataryayla 7/24 çalışır. Keşifte tüketiminize göre kapasiteyi hesaplıyoruz.",
       },
       {
-        q: "Kışın sistemi sökmem gerekir mi?",
-        a: "Gerekmez; ekipman dış ortama dayanıklıdır. Yine de isterseniz taşınabilir kurulum yapıyoruz, sezon sonunda depoya kaldırırsınız.",
-      },
-      {
-        q: "Hırsızlığa karşı önlem var mı?",
-        a: "Panelleri sökülmesi zor güvenlik bağlantılarıyla monte ediyoruz; talep ederseniz hareket sensörlü aydınlatma ve kamera beslemesini de sisteme ekliyoruz.",
-      },
-      {
-        q: "Kurulum ne kadar sürer?",
-        a: "Başlangıç paketleri genellikle aynı gün, daha kapsamlı sistemler 1-2 gün içinde çalışır halde teslim edilir.",
-      },
-    ],
-    closing: {
-      title: "Bahçenize uygun paketi seçelim",
-      text: "Bahçenizde neleri çalıştırmak istediğinizi yazın; size uygun paketi ve net fiyatı aynı gün iletelim.",
-    },
-    referenceCategories: ["Hobi Bahçesi"],
-  },
-
-  "karavan-sistemleri": {
-    hero: {
-      headline: "Nerede durursanız durun, enerjiniz yanınızda.",
-      sub: "Karavanınıza özel panel + lityum batarya kurulumuyla kamp alanı ve priz aramayı bırakın: buzdolabı, aydınlatma ve cihazlarınız yolda da evinizdeki gibi çalışsın.",
-    },
-    benefits: [
-      {
-        icon: Route,
-        title: "Tam bağımsız seyahat",
-        text: "Elektrik bağlantılı kamp alanına mahkûm olmayın; doğanın ortasında günlerce konaklayın.",
-      },
-      {
-        icon: Feather,
-        title: "Esnek panel: görünmez ağırlık",
-        text: "Düşük profilli esnek paneller aerodinamiği ve görünümü bozmaz, çatıya yük bindirmez.",
-      },
-      {
-        icon: BatteryCharging,
-        title: "Gece boyu enerji",
-        text: "Kompakt lityum paket gündüz dolar; akşam buzdolabı, ışık ve cihazlarınız kesintisiz çalışır.",
-      },
-      {
-        icon: LifeBuoy,
-        title: "Yolda yalnız değilsiniz",
-        text: "Kurulum sonrası uzaktan teknik destekle olası sorunları siz yoldayken çözüyoruz.",
-      },
-    ],
-    table: {
-      title: "Karavan paketleri",
-      columns: ["Paket", "Neleri besler", "Kimin için"],
-      rows: [
-        ["Hafta sonu", "Aydınlatma, şarj, su pompası", "Kısa kaçamaklar"],
-        ["Gezgin", "+ kompresörlü buzdolabı, TV", "Uzun seyahatler"],
-        ["Full-time", "+ invertörle 220V cihazlar", "Karavanda yaşayanlar"],
-      ],
-      note: "Paketler örnek kombinasyonlardır; karavanınızın çatısına ve tüketiminize göre özelleştirilir.",
-    },
-    steps: OFFGRID_STEPS,
-    faqs: [
-      {
-        q: "Klima çalıştırabilir miyim?",
+        q: "Karavanımda klima çalıştırabilir miyim?",
         a: "Kamp tipi düşük tüketimli klimalar doğru boyutlanmış batarya ve invertörle mümkün; standart ev kliması içinse dürüst olalım — verimli değil. Keşifte gerçekçi senaryoyu birlikte kuruyoruz.",
       },
       {
-        q: "Panel çatıya zarar verir mi?",
+        q: "EDAŞ başvurusu gerekiyor mu?",
+        a: "Hayır — sistem şebekeye bağlı olmadığı için EDAŞ başvurusu, abonelik veya bağlantı anlaşması gerekmez.",
+      },
+      {
+        q: "Kurulum ne kadar sürer?",
+        a: "Başlangıç paketleri genellikle aynı gün, karavan ve daha kapsamlı sistemler 1-3 gün içinde çalışır halde teslim edilir.",
+      },
+      {
+        q: "Panel karavan çatısına zarar verir mi?",
         a: "Hayır — esnek paneller delme gerektirmeyen montajla uygulanır; sert panellerde ise sızdırmaz braket sistemi kullanıyoruz.",
-      },
-      {
-        q: "Kurulum kaç gün sürer?",
-        a: "Çoğu kurulum 1 gün içinde teslim edilir; kapsamlı full-time sistemlerde süre 2 güne çıkabilir.",
-      },
-      {
-        q: "Sürüş sırasında da şarj olur mu?",
-        a: "Evet; paneller sürüşte de üretir. İsterseniz araç alternatöründen destek şarjı (DC-DC) da ekliyoruz.",
       },
     ],
     closing: {
-      title: "Karavanınıza uygun sistemi konuşalım",
-      text: "Karavan modelinizi ve neleri çalıştırmak istediğinizi yazın; paket önerisini ve fiyatı hızlıca dönelim.",
+      title: "Bağımsız enerji ihtiyacınızı konuşalım",
+      text: "Hobi bahçeniz, karavanınız ya da uzak tesisiniz için neleri çalıştırmak istediğinizi yazın; size uygun sistemi ve net fiyatı hızlıca iletelim.",
     },
-    referenceCategories: ["Karavan"],
+    referenceCategories: ["Hobi Bahçesi", "Karavan"],
+  },
+
+  "elektrikli-arac-sarj-istasyonu": {
+    hero: {
+      headline: "Aracınızı evde, güneşten şarj edin.",
+      sub: "Villanıza, işletmenize ya da mevcut güneş enerjisi sisteminize entegre AC Tip 2 duvar tipi şarj istasyonu kuruyoruz — akıllı uygulamadan takip ve programlama dahil.",
+    },
+    benefits: [
+      {
+        icon: Zap,
+        title: "Hızlı ve güvenli şarj",
+        text: "AC Tip 2 duvar tipi istasyonlarla evde ya da işletmenizde güvenli ve hızlı şarj imkânı sunuyoruz.",
+      },
+      {
+        icon: Car,
+        title: "Güneşten şarj, sıfıra yakın maliyet",
+        text: "Mevcut güneş enerjisi sisteminize entegre ederek aracınızı büyük ölçüde güneşten şarj etmenizi sağlıyoruz.",
+      },
+      {
+        icon: Smartphone,
+        title: "Akıllı uygulamadan takip",
+        text: "Şarj geçmişinizi izleyebilir, güneşin en yoğun olduğu saatlere otomatik şarj planlayabilirsiniz.",
+      },
+      {
+        icon: Building2,
+        title: "Toplu kurulum ve yönetim",
+        text: "Site ve işyeri otoparklarında birden fazla istasyonu ortak altyapıya bağlayarak yönetiyoruz.",
+      },
+    ],
+    table: {
+      title: "Kurulum ölçeğine göre süreç",
+      columns: ["Kurulum tipi", "Kapsam", "Süre"],
+      rows: [
+        ["Villa / tekli ev kullanımı", "Tek AC şarj istasyonu + altyapı kontrolü", "1 gün"],
+        ["İşletme / işyeri otoparkı", "Tek ya da birkaç istasyon", "1-3 gün"],
+        ["Site / toplu konut", "Çoklu istasyon + ortak altyapı yönetimi", "Proje ölçeğine göre"],
+      ],
+      note: "Süreler mevcut elektrik altyapınızın durumuna ve istasyon sayısına göre keşif sonrası netleşir.",
+    },
+    steps: [
+      { title: "Keşif & Altyapı Kontrolü", text: "Pano kapasitenizi, kablo kesitinizi ve araç şarj ihtiyacınızı yerinde inceliyoruz." },
+      { title: "Cihaz & Kurulum Planı", text: "İhtiyacınıza uygun şarj istasyonu modelini ve kurulum noktasını belirliyoruz." },
+      { title: "Elektrik Altyapı Hazırlığı", text: "Gerekiyorsa pano ve kablo güncellemesini yapıyoruz." },
+      { title: "Kurulum & Devreye Alma", text: "Şarj istasyonunu monte edip test ediyor, uygulama bağlantısını kuruyoruz." },
+      { title: "Güneş Entegrasyonu (opsiyonel)", text: "Mevcut GES sisteminiz varsa şarjı güneş üretiminize göre programlıyoruz." },
+    ],
+    faqs: [
+      {
+        q: "Villamda mevcut GES sistemim var, şarj istasyonunu entegre edebilir miyim?",
+        a: "Evet — şarj istasyonunu mevcut sisteminize entegre ederek aracınızı büyük ölçüde güneşten şarj etmenizi sağlıyoruz.",
+      },
+      {
+        q: "Elektrik panom şarj istasyonuna yetiyor mu?",
+        a: "Keşifte pano kapasitenizi kontrol ediyoruz; yetersizse gerekli altyapı güncellemesini de biz üstleniyoruz.",
+      },
+      {
+        q: "Sitemizde birden fazla şarj istasyonu kurabilir misiniz?",
+        a: "Evet, toplu konut ve site projelerinde birden fazla üniteyi ortak altyapıya bağlayarak kuruyor ve yönetiyoruz.",
+      },
+      {
+        q: "Şarj süresi ne kadar sürer?",
+        a: "AC Tip 2 duvar tipi istasyonlarda araç ve şarj gücüne göre değişir; genellikle birkaç saat içinde tam şarj sağlanır.",
+      },
+    ],
+    closing: {
+      title: "Şarj istasyonunuzu birlikte planlayalım",
+      text: "Villanız, işletmeniz veya siteniz için ihtiyacınızı anlatın; size uygun şarj istasyonu çözümünü ve teklifi hızlıca sunalım.",
+    },
+    referenceCategories: [],
   },
 
   "malzeme-tedarik-toptan-perakende": {

@@ -15,6 +15,7 @@ const nav = [
   { href: "/blog", label: "Blog" },
   { href: "/iletisim", label: "İletişim" },
   { href: "/hizmetlerimiz/distributorluk-bayilik", label: "Bayilik" },
+  { href: "https://gunesdukkan.com", label: "E-Ticaret", external: true },
 ];
 
 export default function Header({ settings }: { settings: SiteSettings }) {
@@ -37,15 +38,27 @@ export default function Header({ settings }: { settings: SiteSettings }) {
         </Link>
 
         <nav className="hidden items-center gap-4 xl:gap-5 lg:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {nav.map((item) =>
+            item.external ? (
+              <a
+                key={item.href}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
+              >
+                {item.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="hidden items-center gap-3 xl:flex">
@@ -73,16 +86,29 @@ export default function Header({ settings }: { settings: SiteSettings }) {
       {open && (
         <div className="border-t border-line bg-paper px-5 py-4 lg:hidden">
           <nav className="flex flex-col gap-1">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-2 py-2.5 text-[15px] font-medium text-ink hover:bg-ink/[0.04]"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {nav.map((item) =>
+              item.external ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-2 py-2.5 text-[15px] font-medium text-ink hover:bg-ink/[0.04]"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-2 py-2.5 text-[15px] font-medium text-ink hover:bg-ink/[0.04]"
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
             <Link
               href="/iletisim"
               onClick={() => setOpen(false)}

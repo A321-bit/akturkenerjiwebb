@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowUpRight, BadgeCheck, Check, ChevronDown, MessageCircle } from "lucide-react";
 import {
   getServices,
@@ -18,6 +18,13 @@ import CoverMedia from "@/components/CoverMedia";
 import SunGlow from "@/components/SunGlow";
 import Reveal from "@/components/Reveal";
 import QuoteModal from "@/components/QuoteModal";
+
+// Hobi Bahçesi ve Karavan Sistemleri hizmetleri Off-Grid hizmetinde birleştirildi;
+// eski linkler/yer imleri 404 yerine yeni sayfaya yönlensin diye eşleme tutuyoruz.
+const LEGACY_SLUG_REDIRECTS: Record<string, string> = {
+  "hobi-bahcesi": "off-grid-sebekeden-bagimsiz",
+  "karavan-sistemleri": "off-grid-sebekeden-bagimsiz",
+};
 
 export async function generateMetadata({
   params,
@@ -41,6 +48,9 @@ export default async function ServiceDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  if (LEGACY_SLUG_REDIRECTS[slug]) {
+    redirect(`/hizmetlerimiz/${LEGACY_SLUG_REDIRECTS[slug]}`);
+  }
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 

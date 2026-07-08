@@ -115,6 +115,16 @@ export default function Footer({
                 </Link>
               </li>
               <li>
+                <a
+                  href="https://gunesdukkan.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[14px] text-slate-soft hover:text-paper"
+                >
+                  E-Ticaret (gunesdukkan.com)
+                </a>
+              </li>
+              <li>
                 <Link href="/iletisim" className="text-[14px] text-slate-soft hover:text-paper">
                   İletişim
                 </Link>
