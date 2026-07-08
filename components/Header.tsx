@@ -45,7 +45,7 @@ export default function Header({ settings }: { settings: SiteSettings }) {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
+                className="whitespace-nowrap text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
               >
                 {item.label}
               </a>
@@ -53,7 +53,7 @@ export default function Header({ settings }: { settings: SiteSettings }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
+                className="whitespace-nowrap text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
               >
                 {item.label}
               </Link>
