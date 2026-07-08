@@ -46,7 +46,7 @@ export default function MediaCarousel({
             allowFullScreen
           />
         ) : (
-          <Image src={current.src} alt={title} fill className="object-cover" />
+          <Image src={current.src} alt={title} fill className="object-contain" />
         )}
 
         {slides.length > 1 && (
