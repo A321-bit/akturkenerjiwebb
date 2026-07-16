@@ -27,6 +27,7 @@ import {
   Route,
   ShieldCheck,
   Smartphone,
+  Snowflake,
   Sprout,
   TrendingUp,
   Truck,
@@ -160,7 +161,83 @@ export const serviceContent: Record<string, ServiceContent> = {
     referenceCategories: ["Villa"],
     seoKeywords: ["villa çatı güneş paneli fiyatları", "villa GES kaç kWp", "villa çatısına güneş enerjisi kurulumu Ankara"],
     blogCategory: "Villa GES",
-    relatedServiceSlugs: ["off-grid-sebekeden-bagimsiz", "lityum-batarya-depolama", "elektrikli-arac-sarj-istasyonu"],
+    relatedServiceSlugs: ["isi-pompasi-entegrasyonu", "lityum-batarya-depolama", "elektrikli-arac-sarj-istasyonu"],
+  },
+
+  "isi-pompasi-entegrasyonu": {
+    hero: {
+      headline: "Isınma ve soğutmayı tek cihazla, güneşten besleyerek çözün.",
+      sub: "Hava kaynaklı ısı pompasını mevcut ya da yeni kurulacak güneş enerjisi sisteminize entegre ediyoruz — kışın ısıtma, yazın soğutma giderinizi doğalgaza kıyasla belirgin şekilde düşürüyoruz.",
+    },
+    benefits: [
+      {
+        icon: Flame,
+        title: "Isınma ve soğutmayı tek cihazla çözün",
+        text: "Hava kaynaklı ısı pompası kışın ısıtma, yazın soğutma sağlar — iki ayrı sistem kurma masrafından kurtulursunuz.",
+      },
+      {
+        icon: Snowflake,
+        title: "Doğalgaza göre çok daha verimli",
+        text: "1 birim elektrikle 3-4 birim ısı enerjisi üretir; doğalgaz ve elektrikli ısıtıcılara kıyasla işletme maliyeti belirgin şekilde düşer.",
+      },
+      {
+        icon: Zap,
+        title: "Güneş enerjinizle besleyin",
+        text: "Mevcut ya da yeni kurulacak GES sisteminize entegre ederek ısınma-soğutma maliyetinizi neredeyse sıfıra indirin.",
+      },
+      {
+        icon: TrendingUp,
+        title: "Konutunuzun değerini artırır",
+        text: "Enerji verimli ısıtma-soğutma sistemi, villanın enerji kimlik belgesini ve yeniden satış değerini olumlu etkiler.",
+      },
+    ],
+    table: {
+      title: "Konut büyüklüğüne göre kapasite",
+      columns: ["Konut büyüklüğü", "Tipik ısı pompası kapasitesi", "Tahmini yıllık tasarruf"],
+      rows: [
+        ["100-150 m²", "8-12 kW", "Doğalgaza göre %40-60"],
+        ["150-250 m²", "12-16 kW", "Doğalgaza göre %40-60"],
+        ["250+ m² / güneş enerjili", "16-24 kW", "GES ile birlikte %70+"],
+      ],
+      note: "Kesin kapasite, konutun yalıtım durumu ve keşif sonrası netleşir.",
+    },
+    steps: [
+      { title: "Keşif & İhtiyaç Analizi", text: "Konutunuzun m², yalıtım durumu ve mevcut ısıtma sisteminizi yerinde inceliyoruz." },
+      { title: "Kapasite & Cihaz Seçimi", text: "İhtiyacınıza uygun ısı pompası kapasitesini ve modelini belirliyoruz." },
+      { title: "Montaj & Tesisat", text: "İç/dış ünite montajı, boru tesisatı ve elektrik bağlantısını tamamlıyoruz." },
+      { title: "Güneş Enerjisi Entegrasyonu", text: "Mevcut veya yeni GES sisteminize entegre ederek işletme maliyetini düşürüyoruz (opsiyonel)." },
+      { title: "Devreye Alma & Test", text: "Sistemi test edip kullanım eğitimini veriyoruz." },
+    ],
+    faqs: [
+      {
+        q: "Isı pompası hangi konut tiplerine uygun?",
+        a: "Villa, müstakil ev ve doğru yalıtıma sahip her konut tipine uygulanabilir; keşifte konutunuzun uygunluğunu değerlendiriyoruz.",
+      },
+      {
+        q: "Isı pompasını mevcut kombi/doğalgaz sistemimle birlikte kullanabilir miyim?",
+        a: "Evet, hibrit kullanım mümkündür; çoğu müşterimiz geçiş döneminde iki sistemi bir arada kullanmayı tercih ediyor.",
+      },
+      {
+        q: "Güneş enerjisi sistemim yoksa yine de ısı pompası kurdurabilir miyim?",
+        a: "Evet, ısı pompası bağımsız olarak da kurulabilir; sadece elektrik şebekesinden beslenerek yine doğalgaza göre yüksek verimle çalışır.",
+      },
+      {
+        q: "Kışın çok soğuk günlerde performansı düşer mi?",
+        a: "Modern hava kaynaklı ısı pompaları -15°C ile -20°C'ye kadar verimli çalışacak şekilde üretiliyor; Ankara iklimi için uygun kapasiteyi keşifte belirliyoruz.",
+      },
+      {
+        q: "Yaz aylarında soğutma için de kullanılabilir mi?",
+        a: "Evet, ısı pompaları kışın ısıtma yazın soğutma sağlayan tersinir (reversible) sistemlerdir — klima ihtiyacınızı da karşılar.",
+      },
+    ],
+    closing: {
+      title: "Isı pompanız için keşif planlayalım",
+      text: "Konutunuzu ve mevcut ısıtma sisteminizi görelim; size en uygun kapasiteyi ve net teklifi hızlıca sunalım.",
+    },
+    referenceCategories: ["Villa"],
+    seoKeywords: ["ısı pompası kurulumu Ankara", "hava kaynaklı ısı pompası fiyatları", "güneş enerjili ısı pompası", "villa ısı pompası"],
+    blogCategory: "Isı Pompası",
+    relatedServiceSlugs: ["villa-cati-ges", "lityum-batarya-depolama", "elektrikli-arac-sarj-istasyonu"],
   },
 
   "muteahhit-ges": {

@@ -1,4 +1,5 @@
-import { Zap, BatteryCharging, Flame, Car, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Zap, BatteryCharging, Flame, Car, Sparkles, ArrowRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import SunGlow from "@/components/SunGlow";
 import QuoteModal from "@/components/QuoteModal";
@@ -10,6 +11,7 @@ const pillars = [
     tag: "25 kW'a kadar",
     title: "On-Grid Villa Paketleri",
     text: "Şebeke bağlantılı (on-grid) sistemlerde 25 kW'a kadar villa çatı GES kuruyoruz — mahsuplaşmayla faturanız büyük ölçüde sıfırlanır.",
+    href: null,
   },
   {
     icon: BatteryCharging,
@@ -17,6 +19,7 @@ const pillars = [
     tag: "Mahsuplaşmasız da mümkün",
     title: "Hibrit Lityum Batarya",
     text: "İster şebekeye bağlı, ister mahsuplaşma sürecine hiç girmeden — hibrit lityum batarya sistemiyle enerjinizi kendi çatınızda depolarsınız.",
+    href: "/hizmetlerimiz/lityum-batarya-depolama",
   },
   {
     icon: Flame,
@@ -24,6 +27,7 @@ const pillars = [
     tag: "Isınma + soğutma",
     title: "Isı Pompası Entegrasyonu",
     text: "Isı pompanızı güneş enerjisi sisteminize entegre ederek ısınma ve soğutma giderinizi de faturayla birlikte küçültüyoruz.",
+    href: "/hizmetlerimiz/isi-pompasi-entegrasyonu",
   },
   {
     icon: Car,
@@ -31,6 +35,7 @@ const pillars = [
     tag: "Akıllı programlama",
     title: "Elektrikli Araç Şarj İstasyonu",
     text: "Duvar tipi AC şarj cihazınızı sisteme entegre ediyoruz — aracınızı büyük ölçüde kendi ürettiğiniz güneşle şarj edersiniz.",
+    href: "/hizmetlerimiz/elektrikli-arac-sarj-istasyonu",
   },
 ];
 
@@ -70,24 +75,38 @@ export default function VillaSystemShowcase() {
           {pillars.map((p, i) => {
             const Icon = p.icon;
             const accent = accentClasses[p.accent];
+            const cardClassName = `group flex h-full flex-col rounded-2xl border border-line-dark bg-ink-soft/60 p-6 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 ${accent.ring}`;
+            const cardContent = (
+              <>
+                <span
+                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110 ${accent.badge}`}
+                >
+                  <Icon size={22} />
+                </span>
+                <span className="mt-4 inline-block w-fit rounded-full bg-paper/10 px-2.5 py-1 font-mono-data text-[10.5px] uppercase tracking-[0.1em] text-slate-soft">
+                  {p.tag}
+                </span>
+                <h3 className="mt-3 font-display text-[16px] font-semibold text-paper">
+                  {p.title}
+                </h3>
+                <p className="mt-2 flex-1 text-[13px] leading-relaxed text-slate-soft">{p.text}</p>
+                {p.href && (
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-sun-soft">
+                    Detaylı bilgi
+                    <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+                  </span>
+                )}
+              </>
+            );
             return (
               <Reveal key={p.title} delay={i * 90}>
-                <div
-                  className={`group h-full rounded-2xl border border-line-dark bg-ink-soft/60 p-6 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 ${accent.ring}`}
-                >
-                  <span
-                    className={`flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110 ${accent.badge}`}
-                  >
-                    <Icon size={22} />
-                  </span>
-                  <span className="mt-4 inline-block rounded-full bg-paper/10 px-2.5 py-1 font-mono-data text-[10.5px] uppercase tracking-[0.1em] text-slate-soft">
-                    {p.tag}
-                  </span>
-                  <h3 className="mt-3 font-display text-[16px] font-semibold text-paper">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 text-[13px] leading-relaxed text-slate-soft">{p.text}</p>
-                </div>
+                {p.href ? (
+                  <Link href={p.href} className={cardClassName}>
+                    {cardContent}
+                  </Link>
+                ) : (
+                  <div className={cardClassName}>{cardContent}</div>
+                )}
               </Reveal>
             );
           })}
