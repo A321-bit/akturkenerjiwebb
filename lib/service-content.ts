@@ -67,6 +67,13 @@ export type ServiceContent = {
   blogCategory?: string;
   /** "İlginizi çekebilir" bölümünde rastgele değil, kürasyonlu hizmetler göstermek için slug listesi. */
   relatedServiceSlugs?: string[];
+  /** Sayfa içi uzun-format SEO makalesi (Süreç ile SSS arasında gösterilir).
+   * Gerçek arama niyetine göre yazılmış H3 alt başlıklı derinlemesine rehber içerik. */
+  article?: {
+    title: string;
+    intro: string;
+    sections: { heading: string; paragraphs: string[] }[];
+  };
 };
 
 const INSTALL_STEPS: ServiceContent["steps"] = [
@@ -159,9 +166,74 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Çatınızı görelim, faturanızı inceleyelim; size özel sistem boyutunu ve net teklifi hızlıca önünüze koyalım.",
     },
     referenceCategories: ["Villa"],
-    seoKeywords: ["villa çatı güneş paneli fiyatları", "villa GES kaç kWp", "villa çatısına güneş enerjisi kurulumu Ankara"],
+    seoKeywords: [
+      "villa çatı güneş paneli fiyatları",
+      "villa GES kaç kWp",
+      "villa çatısına güneş enerjisi kurulumu Ankara",
+      "villa güneş enerjisi sistemi fiyatları 2026",
+      "güneş enerjisi sistemi kaç yılda amorti eder",
+      "mahsuplaşma nasıl çalışır",
+      "EDAŞ başvurusu kaç gün sürer",
+      "güneş enerjisi kredisi taksit",
+    ],
     blogCategory: "Villa GES",
     relatedServiceSlugs: ["isi-pompasi-entegrasyonu", "lityum-batarya-depolama", "elektrikli-arac-sarj-istasyonu"],
+    article: {
+      title: "Villa Güneş Enerjisi Sistemi Rehberi: Fiyatlar, kWp Hesabı, Geri Ödeme ve Mahsuplaşma",
+      intro:
+        "Villanız için güneş enerjisi sistemi araştırırken karşınıza çıkan \"kaç kWp yeterli\", \"ne kadar tutar\", \"kaç yılda kendini öder\" gibi soruların hepsini tek yerde, gerçekçi rakamlarla topladık. Aşağıdaki rehber, 2016'dan beri Ankara'da yüzlerce villa projesi kurmuş ekibimizin sahada edindiği tecrübeye dayanıyor.",
+      sections: [
+        {
+          heading: "Villa için kaç kWp güneş paneli sistemi gerekir?",
+          paragraphs: [
+            "Sistem boyutu, yıllık elektrik tüketiminize ve çatınızın güneşlenme potansiyeline göre hesaplanır. Ankara'da ortalama günlük tepe güneşlenme süresi yaklaşık 4,5-5 saat kabul edilir; bu nedenle aylık 500 kWh tüketen bir villa için kabaca 3-4 kWp'lik bir sistem yeterli olur.",
+            "Standart bir villa genellikle 5-8 kWp aralığında bir sistemle tüketiminin büyük bölümünü karşılar. Elektrikli araç şarjı, ısı pompası veya havuz pompası gibi ek yükleriniz varsa bu rakam 10-15 kWp'ye, geniş çatılı ve yüksek tüketimli villalarda ise 25 kWp'a kadar çıkabilir. Kesin rakam, son 12 aylık faturalarınızın incelendiği ücretsiz keşif sonrası netleşir.",
+          ],
+        },
+        {
+          heading: "Villa güneş paneli fiyatları ne kadar? (2026)",
+          paragraphs: [
+            "Villa tipi güneş enerjisi sistemlerinde yatırım tutarı; panel markası, invertör kalitesi, çatı tipi (kiremit, sac, düz teras) ve sistem gücüne göre değişir. Piyasada 5 kWp'lik anahtar teslim bir sistem ile 25 kWp'lik depolamalı, elektrikli araç şarjlı büyük bir sistem arasında geniş bir fiyat aralığı vardır.",
+            "Bu nedenle internette gördüğünüz genel fiyat listelerine göre karar vermek yerine, çatınıza özel hazırlanan net teklifi almanızı öneririz — çatı yönü, gölgelenme durumu ve tüketiminiz fiyatı doğrudan etkiler. Ücretsiz keşif sonrası size kalem kalem, sürpriz maliyet içermeyen bir teklif sunuyoruz.",
+          ],
+        },
+        {
+          heading: "Sistem kaç yılda kendini amorti eder?",
+          paragraphs: [
+            "Doğru boyutlandırılmış bir villa GES sistemi, Türkiye'de genellikle 5-9 yıl içinde kendini amorti eder. Elektrikli araç şarjı ve ısı pompası gibi ek tüketimleri güneşten karşıladığınızda tasarruf büyüdüğü için bu süre kısalır.",
+            "Panellerin ömrü 25 yılın üzerindedir; amortisman tamamlandıktan sonraki 15-20 yıl boyunca ürettiğiniz enerji neredeyse tamamen kârdır. Amortisman süresini etkileyen en büyük değişkenler çatı açısı/yönü, gölgelenme durumu ve güncel elektrik birim fiyatıdır.",
+          ],
+        },
+        {
+          heading: "Mahsuplaşma nasıl çalışır?",
+          paragraphs: [
+            "On-grid (şebeke bağlantılı) villa sistemlerinde, gündüz ürettiğiniz ve anlık kullanmadığınız fazla enerji şebekeye verilir; ay sonunda tükettiğiniz ile ürettiğiniz enerji karşılıklı olarak mahsuplaşır (netleştirilir). Sadece net farkınız için fatura ödersiniz.",
+            "Bir ay fazla ürettiyseniz, oluşan fazlalık bir sonraki döneme taşınabilir — yani yaz aylarında ürettiğiniz fazla enerji kışın tüketiminizde işinize yarayabilir. Mahsuplaşma sürecine hiç girmeden, tamamen kendi bataryanızda depolayarak bağımsız çalışan hibrit sistemler de kuruyoruz; ikisi arasındaki farkı keşifte birlikte değerlendiriyoruz.",
+          ],
+        },
+        {
+          heading: "EDAŞ başvurusu ve kurulum süreci ne kadar sürer?",
+          paragraphs: [
+            "Süreç dört ana adımdan oluşur: keşif ve tüketim analizi, statik/elektrik projesinin çizilmesi, EDAŞ bağlantı anlaşması başvurusu ve fiziksel kurulum. Keşiften kurulumun tamamlanmasına kadar toplam süre, dosyanın EDAŞ'taki inceleme temposuna bağlı olarak genellikle birkaç hafta ile birkaç ay arasında değişir.",
+            "Panel ve invertör montajının kendisi çatı büyüklüğüne göre çoğu villada 1-3 gün içinde tamamlanır. Statik rapor, tek hat şeması ve EDAŞ başvurusu dahil tüm evrak sürecini sizin adınıza biz yürütüyoruz — sizden randevu vermeniz dışında bir uğraş beklemiyoruz.",
+          ],
+        },
+        {
+          heading: "Kredi ve taksit imkanı var mı?",
+          paragraphs: [
+            "Evet — anlaşmalı bankalarla kredi kartına taksit imkanı sunuyoruz, ayrıca bazı bankaların düşük faizli yeşil enerji/GES kredisi seçenekleri de mevcut. Birçok müşterimiz, kredi taksitini sistemin sağladığı fatura tasarrufuna yakın bir tutarda planlayarak yatırımı adeta \"kendi kendini ödeyen\" bir modele dönüştürüyor.",
+            "Size uygun ödeme planını, keşif sonrası net teklifle birlikte karşılaştırmalı olarak sunuyoruz; hangi banka ve vade seçeneğinin sizin için en avantajlı olduğunu birlikte değerlendiriyoruz.",
+          ],
+        },
+        {
+          heading: "Villanızı hibrit batarya, ısı pompası ve EV şarjıyla tamamen bağımsız hale getirin",
+          paragraphs: [
+            "Villa GES sistemi tek başına da güçlü bir yatırımdır; ama asıl fark, onu hibrit lityum batarya, ısı pompası entegrasyonu ve elektrikli araç şarj istasyonuyla birleştirdiğinizde ortaya çıkar. Bu sayfanın üst kısmındaki \"Tek çatı, tek sistem, dört çözüm\" bölümünde anlattığımız gibi, bu dördünü tek entegre sistemde kurarak villanızı elektrik faturasından büyük ölçüde ya da tamamen bağımsız hale getirebiliyoruz.",
+            "Hangi kombinasyonun sizin tüketim profilinize ve bütçenize en uygun olduğunu belirlemek için ücretsiz keşif talep edebilir, ya da doğrudan WhatsApp'tan sorularınızı iletebilirsiniz.",
+          ],
+        },
+      ],
+    },
   },
 
   "isi-pompasi-entegrasyonu": {

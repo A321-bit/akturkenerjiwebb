@@ -393,6 +393,35 @@ export default async function ServiceDetailPage({
         </div>
       </section>
 
+      {/* SEO REHBER MAKALESİ */}
+      {content.article && (
+        <section className="mx-auto max-w-4xl px-5 py-16 sm:px-8">
+          <Reveal>
+            <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+              Rehber
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {content.article.title}
+            </h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-slate">{content.article.intro}</p>
+          </Reveal>
+          <div className="mt-8 flex flex-col gap-8">
+            {content.article.sections.map((s, i) => (
+              <Reveal key={s.heading} delay={i * 50}>
+                <h3 className="font-display text-[17px] font-semibold text-ink">{s.heading}</h3>
+                <div className="mt-2.5 flex flex-col gap-3">
+                  {s.paragraphs.map((p, pi) => (
+                    <p key={pi} className="text-[14.5px] leading-relaxed text-slate">
+                      {p}
+                    </p>
+                  ))}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* SSS */}
       {content.faqs.length > 0 && (
         <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
