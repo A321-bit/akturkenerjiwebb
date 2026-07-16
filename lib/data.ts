@@ -201,10 +201,14 @@ function mapReference(row: ReferenceRow): Reference {
   };
 }
 
+// Tüm çağıranlar (anasayfa, referans listesi, hizmet sayfalarındaki
+// "Son Tamamlanan Projelerimiz" ve sitemap) bu veriyi yalnızca önizleme
+// kartlarında kullanıyor — detay sayfasına özel "gallery" ve "description"
+// alanlarını (hem daha büyük hem gereksiz) hiç çekmiyoruz.
 export const getReferences = cache(async (): Promise<Reference[]> => {
   const { data, error } = await supabasePublic
     .from("project_references")
-    .select("*")
+    .select("id, slug, title, category, location, address, capacity, year, summary, image")
     .order("sort_order");
   if (error) throw new Error(error.message);
   return (data as ReferenceRow[]).map(mapReference);
@@ -285,6 +289,21 @@ export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
 export const getBlogPostBySlug = cache(async (slug: string): Promise<BlogPost | null> => {
   const { data } = await supabasePublic.from("blog_posts").select("*").eq("slug", slug).maybeSingle();
   return data ? mapBlogPost(data as BlogPostRow) : null;
+});
+
+export type BlogPostSummary = Pick<BlogPost, "slug" | "title" | "description" | "category">;
+
+// "İlgili Yazılar" gibi liste/önizleme bölümleri okuma süresi göstermediği için
+// ağır "content" (1000+ kelimelik makale gövdesi) sütununu hiç çekmiyoruz —
+// bu, 13 hizmet sayfasının her isteğinde ~30 yazının tamamını gereksiz yere
+// transfer etmesini önler.
+export const getBlogPostSummaries = cache(async (): Promise<BlogPostSummary[]> => {
+  const { data, error } = await supabasePublic
+    .from("blog_posts")
+    .select("slug, title, description, category")
+    .order("published_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as BlogPostSummary[];
 });
 
 // ── Admin (secret anahtar, sadece sunucu tarafı route'larda kullanılır) ──

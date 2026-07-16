@@ -7,7 +7,7 @@ import {
   getServiceBySlug,
   getReferences,
   getSiteSettings,
-  getBlogPosts,
+  getBlogPostSummaries,
   whatsappLink,
   SITE_URL,
   SITE_NAME,
@@ -70,7 +70,7 @@ export default async function ServiceDetailPage({
     getSiteSettings(),
     getServices(),
     getReferences(),
-    getBlogPosts(),
+    getBlogPostSummaries(),
   ]);
 
   const others = content.relatedServiceSlugs
