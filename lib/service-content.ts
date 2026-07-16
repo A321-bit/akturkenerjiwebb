@@ -27,8 +27,8 @@ import {
   Route,
   ShieldCheck,
   Smartphone,
-  Snowflake,
   Sprout,
+  Waves,
   TrendingUp,
   Truck,
   Wind,
@@ -166,8 +166,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "isi-pompasi-entegrasyonu": {
     hero: {
-      headline: "Isınma ve soğutmayı tek cihazla, güneşten besleyerek çözün.",
-      sub: "Hava kaynaklı ısı pompasını mevcut ya da yeni kurulacak güneş enerjisi sisteminize entegre ediyoruz — kışın ısıtma, yazın soğutma giderinizi doğalgaza kıyasla belirgin şekilde düşürüyoruz.",
+      headline: "Isınma, soğutma ve havuz suyu — tek sistemle, güneşten besleyerek çözün.",
+      sub: "Villanızdan işletmenize, özel havuzunuzdan fabrika tesisinize kadar her ölçekte hava kaynaklı ısı pompası kuruyoruz — mevcut ya da yeni güneş enerjisi sisteminize entegre ederek işletme maliyetini düşürüyoruz.",
     },
     benefits: [
       {
@@ -176,33 +176,34 @@ export const serviceContent: Record<string, ServiceContent> = {
         text: "Hava kaynaklı ısı pompası kışın ısıtma, yazın soğutma sağlar — iki ayrı sistem kurma masrafından kurtulursunuz.",
       },
       {
-        icon: Snowflake,
-        title: "Doğalgaza göre çok daha verimli",
-        text: "1 birim elektrikle 3-4 birim ısı enerjisi üretir; doğalgaz ve elektrikli ısıtıcılara kıyasla işletme maliyeti belirgin şekilde düşer.",
+        icon: Waves,
+        title: "Havuzunuzu sezon boyu ısıtın",
+        text: "Özel havuz ısı pompalarıyla açık veya kapalı havuzunuzu geleneksel yöntemlere göre çok daha düşük maliyetle ısıtır, yüzme sezonunu uzatırsınız.",
       },
       {
         icon: Zap,
         title: "Güneş enerjinizle besleyin",
-        text: "Mevcut ya da yeni kurulacak GES sisteminize entegre ederek ısınma-soğutma maliyetinizi neredeyse sıfıra indirin.",
+        text: "Mevcut ya da yeni kurulacak GES sisteminize entegre ederek ısınma-soğutma-havuz maliyetinizi neredeyse sıfıra indirin.",
       },
       {
-        icon: TrendingUp,
-        title: "Konutunuzun değerini artırır",
-        text: "Enerji verimli ısıtma-soğutma sistemi, villanın enerji kimlik belgesini ve yeniden satış değerini olumlu etkiler.",
+        icon: Building2,
+        title: "Her ölçekte çözüm",
+        text: "Villadan siteye, ofisten fabrikaya kadar ihtiyacınıza uygun kapasitede konut, ticari ve endüstriyel ısı pompası sistemleri kuruyoruz.",
       },
     ],
     table: {
-      title: "Konut büyüklüğüne göre kapasite",
-      columns: ["Konut büyüklüğü", "Tipik ısı pompası kapasitesi", "Tahmini yıllık tasarruf"],
+      title: "Kullanım alanına göre kapasite",
+      columns: ["Kullanım alanı", "Tipik kapasite", "Not"],
       rows: [
-        ["100-150 m²", "8-12 kW", "Doğalgaza göre %40-60"],
-        ["150-250 m²", "12-16 kW", "Doğalgaza göre %40-60"],
-        ["250+ m² / güneş enerjili", "16-24 kW", "GES ile birlikte %70+"],
+        ["Villa / konut (100-250 m²)", "8-16 kW", "Isınma + soğutma"],
+        ["Özel havuz ısıtma", "5-15 kW", "Havuz hacmine göre değişir"],
+        ["İşletme / ofis / site", "20-60 kW", "Çoklu ünite ile ölçeklenir"],
+        ["Fabrika / büyük tesis", "60 kW ve üzeri", "Endüstriyel proje bazlı tasarım"],
       ],
-      note: "Kesin kapasite, konutun yalıtım durumu ve keşif sonrası netleşir.",
+      note: "Kesin kapasite, kullanım alanı, hacim/yalıtım durumu ve keşif sonrası netleşir.",
     },
     steps: [
-      { title: "Keşif & İhtiyaç Analizi", text: "Konutunuzun m², yalıtım durumu ve mevcut ısıtma sisteminizi yerinde inceliyoruz." },
+      { title: "Keşif & İhtiyaç Analizi", text: "Konut, havuz, işletme ya da tesisinizin büyüklüğünü ve mevcut ısıtma sisteminizi yerinde inceliyoruz." },
       { title: "Kapasite & Cihaz Seçimi", text: "İhtiyacınıza uygun ısı pompası kapasitesini ve modelini belirliyoruz." },
       { title: "Montaj & Tesisat", text: "İç/dış ünite montajı, boru tesisatı ve elektrik bağlantısını tamamlıyoruz." },
       { title: "Güneş Enerjisi Entegrasyonu", text: "Mevcut veya yeni GES sisteminize entegre ederek işletme maliyetini düşürüyoruz (opsiyonel)." },
@@ -210,8 +211,16 @@ export const serviceContent: Record<string, ServiceContent> = {
     ],
     faqs: [
       {
-        q: "Isı pompası hangi konut tiplerine uygun?",
-        a: "Villa, müstakil ev ve doğru yalıtıma sahip her konut tipine uygulanabilir; keşifte konutunuzun uygunluğunu değerlendiriyoruz.",
+        q: "Isı pompası hangi yapı tiplerine uygun?",
+        a: "Villa, müstakil ev, özel havuzlar, ofis/işletmeler, siteler ve fabrikalar dahil hemen her yapıya uygulanabilir; keşifte kullanım alanınıza göre doğru kapasiteyi belirliyoruz.",
+      },
+      {
+        q: "Havuzumu ısı pompasıyla ısıtabilir miyim?",
+        a: "Evet — özel havuz ısı pompalarıyla açık veya kapalı havuzunuzu geleneksel yöntemlere göre çok daha düşük maliyetle ısıtabilir, yüzme sezonunuzu uzatabilirsiniz.",
+      },
+      {
+        q: "İşletmemde veya fabrikamda büyük ölçekli ısı pompası kurabilir misiniz?",
+        a: "Evet — ofis, site ve üretim tesisleri için çoklu ünite ile ölçeklenen ticari ve endüstriyel kapasiteli sistemler tasarlıyor ve kuruyoruz.",
       },
       {
         q: "Isı pompasını mevcut kombi/doğalgaz sistemimle birlikte kullanabilir miyim?",
@@ -222,22 +231,25 @@ export const serviceContent: Record<string, ServiceContent> = {
         a: "Evet, ısı pompası bağımsız olarak da kurulabilir; sadece elektrik şebekesinden beslenerek yine doğalgaza göre yüksek verimle çalışır.",
       },
       {
-        q: "Kışın çok soğuk günlerde performansı düşer mi?",
-        a: "Modern hava kaynaklı ısı pompaları -15°C ile -20°C'ye kadar verimli çalışacak şekilde üretiliyor; Ankara iklimi için uygun kapasiteyi keşifte belirliyoruz.",
-      },
-      {
         q: "Yaz aylarında soğutma için de kullanılabilir mi?",
         a: "Evet, ısı pompaları kışın ısıtma yazın soğutma sağlayan tersinir (reversible) sistemlerdir — klima ihtiyacınızı da karşılar.",
       },
     ],
     closing: {
       title: "Isı pompanız için keşif planlayalım",
-      text: "Konutunuzu ve mevcut ısıtma sisteminizi görelim; size en uygun kapasiteyi ve net teklifi hızlıca sunalım.",
+      text: "Konutunuzu, havuzunuzu ya da tesisinizi görelim; size en uygun kapasiteyi ve net teklifi hızlıca sunalım.",
     },
-    referenceCategories: ["Villa"],
-    seoKeywords: ["ısı pompası kurulumu Ankara", "hava kaynaklı ısı pompası fiyatları", "güneş enerjili ısı pompası", "villa ısı pompası"],
+    referenceCategories: ["Villa", "Fabrika", "Müteahhit"],
+    seoKeywords: [
+      "ısı pompası kurulumu Ankara",
+      "havuz ısı pompası fiyatları",
+      "hava kaynaklı ısı pompası fiyatları",
+      "işletme ısı pompası sistemleri",
+      "endüstriyel ısı pompası kurulumu",
+      "güneş enerjili ısı pompası",
+    ],
     blogCategory: "Isı Pompası",
-    relatedServiceSlugs: ["villa-cati-ges", "lityum-batarya-depolama", "elektrikli-arac-sarj-istasyonu"],
+    relatedServiceSlugs: ["villa-cati-ges", "fabrika-cati-ges", "lityum-batarya-depolama"],
   },
 
   "muteahhit-ges": {
