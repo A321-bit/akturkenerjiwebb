@@ -19,6 +19,7 @@ import CoverMedia from "@/components/CoverMedia";
 import SunGlow from "@/components/SunGlow";
 import Reveal from "@/components/Reveal";
 import QuoteModal from "@/components/QuoteModal";
+import PumpPowerCalculator from "@/components/PumpPowerCalculator";
 
 // Hobi Bahçesi ve Karavan Sistemleri hizmetleri Off-Grid hizmetinde birleştirildi;
 // eski linkler/yer imleri 404 yerine yeni sayfaya yönlensin diye eşleme tutuyoruz.
@@ -341,6 +342,9 @@ export default async function ServiceDetailPage({
           <p className="mt-3 text-[12.5px] leading-relaxed text-slate-soft">
             {content.table.note}
           </p>
+          {service.slug === "tarimsal-sulama" && (
+            <PumpPowerCalculator whatsappNumber={site.contact.whatsappNumber} />
+          )}
         </section>
       )}
 
