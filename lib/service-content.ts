@@ -322,6 +322,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     ],
     blogCategory: "Isı Pompası",
     relatedServiceSlugs: ["villa-cati-ges", "fabrika-cati-ges", "lityum-batarya-depolama"],
+    article: {
+      title: "Isı Pompası Rehberi: Doğru Kapasite, Havuz Isıtma ve Doğalgazla Karşılaştırma",
+      intro:
+        "Isı pompası araştıran müşterilerimizin en çok sorduğu soruları — kapasite seçimi, havuz ısıtma maliyeti, doğalgazla karşılaştırma ve kışın verim — tek yerde topladık.",
+      sections: [
+        {
+          heading: "Villa, işletme ve havuz için doğru kapasite nasıl seçilir?",
+          paragraphs: [
+            "Isı pompası kapasitesi; mekanın metrekaresi, yalıtım kalitesi ve hedef sıcaklık farkına göre belirlenir. Konutlarda 100-250 m² için genellikle 8-16 kW yeterli olurken, özel havuzlarda kapasite havuzun su hacmine ve istenen sıcaklık artışına göre 5-15 kW aralığında değişir.",
+            "İşletme, ofis veya fabrika gibi büyük hacimlerde tek ünite yetmez; bu durumda çoklu ünite ile 20-60 kW ve üzerine ölçeklenen ticari/endüstriyel sistemler kuruyoruz. Kesin kapasite her zaman yerinde keşifle netleşir — fazla büyük seçilen bir cihaz gereksiz yere pahalıya mal olur, küçük seçilen ise hedef sıcaklığa ulaşamaz.",
+          ],
+        },
+        {
+          heading: "Isı pompası mı, doğalgaz kombi mi daha ekonomik?",
+          paragraphs: [
+            "Isı pompaları, 1 birim elektrik tüketimiyle ortam havasından aldığı enerjiyle 3-4 birim ısı enerjisi üretir; bu verim oranı (COP) doğalgaz kombiyle kıyaslandığında işletme maliyetini belirgin şekilde düşürür. Doğalgaz fiyatlarındaki artışlar da bu farkı her yıl biraz daha büyütüyor.",
+            "En büyük fark, ısı pompasını güneş enerjisi sisteminize entegre ettiğinizde ortaya çıkıyor: gündüz ürettiğiniz elektrikle cihazı besleyerek ısınma-soğutma maliyetini neredeyse sıfıra indirebiliyorsunuz — doğalgazda böyle bir seçenek yok.",
+          ],
+        },
+        {
+          heading: "Havuz ısı pompası fiyatını ne belirler?",
+          paragraphs: [
+            "Havuz ısı pompası maliyeti; havuzun su hacmi (m³), açık/kapalı olması, hedeflenen su sıcaklığı ve sezon uzunluğuna göre değişir. Açık havuzlarda rüzgar ve buharlaşma ısı kaybını artırdığı için örtü kullanımı önerilir; bu da cihazın daha küçük kapasitede seçilebilmesini sağlar.",
+            "Havuzunuzu güneş enerjisi sisteminize entegre ettiğinizde, özellikle yaz aylarında (güneşin en bol olduğu dönem, havuz kullanımının da en yoğun olduğu dönemle çakıştığı için) su ısıtma maliyeti dramatik şekilde düşer.",
+          ],
+        },
+        {
+          heading: "Ankara kışında ısı pompası verimli çalışır mı?",
+          paragraphs: [
+            "Evet — modern hava kaynaklı ısı pompaları düşük dış hava sıcaklıklarında da çalışacak şekilde tasarlanır. Çok soğuk günlerde verim bir miktar düşse de, doğru kapasitede seçilmiş bir cihaz Ankara'nın kış koşullarında sorunsuz ısıtma sağlar.",
+            "Yaz aylarında ise aynı cihaz tersinir (reversible) çalışarak soğutma sağlar — yani tek bir yatırımla hem kışın ısınma hem yazın klima ihtiyacınızı karşılarsınız, ayrı bir soğutma sistemi kurmanıza gerek kalmaz.",
+          ],
+        },
+        {
+          heading: "Güneş enerjisiyle birlikte kullanınca gerçekte ne kadar tasarruf sağlanır?",
+          paragraphs: [
+            "Isı pompasının elektrik tüketimini gündüz saatlerinde güneş panellerinizden karşıladığınızda, hem ısınma-soğutma hem havuz ısıtma maliyetiniz doğrudan üretim kapasitenize bağlı hale gelir — şebekeden çektiğiniz enerji, dolayısıyla faturanız küçülür.",
+            "Villa çatı GES'iniz yoksa dahi ısı pompası kurulumu tek başına yapılabilir; ileride güneş enerjisi sistemi eklediğinizde ikisini entegre etmek teknik olarak kolaydır. Hangi sıralamanın sizin için daha mantıklı olduğunu keşifte birlikte değerlendiriyoruz.",
+          ],
+        },
+      ],
+    },
   },
 
   "muteahhit-ges": {
@@ -394,6 +436,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["toplu konut güneş enerjisi sistemi", "site GES kurulumu", "müteahhit firmalarla güneş paneli iş birliği"],
     blogCategory: "Müteahhit GES",
     relatedServiceSlugs: ["fabrika-cati-ges", "projelendirme-muhendislik-basvuru", "taahhut-isletme-bakim"],
+    article: {
+      title: "Müteahhitler için GES Rehberi: Ne Zaman Devreye Alınmalı, Kim Öder, Satışa Etkisi Ne?",
+      intro:
+        "Toplu konut ve site projelerinde güneş enerjisi sistemini projeye dahil etmeyi düşünen müteahhit ve geliştiricilerin en çok merak ettiği pratik soruları derledik.",
+      sections: [
+        {
+          heading: "GES, projeye ne zaman dahil edilmeli?",
+          paragraphs: [
+            "En verimli sonuç, GES'in kaba inşaat aşamasında değil, proje geliştirme/ruhsat aşamasında planlanmasıyla alınır. Böylece elektrik altyapısı (pano kapasitesi, kablo güzergahı, sayaç yeri) baştan GES'e uygun tasarlanır ve sonradan ek maliyet çıkmaz.",
+            "Yine de kaba inşaatı devam eden ya da tamamlanmış projelere de sonradan GES entegre edebiliyoruz — ideal olan erken planlama olsa da, zorunlu değil.",
+          ],
+        },
+        {
+          heading: "Blok bazlı kurulum teslim tarihini etkiler mi?",
+          paragraphs: [
+            "Doğru planlandığında hayır — tam tersine, çatısı biten bloktan kuruluma başlayıp diğer bloklarda inşaat devam ederken paralel ilerliyoruz. Bu sayede GES kurulumu şantiye takviminizin bir parçası olur, ayrı bir gecikme kalemi olmaz.",
+            "Kritik nokta, EDAŞ başvuru sürecinin proje aşamasında başlatılmasıdır; başvuru iskân aşamasına kalırsa teslim tarihini riske atabilir. Bu stratejiyi biz proje başında sizinle birlikte kuruyoruz.",
+          ],
+        },
+        {
+          heading: "\"Güneş enerjili site\" etiketi satışlarda gerçekten fark yaratıyor mu?",
+          paragraphs: [
+            "Enerji giderleri konut alıcıları için giderek daha belirleyici bir kriter haline geliyor. Ortak alan elektriğinin (asansör, aydınlatma, hidrofor) güneşten karşılandığı bir site, aidat tasarrufu vaadiyle somut bir pazarlama argümanı sunuyor.",
+            "Bu, sadece bir broşür maddesi değil — aidat bütçesine yansıyan, alıcının kendi cebinde hissedeceği bir fark. Satış ekibinizin kullanabileceği somut rakamları (tahmini aidat tasarrufu gibi) projelendirme aşamasında birlikte çıkarabiliyoruz.",
+          ],
+        },
+        {
+          heading: "Ortak alan mı, daire bazlı mı — hangisi doğru tercih?",
+          paragraphs: [
+            "Çoğu projede ortak alan tüketimini (asansör, merdiven aydınlatması, hidrofor, otopark) karşılayacak bir sistem tercih ediliyor; bu hem yönetimi kolaylaştırıyor hem de site yönetimine doğrudan aidat tasarrufu sağlıyor.",
+            "Talep varsa daire bazlı sistemler (her bağımsız bölüm kendi üretimini kendi sayacından karşılar) de tasarlıyoruz — özellikle üst düzey/villa tipi projelerde bu, satış fiyatına yansıtılabilecek ek bir özellik olarak konumlandırılabiliyor.",
+          ],
+        },
+        {
+          heading: "Toplu alımda maliyet ne kadar düşüyor, kim ödüyor?",
+          paragraphs: [
+            "Panel, invertör ve montaj ekipmanını proje ölçeğinde tedarik ettiğimiz için birim maliyet, tek bir villa için yapılan bireysel alıma göre belirgin şekilde düşüyor — bu avantarı doğrudan proje bütçenize yansıtıyoruz.",
+            "Ödeme modeli genellikle inşaat sürecine paralel hakediş bazlı ilerliyor; malzeme ve işçilik kalemleri şeffaf şekilde ayrıştırılıyor. İsteyen müteahhit firmalarla uzun vadeli bayilik/çözüm ortaklığı modeliyle de çalışabiliyoruz.",
+          ],
+        },
+      ],
+    },
   },
 
   "tarimsal-sulama": {
@@ -466,6 +550,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["tarımsal sulama güneş enerjisi sistemi", "güneş enerjili su pompası fiyatları", "şebekesiz arazide sulama sistemi"],
     blogCategory: "Tarımsal Sulama",
     relatedServiceSlugs: ["off-grid-sebekeden-bagimsiz", "ruzgar-hibrit", "malzeme-tedarik-toptan-perakende"],
+    article: {
+      title: "Tarımsal Sulama GES Rehberi: Pompa Seçimi, Hibe İmkanları ve Dizelle Karşılaştırma",
+      intro:
+        "Yukarıda pompa gücünüzü seçip anlık kWp hesabı yapabildiniz. Aşağıda çiftçilerimizin en sık sorduğu, hesap makinesinin cevaplamadığı soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "Şebeke olmayan arazide sulama sistemi nasıl kurulur?",
+          paragraphs: [
+            "Sistem üç ana bileşenden oluşur: güneş panelleri, pompa kontrol ünitesi (VFD/invertör) ve dalgıç ya da yüzey pompası. Şebeke bağlantısı gerekmediği için EDAŞ başvurusu, hat çekme yatırımı ya da trafo maliyeti yok — panel ve pompa doğrudan birbirine bağlanır.",
+            "Kurulum süresi arazi büyüklüğüne göre değişse de çoğu proje birkaç gün içinde tamamlanır; panel sehpası, pompa ve kontrol ünitesi sahada monte edilip sulama hattınıza bağlanır.",
+          ],
+        },
+        {
+          heading: "Kuyu debisine göre panel ve pompa nasıl boyutlandırılır?",
+          paragraphs: [
+            "Doğru boyutlandırma için kuyu derinliği, statik su seviyesi ve debi (litre/saniye) ölçülür. Sığ kuyu/küçük parselde 3-7 kWp yeterli olurken, derin kuyu ve yüksek debi ihtiyacında sistem 15-30 kWp'a kadar çıkabilir — pompa gücü ve panel sayısı bu ölçüme göre birlikte hesaplanır.",
+            "Bulutlu günlerde üretim azaldığı için, ihtiyaca göre bir su deposu entegrasyonu öneriyoruz: güneşli saatlerde depoya su çekilir, istediğiniz an bu depodan sulama yapılır — böylece hava koşullarından bağımsız bir esneklik kazanılır.",
+          ],
+        },
+        {
+          heading: "Tarımsal GES için hibe ve destek imkanı var mı?",
+          paragraphs: [
+            "Kırsal kalkınma ve tarımsal destekleme programları zaman zaman güneş enerjili sulama sistemleri için hibe veya düşük faizli kredi imkanı sunuyor; bu programların kapsamı ve şartları dönemsel olarak değişiyor.",
+            "Güncel destek programlarını takip ediyor, uygun olduğunuz bir hibe/kredi fırsatı varsa başvuru evraklarınızda danışmanlık sağlıyoruz — bu süreç projenizin efektif maliyetini daha da aşağı çekebilir.",
+          ],
+        },
+        {
+          heading: "Dizel jeneratöre kıyasla gerçek maliyet avantajı ne kadar?",
+          paragraphs: [
+            "Dizel jeneratörle sulama yapan bir çiftçi, her sulama sezonunda yakıt, bakım ve amortisman maliyetiyle karşı karşıya kalır; bu maliyet yıldan yıla yakıt fiyatlarıyla birlikte artar. Güneş enerjili sistemde ise kurulum sonrası işletme maliyeti neredeyse sıfırdır.",
+            "Bu nedenle güneş enerjili sulama sistemleri genellikle 2-6 sulama sezonu içinde kendini amorti eder — kuyu derinliğine ve önceki dizel yakıt giderinize göre bu süre değişir. Panellerin 25 yılı aşan ömrü boyunca amortisman sonrası tüm üretim kârdır.",
+          ],
+        },
+        {
+          heading: "Kurulum sonrası bakım gerektirir mi?",
+          paragraphs: [
+            "Sistemde hareketli parça minimum düzeydedir; paneller sezonluk bir görsel kontrol ve temizlik dışında bakım istemez. Pompa tarafında ise su kalitesine bağlı periyodik kontrol önerilir.",
+            "İsteyen çiftçilerimiz için sezon dışında sökülüp saklanabilen taşınabilir kurulum seçeneği de sunuyoruz — özellikle kiralık arazilerde ya da mevsimlik kullanımda tercih ediliyor.",
+          ],
+        },
+      ],
+    },
   },
 
   "ruzgar-hibrit": {
@@ -534,6 +660,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["rüzgar güneş hibrit enerji sistemi", "hibrit invertör kurulumu", "şebekeden bağımsız hibrit enerji"],
     blogCategory: "Rüzgar & Hibrit",
     relatedServiceSlugs: ["lityum-batarya-depolama", "off-grid-sebekeden-bagimsiz", "tarimsal-sulama"],
+    article: {
+      title: "Rüzgar-Güneş Hibrit Sistem Rehberi: Ne Zaman Mantıklı, Batarya Şart mı?",
+      intro:
+        "Şebekeden tamamen bağımsız çalışması gereken tesisler için rüzgar-güneş hibrit sistemleri sıkça araştırılıyor. En sık gelen soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "Hangi durumlarda rüzgar-güneş hibrit sistem mantıklı?",
+          paragraphs: [
+            "Hibrit sistem, tek başına güneşin yetersiz kaldığı senaryolarda değerli: gece kesintisiz üretim gereken telekom istasyonları, uzun bulutlu dönemler yaşanan bölgeler ya da şebekeden tamamen bağımsız çalışması gereken kritik altyapılar. Sadece güneş yeterliyse ek türbin maliyetine gerek kalmayabilir.",
+            "Bölgenizin rüzgar potansiyeli belirleyici faktör; keşif öncesinde bölge verilerini analiz ediyor, rüzgar zayıfsa bunu dürüstçe söyleyip güneş + batarya ağırlıklı bir kurgu öneriyoruz — gereksiz türbin yatırımı yaptırmıyoruz.",
+          ],
+        },
+        {
+          heading: "Küçük ölçekli rüzgar türbini villa veya tesis için yeterli mi?",
+          paragraphs: [
+            "Küçük ölçekli türbinler, güneş panellerinin ana kaynak olduğu bir sistemde destekleyici rol oynar — özellikle gece ve kış aylarında güneşin ürettiği açığı kısmen kapatır. Tek başına bir villanın tüm ihtiyacını karşılayacak büyüklükte değildir, panel + türbin kombinasyonu olarak düşünülmelidir.",
+            "Uzak tesisler, dağ evleri ve telekom istasyonları gibi şebekenin hiç ulaşmadığı noktalarda bu kombinasyon, tek kaynaklı sistemlere göre çok daha güvenilir bir kesintisizlik sağlar.",
+          ],
+        },
+        {
+          heading: "Hibrit sistemde batarya şart mı?",
+          paragraphs: [
+            "Şebekeden tamamen bağımsız (off-grid) çalışacaksa evet — güneş ve rüzgarın anlık üretmediği saatlerde ihtiyacınızı karşılayacak enerji bataryada depolanmalı. Şebekeye bağlı hibrit kurulumlarda batarya opsiyoneldir, ama kesintisizlik önemliyse yine önerilir.",
+            "Batarya kapasitesi, tesisin kritik yük profiline göre belirlenir; hibrit invertör hem panel hem türbin çıkışını tek hatta toplayıp bataryayı yönetir, siz tek bir uygulamadan tüm sistemi izlersiniz.",
+          ],
+        },
+        {
+          heading: "Gece enerji üretimi nasıl sağlanıyor?",
+          paragraphs: [
+            "Güneş panelleri gece üretim yapamaz; bu saatlerde ya rüzgar türbini (varsa ve rüzgar yeterliyse) ya da gündüz bataryada biriken enerji devreye girer. Doğru boyutlandırılmış bir hibrit sistemde bu geçiş otomatik ve kesintisizdir.",
+            "Kritik altyapılarda (telekom istasyonu gibi) ek güvence için yedekli batarya kapasitesi öneriyoruz — birkaç gün üst üste düşük rüzgar/güneş olsa bile sistem çalışmaya devam eder.",
+          ],
+        },
+        {
+          heading: "Kurulum ve bakım maliyeti sadece güneş sistemine göre nasıl?",
+          paragraphs: [
+            "Türbin eklemek başlangıç yatırımını artırır; panel tarafı neredeyse bakım istemezken türbinde periyodik mekanik kontrol gerekir (rulman, kanat, elektrik bağlantıları). Bu bakım planını kurulumla birlikte size sunuyoruz.",
+            "Buna karşılık, güneşin yetersiz kaldığı dönemlerde jeneratör yakıtı ya da uzun süreli enerji kesintisi riskini ortadan kaldırdığı için, kritik tesislerde bu ek maliyet kısa sürede kendini gösterir.",
+          ],
+        },
+      ],
+    },
   },
 
   "lityum-batarya-depolama": {
@@ -606,6 +774,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["lityum batarya depolama sistemi fiyatları", "güneş enerjisi batarya entegrasyonu", "kesintisiz güç için güneş bataryası"],
     blogCategory: "Batarya Depolama",
     relatedServiceSlugs: ["villa-cati-ges", "ruzgar-hibrit", "elektrikli-arac-sarj-istasyonu"],
+    article: {
+      title: "Lityum Batarya Depolama Rehberi: Kaç kWh Yeterli, LiFePO4 Neden Güvenli?",
+      intro:
+        "Kesintide elektriksiz kalmamak ya da güneşi gece kullanmak isteyenlerin en çok sorduğu soruları derledik.",
+      sections: [
+        {
+          heading: "Evim için kaç kWh batarya kapasitesi yeterli?",
+          paragraphs: [
+            "Kapasite, hangi cihazları ne kadar süre çalıştırmak istediğinize göre belirlenir. Aydınlatma, buzdolabı, internet ve TV gibi kritik yükler için 5-10 kWh mertebesinde bir batarya genellikle kesinti yedeği olarak yeterlidir.",
+            "Akşam tüketiminizin büyük kısmını güneşten karşılamak istiyorsanız 10-20 kWh aralığına çıkmak gerekir; ısı pompası desteği veya yoğun tüketim varsa 20 kWh üzerine çıkan sistemlerle şebekeden neredeyse tam bağımsızlık sağlanabilir. Kesin rakam, günlük tüketim profilinize göre keşifte hesaplanır.",
+          ],
+        },
+        {
+          heading: "LiFePO4 diğer lityum kimyasallarından neden daha güvenli?",
+          paragraphs: [
+            "LiFePO4 (lityum demir fosfat), telefon ve dizüstü bilgisayarlarda kullanılan lityum-kobalt hücrelere göre termal olarak çok daha kararlıdır; aşırı ısınma ve yangın riski belirgin şekilde düşüktür. Bu nedenle ev ve işletme kullanımı için sektörün tercih ettiği kimyasaldır.",
+            "Buna ek olarak BMS (batarya yönetim sistemi) her hücreyi sürekli izleyerek aşırı şarj, aşırı deşarj ve sıcaklık anomalilerine karşı otomatik koruma sağlar — doğru sigortalama ve standartlara uygun montajla güvenli bir ev kurulumu elde edilir.",
+          ],
+        },
+        {
+          heading: "Kesinti anında sistem nasıl devreye giriyor?",
+          paragraphs: [
+            "Sistem bir UPS mantığıyla çalışır: şebeke kesintisi algılandığı anda, milisaniyeler içinde otomatik olarak bataryaya geçiş yapılır. Çoğu kullanıcı bu geçişi ışıkların titremesi dışında fark etmez.",
+            "Devreye alma sırasında bu senaryo test edilir ve mobil uygulama telefonunuza kurulur — böylece batarya doluluk oranını, üretimi ve tüketimi her an anlık izleyebilirsiniz.",
+          ],
+        },
+        {
+          heading: "Mevcut güneş enerjisi sistemime sonradan batarya eklenebilir mi?",
+          paragraphs: [
+            "Çoğu durumda evet. Mevcut invertörünüzün modeline göre ya hibrit dönüşüm yapılır ya da ek bir şarj/depolama ünitesi entegre edilir — sistemi baştan kurmanıza gerek kalmaz.",
+            "Entegrasyon öncesi invertör uyumluluğunu keşifte kontrol ediyoruz; bazı eski model invertörlerde ek bir dönüştürücü gerekebilir, bunu da net şekilde önceden bildiriyoruz.",
+          ],
+        },
+        {
+          heading: "Batarya kaç yıl kullanılır, ömrü nasıl korunur?",
+          paragraphs: [
+            "LiFePO4 hücreler binlerce şarj-deşarj döngüsü ömrüne sahiptir; günlük kullanımda 10 yıl mertebesinde yüksek performans korunur ve üretici garantileri bunu destekler.",
+            "Batarya ömrünü en çok etkileyen faktör aşırı derin deşarjdır; BMS bu riski otomatik olarak sınırlar. Aşırı sıcak/soğuk ortamlardan kaçınmak ve üretici önerilerine uygun montaj da ömrü uzatan pratik adımlardır.",
+          ],
+        },
+      ],
+    },
   },
 
   "off-grid-sebekeden-bagimsiz": {
@@ -676,6 +886,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["off grid güneş enerjisi sistemi", "karavan güneş paneli kurulumu", "hobi bahçesi güneş enerjisi sistemi"],
     blogCategory: "Off-Grid Sistemler",
     relatedServiceSlugs: ["lityum-batarya-depolama", "ruzgar-hibrit", "villa-cati-ges"],
+    article: {
+      title: "Hobi Bahçesi ve Karavan için Off-Grid Rehberi: Kaç Watt Yeterli, Neler Çalışır?",
+      intro:
+        "Şebekenin ulaşmadığı hobi bahçesi, karavan ve uzak tesisler için en çok sorulan pratik soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "Hobi bahçesi veya karavan için kaç watt sistem yeterli?",
+          paragraphs: [
+            "İhtiyaç, hangi cihazları çalıştıracağınıza göre değişir. Sadece aydınlatma ve küçük bir su pompası için 0,5-2 kWp'lik küçük bir sistem + küçük batarya çoğu zaman yeterlidir; bu paketler genellikle aynı gün içinde kurulup çalışır hale gelir.",
+            "Karavanda buzdolabı ve elektronik cihazlar için 200-600W esnek ya da sert panel yeterli olurken, uzak bir tesis/kulübede daha kapsamlı ihtiyaçlar için 1-5 kWp + batarya paketine çıkılabilir. Kesin boyut, telefon görüşmesi ya da keşif sonrası netleşir.",
+          ],
+        },
+        {
+          heading: "EDAŞ başvurusu olmadan kurulum nasıl yapılır?",
+          paragraphs: [
+            "Sistem şebekeye hiç bağlanmadığı için EDAŞ başvurusu, abonelik, sayaç ya da bağlantı anlaşması gerekmez — panel, batarya ve invertörden oluşan kompakt sistem doğrudan sahada kurulur ve devreye alınır.",
+            "Bu, villa çatı GES'e kıyasla süreci ciddi şekilde hızlandırır: bürokratik onay beklemeden, çoğu zaman aynı gün ya da birkaç gün içinde elektriğiniz olur.",
+          ],
+        },
+        {
+          heading: "Karavanda hangi cihazlar çalıştırılabilir?",
+          paragraphs: [
+            "Buzdolabı, aydınlatma, telefon/laptop şarjı, televizyon ve küçük elektronik cihazlar doğru boyutlanmış panel ve bataryayla güneş olduğu sürece sorunsuz çalışır. Kamp tipi düşük tüketimli klimalar da uygun batarya/invertör kombinasyonuyla mümkün.",
+            "Standart bir ev tipi klima için dürüst olmak gerekirse — enerji tüketimi çok yüksek olduğu için verimli değil. Keşifte gerçekçi bir senaryo üzerinden hangi cihazların pratik olarak çalışabileceğini birlikte planlıyoruz.",
+          ],
+        },
+        {
+          heading: "İhtiyaç arttıkça sistem nasıl büyütülür?",
+          paragraphs: [
+            "Sistem modüler tasarlanır: bugün sadece aydınlatma ve su pompasıyla başlayıp yarın buzdolabı, sonra ek batarya kapasitesi ekleyebilirsiniz. Baştan büyük yatırım yapmak zorunda değilsiniz.",
+            "Bu yaklaşım özellikle hobi bahçesi sahiplerinde tercih ediliyor — arazi kullanımınız yıllar içinde değiştikçe (örneğin misafirhane veya küçük bir kulübe eklendiğinde) sistemi kademeli büyütüyoruz.",
+          ],
+        },
+        {
+          heading: "Kış aylarında ya da bulutlu havada performans nasıl?",
+          paragraphs: [
+            "Bulutlu günlerde üretim azalır ama durmaz; doğru boyutlanmış batarya, birkaç gün süren düşük üretim dönemlerinde bile kritik ihtiyaçlarınızı karşılamaya devam eder.",
+            "Kış aylarında güneşlenme süresi kısaldığı için sistem boyutlandırmasında bu mevsimsel değişim de hesaba katılır — yıl boyu kullanılacak bir hobi bahçesi/kulübe için kışı da göz önünde bulundurarak biraz daha geniş boyutlandırma öneriyoruz.",
+          ],
+        },
+      ],
+    },
   },
 
   "elektrikli-arac-sarj-istasyonu": {
@@ -748,6 +1000,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["elektrikli araç şarj istasyonu kurulumu", "ev tipi araç şarj cihazı fiyatları", "güneş enerjisiyle araç şarjı"],
     blogCategory: "Elektrikli Araç Şarjı",
     relatedServiceSlugs: ["villa-cati-ges", "lityum-batarya-depolama", "fabrika-cati-ges"],
+    article: {
+      title: "Ev Tipi Araç Şarj İstasyonu Rehberi: Pano Yeterli mi, Güneşle Ne Kadar Tasarruf?",
+      intro:
+        "Villa, işletme ve site otoparkları için elektrikli araç şarj istasyonu kurdurmayı düşünenlerin en çok sorduğu soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "AC duvar tipi şarj ile hızlı (DC) şarj arasındaki fark nedir?",
+          paragraphs: [
+            "Ev ve işyeri kullanımında standart çözüm AC Tip 2 duvar tipi istasyonlardır — güvenli, sessiz ve mevcut elektrik altyapınıza kolayca entegre edilir; aracı genellikle birkaç saat içinde tam şarj eder, gece boyunca şarj etmek için ideal.",
+            "DC hızlı şarj istasyonları çok daha yüksek güç çeker ve çok daha pahalıdır; bunlar genellikle ticari/yol üstü şarj istasyonları için tercih edilir, villa veya standart işyeri kullanımı için AC tip yeterli ve ekonomiktir.",
+          ],
+        },
+        {
+          heading: "Villamın elektrik panosu şarj istasyonuna yetiyor mu?",
+          paragraphs: [
+            "Bu, keşifte kontrol ettiğimiz ilk şeydir: pano kapasitenizi, kablo kesitinizi ve mevcut sigortalarınızı inceliyoruz. Çoğu modern villa panosu tek bir AC istasyonu için yeterlidir.",
+            "Yetersiz çıkarsa gerekli pano/kablo güncellemesini de biz üstleniyoruz — bu ek maliyeti size keşif sonrası net şekilde bildiriyoruz, sürpriz çıkmaz.",
+          ],
+        },
+        {
+          heading: "Güneş enerjisiyle araç şarjı gerçekte ne kadar tasarruf sağlar?",
+          paragraphs: [
+            "Şarj istasyonunu mevcut ya da yeni kurulacak GES sisteminize entegre ettiğinizde, aracınızı büyük ölçüde gündüz ürettiğiniz enerjiyle şarj edersiniz — kilometre başına yakıt/şarj maliyetiniz şebekeden çekilen elektriğe göre ciddi oranda düşer.",
+            "Akıllı uygulama üzerinden şarjı güneşin en yoğun olduğu saatlere otomatik programlayabilirsiniz; bu sayede üretiminizin büyük kısmı doğrudan aracınıza gider, şebekeye satmak yerine kendi tüketiminizde değerlendirilir.",
+          ],
+        },
+        {
+          heading: "Site veya işyeri otoparkında çoklu istasyon nasıl yönetiliyor?",
+          paragraphs: [
+            "Birden fazla üniteyi ortak elektrik altyapısına bağlayarak kuruyor ve yönetiyoruz; yük yönetimi (load balancing) sayesinde aynı anda şarj olan araçlar arasında güç adil şekilde paylaştırılır, pano aşırı yüklenmez.",
+            "Site yönetimleri için kullanım/faturalama takibi de mümkün — hangi dairenin ne kadar şarj kullandığı ortak altyapı üzerinden izlenebilir.",
+          ],
+        },
+        {
+          heading: "Akıllı şarj programlama tam olarak nasıl çalışır?",
+          paragraphs: [
+            "Mobil uygulama üzerinden şarj geçmişinizi görebilir, belirli saatlerde (örneğin güneşin en yoğun olduğu öğle saatlerinde) otomatik şarj başlatabilir ya da elektrik tarifenizin en ucuz olduğu gece saatlerine programlayabilirsiniz.",
+            "Bu esneklik, hem güneş enerjinizden maksimum faydalanmanızı hem de şebekeden çekilen enerjide en uygun tarife saatlerini yakalamanızı sağlıyor.",
+          ],
+        },
+      ],
+    },
   },
 
   "malzeme-tedarik-toptan-perakende": {
@@ -821,6 +1115,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["güneş paneli toptan satış", "invertör fiyatları Ankara", "solar panel bayi fiyat listesi"],
     blogCategory: "Malzeme Tedariği",
     relatedServiceSlugs: ["distributorluk-bayilik", "villa-cati-ges", "projelendirme-muhendislik-basvuru"],
+    article: {
+      title: "Güneş Paneli ve İnvertör Alım Rehberi: Nelere Dikkat Edilmeli?",
+      intro:
+        "Panel, invertör ve batarya alırken sıkça sorulan, doğru ürünü seçmenize yardımcı olacak pratik soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "Panel/invertör alırken en çok nelere dikkat edilmeli?",
+          paragraphs: [
+            "Öncelik üretici garanti belgesi ve orijinallik — gri ithalat ya da belgesiz ürünlerde arıza durumunda garanti desteği alamazsınız. İkinci kriter, panel ile invertörün gerilim/akım uyumluluğu; yanlış eşleştirme verim kaybına ya da cihaz arızasına yol açabilir.",
+            "Panel teknolojisi de önemli: monokristalin paneller yüksek verim isteyenler için, TOPCon gibi yeni nesil teknolojiler daha da yüksek verim sunuyor; polikristalin ise bütçe dostu bir seçenek. Hangi teknolojinin sizin projeniz için mantıklı olduğunu ücretsiz danışmanlıkla belirliyoruz.",
+          ],
+        },
+        {
+          heading: "Toptan alımda fiyat nasıl avantajlı hale gelir?",
+          paragraphs: [
+            "Belirli adetlerin üzerindeki alımlarda birim maliyet düşer; bu avantaj özellikle bayi, müteahhit ve kurumsal alıcılar için proje ölçeğine göre fiyatlandırmayla devreye girer.",
+            "Fiyat listemiz döviz kuru ve stok durumuna göre sık güncellendiği için, güncel ve size özel teklifi WhatsApp veya e-posta üzerinden aynı gün paylaşıyoruz.",
+          ],
+        },
+        {
+          heading: "Orijinal ürün garantisi neden bu kadar önemli?",
+          paragraphs: [
+            "Paneller 25 yıla varan performans garantisiyle satılır; bu garantinin geçerli olması için ürünün yetkili/orijinal kanaldan alınmış olması şart. Belgesiz ürünlerde arıza ya da düşük performans durumunda başvuracak bir muhatap bulamazsınız.",
+            "Her ürünümüz üretici garanti belgesiyle teslim edilir — hem bireysel proje sahipleri hem toplu alım yapan firmalar için bu belge, ileride yaşanabilecek anlaşmazlıkların önüne geçer.",
+          ],
+        },
+        {
+          heading: "Bayiler için stok ve tedarik süreci nasıl işliyor?",
+          paragraphs: [
+            "Bayi ve müteahhit firmalar için öncelikli stok ayırma ve özel fiyat listesi sunuyoruz; talep listenizi ilettiğinizde güncel stok durumuna göre aynı gün teklif dönüyoruz.",
+            "Ankara depomuzdan Türkiye geneline sigortalı sevkiyat yapıyoruz; kırılgan ürünler (paneller gibi) paletli olarak, proje takviminize uygun planlamayla gönderiliyor.",
+          ],
+        },
+        {
+          heading: "Hangi marka/teknoloji tercih edilmeli?",
+          paragraphs: [
+            "Doğru seçim, kullanım amacınıza bağlı: çatı alanı sınırlıysa yüksek verimli mono/TOPCon paneller daha az alanda daha fazla güç sağlar; alan bol ve bütçe önceliğiyse polikristalin/standart panellerle daha ekonomik bir sistem kurulabilir.",
+            "İnvertör tarafında string, hibrit (bataryalı) ve off-grid modeller arasında seçim, sisteminizin şebeke bağlantısı ve depolama ihtiyacına göre yapılır — hangi kombinasyonun projenize uyduğunu ücretsiz teknik danışmanlıkla netleştiriyoruz.",
+          ],
+        },
+      ],
+    },
   },
 
   "distributorluk-bayilik": {
@@ -890,6 +1226,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["güneş enerjisi bayilik başvurusu", "solar distribütörlük şartları", "GES bayilik iş ortaklığı"],
     blogCategory: "Bayilik",
     relatedServiceSlugs: ["malzeme-tedarik-toptan-perakende", "taahhut-isletme-bakim", "muteahhit-ges"],
+    article: {
+      title: "GES Bayilik Rehberi: Ne Gerekir, Kazanç Modeli Nasıl İşler?",
+      intro:
+        "Solar sektöründe bayilik veya distribütörlük değerlendiren firmaların en çok sorduğu soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "GES bayiliği almak için ne gerekir?",
+          paragraphs: [
+            "Ağır bir ilk yatırım ya da teknik ekip zorunluluğu dayatmıyoruz — satış ve müşteri ilişkilerini yönetebilen firmalar için uygun bir model kuruyoruz, teknik eğitimi ve ilk kurulumlarda saha desteğini biz sağlıyoruz.",
+            "Asıl önemli olan bölgenizi tanımanız ve büyüme isteğiniz; ilk görüşmede firmanızı ve hedeflerinizi dinleyip size özel, gerçekçi bir başlangıç planı çıkarıyoruz.",
+          ],
+        },
+        {
+          heading: "Bayilik ile distribütörlük arasındaki fark nedir?",
+          paragraphs: [
+            "Bayilik modeli, satış ve kurulumu bölgenizde yürütmenizi kapsar — eğitim, marka desteği ve öncelikli tedarik fiyatı bizden, saha işi sizden. Distribütörlük ise daha geniş bir bölgede malzeme dağıtımı yapmayı ve kendi alt bayi ağınızı kurmayı içerir.",
+            "Hangi modelin firmanıza uygun olduğu; mevcut dağıtım altyapınıza, ekip büyüklüğünüze ve hedeflediğiniz coğrafi kapsam alanına göre değişir — bunu ilk görüşmede birlikte netleştiriyoruz.",
+          ],
+        },
+        {
+          heading: "Bayilik desteği tam olarak neleri kapsıyor?",
+          paragraphs: [
+            "Keşif, projelendirme, kurulum ve satış süreçlerinde ekibinizi eğitiyoruz; ilk projelerinizde sahada fiilen yanınızda oluyoruz. Ortak pazarlama materyalleri ve marka kullanım desteğiyle bölgenizde güvenilir bir GES markası olarak konumlanmanıza yardımcı oluyoruz.",
+            "Teknik destek tek seferlik değil — sürekli tedarik önceliği, güncel fiyat listesi ve karşılaştığınız saha sorunlarında danışmanlık almaya devam edersiniz.",
+          ],
+        },
+        {
+          heading: "Bayilikte kazanç modeli nasıl işliyor?",
+          paragraphs: [
+            "Bayiye özel fiyat listesi ve stok önceliğiyle rekabetçi teklif verme gücü kazanırsınız; kazancınız, sattığınız/kurduğunuz projelerin marjından oluşur — bize bağlı bir komisyon modeli değil, kendi işinizi kurduğunuz bir yapı.",
+            "2016'dan beri sahada olan kurulu bir markanın referans gücüyle müşteri karşısına çıkmanız, özellikle yeni başlayan firmalar için güven inşa etme süresini kısaltıyor.",
+          ],
+        },
+        {
+          heading: "Hangi bölgeler için fırsat var, bölge koruması sağlanıyor mu?",
+          paragraphs: [
+            "Türkiye'de solar pazarı her yıl büyüyor ve henüz güçlü bir yerel oyuncunun olmadığı birçok bölge var. İş birliği modeline göre bölge bazlı çalışıyoruz; aynı bölgeye kontrolsüz şekilde bayi vermeyerek emeğinizin karşılığını koruyoruz.",
+            "Bölgenizdeki mevcut durumu ve rekabeti ilk görüşmede birlikte değerlendirip, size en uygun coğrafi kapsamı netleştiriyoruz.",
+          ],
+        },
+      ],
+    },
   },
 
   "projelendirme-muhendislik-basvuru": {
@@ -959,6 +1337,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["EDAŞ bağlantı anlaşması başvurusu", "güneş enerjisi elektrik projesi", "lisanssız üretim başvurusu nasıl yapılır"],
     blogCategory: "Mühendislik & Başvuru",
     relatedServiceSlugs: ["villa-cati-ges", "muteahhit-ges", "fabrika-cati-ges"],
+    article: {
+      title: "GES Projelendirme ve EDAŞ Başvuru Rehberi: Statik Rapordan Bağlantı Anlaşmasına",
+      intro:
+        "Kurulumu kim yaparsa yapsın, GES'in kağıt üzerindeki süreci hakkında en çok sorulan soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "Statik rapor ve elektrik projesi neden şart?",
+          paragraphs: [
+            "Statik rapor, çatınızın panel yükünü güvenle taşıyıp taşımadığını mühendislik hesabıyla kanıtlar — bu belge olmadan EDAŞ başvurusu kabul edilmez. Elektrik projesi (tek hat şeması) ise sistemin nasıl bağlanacağını gösteren, başvurunun teknik omurgasıdır.",
+            "Bu belgeler mevzuata tam uyumlu hazırlanmazsa başvuru revizyon turlarına girer, süreç uzar. Doğru hazırlanmış bir dosya, en büyük zaman tasarrufu kaynağıdır.",
+          ],
+        },
+        {
+          heading: "EDAŞ bağlantı anlaşması ve lisanssız üretim başvurusu nasıl yapılır?",
+          paragraphs: [
+            "Başvuru, ilgili dağıtım şirketine (EDAŞ) statik rapor, elektrik projesi ve gerekli evrakla birlikte yapılır; kurum başvuruyu inceleyip bağlantı görüşü verir. Sürecin her adımını sizin adınıza takip ediyor, kurumla yazışmaları biz yürütüyoruz.",
+            "Dosya eksiksiz ve mevzuata uygun hazırlandığında süreç düzgün ilerler; eksik ya da hatalı evrak en sık gecikme sebebidir — bu yüzden dosya hazırlığına özellikle özen gösteriyoruz.",
+          ],
+        },
+        {
+          heading: "Kurulumu başka firma yaptı, sadece proje/başvuru hizmeti alabilir miyim?",
+          paragraphs: [
+            "Evet — bu hizmeti tamamen bağımsız olarak veriyoruz. Mevcut kurulumunuzun projelendirmesini ve EDAŞ sürecini devralıp mevzuata uygun hale getiriyor, başvuruyu sizin adınıza tamamlıyoruz.",
+            "Bu, özellikle kurulumu yapan firmanın mühendislik/başvuru desteği sunmadığı ya da sürecin tıkandığı durumlarda sıkça başvurulan bir hizmet.",
+          ],
+        },
+        {
+          heading: "Başvuru sürecinde en sık yapılan hatalar nelerdir?",
+          paragraphs: [
+            "En sık görülen sorunlar: eksik ya da güncel olmayan statik rapor, tek hat şemasıyla saha uygulamasının uyuşmaması ve başvuru evrakının kurumun istediği formatta hazırlanmamış olması. Bunların her biri revizyon talebine, dolayısıyla gecikmeye yol açar.",
+            "Biz bu hataları, dosyayı sunmadan önce kendi içimizde çift kontrol ederek en aza indiriyoruz — amacımız başvurunun ilk seferde sorunsuz ilerlemesi.",
+          ],
+        },
+        {
+          heading: "Kurumsal ve savunma sanayi projelerinde ek gereklilik var mı?",
+          paragraphs: [
+            "Evet, kurumsal ve kritik altyapı projelerinde standart konut/tarım başvurularına göre ek teknik doküman ve onay süreçleri gerekebilir. Savunma sanayi ve telekomünikasyon sektöründeki saha tecrübemiz, bu tür daha karmaşık başvurularda da güvenilir bir çözüm ortağı olmamızı sağlıyor.",
+            "Bu projelerde süreç genellikle daha uzun sürse de, doğru hazırlanmış bir dosya ve deneyimli takip, riski önemli ölçüde azaltıyor.",
+          ],
+        },
+      ],
+    },
   },
 
   "fabrika-cati-ges": {
@@ -1031,6 +1451,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["fabrika çatısına güneş enerjisi sistemi", "endüstriyel GES kurulumu", "OSB güneş enerjisi santrali"],
     blogCategory: "Fabrika GES",
     relatedServiceSlugs: ["taahhut-isletme-bakim", "projelendirme-muhendislik-basvuru", "muteahhit-ges"],
+    article: {
+      title: "Fabrika Çatı GES Rehberi: Amortisman, KDV İstisnası ve Teşvikler",
+      intro:
+        "Üretim tesisi sahiplerinin fabrika çatı GES yatırımı öncesi en çok sorduğu maliyet, teşvik ve süreç sorularını yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "Fabrika çatı GES yatırımı kaç yılda amorti eder?",
+          paragraphs: [
+            "Endüstriyel tesislerde üretim genellikle gündüz saatlerinde en yoğun elektrik tüketimiyle çakıştığı için, üretilen enerjinin büyük bölümü anında tüketilir — bu da geri ödeme süresini konut projelerine göre kısaltır. Çatı üstü GES yatırımları sanayi ölçeğinde tipik olarak 3-5 yıl aralığında kendini amorti eder; arazi tipi santrallerde bu süre biraz daha uzundur.",
+            "Kesin süre; tesisinizin gündüz tüketim yoğunluğu, çatı alanı ve mevcut elektrik birim fiyatınıza göre değişir. Panellerin 25+ yıllık ömrü boyunca amortisman sonrası üretim tamamen işletme kârına dönüşür.",
+          ],
+        },
+        {
+          heading: "KDV istisnası ve vergi avantajları nelerdir?",
+          paragraphs: [
+            "Panel, invertör, trafo ve montaj dahil GES ekipmanı alımlarında KDV istisnası uygulanabiliyor — bu, ilk yatırım maliyetini doğrudan aşağı çeken önemli bir kalem. 240 kW ve üzeri çatı GES yatırımı yapan ve kendi tüketimi için lisanssız üretim yapan işletmeler, bulundukları bölgeden bağımsız olarak en az 4. bölge teşvik seviyesinden yararlanabiliyor.",
+            "Bu kapsamda gümrük vergisi muafiyeti, kurumlar vergisinde bölgeye göre değişen oranlarda indirim (3-7 yıl arası uygulanan) ve 6-12 yıla varan SGK işveren primi muafiyeti gibi ek teşvikler de söz konusu olabiliyor. Güncel teşvik mevzuatı sık değiştiği için, sizin ölçeğinizdeki projede hangi teşviklerden yararlanabileceğinizi başvuru sürecinde netleştiriyoruz.",
+          ],
+        },
+        {
+          heading: "Üretim durmadan kurulum nasıl yapılır?",
+          paragraphs: [
+            "Kurulumu vardiya ve bakım planınıza göre programlıyoruz; çatı üzerindeki çalışmalar üretim hattınızı etkilemeyecek şekilde, gerekirse mesai dışı saatlerde yürütülür.",
+            "Trapez sac veya sandviç panel gibi farklı endüstriyel çatı tiplerine uygun montaj sistemleri kullanıyoruz — çatı yapısına özel braket ve su yalıtım detayları, üretim faaliyetinize hiç dokunmadan uygulanır.",
+          ],
+        },
+        {
+          heading: "Trapez sac ve sandviç panel çatılarda montaj nasıl farklılaşır?",
+          paragraphs: [
+            "Trapez sac çatılarda panel dizilimi, sacın oluk yapısına uygun özel klemens ve braket sistemleriyle delinmeden ya da minimum delikle uygulanır; sandviç panel çatılarda ise yapının taşıma kapasitesine göre farklı bir montaj detayı kullanılır.",
+            "Her iki durumda da su yalıtımının bozulmaması kritik önemde — montaj öncesi çatı statiği ve malzeme uyumluluğu keşifte titizlikle kontrol edilir.",
+          ],
+        },
+        {
+          heading: "Üç faz elektrik altyapısına uygun sistem nasıl tasarlanır?",
+          paragraphs: [
+            "Endüstriyel tesislerde üç faz elektrik altyapısına uygun invertör ve panel dizilimiyle yüksek kapasiteli sistemler kuruyoruz; mevcut pano ve trafo kapasitenizi keşifte kontrol edip gerekirse yükseltme ihtiyacını netleştiriyoruz.",
+            "OSB içindeki tesislerde bağlantı süreci kendi müdürlüğü üzerinden yürüyebiliyor; bu süreci de standart EDAŞ başvurusu gibi sizin adınıza uçtan uca takip ediyoruz.",
+          ],
+        },
+      ],
+    },
   },
 
   "taahhut-isletme-bakim": {
@@ -1103,6 +1565,48 @@ export const serviceContent: Record<string, ServiceContent> = {
     seoKeywords: ["güneş enerjisi sistemi bakımı", "GES işletme bakım hizmeti", "solar panel taahhüt ihalesi"],
     blogCategory: "Taahhüt & Bakım",
     relatedServiceSlugs: ["fabrika-cati-ges", "distributorluk-bayilik", "projelendirme-muhendislik-basvuru"],
+    article: {
+      title: "GES İşletme-Bakım Rehberi: Ne Sıklıkla, Ne Kadar Verim Kazandırır?",
+      intro:
+        "Devreye alınmış bir güneş enerjisi sisteminin bakımı ve kurumsal taahhüt süreciyle ilgili en çok sorulan soruları yanıtlıyoruz.",
+      sections: [
+        {
+          heading: "GES bakımı ne sıklıkla yapılmalı?",
+          paragraphs: [
+            "Genel öneri 3-6 ayda bir periyodik ziyarettir; ancak tesisin konumu (toz, tarım arazisi yakınlığı, kuş pisliği riski) ve sistem ölçeği bu periyodu etkiler. Şehir dışındaki toz yoğun bölgelerde daha sık, temiz çatı ortamlarında daha seyrek bakım yeterli olabilir.",
+            "Kesin periyodu keşifte tesisinize özel belirliyoruz; amaç gereksiz sık ziyaretle maliyet çıkarmadan, üretim kaybına yol açmayacak bir denge kurmak.",
+          ],
+        },
+        {
+          heading: "Panel temizliği üretimi gerçekten ne kadar artırıyor?",
+          paragraphs: [
+            "Toz, polen ve kir birikimi panel yüzeyinde ışığın paneline ulaşmasını engelleyerek üretimde ölçülebilir bir kayba yol açar; bu kayıp bölgeye ve mevsime göre değişse de, düzenli temizlik yapılmayan sistemlerde zamanla belirgin hale gelebilir.",
+            "Bu yüzden periyodik bakım ziyaretlerimizde panel temizliği standart bir kalemdir — küçük bir yatırım gibi görünse de, sistemin ömrü boyunca kayıp üretimi önlediği için kendini fazlasıyla amorti eder.",
+          ],
+        },
+        {
+          heading: "Sistemimi başka firma kurdu, yine de bakımını devralabilir misiniz?",
+          paragraphs: [
+            "Evet — marka ve kurulumu kim yaptıysa yapsın, mevcut sisteminizin bakım ve işletme sürecini devralabiliyoruz. İlk ziyarette sistemin genel sağlık durumunu (panel, invertör, bağlantı noktaları) ücretsiz değerlendiriyoruz.",
+            "Bu, özellikle kurulumu yapan firmayla iletişimi kopan ya da bakım hizmeti sunmayan firmalarla çalışmış müşterilerimiz için sık başvurulan bir hizmet.",
+          ],
+        },
+        {
+          heading: "Uzaktan izleme arıza tespitini nasıl hızlandırıyor?",
+          paragraphs: [
+            "Sistem üretim verilerini sürekli izliyoruz; beklenenin altında bir üretim tespit ettiğimizde, sahaya çıkmadan önce olası arızayı (kirlenme, bağlantı sorunu, invertör hatası vb.) teşhis etmeye çalışıyoruz. Bu, hem müdahale süresini kısaltır hem de gereksiz saha ziyaretini önler.",
+            "Uzun süreli, fark edilmeyen bir üretim kaybı — özellikle büyük ölçekli fabrika sistemlerinde — ciddi bir mali kayba dönüşebilir; uzaktan izleme bu riski büyük ölçüde ortadan kaldırıyor.",
+          ],
+        },
+        {
+          heading: "Kurumsal ihalede taahhüt yüklenimi nasıl işliyor?",
+          paragraphs: [
+            "İhale şartnamesine uygun mühendislik, malzeme tedariki, kurulum ve devreye alma süreçlerini sözleşme kapsamında uçtan uca üstleniyoruz — ister kendi projemiz olsun ister başka bir yüklenicinin devrettiği iş.",
+            "Kurumsal ve kamu projelerinde şartname uyumluluğu kritik olduğu için, teklif aşamasında dosyanızı titizlikle inceleyip eksiksiz bir taahhüt planı sunuyoruz.",
+          ],
+        },
+      ],
+    },
   },
 };
 
