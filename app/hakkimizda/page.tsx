@@ -65,17 +65,19 @@ export default async function AboutPage() {
 
       <nav
         aria-label="Sayfa içi bölümler"
-        className="sticky top-[57px] z-30 -mx-5 mb-10 flex gap-1 overflow-x-auto border-b border-line bg-paper/95 px-5 py-3 backdrop-blur sm:top-[73px] sm:-mx-8 sm:px-8"
+        className="sticky top-[57px] z-30 -mx-5 mb-10 overflow-x-auto border-b border-line bg-paper/95 px-5 py-3 backdrop-blur sm:top-[73px] sm:-mx-8 sm:px-8"
       >
-        {subNav.map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            className="shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium text-slate transition-colors hover:bg-ink/5 hover:text-ink"
-          >
-            {item.label}
-          </a>
-        ))}
+        <div className="flex w-fit divide-x divide-line overflow-hidden rounded-full border border-line bg-paper-raised">
+          {subNav.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="shrink-0 px-4 py-2 text-[13px] font-semibold text-ink transition-colors hover:bg-brand/10 hover:text-brand"
+            >
+              {item.label}
+            </a>
+          ))}
+        </div>
       </nav>
 
       {/* HAKKIMIZDA */}
