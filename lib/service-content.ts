@@ -369,7 +369,7 @@ export const serviceContent: Record<string, ServiceContent> = {
   "muteahhit-ges": {
     hero: {
       headline: "Projenize güneş enerjisi ekleyin — teslim tarihinizi riske atmadan.",
-      sub: "Site ve toplu konut projelerinde GES artık güçlü bir satış argümanı. Ön mühendislikten blok bazlı kurulum takvimine kadar tek muhatapla çalışın; “güneş enerjili site” etiketiyle projeniz rakiplerinden ayrışsın.",
+      sub: "2000 m² üzeri inşaat projelerinde yenilenebilir enerji kaynağı kullanımı artık yasal bir zorunluluk — bu şart karşılanmadan iskân alınamıyor. Ön mühendislikten blok bazlı kurulum takvimine kadar tek muhatapla çalışın, iskân sürecinizi riske atmayın.",
     },
     benefits: [
       {
@@ -389,8 +389,8 @@ export const serviceContent: Record<string, ServiceContent> = {
       },
       {
         icon: Building2,
-        title: "Satışta güçlü argüman",
-        text: "“Ortak alan elektriği güneşten” vaadi konut alıcısı için somut fark yaratır — pazarlamanıza doğrudan malzeme.",
+        title: "Yasal zorunluluğu eksiksiz karşılayın",
+        text: "2000 m² üzeri projelerde iskân için şart olan yenilenebilir enerji sistemini, her bloğa uygun kapasitede eksiksiz kuruyoruz.",
       },
     ],
     table: {
@@ -411,6 +411,10 @@ export const serviceContent: Record<string, ServiceContent> = {
       { title: "Sürekli Destek", text: "Site yönetimine teslim sonrası izleme ve bakım desteği veriyoruz." },
     ],
     faqs: [
+      {
+        q: "2000 m² üzeri projelerde güneş enerjisi sistemi gerçekten zorunlu mu?",
+        a: "Evet — 2000 m² ve üzeri inşaat alanına sahip yapılarda yenilenebilir enerji kaynağı kullanımı yasal bir zorunluluk ve bu şart karşılanmadan iskân (yapı kullanma izin belgesi) alınamıyor. Her bloğun çatısına ihtiyaca uygun kapasitede sistemi anahtar teslim kuruyor, iskân başvurunuzu geciktirmeden süreci tamamlıyoruz.",
+      },
       {
         q: "İnşaat devam ederken kurulum yapılabilir mi?",
         a: "Evet — en verimli model de bu. Çatı imalatı biten bloklarda kuruluma başlıyor, kaba inşaatı süren bloklarda altyapıyı hazırlıyoruz; şantiye düzeninize göre koordine oluyoruz.",
@@ -433,7 +437,14 @@ export const serviceContent: Record<string, ServiceContent> = {
       text: "Vaziyet planınızı paylaşın; blok bazlı ön fizibiliteyi ve takvim önerisini ücretsiz hazırlayalım.",
     },
     referenceCategories: ["Müteahhit"],
-    seoKeywords: ["toplu konut güneş enerjisi sistemi", "site GES kurulumu", "müteahhit firmalarla güneş paneli iş birliği"],
+    seoKeywords: [
+      "toplu konut güneş enerjisi sistemi",
+      "site GES kurulumu",
+      "müteahhit firmalarla güneş paneli iş birliği",
+      "2000 m2 üzeri bina güneş enerjisi zorunluluğu",
+      "iskan için çatı GES zorunluluğu",
+      "inşaat GES yasal zorunluluk",
+    ],
     blogCategory: "Müteahhit GES",
     relatedServiceSlugs: ["fabrika-cati-ges", "projelendirme-muhendislik-basvuru", "taahhut-isletme-bakim"],
     article: {
@@ -441,6 +452,13 @@ export const serviceContent: Record<string, ServiceContent> = {
       intro:
         "Toplu konut ve site projelerinde güneş enerjisi sistemini projeye dahil etmeyi düşünen müteahhit ve geliştiricilerin en çok merak ettiği pratik soruları derledik.",
       sections: [
+        {
+          heading: "2000 m² üzeri projelerde güneş enerjisi neden artık zorunlu?",
+          paragraphs: [
+            "2000 m² ve üzeri inşaat alanına sahip yapılarda yenilenebilir enerji kaynağı kullanımı yasal bir zorunluluk haline geldi; bu şart karşılanmadan projeniz için iskân (yapı kullanma izin belgesi) alınamıyor. Yani artık güneş enerjisi sistemi, toplu konut projelerinde bir 'ekstra' değil, teslim sürecinin ayrılmaz bir parçası.",
+            "Ankara Altındağ Doğantepe'de MSN Grup İnşaat ile hayata geçirdiğimiz çok bloklu bir projede tam da bu ihtiyacı karşıladık: kapsamdaki her bloğun çatısına 38 adet 595W Aktürk Enerji güneş paneli ve 20 kW'lık Deye invertör kurarak her bloğu 22,6 kWp gücünde bağımsız bir sisteme kavuşturduk — kurulum, iskân başvuru takvimini hiç aksatmadan tamamlandı. Bu tür projelerde erken planlama yapıldığında, yasal zorunluluk sizin için bir soruna değil, sorunsuz ilerleyen bir sürece dönüşüyor.",
+          ],
+        },
         {
           heading: "GES, projeye ne zaman dahil edilmeli?",
           paragraphs: [
