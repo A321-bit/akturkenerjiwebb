@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Bold, Italic, Heading2, List, Quote, Link2, ImageUp, Loader2 } from "lucide-react";
 import { supabasePublic } from "@/lib/supabase";
+import { processImageForUpload } from "@/lib/imageProcessing";
 
 export default function MarkdownEditorField({
   value,
@@ -58,17 +59,18 @@ export default function MarkdownEditorField({
     setUploading(true);
     setError("");
     try {
+      const processed = await processImageForUpload(file);
       const urlRes = await fetch("/api/admin/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ filename: file.name }),
+        body: JSON.stringify({ filename: processed.name }),
       });
       const urlBody = await urlRes.json().catch(() => ({}));
       if (!urlRes.ok) throw new Error(urlBody.error ?? "Yükleme başlatılamadı.");
 
       const { error: uploadError } = await supabasePublic.storage
         .from("media")
-        .uploadToSignedUrl(urlBody.path, urlBody.token, file);
+        .uploadToSignedUrl(urlBody.path, urlBody.token, processed);
       if (uploadError) throw uploadError;
 
       insertAtCursor(`\n\n![${file.name.replace(/\.[^.]+$/, "")}](${urlBody.publicUrl})\n\n`);

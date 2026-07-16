@@ -174,8 +174,8 @@ export default async function Home() {
         </Reveal>
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {services.slice(0, 6).map((s, i) => (
-            <Reveal key={s.slug} delay={i * 60}>
+          {services.map((s, i) => (
+            <Reveal key={s.slug} delay={(i % 6) * 60}>
               <ServiceCard service={s} />
             </Reveal>
           ))}
@@ -206,8 +206,8 @@ export default async function Home() {
           </Reveal>
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {references.slice(0, 3).map((r, i) => (
-              <Reveal key={r.slug} delay={i * 60}>
+            {references.slice(0, 6).map((r, i) => (
+              <Reveal key={r.slug} delay={(i % 6) * 60}>
                 <Link
                   href={`/referanslarimiz/${r.slug}`}
                   className="group flex flex-col rounded-2xl border border-line bg-paper p-4 transition-transform duration-300 hover:-translate-y-1"
