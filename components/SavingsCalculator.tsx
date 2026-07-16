@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Zap, BatteryCharging } from "lucide-react";
+import { ArrowUpRight, Zap, BatteryCharging, Gauge } from "lucide-react";
 import { whatsappLink } from "@/lib/data";
+import { PUMP_OPTIONS, calcPumpSystem } from "@/lib/pumpOptions";
 
 // Ankara ortalama tepe güneşlenme saati ~4,5 saat/gün kabul edilmiştir.
 // Birim elektrik fiyatı ve verim katsayısı güncel tarifeye göre ayarlanmalıdır.
@@ -12,19 +13,20 @@ const UNIT_PRICE_TL = 3.2; // [PLACEHOLDER] güncel birim fiyat ile değiştirin
 const AUTONOMY_DAYS = 1.5; // bulutlu gün / yedek süre için batarya tamponu
 
 const roofTypes = [
-  { id: "villa", label: "Villa / Müstakil Ev", offGrid: false },
-  { id: "muteahhit", label: "Müteahhit / Toplu Proje", offGrid: false },
-  { id: "hobi", label: "Hobi Bahçesi / Karavan", offGrid: true },
-  { id: "tarim", label: "Tarımsal Arazi", offGrid: true },
+  { id: "villa", label: "Villa / Müstakil Ev", mode: "grid" },
+  { id: "muteahhit", label: "Müteahhit / Toplu Proje", mode: "grid" },
+  { id: "hobi", label: "Hobi Bahçesi / Karavan", mode: "energy" },
+  { id: "tarim", label: "Tarımsal Arazi", mode: "pump" },
 ] as const;
 
 export default function SavingsCalculator({ whatsappNumber }: { whatsappNumber: string }) {
   const [roofType, setRoofType] = useState<(typeof roofTypes)[number]["id"]>("villa");
   const [monthlyBill, setMonthlyBill] = useState(2500);
   const [dailyNeedKWh, setDailyNeedKWh] = useState(8);
+  const [selectedPump, setSelectedPump] = useState<(typeof PUMP_OPTIONS)[number]>(PUMP_OPTIONS[3]);
 
   const activeType = roofTypes.find((r) => r.id === roofType) ?? roofTypes[0];
-  const isOffGrid = activeType.offGrid;
+  const mode = activeType.mode;
 
   const gridResult = useMemo(() => {
     const monthlyConsumptionKWh = monthlyBill / UNIT_PRICE_TL;
@@ -48,15 +50,22 @@ export default function SavingsCalculator({ whatsappNumber }: { whatsappNumber: 
     };
   }, [dailyNeedKWh]);
 
+  const pumpResult = useMemo(() => calcPumpSystem(selectedPump.kw), [selectedPump]);
+
   const roofLabel = activeType.label;
 
-  const waMessage = isOffGrid
-    ? `Merhaba, ${roofLabel} için şebekeden bağımsız (off-grid) yaklaşık ${offGridResult.systemSizeKWp.toFixed(
-        1
-      )} kWp'lik panel ve ${offGridResult.batteryKWh.toFixed(0)} kWh'lik depolama sistemi hakkında bilgi almak istiyorum. Günlük ortalama enerji ihtiyacım yaklaşık ${dailyNeedKWh} kWh.`
-    : `Merhaba, ${roofLabel} için yaklaşık ${gridResult.systemSizeKWp.toFixed(
-        1
-      )} kWp'lik bir sistem hakkında bilgi almak istiyorum. Aylık faturam yaklaşık ${monthlyBill} TL.`;
+  const waMessage =
+    mode === "pump"
+      ? `Merhaba, tarımsal arazimdeki ${selectedPump.hp} (${selectedPump.kw} kW) sulama pompam için güneş enerjili sulama sistemi hakkında bilgi almak istiyorum. Yaklaşık ${pumpResult.systemSizeKWp.toFixed(
+          1
+        )} kWp'lik bir sistem öneriliyor.`
+      : mode === "energy"
+        ? `Merhaba, ${roofLabel} için şebekeden bağımsız (off-grid) yaklaşık ${offGridResult.systemSizeKWp.toFixed(
+            1
+          )} kWp'lik panel ve ${offGridResult.batteryKWh.toFixed(0)} kWh'lik depolama sistemi hakkında bilgi almak istiyorum. Günlük ortalama enerji ihtiyacım yaklaşık ${dailyNeedKWh} kWh.`
+        : `Merhaba, ${roofLabel} için yaklaşık ${gridResult.systemSizeKWp.toFixed(
+            1
+          )} kWp'lik bir sistem hakkında bilgi almak istiyorum. Aylık faturam yaklaşık ${monthlyBill} TL.`;
 
   return (
     <div className="w-full rounded-2xl border border-line-dark bg-ink-soft/60 p-6 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.5)] backdrop-blur sm:p-7">
@@ -88,7 +97,52 @@ export default function SavingsCalculator({ whatsappNumber }: { whatsappNumber: 
         </div>
       </div>
 
-      {isOffGrid ? (
+      {mode === "pump" ? (
+        <>
+          <div className="mt-4 flex items-center gap-1.5 rounded-lg bg-sun/10 px-3 py-2 text-[11.5px] font-medium text-sun-soft">
+            <Gauge size={13} /> Sulama pompanızın gücünü seçin, sistemi anında hesaplayalım
+          </div>
+
+          <div className="mt-5">
+            <label className="text-[12.5px] font-medium text-slate-soft">Pompa Gücü</label>
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {PUMP_OPTIONS.map((p) => (
+                <button
+                  key={p.hp}
+                  type="button"
+                  onClick={() => setSelectedPump(p)}
+                  className={`rounded-lg border px-2 py-2 text-center text-[12.5px] font-semibold transition-colors ${
+                    selectedPump.hp === p.hp
+                      ? "border-sun bg-sun/15 text-paper"
+                      : "border-line-dark text-slate-soft hover:border-sun/50"
+                  }`}
+                >
+                  {p.hp}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[11.5px] text-slate-soft">
+              Seçili pompa: <span className="font-semibold text-paper">{selectedPump.hp} ({selectedPump.kw} kW)</span>
+            </p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-3 border-t border-line-dark pt-5">
+            <div>
+              <p className="font-mono-data text-2xl font-semibold text-paper">
+                {pumpResult.systemSizeKWp.toFixed(1)}{" "}
+                <span className="text-sm font-normal text-slate-soft">kWp</span>
+              </p>
+              <p className="text-[12px] text-slate-soft">Önerilen sistem gücü</p>
+            </div>
+            <div>
+              <p className="font-mono-data text-2xl font-semibold text-sun-soft">
+                ~{pumpResult.panelCount} <span className="text-sm font-normal text-slate-soft">panel</span>
+              </p>
+              <p className="text-[12px] text-slate-soft">600W panel bazında tahmini adet</p>
+            </div>
+          </div>
+        </>
+      ) : mode === "energy" ? (
         <>
           <div className="mt-4 flex items-center gap-1.5 rounded-lg bg-sun/10 px-3 py-2 text-[11.5px] font-medium text-sun-soft">
             <Zap size={13} /> Şebeke bağlantısı yok — faturaya göre değil, enerji ihtiyacına göre hesaplıyoruz
@@ -114,7 +168,7 @@ export default function SavingsCalculator({ whatsappNumber }: { whatsappNumber: 
               className="mt-3 w-full accent-[var(--sun)]"
             />
             <p className="mt-2 text-[11.5px] leading-relaxed text-slate-soft">
-              Fikir vermesi için: bir buzdolabı + aydınlatma + su pompası günde ortalama 3-6 kWh, bir karavan/kabin yaşam alanı 6-12 kWh, sulama pompası olan bir tarım arazisi 10-30 kWh civarındadır.
+              Fikir vermesi için: bir buzdolabı + aydınlatma + su pompası günde ortalama 3-6 kWh, bir karavan/kabin yaşam alanı 6-12 kWh civarındadır.
             </p>
           </div>
 

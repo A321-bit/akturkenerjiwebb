@@ -3,32 +3,12 @@
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Gauge } from "lucide-react";
 import { whatsappLink } from "@/lib/data";
-
-// Solar sulama sistemlerinde panel gücü, pompanın VFD/invertör kayıplarını ve
-// kalkış akımını karşılayabilmesi için pompa elektrik gücünün ~1,3 katı olarak
-// boyutlandırılır. Panel başına 600W (Tommatech) kabul edilmiştir.
-const SIZING_FACTOR = 1.3;
-const PANEL_WATT = 600;
-
-const pumpOptions = [
-  { hp: "1 HP", kw: 0.75 },
-  { hp: "2 HP", kw: 1.5 },
-  { hp: "3 HP", kw: 2.2 },
-  { hp: "5 HP", kw: 3.7 },
-  { hp: "7.5 HP", kw: 5.5 },
-  { hp: "10 HP", kw: 7.5 },
-  { hp: "15 HP", kw: 11 },
-  { hp: "20 HP", kw: 15 },
-] as const;
+import { PUMP_OPTIONS, calcPumpSystem } from "@/lib/pumpOptions";
 
 export default function PumpPowerCalculator({ whatsappNumber }: { whatsappNumber: string }) {
-  const [selected, setSelected] = useState<(typeof pumpOptions)[number]>(pumpOptions[2]);
+  const [selected, setSelected] = useState<(typeof PUMP_OPTIONS)[number]>(PUMP_OPTIONS[3]);
 
-  const result = useMemo(() => {
-    const systemSizeKWp = selected.kw * SIZING_FACTOR;
-    const panelCount = Math.ceil((systemSizeKWp * 1000) / PANEL_WATT);
-    return { systemSizeKWp, panelCount };
-  }, [selected]);
+  const result = useMemo(() => calcPumpSystem(selected.kw), [selected]);
 
   const waMessage = `Merhaba, ${selected.hp} (${selected.kw} kW) sulama pompam için güneş enerjili sulama sistemi hakkında bilgi almak istiyorum. Yaklaşık ${result.systemSizeKWp.toFixed(
     1
@@ -46,8 +26,8 @@ export default function PumpPowerCalculator({ whatsappNumber }: { whatsappNumber
         Sulama pompanıza göre önerilen sistem
       </h3>
 
-      <div className="mt-5 grid grid-cols-4 gap-2 sm:grid-cols-8">
-        {pumpOptions.map((p) => (
+      <div className="mt-5 grid grid-cols-4 gap-2 sm:grid-cols-6">
+        {PUMP_OPTIONS.map((p) => (
           <button
             key={p.hp}
             type="button"
