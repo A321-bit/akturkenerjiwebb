@@ -16,6 +16,11 @@ export const PUMP_OPTIONS = [
   { hp: "20 HP", kw: 15 },
   { hp: "25 HP", kw: 18.5 },
   { hp: "30 HP", kw: 22 },
+  { hp: "40 HP", kw: 30 },
+  { hp: "50 HP", kw: 37 },
+  { hp: "60 HP", kw: 45 },
+  { hp: "75 HP", kw: 55 },
+  { hp: "100 HP", kw: 75 },
 ] as const;
 
 export const PUMP_SIZING_FACTOR = 1.3;
