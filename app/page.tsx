@@ -240,33 +240,35 @@ export default async function Home() {
       </Suspense>
 
       {/* TESTIMONIALS */}
-      <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
-        <Reveal>
-          <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
-            Müşterilerimiz
-          </p>
-          <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            Kurulum sonrasında da yanınızdayız
-          </h2>
-        </Reveal>
+      {testimonials.length > 0 && (
+        <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+          <Reveal>
+            <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
+              Müşterilerimiz
+            </p>
+            <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              Kurulum sonrasında da yanınızdayız
+            </h2>
+          </Reveal>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <Reveal key={`${t.name}-${i}`} delay={i * 60}>
-              <figure className="rounded-2xl border border-line bg-paper-raised p-6">
-                <blockquote className="text-[14.5px] leading-relaxed text-ink">
-                  &ldquo;{t.quote}&rdquo;
-                </blockquote>
-                <figcaption className="mt-4 border-t border-line pt-3 text-[13px] text-slate">
-                  <span className="font-semibold text-ink">{t.name}</span>
-                  <br />
-                  {t.role}
-                </figcaption>
-              </figure>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+            {testimonials.map((t, i) => (
+              <Reveal key={`${t.name}-${i}`} delay={i * 60}>
+                <figure className="rounded-2xl border border-line bg-paper-raised p-6">
+                  <blockquote className="text-[14.5px] leading-relaxed text-ink">
+                    &ldquo;{t.quote}&rdquo;
+                  </blockquote>
+                  <figcaption className="mt-4 border-t border-line pt-3 text-[13px] text-slate">
+                    <span className="font-semibold text-ink">{t.name}</span>
+                    <br />
+                    {t.role}
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* LEAD FORM */}
       <section id="teklif-formu" className="relative scroll-mt-20 overflow-hidden bg-ink text-paper">
