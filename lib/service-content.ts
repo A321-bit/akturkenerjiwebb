@@ -900,7 +900,7 @@ export const serviceContent: Record<string, ServiceContent> = {
       title: "Bağımsız enerji ihtiyacınızı konuşalım",
       text: "Hobi bahçeniz, karavanınız ya da uzak tesisiniz için neleri çalıştırmak istediğinizi yazın; size uygun sistemi ve net fiyatı hızlıca iletelim.",
     },
-    referenceCategories: ["Hobi Bahçesi", "Karavan"],
+    referenceCategories: ["Hobi Bahçesi", "Karavan", "Telekomünikasyon"],
     seoKeywords: ["off grid güneş enerjisi sistemi", "karavan güneş paneli kurulumu", "hobi bahçesi güneş enerjisi sistemi"],
     blogCategory: "Off-Grid Sistemler",
     relatedServiceSlugs: ["lityum-batarya-depolama", "ruzgar-hibrit", "villa-cati-ges"],
