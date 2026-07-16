@@ -17,7 +17,7 @@ export async function generateMetadata({
   const reference = await getReferenceBySlug(slug);
   if (!reference) return {};
   return buildMetadata({
-    title: `${reference.title} | Referanslarımız`,
+    title: reference.title,
     description: reference.description ?? reference.summary,
     path: `/referanslarimiz/${reference.slug}`,
     keywords: [reference.title, reference.category, reference.location, "güneş enerjisi sistemi", "GES"],

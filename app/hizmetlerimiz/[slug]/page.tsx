@@ -39,7 +39,7 @@ export async function generateMetadata({
   if (!service) return {};
   const content = getServiceContent(service);
   return buildMetadata({
-    title: `${service.title} | Ankara Güneş Enerjisi Sistemleri`,
+    title: `${service.title} | Ankara`,
     description: service.summary,
     path: `/hizmetlerimiz/${service.slug}`,
     keywords: [
