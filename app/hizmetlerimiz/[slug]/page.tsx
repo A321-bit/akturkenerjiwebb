@@ -20,6 +20,7 @@ import SunGlow from "@/components/SunGlow";
 import Reveal from "@/components/Reveal";
 import QuoteModal from "@/components/QuoteModal";
 import PumpPowerCalculator from "@/components/PumpPowerCalculator";
+import VillaSystemShowcase from "@/components/VillaSystemShowcase";
 
 // Hobi Bahçesi ve Karavan Sistemleri hizmetleri Off-Grid hizmetinde birleştirildi;
 // eski linkler/yer imleri 404 yerine yeni sayfaya yönlensin diye eşleme tutuyoruz.
@@ -192,6 +193,8 @@ export default async function ServiceDetailPage({
           />
         </div>
       </section>
+
+      {service.slug === "villa-cati-ges" && <VillaSystemShowcase />}
 
       {/* FAYDA KARTLARI */}
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">

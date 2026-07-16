@@ -144,6 +144,14 @@ export const serviceContent: Record<string, ServiceContent> = {
         q: "İzin ve EDAŞ süreci uğraştırır mı?",
         a: "Sizi hiç uğraştırmaz — statik rapor, elektrik projesi ve EDAŞ bağlantı anlaşması dahil tüm bürokrasiyi biz yürütüyoruz. Size sadece keşif randevusu vermek kalıyor.",
       },
+      {
+        q: "Mahsuplaşma sürecine girmeden hibrit batarya sistemi kurabilir miyim?",
+        a: "Evet — hibrit lityum batarya sistemleri şebeke bağlantılı (on-grid, mahsuplaşmalı) olarak kurulabildiği gibi, EDAŞ mahsuplaşma sürecine hiç girmeden de kurulabilir. İkinci seçenekte enerjinizi tamamen kendi bataryanızda depolar, villanızı büyük ölçüde bağımsız hale getirirsiniz.",
+      },
+      {
+        q: "On-grid villa sisteminde maksimum kaç kW kurabilirim?",
+        a: "Villa çatı GES paketlerimizi on-grid (şebeke bağlantılı) olarak 25 kW'a kadar kuruyoruz. Kesin üst sınır çatı alanınıza, bağlantı anlaşmanıza ve EDAŞ onayına göre netleşir.",
+      },
     ],
     closing: {
       title: "Villanız için ücretsiz keşif planlayalım",
