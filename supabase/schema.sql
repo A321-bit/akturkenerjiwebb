@@ -115,6 +115,16 @@ create table if not exists leads (
   created_at timestamptz not null default now()
 );
 
+create table if not exists job_applications (
+  id bigint generated always as identity primary key,
+  fullname text not null,
+  address text,
+  phone text not null,
+  description text,
+  cv_url text,
+  created_at timestamptz not null default now()
+);
+
 -- Herkese açık okuma (site ziyaretçileri publishable anahtarla okuyacak),
 -- yazma işlemleri sadece sunucu tarafında secret anahtarla yapılacağı için
 -- yazma politikası eklemiyoruz (varsayılan olarak RLS her şeyi reddeder).
@@ -125,6 +135,7 @@ alter table blog_posts enable row level security;
 alter table testimonials enable row level security;
 alter table site_videos enable row level security;
 alter table leads enable row level security;
+alter table job_applications enable row level security;
 alter table analytics_events enable row level security;
 
 create policy "public read" on site_settings for select using (true);
@@ -133,7 +144,7 @@ create policy "public read" on project_references for select using (true);
 create policy "public read" on blog_posts for select using (true);
 create policy "public read" on testimonials for select using (true);
 create policy "public read" on site_videos for select using (true);
--- leads tablosuna herkese açık okuma YOK — sadece secret anahtarla yazılıp okunur.
+-- leads ve job_applications tablolarına herkese açık okuma YOK — sadece secret anahtarla yazılıp okunur.
 
 -- Görsel yükleme için storage bucket (herkese açık okuma, yazma sadece secret anahtarla)
 insert into storage.buckets (id, name, public)

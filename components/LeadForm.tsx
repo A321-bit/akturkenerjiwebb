@@ -39,10 +39,7 @@ const leadSchema = z.object({
   needType: z.string().min(1, "Bir ihtiyaç türü seçin"),
   billRange: z.string().min(1, "Bir seçenek işaretleyin"),
   fullname: z.string().trim().min(3, "Ad soyad girin"),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^0?5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/, "Geçerli bir telefon numarası girin (05xx xxx xx xx)"),
+  phone: z.string().trim().min(7, "Telefon numarası girin"),
   email: z.union([z.literal(""), z.string().trim().email("Geçerli bir e-posta girin")]),
 });
 

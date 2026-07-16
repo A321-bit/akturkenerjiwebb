@@ -11,6 +11,8 @@ import HowItWorks from "@/components/HowItWorks";
 import CoverMedia from "@/components/CoverMedia";
 import LeadForm from "@/components/LeadForm";
 import VideosSection from "@/components/VideosSection";
+import QuoteModal from "@/components/QuoteModal";
+import WhatsappCtaBanner from "@/components/WhatsappCtaBanner";
 
 export default async function Home() {
   const [services, references, testimonials, site] = await Promise.all([
@@ -46,13 +48,11 @@ export default async function Home() {
               anahtar teslim güneş enerjisi sistemleri kuruyoruz.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a
-                href="#teklif-formu"
-                className="group inline-flex items-center gap-2 rounded-full bg-sun px-6 py-3.5 text-[15px] font-bold text-ink shadow-[0_10px_30px_-8px_rgba(238,162,58,0.6)] transition-transform hover:scale-[1.03] hover:bg-sun-soft"
-              >
-                Ücretsiz Keşif & Teklif Al
-                <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </a>
+              <QuoteModal
+                label="Ücretsiz Keşif & Teklif Al"
+                variant="sun"
+                whatsappNumber={site.contact.whatsappNumber}
+              />
               <Link
                 href="/referanslarimiz"
                 className="inline-flex items-center gap-2 rounded-full border border-line-dark px-5 py-3 text-[14.5px] font-semibold text-paper transition-colors hover:border-sun/60"
@@ -83,6 +83,19 @@ export default async function Home() {
       <Reveal>
         <HowItWorks />
       </Reveal>
+
+      {/* WHATSAPP CTA: How It Works -> Ödeme/Garanti arası */}
+      <section className="mx-auto max-w-6xl px-5 sm:px-8">
+        <Reveal>
+          <WhatsappCtaBanner
+            title="Anında Fizibilite Raporunu Ücretsiz Alın"
+            subtitle="Çatınıza özel üretim ve tasarruf hesabını birkaç dakika içinde WhatsApp'tan paylaşalım."
+            whatsappNumber={site.contact.whatsappNumber}
+            message="Merhaba, çatım/arazim için ücretsiz fizibilite raporu almak istiyorum."
+            buttonLabel="WhatsApp'tan Rapor İste"
+          />
+        </Reveal>
+      </section>
 
       {/* ÖDEME / GARANTİ / STANDARTLAR */}
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
@@ -180,6 +193,19 @@ export default async function Home() {
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* WHATSAPP CTA: Hizmetlerimiz -> Referanslarımız arası */}
+      <section className="mx-auto max-w-6xl px-5 pb-16 sm:px-8">
+        <Reveal>
+          <WhatsappCtaBanner
+            title="Hangi Hizmete İhtiyacınız Olduğundan Emin Değil misiniz?"
+            subtitle="Projenizi anlatın, size en uygun sistemi WhatsApp'tan birlikte belirleyelim."
+            whatsappNumber={site.contact.whatsappNumber}
+            message="Merhaba, projem için hangi hizmete ihtiyacım olduğu konusunda yardım almak istiyorum."
+            buttonLabel="WhatsApp'tan Danışın"
+          />
+        </Reveal>
       </section>
 
       {/* REFERENCES PREVIEW */}

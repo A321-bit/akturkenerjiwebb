@@ -4,6 +4,8 @@ import { getSiteSettings } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import Reveal from "@/components/Reveal";
+import WhatsappCtaBanner from "@/components/WhatsappCtaBanner";
+import JobApplicationForm from "@/components/JobApplicationForm";
 
 export const metadata: Metadata = buildMetadata({
   title: "Hakkımızda | Vizyon, Misyon ve İnsan Kaynakları",
@@ -132,6 +134,16 @@ export default async function AboutPage() {
           ))}
         </ol>
 
+        <Reveal className="mt-14">
+          <WhatsappCtaBanner
+            title="Bedava Elektrik Üretmeniz İçin Sizi Arayalım"
+            subtitle="Çatınız veya arazinize özel sistem boyutunu birlikte belirleyelim."
+            whatsappNumber={site.contact.whatsappNumber}
+            message="Merhaba, bedava elektrik üretmek için sistem hakkında bilgi almak istiyorum."
+            buttonLabel="Beni Arayın"
+          />
+        </Reveal>
+
         <h2 className="mt-14 font-display text-2xl font-semibold tracking-tight">
           Neden Aktürk Enerji
         </h2>
@@ -205,6 +217,16 @@ export default async function AboutPage() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal className="mt-8">
+          <WhatsappCtaBanner
+            title="Bedava Elektrik Üretmeniz İçin Sizi Arayalım"
+            subtitle="4 bilgiyi bırakın, ekibimiz size özel fiyat teklifiyle dönsün."
+            whatsappNumber={site.contact.whatsappNumber}
+            message="Merhaba, bedava elektrik üretmek için sistem hakkında bilgi almak istiyorum."
+            buttonLabel="Beni Arayın"
+          />
+        </Reveal>
       </section>
 
       {/* İNSAN KAYNAKLARI */}
@@ -251,16 +273,11 @@ export default async function AboutPage() {
         <div className="mt-8 rounded-2xl border border-line bg-paper-raised p-6 sm:p-7">
           <h3 className="font-display text-[16px] font-semibold text-ink">Açık pozisyonlar</h3>
           <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-slate">
-            Güncel açık pozisyon ilanımız bulunmuyor olsa da CV&apos;nizi
+            Güncel açık pozisyon ilanımız bulunmuyor olsa da bilgilerinizi
             bize her zaman gönderebilirsiniz; uygun bir proje açıldığında
             sizinle iletişime geçeriz.
           </p>
-          <a
-            href={`mailto:${site.contact.email}?subject=${encodeURIComponent("İş Başvurusu")}`}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-sun hover:text-ink"
-          >
-            CV Gönder
-          </a>
+          <JobApplicationForm />
         </div>
       </section>
     </div>

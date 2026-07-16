@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getReferences } from "@/lib/data";
+import { getReferences, getSiteSettings } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ReferenceGrid from "@/components/ReferenceGrid";
 
@@ -20,7 +20,7 @@ const jsonLd = {
 };
 
 export default async function ReferencesPage() {
-  const references = await getReferences();
+  const [references, site] = await Promise.all([getReferences(), getSiteSettings()]);
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
@@ -40,7 +40,7 @@ export default async function ReferencesPage() {
         bulabilirsiniz — proje fotoğrafları ve daha fazla referans için bizimle
         iletişime geçin.
       </p>
-      <ReferenceGrid references={references} />
+      <ReferenceGrid references={references} whatsappNumber={site.contact.whatsappNumber} />
     </div>
   );
 }

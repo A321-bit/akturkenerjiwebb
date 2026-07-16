@@ -159,7 +159,7 @@ export default async function ServiceDetailPage({
               {content.hero.sub}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <QuoteModal defaultPurpose={service.title} />
+              <QuoteModal defaultPurpose={service.title} whatsappNumber={site.contact.whatsappNumber} />
               {content.turnkeyInstall !== false && (
                 <Link
                   href="/iletisim"
@@ -194,7 +194,9 @@ export default async function ServiceDetailPage({
         </div>
       </section>
 
-      {service.slug === "villa-cati-ges" && <VillaSystemShowcase />}
+      {service.slug === "villa-cati-ges" && (
+        <VillaSystemShowcase whatsappNumber={site.contact.whatsappNumber} />
+      )}
 
       {/* FAYDA KARTLARI */}
       <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
@@ -514,7 +516,7 @@ export default async function ServiceDetailPage({
               {content.closing.text}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <QuoteModal defaultPurpose={service.title} />
+              <QuoteModal defaultPurpose={service.title} whatsappNumber={site.contact.whatsappNumber} />
               {content.turnkeyInstall !== false && (
                 <Link
                   href="/iletisim"

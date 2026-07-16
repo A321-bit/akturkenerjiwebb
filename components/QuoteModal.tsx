@@ -1,34 +1,56 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { z } from "zod";
 import { Zap, X, User, PhoneCall, MapPin, Wrench, Loader2, CheckCircle2 } from "lucide-react";
 import { trackEvent } from "@/lib/track";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
+import { whatsappLink } from "@/lib/data";
 
 const quoteSchema = z.object({
   fullname: z.string().trim().min(3, "Ad soyad girin"),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^0?5\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/, "Geçerli bir telefon numarası girin (05xx xxx xx xx)"),
+  phone: z.string().trim().min(7, "Telefon numarası girin"),
   province: z.string().min(1, "İl seçin"),
   purpose: z.string().trim().min(2, "Kurulum amacını belirtin"),
 });
 
 type QuoteValues = z.infer<typeof quoteSchema>;
 
+const variantStyles = {
+  red: {
+    button:
+      "bg-red-600 shadow-[0_10px_30px_-8px_rgba(220,38,38,0.55)] hover:bg-red-700 text-white",
+    accent: "text-red-600",
+    input: "focus:border-red-500 focus:ring-red-500",
+    submit: "bg-red-600 hover:bg-red-700 text-white",
+  },
+  sun: {
+    button: "bg-sun shadow-[0_10px_30px_-8px_rgba(238,162,58,0.6)] hover:bg-sun-soft text-ink",
+    accent: "text-brand",
+    input: "focus:border-sun focus:ring-sun",
+    submit: "bg-sun hover:bg-sun-soft text-ink",
+  },
+} as const;
+
 export default function QuoteModal({
   defaultPurpose = "",
   label = "Teklif Al",
   className = "",
+  variant = "red",
+  redirectTo = "whatsapp",
+  whatsappNumber,
 }: {
   defaultPurpose?: string;
   label?: string;
   className?: string;
+  variant?: "red" | "sun";
+  redirectTo?: "whatsapp" | "iletisim" | "none";
+  whatsappNumber: string;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const styles = variantStyles[variant];
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<QuoteValues>({
     fullname: "",
@@ -88,6 +110,15 @@ export default function QuoteModal({
       if (!res.ok) throw new Error("failed");
       setStatus("sent");
       trackEvent("click", pathname ?? "/", "quote_form_submit");
+
+      if (redirectTo === "whatsapp") {
+        const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}`;
+        window.open(whatsappLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
+      } else if (redirectTo === "iletisim") {
+        setTimeout(() => {
+          router.push("/iletisim");
+        }, 1400);
+      }
     } catch {
       setStatus("error");
     }
@@ -98,7 +129,7 @@ export default function QuoteModal({
       <button
         type="button"
         onClick={openModal}
-        className={`group inline-flex items-center gap-2 rounded-full bg-red-600 px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_30px_-8px_rgba(220,38,38,0.55)] transition-transform hover:scale-[1.03] hover:bg-red-700 ${className}`}
+        className={`group inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-[15px] font-bold transition-transform hover:scale-[1.03] ${styles.button} ${className}`}
       >
         <Zap size={17} fill="currentColor" />
         {label}
@@ -126,19 +157,36 @@ export default function QuoteModal({
                 <CheckCircle2 size={40} className="text-volt" />
                 <p className="font-display text-lg font-semibold text-ink">Teklif talebiniz alındı</p>
                 <p className="max-w-xs text-[14px] text-slate">
-                  Ekibimiz en kısa sürede sizi arayarak size özel fiyat teklifini paylaşacak.
+                  {redirectTo === "whatsapp"
+                    ? "WhatsApp'a yönlendiriliyorsunuz. Açılmadıysa aşağıdaki butona dokunun."
+                    : redirectTo === "iletisim"
+                    ? "Birazdan iletişim sayfasına yönlendirileceksiniz."
+                    : "Ekibimiz en kısa sürede sizi arayarak size özel fiyat teklifini paylaşacak."}
                 </p>
+                {redirectTo === "whatsapp" && (
+                  <a
+                    href={whatsappLink(
+                      whatsappNumber,
+                      `Merhaba, ben ${values.fullname}. ${values.purpose} hakkında bilgi almak istiyorum. Telefon: ${values.phone}`
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 rounded-full bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-sun hover:text-ink"
+                  >
+                    WhatsApp&apos;ı Aç
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="mt-2 rounded-full bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-sun hover:text-ink"
+                  className="mt-2 rounded-full border border-line px-5 py-2.5 text-[13.5px] font-semibold text-ink hover:border-brand"
                 >
                   Kapat
                 </button>
               </div>
             ) : (
               <>
-                <p className="pr-8 font-mono-data text-[11px] uppercase tracking-[0.14em] text-red-600">
+                <p className={`pr-8 font-mono-data text-[11px] uppercase tracking-[0.14em] ${styles.accent}`}>
                   Hızlı Teklif
                 </p>
                 <h3 className="mt-1.5 font-display text-xl font-semibold text-ink">
@@ -160,7 +208,7 @@ export default function QuoteModal({
                       required
                       value={values.fullname}
                       onChange={(e) => setValues((v) => ({ ...v, fullname: e.target.value }))}
-                      className="min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                      className={`min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:ring-1 ${styles.input}`}
                     />
                     {errors.fullname && <p className="text-[12.5px] text-red-600">{errors.fullname}</p>}
                   </div>
@@ -177,7 +225,7 @@ export default function QuoteModal({
                       required
                       value={values.phone}
                       onChange={(e) => setValues((v) => ({ ...v, phone: e.target.value }))}
-                      className="min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                      className={`min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:ring-1 ${styles.input}`}
                     />
                     {errors.phone && <p className="text-[12.5px] text-red-600">{errors.phone}</p>}
                   </div>
@@ -191,7 +239,7 @@ export default function QuoteModal({
                       required
                       value={values.province}
                       onChange={(e) => setValues((v) => ({ ...v, province: e.target.value }))}
-                      className="min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                      className={`min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:ring-1 ${styles.input}`}
                     >
                       <option value="" disabled>
                         Seçin...
@@ -215,7 +263,7 @@ export default function QuoteModal({
                       required
                       value={values.purpose}
                       onChange={(e) => setValues((v) => ({ ...v, purpose: e.target.value }))}
-                      className="min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                      className={`min-h-[48px] rounded-lg border border-line bg-paper px-3.5 py-3 text-[15px] outline-none focus:ring-1 ${styles.input}`}
                     />
                     {errors.purpose && <p className="text-[12.5px] text-red-600">{errors.purpose}</p>}
                   </div>
@@ -223,7 +271,7 @@ export default function QuoteModal({
                   <button
                     type="submit"
                     disabled={status === "sending"}
-                    className="mt-1 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-red-600 px-5 py-3.5 text-[15px] font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                    className={`mt-1 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-[15px] font-bold transition-colors disabled:opacity-60 ${styles.submit}`}
                   >
                     {status === "sending" ? (
                       <>

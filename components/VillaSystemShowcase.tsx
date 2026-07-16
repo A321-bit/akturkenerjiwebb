@@ -46,7 +46,7 @@ const accentClasses: Record<string, { badge: string; ring: string }> = {
   red: { badge: "bg-red-600/10 text-red-600", ring: "group-hover:border-red-600/40" },
 };
 
-export default function VillaSystemShowcase() {
+export default function VillaSystemShowcase({ whatsappNumber }: { whatsappNumber: string }) {
   return (
     <section className="relative overflow-hidden bg-ink text-paper">
       <div className="grid-texture absolute inset-0" />
@@ -124,7 +124,10 @@ export default function VillaSystemShowcase() {
 
         <Reveal delay={420}>
           <div className="mt-10 flex justify-center">
-            <QuoteModal defaultPurpose="Villa Enerji Sistemi (On-Grid + Batarya + Isı Pompası + EV Şarj)" />
+            <QuoteModal
+              defaultPurpose="Villa Enerji Sistemi (On-Grid + Batarya + Isı Pompası + EV Şarj)"
+              whatsappNumber={whatsappNumber}
+            />
           </div>
         </Reveal>
       </div>

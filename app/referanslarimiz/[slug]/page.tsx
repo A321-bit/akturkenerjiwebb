@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, MapPin, Zap, Calendar } from "lucide-react";
+import { MapPin, Zap, Calendar } from "lucide-react";
 import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
@@ -82,7 +82,11 @@ export default async function ReferenceDetailPage({
         <p className="font-display text-[16px] font-semibold leading-snug text-ink">
           Sizde çatınızdan bedava elektrik üretmek için şimdi ücretsiz teklif alın.
         </p>
-        <QuoteModal defaultPurpose={reference.category} className="shrink-0" />
+        <QuoteModal
+          defaultPurpose={reference.category}
+          className="shrink-0"
+          whatsappNumber={site.contact.whatsappNumber}
+        />
       </div>
 
       <CoverMedia
@@ -179,13 +183,13 @@ export default async function ReferenceDetailPage({
         >
           WhatsApp&apos;tan Sor
         </a>
-        <Link
-          href="/iletisim"
-          className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 text-[14.5px] font-semibold text-ink hover:border-brand"
-        >
-          Ücretsiz Keşif Talep Et
-          <ArrowUpRight size={16} />
-        </Link>
+        <QuoteModal
+          label="Ücretsiz Keşif Talep Et"
+          variant="sun"
+          redirectTo="iletisim"
+          defaultPurpose={reference.category}
+          whatsappNumber={site.contact.whatsappNumber}
+        />
       </div>
 
       <div className="mt-16">

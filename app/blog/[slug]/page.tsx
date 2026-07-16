@@ -3,9 +3,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowLeft } from "lucide-react";
-import { getBlogPostBySlug, SITE_URL, SITE_NAME } from "@/lib/data";
+import { getBlogPostBySlug, getSiteSettings, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import QuoteModal from "@/components/QuoteModal";
+
+function findMidArticleSplit(content: string): number | null {
+  const positions: number[] = [];
+  const headingRegex = /\n## /g;
+  let match: RegExpExecArray | null;
+  while ((match = headingRegex.exec(content))) positions.push(match.index);
+  if (positions.length < 2) return null;
+  const mid = content.length / 2;
+  return positions.reduce((best, p) =>
+    Math.abs(p - mid) < Math.abs(best - mid) ? p : best
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -30,8 +42,12 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = await getBlogPostBySlug(slug);
+  const [post, site] = await Promise.all([getBlogPostBySlug(slug), getSiteSettings()]);
   if (!post) notFound();
+
+  const splitIndex = findMidArticleSplit(post.content);
+  const firstHalf = splitIndex ? post.content.slice(0, splitIndex) : post.content;
+  const secondHalf = splitIndex ? post.content.slice(splitIndex) : "";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -89,12 +105,42 @@ export default async function BlogPostPage({
         <p className="font-display text-[15px] font-semibold leading-snug text-ink">
           Bu konuyla ilgili size özel bir fiyat teklifi ister misiniz?
         </p>
-        <QuoteModal defaultPurpose={post.category} className="shrink-0" />
+        <QuoteModal
+          defaultPurpose={post.category}
+          className="shrink-0"
+          whatsappNumber={site.contact.whatsappNumber}
+        />
       </div>
 
       <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl">
-        <MDXRemote source={post.content} />
+        <MDXRemote source={firstHalf} />
       </div>
+
+      {secondHalf && (
+        <>
+          <div className="not-prose mt-10 flex flex-col items-start gap-3 rounded-2xl border border-volt/30 bg-volt/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-display text-[15px] font-semibold leading-snug text-ink">
+                Daha Detaylı Bilgi Almak İçin Sizi Arayalım
+              </p>
+              <p className="mt-1 text-[13px] text-slate">
+                Formu doldurun, size özel bilgiyi WhatsApp&apos;tan hemen paylaşalım.
+              </p>
+            </div>
+            <QuoteModal
+              label="Sizi Arayalım"
+              variant="sun"
+              defaultPurpose={post.category}
+              className="shrink-0"
+              whatsappNumber={site.contact.whatsappNumber}
+            />
+          </div>
+
+          <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl">
+            <MDXRemote source={secondHalf} />
+          </div>
+        </>
+      )}
 
       <div className="mt-14 rounded-2xl border border-line bg-paper-raised p-6">
         <p className="font-display text-[16px] font-semibold">
@@ -104,7 +150,7 @@ export default async function BlogPostPage({
           Size özel sistem boyutu ve fiyat teklifi için bizimle iletişime geçin.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <QuoteModal defaultPurpose={post.category} />
+          <QuoteModal defaultPurpose={post.category} whatsappNumber={site.contact.whatsappNumber} />
           <Link
             href="/iletisim"
             className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-sun hover:text-ink"
