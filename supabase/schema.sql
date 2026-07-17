@@ -112,8 +112,17 @@ create table if not exists leads (
   email text,
   province text,
   source text not null default 'website',
+  status text not null default 'Yeni',
+  notes text,
+  status_updated_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Mevcut kurulumlarda leads tablosu zaten varsa yukarıdaki "create table if not exists"
+-- çalışmaz; bu durumda aşağıdaki satırları ayrıca çalıştırın:
+alter table leads add column if not exists status text not null default 'Yeni';
+alter table leads add column if not exists notes text;
+alter table leads add column if not exists status_updated_at timestamptz;
 
 create table if not exists job_applications (
   id bigint generated always as identity primary key,

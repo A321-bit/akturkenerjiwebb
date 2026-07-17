@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download, PhoneCall, Trash2 } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { Download, PhoneCall, Trash2, MessageSquareText, ChevronDown, ChevronUp } from "lucide-react";
 
 type LeadRow = {
   id: number;
@@ -13,6 +13,18 @@ type LeadRow = {
   need_type: string;
   bill_range: string | null;
   source: string;
+  status: string;
+  notes: string | null;
+};
+
+const STATUSES = ["Yeni", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"] as const;
+
+const STATUS_STYLES: Record<string, string> = {
+  Yeni: "bg-ink/5 text-slate border-line",
+  Arandı: "bg-brand/10 text-brand border-brand/30",
+  Ulaşılamadı: "bg-sun/15 text-sun-soft border-sun/40",
+  Olumsuz: "bg-red-50 text-red-600 border-red-200",
+  Olumlu: "bg-volt/10 text-volt border-volt/30",
 };
 
 function telHref(phone: string) {
@@ -21,6 +33,10 @@ function telHref(phone: string) {
 
 export default function AdminLeadsPage() {
   const [items, setItems] = useState<LeadRow[] | null>(null);
+  const [activeStatus, setActiveStatus] = useState<string>("Tümü");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [savingId, setSavingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/leads")
@@ -38,6 +54,49 @@ export default function AdminLeadsPage() {
     await fetch(`/api/admin/leads/${id}`, { method: "DELETE" });
     refresh();
   }
+
+  async function handleStatusChange(id: number, status: string) {
+    setItems((prev) => prev?.map((it) => (it.id === id ? { ...it, status } : it)) ?? prev);
+    setSavingId(id);
+    await fetch(`/api/admin/leads/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    setSavingId(null);
+  }
+
+  function openNotes(item: LeadRow) {
+    if (expandedId === item.id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(item.id);
+    setNoteDraft(item.notes ?? "");
+  }
+
+  async function saveNotes(id: number) {
+    setSavingId(id);
+    await fetch(`/api/admin/leads/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: noteDraft }),
+    });
+    setItems((prev) => prev?.map((it) => (it.id === id ? { ...it, notes: noteDraft } : it)) ?? prev);
+    setSavingId(null);
+    setExpandedId(null);
+  }
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { Tümü: items?.length ?? 0 };
+    for (const s of STATUSES) c[s] = items?.filter((it) => it.status === s).length ?? 0;
+    return c;
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    if (!items) return null;
+    return activeStatus === "Tümü" ? items : items.filter((it) => it.status === activeStatus);
+  }, [items, activeStatus]);
 
   return (
     <div>
@@ -57,13 +116,29 @@ export default function AdminLeadsPage() {
         </a>
       </div>
 
+      <div className="mt-5 flex flex-wrap gap-2">
+        {["Tümü", ...STATUSES].map((s) => (
+          <button
+            key={s}
+            onClick={() => setActiveStatus(s)}
+            className={`rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors ${
+              activeStatus === s
+                ? "border-ink bg-ink text-paper"
+                : "border-line text-slate hover:border-brand"
+            }`}
+          >
+            {s} {items && <span className="opacity-70">({counts[s] ?? 0})</span>}
+          </button>
+        ))}
+      </div>
+
       <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper-raised">
-        {items === null ? (
+        {filtered === null ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Yükleniyor...</p>
-        ) : items.length === 0 ? (
-          <p className="p-5 text-[13.5px] text-slate-soft">Henüz gelen bir talep yok.</p>
+        ) : filtered.length === 0 ? (
+          <p className="p-5 text-[13.5px] text-slate-soft">Bu durumda talep yok.</p>
         ) : (
-          <table className="w-full min-w-[860px] text-[13.5px]">
+          <table className="w-full min-w-[960px] text-[13.5px]">
             <thead>
               <tr className="border-b border-line text-left text-[11.5px] uppercase tracking-[0.08em] text-slate-soft">
                 <th className="px-5 py-3 font-medium">Tarih</th>
@@ -71,53 +146,117 @@ export default function AdminLeadsPage() {
                 <th className="px-5 py-3 font-medium">Telefon</th>
                 <th className="px-5 py-3 font-medium">İl</th>
                 <th className="px-5 py-3 font-medium">İhtiyaç</th>
-                <th className="px-5 py-3 font-medium">Fatura</th>
                 <th className="px-5 py-3 font-medium">Kaynak</th>
-                <th className="w-20 px-5 py-3" />
+                <th className="px-5 py-3 font-medium">Durum</th>
+                <th className="w-24 px-5 py-3" />
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className="border-b border-line last:border-0">
-                  <td className="whitespace-nowrap px-5 py-3.5 text-slate">
-                    {new Date(item.created_at).toLocaleString("tr-TR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <p className="font-semibold text-ink">{item.fullname}</p>
-                    {item.email && <p className="text-[12px] text-slate-soft">{item.email}</p>}
-                  </td>
-                  <td className="whitespace-nowrap px-5 py-3.5">
-                    <a
-                      href={telHref(item.phone)}
-                      className="flex items-center gap-1.5 font-semibold text-brand hover:underline"
-                    >
-                      <PhoneCall size={14} /> {item.phone}
-                    </a>
-                  </td>
-                  <td className="px-5 py-3.5 text-slate">{item.province ?? "—"}</td>
-                  <td className="px-5 py-3.5 text-ink">{item.need_type}</td>
-                  <td className="px-5 py-3.5 text-slate">{item.bill_range ?? "—"}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="rounded-full bg-ink/5 px-2.5 py-1 text-[11.5px] font-medium text-slate">
-                      {item.source}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="rounded-lg p-2 text-slate hover:bg-red-50 hover:text-red-600"
-                      aria-label="Sil"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
+              {filtered.map((item) => (
+                <Fragment key={item.id}>
+                  <tr className="border-b border-line last:border-0">
+                    <td className="whitespace-nowrap px-5 py-3.5 text-slate">
+                      {new Date(item.created_at).toLocaleString("tr-TR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <p className="font-semibold text-ink">{item.fullname}</p>
+                      {item.email && <p className="text-[12px] text-slate-soft">{item.email}</p>}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3.5">
+                      <a
+                        href={telHref(item.phone)}
+                        className="flex items-center gap-1.5 font-semibold text-brand hover:underline"
+                      >
+                        <PhoneCall size={14} /> {item.phone}
+                      </a>
+                    </td>
+                    <td className="px-5 py-3.5 text-slate">{item.province ?? "—"}</td>
+                    <td className="px-5 py-3.5 text-ink">{item.need_type}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="rounded-full bg-ink/5 px-2.5 py-1 text-[11.5px] font-medium text-slate">
+                        {item.source}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <select
+                        value={item.status}
+                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                        disabled={savingId === item.id}
+                        className={`rounded-full border px-3 py-1.5 text-[12.5px] font-semibold outline-none disabled:opacity-60 ${
+                          STATUS_STYLES[item.status] ?? STATUS_STYLES.Yeni
+                        }`}
+                      >
+                        {STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openNotes(item)}
+                          className={`rounded-lg p-2 hover:bg-ink/5 ${
+                            item.notes ? "text-brand" : "text-slate"
+                          }`}
+                          aria-label="Not ekle/düzenle"
+                        >
+                          <MessageSquareText size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="rounded-lg p-2 text-slate hover:bg-red-50 hover:text-red-600"
+                          aria-label="Sil"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        {expandedId === item.id ? (
+                          <ChevronUp size={16} className="text-slate-soft" />
+                        ) : (
+                          <ChevronDown size={16} className="text-slate-soft" />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                  {expandedId === item.id && (
+                    <tr className="border-b border-line bg-ink/[0.02] last:border-0">
+                      <td colSpan={8} className="px-5 py-4">
+                        <label className="text-[12.5px] font-medium text-slate">
+                          {item.fullname} için not
+                        </label>
+                        <textarea
+                          value={noteDraft}
+                          onChange={(e) => setNoteDraft(e.target.value)}
+                          rows={3}
+                          placeholder="Görüşme notu, randevu bilgisi, itiraz sebebi vb."
+                          className="mt-2 w-full max-w-2xl rounded-lg border border-line bg-paper px-3.5 py-2.5 text-[13.5px] outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+                        />
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            onClick={() => saveNotes(item.id)}
+                            disabled={savingId === item.id}
+                            className="rounded-full bg-ink px-4 py-2 text-[12.5px] font-semibold text-paper hover:bg-sun hover:text-ink disabled:opacity-60"
+                          >
+                            {savingId === item.id ? "Kaydediliyor..." : "Notu Kaydet"}
+                          </button>
+                          <button
+                            onClick={() => setExpandedId(null)}
+                            className="rounded-full border border-line px-4 py-2 text-[12.5px] font-semibold text-ink hover:border-brand"
+                          >
+                            Vazgeç
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>

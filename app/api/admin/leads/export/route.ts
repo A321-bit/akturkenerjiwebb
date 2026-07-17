@@ -10,6 +10,8 @@ type LeadRow = {
   need_type: string;
   bill_range: string | null;
   source: string;
+  status: string;
+  notes: string | null;
 };
 
 function csvCell(value: string | null | undefined) {
@@ -34,6 +36,8 @@ export async function GET() {
     "İhtiyaç Türü",
     "Fatura Aralığı",
     "Kaynak",
+    "Durum",
+    "Notlar",
   ];
   const lines = [header.map(csvCell).join(",")];
   for (const row of rows) {
@@ -47,6 +51,8 @@ export async function GET() {
         row.need_type,
         row.bill_range,
         row.source,
+        row.status,
+        row.notes,
       ]
         .map(csvCell)
         .join(",")
