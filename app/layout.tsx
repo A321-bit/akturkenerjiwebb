@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
@@ -11,6 +12,9 @@ import Analytics from "@/components/Analytics";
 // GA4 Ölçüm Kimliği (Measurement ID) — bu kimlik gizli değildir, her
 // sayfanın kaynak kodunda zaten herkese açık olarak yer alır.
 const GA_MEASUREMENT_ID = "G-7MWBQYG55N";
+
+// Meta Pixel ID — bu da gizli değildir, her sayfanın kaynak kodunda görünür.
+const META_PIXEL_ID = "956247070771662";
 
 // Build sırasında Vercel'in build makinesinden Supabase'e yapılan istekler
 // tutarsız şekilde "fetch failed" ile başarısız oluyor (yerelde ve runtime'da
@@ -163,6 +167,30 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Analytics />
+        <Script id="meta-pixel" strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '${META_PIXEL_ID}');
+            fbq('track', 'PageView');
+          `}
+        </Script>
+        <noscript>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+            alt=""
+          />
+        </noscript>
         <Header settings={settings} />
         <main className="flex-1">{children}</main>
         <Footer settings={settings} services={services} />

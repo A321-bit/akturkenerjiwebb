@@ -9,6 +9,7 @@ import { trackEvent } from "@/lib/track";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
 import { whatsappLink } from "@/lib/data";
 import { buildLeadAttributionFields } from "@/lib/attribution";
+import { trackMetaLead } from "@/lib/meta-pixel";
 
 const quoteSchema = z.object({
   fullname: z.string().trim().min(3, "Ad soyad girin"),
@@ -116,6 +117,7 @@ export default function QuoteModal({
       if (!res.ok) throw new Error("failed");
       setStatus("sent");
       trackEvent("click", pathname ?? "/", "quote_form_submit");
+      trackMetaLead(parsed.data.purpose);
 
       if (redirectTo === "whatsapp") {
         const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}`;

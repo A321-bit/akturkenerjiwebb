@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { z } from "zod";
 import { trackEvent } from "@/lib/track";
 import { buildLeadAttributionFields } from "@/lib/attribution";
+import { trackMetaLead } from "@/lib/meta-pixel";
 import {
   Home,
   Trees,
@@ -94,6 +95,7 @@ export default function LeadForm() {
       if (!res.ok) throw new Error("failed");
       setStatus("sent");
       trackEvent("click", pathname ?? "/", "lead_form_submit");
+      trackMetaLead(parsed.data.needType);
     } catch {
       setStatus("error");
     }
