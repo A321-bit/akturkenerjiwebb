@@ -9,6 +9,15 @@ export function whatsappLink(whatsappNumber: string, message: string) {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
 
+// Blog yazıları ileri tarihli published_at ile planlanabilir (haftada birkaç
+// kez otomatik yayınlanacak şekilde); genel siteye o tarihe kadar hiç
+// görünmemeleri gerekir. RLS herkese okuma izni verdiği için gizleme burada,
+// sorgu seviyesinde yapılıyor — admin panel bu fonksiyonları kullanmadığı
+// için planlanan yazılar admin listesinde her zaman görünmeye devam eder.
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export type SiteSettings = {
   name: string;
   shortName: string;
@@ -281,13 +290,19 @@ export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
   const { data, error } = await supabasePublic
     .from("blog_posts")
     .select("*")
+    .lte("published_at", todayIso())
     .order("published_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data as BlogPostRow[]).map(mapBlogPost);
 });
 
 export const getBlogPostBySlug = cache(async (slug: string): Promise<BlogPost | null> => {
-  const { data } = await supabasePublic.from("blog_posts").select("*").eq("slug", slug).maybeSingle();
+  const { data } = await supabasePublic
+    .from("blog_posts")
+    .select("*")
+    .eq("slug", slug)
+    .lte("published_at", todayIso())
+    .maybeSingle();
   return data ? mapBlogPost(data as BlogPostRow) : null;
 });
 
@@ -301,6 +316,7 @@ export const getBlogPostSummaries = cache(async (): Promise<BlogPostSummary[]> =
   const { data, error } = await supabasePublic
     .from("blog_posts")
     .select("slug, title, description, category")
+    .lte("published_at", todayIso())
     .order("published_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data as BlogPostSummary[];
