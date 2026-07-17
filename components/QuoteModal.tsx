@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { z } from "zod";
 import { Zap, X, User, PhoneCall, MapPin, Wrench, Loader2, CheckCircle2 } from "lucide-react";
@@ -138,14 +139,15 @@ export default function QuoteModal({
         {label}
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/70 px-4 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
-          }}
-        >
-          <div className="relative w-full max-w-md rounded-2xl border border-line bg-paper p-6 shadow-2xl sm:p-7">
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-ink/70 px-4 py-8 backdrop-blur-sm sm:items-center"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setOpen(false);
+            }}
+          >
+          <div className="relative my-auto w-full max-w-md rounded-2xl border border-line bg-paper p-6 shadow-2xl sm:p-7">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -293,8 +295,9 @@ export default function QuoteModal({
               </>
             )}
           </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
