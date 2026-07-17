@@ -63,7 +63,7 @@ export default async function BlogPostPage({
         publisher: {
           "@type": "Organization",
           name: SITE_NAME,
-          logo: { "@type": "ImageObject", url: `${SITE_URL}/logo.svg` },
+          logo: { "@type": "ImageObject", url: `${SITE_URL}/logo-icon.png` },
         },
       },
       breadcrumbJsonLd([
