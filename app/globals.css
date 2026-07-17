@@ -69,11 +69,16 @@ html {
   scroll-behavior: smooth;
 }
 
-/* <option> elemanlarının kendi class'ı yok; renk/arkaplanı miras alıyorlar.
-   Chrome'un "koyu tema zorla" özelliği, yazar tarafından AÇIKÇA renk/arkaplan
-   belirtilmemiş elemanların rengini tersine çevirip beyaz arka plan üzerinde
-   beyaz (görünmez) yazıya yol açıyor. Burada ikisini de açıkça belirterek bu
+/* Form elemanlarının çoğunda arka plan (bg-paper vb.) class'ı var ama yazı
+   rengi hiç açıkça belirtilmemiş, tarayıcıdan miras alınıyor. Android'de
+   Chrome'un "koyu tema zorla" özelliği, yazar tarafından AÇIKÇA renk
+   belirtilmemiş elemanların metnini tersine çevirip beyaz arka plan
+   üzerinde beyaz (görünmez) yazıya yol açıyor — kullanıcı yazdığını görmüyor
+   çünkü metin gerçekten kutuya giriyor, sadece görünmez oluyor. Burada tüm
+   form elemanları için hem rengi hem arka planı açıkça belirterek bu
    zorlamayı devre dışı bırakıyoruz. */
+input,
+textarea,
 select,
 option {
   color: var(--ink);
