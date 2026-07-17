@@ -40,6 +40,7 @@ export default function QuoteModal({
   variant = "red",
   redirectTo = "whatsapp",
   whatsappNumber,
+  onOpen,
 }: {
   defaultPurpose?: string;
   label?: string;
@@ -47,6 +48,7 @@ export default function QuoteModal({
   variant?: "red" | "sun";
   redirectTo?: "whatsapp" | "iletisim" | "none";
   whatsappNumber: string;
+  onOpen?: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -80,6 +82,7 @@ export default function QuoteModal({
     setErrors({});
     setOpen(true);
     trackEvent("click", pathname ?? "/", "quote_button_open");
+    onOpen?.();
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

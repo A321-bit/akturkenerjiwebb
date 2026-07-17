@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, X, ArrowUpRight } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import type { SiteSettings } from "@/lib/data";
+import QuoteModal from "@/components/QuoteModal";
 
 const nav = [
   { href: "/", label: "Anasayfa" },
@@ -79,16 +80,12 @@ export default function Header({ settings }: { settings: SiteSettings }) {
         </nav>
 
         <div className="hidden items-center gap-3 xl:flex">
-          <Link
-            href="/iletisim"
-            className="group inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-ink px-4 py-2 text-[13.5px] font-semibold text-paper transition-colors hover:bg-sun hover:text-ink"
-          >
-            Ücretsiz Keşif Talep Et
-            <ArrowUpRight
-              size={15}
-              className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            />
-          </Link>
+          <QuoteModal
+            label="Ücretsiz Keşif Talep Et"
+            variant="sun"
+            whatsappNumber={settings.contact.whatsappNumber}
+            className="!px-4 !py-2 !text-[13.5px]"
+          />
         </div>
 
         <button
@@ -129,13 +126,13 @@ export default function Header({ settings }: { settings: SiteSettings }) {
                 </Link>
               )
             )}
-            <Link
-              href="/iletisim"
-              onClick={() => setOpen(false)}
-              className="mt-2 rounded-full bg-ink px-4 py-2.5 text-center text-[14px] font-semibold text-paper"
-            >
-              Ücretsiz Keşif Talep Et
-            </Link>
+            <QuoteModal
+              label="Ücretsiz Keşif Talep Et"
+              variant="sun"
+              whatsappNumber={settings.contact.whatsappNumber}
+              onOpen={() => setOpen(false)}
+              className="mt-2 w-full !justify-center"
+            />
           </nav>
         </div>
       )}

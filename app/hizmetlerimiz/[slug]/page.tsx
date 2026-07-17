@@ -159,18 +159,15 @@ export default async function ServiceDetailPage({
               {content.hero.sub}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <QuoteModal defaultPurpose={service.title} whatsappNumber={site.contact.whatsappNumber} />
-              {content.turnkeyInstall !== false && (
-                <Link
-                  href="/iletisim"
-                  className="group inline-flex items-center gap-2 rounded-full bg-sun px-6 py-3.5 text-[15px] font-bold text-ink shadow-[0_10px_30px_-8px_rgba(238,162,58,0.6)] transition-transform hover:scale-[1.03] hover:bg-sun-soft"
-                >
-                  Ücretsiz Keşif Talep Et
-                  <ArrowUpRight
-                    size={16}
-                    className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  />
-                </Link>
+              {content.turnkeyInstall !== false ? (
+                <QuoteModal
+                  label="Ücretsiz Keşif Talep Et"
+                  variant="sun"
+                  defaultPurpose={service.title}
+                  whatsappNumber={site.contact.whatsappNumber}
+                />
+              ) : (
+                <QuoteModal defaultPurpose={service.title} whatsappNumber={site.contact.whatsappNumber} />
               )}
               <a
                 href={waHref}
@@ -516,18 +513,15 @@ export default async function ServiceDetailPage({
               {content.closing.text}
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <QuoteModal defaultPurpose={service.title} whatsappNumber={site.contact.whatsappNumber} />
-              {content.turnkeyInstall !== false && (
-                <Link
-                  href="/iletisim"
-                  className="group inline-flex items-center gap-2 rounded-full bg-sun px-6 py-3.5 text-[15px] font-bold text-ink transition-transform hover:scale-[1.03] hover:bg-sun-soft"
-                >
-                  Ücretsiz Keşif Talep Et
-                  <ArrowUpRight
-                    size={16}
-                    className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                  />
-                </Link>
+              {content.turnkeyInstall !== false ? (
+                <QuoteModal
+                  label="Ücretsiz Keşif Talep Et"
+                  variant="sun"
+                  defaultPurpose={service.title}
+                  whatsappNumber={site.contact.whatsappNumber}
+                />
+              ) : (
+                <QuoteModal defaultPurpose={service.title} whatsappNumber={site.contact.whatsappNumber} />
               )}
               <a
                 href={waHref}
