@@ -2,6 +2,11 @@
 @plugin "@tailwindcss/typography";
 
 :root {
+  /* Site tamamen açık temalı; bunu tarayıcıya bildirmezsek Android'in "koyu tema
+     zorla" özelliği native select/option açılır listesini karartıp metni
+     görünmez hale getiriyor (arka plan beyaz kalırken yazı da beyaza dönüyor). */
+  color-scheme: light;
+
   /* Aktürk Enerji token system — derived from brand logo (blue #3f74c4 + charcoal) */
   --ink: #0e1626;          /* deep navy-black — primary dark surface / text on light */
   --ink-soft: #16223c;     /* raised panel on dark */
