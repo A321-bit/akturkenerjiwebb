@@ -1,4 +1,4 @@
-import { adminClient } from "@/lib/data";
+import { adminClient, getServices, getReferences, getBlogPostSummaries } from "@/lib/data";
 
 function countBy(rows: Record<string, string | null>[], key: string) {
   const map = new Map<string, number>();
@@ -13,6 +13,18 @@ function countBy(rows: Record<string, string | null>[], key: string) {
 function countByValues(values: string[]) {
   const map = new Map<string, number>();
   for (const v of values) map.set(v, (map.get(v) ?? 0) + 1);
+  return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+}
+
+type ClickEventRow = { path: string | null; label: string | null };
+
+function countByPathLabel(rows: ClickEventRow[], describe: (row: ClickEventRow) => string | null) {
+  const map = new Map<string, number>();
+  for (const row of rows) {
+    const desc = describe(row);
+    if (!desc) continue;
+    map.set(desc, (map.get(desc) ?? 0) + 1);
+  }
   return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
 }
 
@@ -40,6 +52,41 @@ function sourceLabel(row: LeadSourceRow): string {
   return row.source === "quick_quote" ? "Hızlı teklif formu" : "Doğrudan / Organik";
 }
 
+const STATIC_PAGE_NAMES: Record<string, string> = {
+  "/": "Anasayfa",
+  "/hakkimizda": "Hakkımızda sayfası",
+  "/hizmetlerimiz": "Hizmetlerimiz sayfası",
+  "/referanslarimiz": "Referanslarımız sayfası",
+  "/blog": "Blog sayfası",
+  "/iletisim": "İletişim sayfası",
+  "/hizmetlerimiz/distributorluk-bayilik": "Bayilik sayfası",
+};
+
+function buildPageNameResolver(
+  services: { slug: string; title: string }[],
+  references: { slug: string; title: string }[],
+  posts: { slug: string; title: string }[]
+) {
+  const serviceMap = new Map(services.map((s) => [s.slug, s.title]));
+  const referenceMap = new Map(references.map((r) => [r.slug, r.title]));
+  const postMap = new Map(posts.map((p) => [p.slug, p.title]));
+
+  return function pageName(path: string): string {
+    if (STATIC_PAGE_NAMES[path]) return STATIC_PAGE_NAMES[path];
+
+    const serviceSlug = path.match(/^\/hizmetlerimiz\/([^/]+)$/)?.[1];
+    if (serviceSlug) return `${serviceMap.get(serviceSlug) ?? serviceSlug} sayfası`;
+
+    const referenceSlug = path.match(/^\/referanslarimiz\/([^/]+)$/)?.[1];
+    if (referenceSlug) return `${referenceMap.get(referenceSlug) ?? referenceSlug} referans sayfası`;
+
+    const blogSlug = path.match(/^\/blog\/([^/]+)$/)?.[1];
+    if (blogSlug) return `${postMap.get(blogSlug) ?? blogSlug} blog yazısı`;
+
+    return path;
+  };
+}
+
 export default async function AdminDashboardPage() {
   const client = adminClient();
   const since7 = daysAgoIso(7);
@@ -60,6 +107,9 @@ export default async function AdminDashboardPage() {
     leadsSourceRes,
     activeNowRes,
     activeCitiesRes,
+    services,
+    references,
+    posts,
   ] = await Promise.all([
     client.from("analytics_events").select("*", { count: "exact", head: true }).eq("type", "pageview"),
     client
@@ -79,7 +129,7 @@ export default async function AdminDashboardPage() {
       .eq("type", "pageview")
       .not("city", "is", null)
       .gte("created_at", since30),
-    client.from("analytics_events").select("label").eq("type", "click").not("label", "is", null),
+    client.from("analytics_events").select("path, label").eq("type", "click").not("label", "is", null),
     client.from("leads").select("*", { count: "exact", head: true }),
     client.from("leads").select("*", { count: "exact", head: true }).gte("created_at", since7),
     client.from("leads").select("form_page").not("form_page", "is", null),
@@ -96,11 +146,13 @@ export default async function AdminDashboardPage() {
       .eq("type", "pageview")
       .not("city", "is", null)
       .gte("created_at", since15min),
+    getServices(),
+    getReferences(),
+    getBlogPostSummaries(),
   ]);
 
   const topPaths = countBy((byPathRes.data ?? []) as Record<string, string | null>[], "path");
   const topCities = countBy((byCityRes.data ?? []) as Record<string, string | null>[], "city");
-  const topLabels = countBy((byLabelRes.data ?? []) as Record<string, string | null>[], "label");
   const topLeadPages = countBy((leadsByPageRes.data ?? []) as Record<string, string | null>[], "form_page");
   const topProvinces = countBy((leadsByProvinceRes.data ?? []) as Record<string, string | null>[], "province");
   const topSources = countByValues(((leadsSourceRes.data ?? []) as LeadSourceRow[]).map(sourceLabel));
@@ -109,8 +161,19 @@ export default async function AdminDashboardPage() {
   const labelNames: Record<string, string> = {
     call_button: "Hemen Ara butonu",
     whatsapp_button: "WhatsApp butonu",
+    whatsapp_cta_banner: "WhatsApp banner butonu",
     lead_form_submit: "Teklif formu gönderimi",
+    quote_button_open: "Keşif Al butonu",
+    quote_form_submit: "Hızlı teklif formu gönderimi",
   };
+
+  const pageName = buildPageNameResolver(services, references, posts);
+  const topLabels = countByPathLabel((byLabelRes.data ?? []) as ClickEventRow[], (row) => {
+    if (!row.label) return null;
+    const button = labelNames[row.label] ?? row.label;
+    const page = row.path ? pageName(row.path) : null;
+    return page ? `${page} — ${button}` : button;
+  });
 
   return (
     <div>
@@ -156,10 +219,7 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <RankTable title="En çok görüntülenen sayfalar (30 gün)" rows={topPaths} />
-        <RankTable
-          title="Tıklanan butonlar (tüm zamanlar)"
-          rows={topLabels.map(([label, count]) => [labelNames[label] ?? label, count])}
-        />
+        <RankTable title="Tıklanan butonlar (tüm zamanlar)" rows={topLabels} />
         <RankTable title="Ziyaretçi şehirleri (30 gün)" rows={topCities} />
       </div>
 

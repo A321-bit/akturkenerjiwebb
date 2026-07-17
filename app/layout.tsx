@@ -23,6 +23,13 @@ const META_PIXEL_ID = "956247070771662";
 // kaldırır hem de admin panel değişikliklerinin anında yansımasını sağlar.
 export const dynamic = "force-dynamic";
 
+// Üçü de globalde (html class'ında) tanımlı olduğu için Next.js varsayılan
+// olarak tüm ağırlıkları <link rel="preload"> ile render-blocking şekilde
+// önceden yüklüyordu (PageSpeed: "oluşturmayı engelleyen kaynaklar", ~1450ms).
+// Sadece başlıklarda kullanılan Space Grotesk gerçekten önceden yüklenmeyi
+// hak ediyor (LCP genelde bir başlık); gövde metni (Inter) tarayıcı sistem
+// fontuyla anında görünüp arkadan takas ediyor (font-display: swap zaten
+// varsayılan), küçük etiket fontu (Plex Mono) ise hiç önceliksiz.
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
@@ -33,12 +40,14 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
+  preload: false,
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -134,7 +143,7 @@ export default async function RootLayout({
         name: settings.name,
         legalName: settings.name,
         url: SITE_URL,
-        logo: `${SITE_URL}/logo.svg`,
+        logo: `${SITE_URL}/logo-icon.png`,
         foundingDate: String(settings.foundedYear),
         address: {
           "@type": "PostalAddress",
