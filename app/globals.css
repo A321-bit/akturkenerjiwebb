@@ -69,6 +69,17 @@ html {
   scroll-behavior: smooth;
 }
 
+/* <option> elemanlarının kendi class'ı yok; renk/arkaplanı miras alıyorlar.
+   Chrome'un "koyu tema zorla" özelliği, yazar tarafından AÇIKÇA renk/arkaplan
+   belirtilmemiş elemanların rengini tersine çevirip beyaz arka plan üzerinde
+   beyaz (görünmez) yazıya yol açıyor. Burada ikisini de açıkça belirterek bu
+   zorlamayı devre dışı bırakıyoruz. */
+select,
+option {
+  color: var(--ink);
+  background-color: var(--paper-raised);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
