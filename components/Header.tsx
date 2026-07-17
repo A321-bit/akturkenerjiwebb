@@ -23,10 +23,26 @@ export default function Header({ settings }: { settings: SiteSettings }) {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
 
+  // Next.js <Link> normalde aynı sayfadaysan tıklamayı yok sayar (no-op).
+  // Logo veya "Anasayfa"ya zaten anasayfadayken basıldığında sayfayı yenile.
+  function handleHomeClick(e: React.MouseEvent) {
+    if (pathname === "/") {
+      e.preventDefault();
+      window.location.reload();
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-2 sm:px-8 sm:py-2.5">
-        <Link href="/" className="shrink-0" onClick={() => setOpen(false)}>
+        <Link
+          href="/"
+          className="shrink-0"
+          onClick={(e) => {
+            setOpen(false);
+            handleHomeClick(e);
+          }}
+        >
           <Image
             src="/logo.svg"
             alt={settings.name}
@@ -53,6 +69,7 @@ export default function Header({ settings }: { settings: SiteSettings }) {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={item.href === "/" ? handleHomeClick : undefined}
                 className="whitespace-nowrap text-[14.5px] font-medium text-slate transition-colors hover:text-ink"
               >
                 {item.label}
@@ -102,7 +119,10 @@ export default function Header({ settings }: { settings: SiteSettings }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => {
+                    setOpen(false);
+                    if (item.href === "/") handleHomeClick(e);
+                  }}
                   className="rounded-lg px-2 py-2.5 text-[15px] font-medium text-ink hover:bg-ink/[0.04]"
                 >
                   {item.label}
