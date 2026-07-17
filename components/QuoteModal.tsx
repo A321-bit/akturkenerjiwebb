@@ -8,6 +8,7 @@ import { Zap, X, User, PhoneCall, MapPin, Wrench, Loader2, CheckCircle2 } from "
 import { trackEvent } from "@/lib/track";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
 import { whatsappLink } from "@/lib/data";
+import { buildLeadAttributionFields } from "@/lib/attribution";
 
 const quoteSchema = z.object({
   fullname: z.string().trim().min(3, "Ad soyad girin"),
@@ -109,6 +110,7 @@ export default function QuoteModal({
           phone: parsed.data.phone,
           province: parsed.data.province,
           source: "quick_quote",
+          ...buildLeadAttributionFields(pathname ?? "/"),
         }),
       });
       if (!res.ok) throw new Error("failed");

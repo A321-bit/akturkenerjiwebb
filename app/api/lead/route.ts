@@ -10,28 +10,27 @@ import { createClient } from "@supabase/supabase-js";
 //   SUPABASE_SERVICE_ROLE_KEY    — "leads" tablosuna yazma izni olan servis anahtarı
 //   GOOGLE_SHEETS_WEBHOOK_URL    — Google Apps Script Web App URL'i (POST kabul eden)
 //
-// Supabase "leads" tablosu için önerilen şema:
-//   create table leads (
-//     id bigint generated always as identity primary key,
-//     need_type text not null,
-//     bill_range text not null,
-//     fullname text not null,
-//     phone text not null,
-//     email text,
-//     source text default 'website',
-//     created_at timestamptz default now()
-//   );
+// Supabase "leads" tablosu için önerilen şema: bkz. supabase/schema.sql
+
+type LeadInput = {
+  needType?: string;
+  billRange?: string;
+  fullname?: string;
+  phone?: string;
+  email?: string;
+  province?: string;
+  source?: string;
+  formPage?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+  adClickId?: string;
+};
 
 export async function POST(req: Request) {
-  let body: {
-    needType?: string;
-    billRange?: string;
-    fullname?: string;
-    phone?: string;
-    email?: string;
-    province?: string;
-    source?: string;
-  };
+  let body: LeadInput;
 
   try {
     body = await req.json();
@@ -39,7 +38,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
 
-  const { needType, billRange, fullname, phone, email, province, source } = body;
+  const {
+    needType,
+    billRange,
+    fullname,
+    phone,
+    email,
+    province,
+    source,
+    formPage,
+    utmSource,
+    utmMedium,
+    utmCampaign,
+    utmContent,
+    utmTerm,
+    adClickId,
+  } = body;
 
   if (!needType || !fullname || !phone) {
     return NextResponse.json({ error: "Zorunlu alanlar eksik." }, { status: 400 });
@@ -53,6 +67,13 @@ export async function POST(req: Request) {
     email: email || null,
     province: province || null,
     source: source || "website",
+    formPage: formPage || null,
+    utmSource: utmSource || null,
+    utmMedium: utmMedium || null,
+    utmCampaign: utmCampaign || null,
+    utmContent: utmContent || null,
+    utmTerm: utmTerm || null,
+    adClickId: adClickId || null,
     receivedAt: new Date().toISOString(),
   };
 
@@ -72,7 +93,7 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true });
 }
 
-async function sendToSupabase(lead: {
+type LeadForStorage = {
   needType: string;
   billRange: string | null;
   fullname: string;
@@ -80,8 +101,17 @@ async function sendToSupabase(lead: {
   email: string | null;
   province?: string | null;
   source: string;
+  formPage?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
+  adClickId?: string | null;
   receivedAt: string;
-}) {
+};
+
+async function sendToSupabase(lead: LeadForStorage) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return; // yapılandırılmamış — sessizce atla
@@ -96,30 +126,38 @@ async function sendToSupabase(lead: {
     source: lead.source,
   };
   if (lead.province) record.province = lead.province;
+  if (lead.formPage) record.form_page = lead.formPage;
+  if (lead.utmSource) record.utm_source = lead.utmSource;
+  if (lead.utmMedium) record.utm_medium = lead.utmMedium;
+  if (lead.utmCampaign) record.utm_campaign = lead.utmCampaign;
+  if (lead.utmContent) record.utm_content = lead.utmContent;
+  if (lead.utmTerm) record.utm_term = lead.utmTerm;
+  if (lead.adClickId) record.ad_click_id = lead.adClickId;
 
   let { error } = await supabase.from("leads").insert(record);
 
-  // "province" kolonu veya "bill_range" nullable migration'ı henüz canlıya
-  // uygulanmadıysa talep tamamen kaybolmasın diye, eksik/uyumsuz alanları
-  // çıkarıp bir kez daha deniyoruz.
+  // "province"/"form_page"/"utm_*" kolonları henüz canlıya uygulanmamış
+  // migration'a bağlıysa talep tamamen kaybolmasın diye, tanınmayan
+  // alanları çıkarıp bir kez daha deniyoruz.
   if (error) {
-    if ("province" in record) delete record.province;
+    const optionalKeys = [
+      "province",
+      "form_page",
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_content",
+      "utm_term",
+      "ad_click_id",
+    ];
+    for (const k of optionalKeys) delete record[k];
     if (record.bill_range === null) record.bill_range = "Belirtilmedi";
     ({ error } = await supabase.from("leads").insert(record));
   }
   if (error) throw error;
 }
 
-async function sendToGoogleSheets(lead: {
-  needType: string;
-  billRange: string | null;
-  fullname: string;
-  phone: string;
-  email: string | null;
-  province?: string | null;
-  source: string;
-  receivedAt: string;
-}) {
+async function sendToGoogleSheets(lead: LeadForStorage) {
   const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
   if (!webhookUrl) return; // yapılandırılmamış — sessizce atla
 

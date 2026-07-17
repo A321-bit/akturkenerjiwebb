@@ -115,14 +115,32 @@ create table if not exists leads (
   status text not null default 'Yeni',
   notes text,
   status_updated_at timestamptz,
+  form_page text,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  utm_content text,
+  utm_term text,
+  ad_click_id text,
   created_at timestamptz not null default now()
 );
 
 -- Mevcut kurulumlarda leads tablosu zaten varsa yukarıdaki "create table if not exists"
--- çalışmaz; bu durumda aşağıdaki satırları ayrıca çalıştırın:
+-- çalışmaz; bu durumda aşağıdaki satırları ayrıca çalıştırın. "province" hiç
+-- eklenmemiş olabilir ve "bill_range" hâlâ NOT NULL olabilir (en eski şemadan
+-- kalma) — ikisi de aşağıda düzeltiliyor.
+alter table leads add column if not exists province text;
+alter table leads alter column bill_range drop not null;
 alter table leads add column if not exists status text not null default 'Yeni';
 alter table leads add column if not exists notes text;
 alter table leads add column if not exists status_updated_at timestamptz;
+alter table leads add column if not exists form_page text;
+alter table leads add column if not exists utm_source text;
+alter table leads add column if not exists utm_medium text;
+alter table leads add column if not exists utm_campaign text;
+alter table leads add column if not exists utm_content text;
+alter table leads add column if not exists utm_term text;
+alter table leads add column if not exists ad_click_id text;
 
 create table if not exists job_applications (
   id bigint generated always as identity primary key,

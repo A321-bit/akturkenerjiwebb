@@ -10,14 +10,41 @@ function countBy(rows: Record<string, string | null>[], key: string) {
   return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
 }
 
+function countByValues(values: string[]) {
+  const map = new Map<string, number>();
+  for (const v of values) map.set(v, (map.get(v) ?? 0) + 1);
+  return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+}
+
 function daysAgoIso(days: number): string {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function minutesAgoIso(minutes: number): string {
+  return new Date(Date.now() - minutes * 60 * 1000).toISOString();
+}
+
+type LeadSourceRow = {
+  utm_source: string | null;
+  utm_medium: string | null;
+  ad_click_id: string | null;
+  source: string;
+};
+
+function sourceLabel(row: LeadSourceRow): string {
+  if (row.utm_source || row.utm_medium) {
+    return [row.utm_source, row.utm_medium].filter(Boolean).join(" / ");
+  }
+  if (row.ad_click_id?.startsWith("fbclid:")) return "Meta Ads";
+  if (row.ad_click_id?.startsWith("gclid:")) return "Google Ads";
+  return row.source === "quick_quote" ? "Hızlı teklif formu" : "Doğrudan / Organik";
 }
 
 export default async function AdminDashboardPage() {
   const client = adminClient();
   const since7 = daysAgoIso(7);
   const since30 = daysAgoIso(30);
+  const since15min = minutesAgoIso(15);
 
   const [
     totalViewsRes,
@@ -28,6 +55,11 @@ export default async function AdminDashboardPage() {
     byLabelRes,
     totalLeadsRes,
     leads7Res,
+    leadsByPageRes,
+    leadsByProvinceRes,
+    leadsSourceRes,
+    activeNowRes,
+    activeCitiesRes,
   ] = await Promise.all([
     client.from("analytics_events").select("*", { count: "exact", head: true }).eq("type", "pageview"),
     client
@@ -50,11 +82,29 @@ export default async function AdminDashboardPage() {
     client.from("analytics_events").select("label").eq("type", "click").not("label", "is", null),
     client.from("leads").select("*", { count: "exact", head: true }),
     client.from("leads").select("*", { count: "exact", head: true }).gte("created_at", since7),
+    client.from("leads").select("form_page").not("form_page", "is", null),
+    client.from("leads").select("province").not("province", "is", null),
+    client.from("leads").select("utm_source, utm_medium, ad_click_id, source"),
+    client
+      .from("analytics_events")
+      .select("*", { count: "exact", head: true })
+      .eq("type", "pageview")
+      .gte("created_at", since15min),
+    client
+      .from("analytics_events")
+      .select("city")
+      .eq("type", "pageview")
+      .not("city", "is", null)
+      .gte("created_at", since15min),
   ]);
 
   const topPaths = countBy((byPathRes.data ?? []) as Record<string, string | null>[], "path");
   const topCities = countBy((byCityRes.data ?? []) as Record<string, string | null>[], "city");
   const topLabels = countBy((byLabelRes.data ?? []) as Record<string, string | null>[], "label");
+  const topLeadPages = countBy((leadsByPageRes.data ?? []) as Record<string, string | null>[], "form_page");
+  const topProvinces = countBy((leadsByProvinceRes.data ?? []) as Record<string, string | null>[], "province");
+  const topSources = countByValues(((leadsSourceRes.data ?? []) as LeadSourceRow[]).map(sourceLabel));
+  const activeCities = countBy((activeCitiesRes.data ?? []) as Record<string, string | null>[], "city");
 
   const labelNames: Record<string, string> = {
     call_button: "Hemen Ara butonu",
@@ -74,6 +124,34 @@ export default async function AdminDashboardPage() {
         <StatCard label="Son 7 gün görüntüleme" value={views7Res.count ?? 0} />
         <StatCard label="Son 30 gün görüntüleme" value={views30Res.count ?? 0} />
         <StatCard label="Toplam teklif talebi" value={totalLeadsRes.count ?? 0} sub={`son 7 günde ${leads7Res.count ?? 0}`} />
+      </div>
+
+      <div className="mt-8 flex items-center gap-2">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-volt opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-volt" />
+        </span>
+        <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-volt">
+          Şu An Aktif · Son 15 Dakika
+        </p>
+      </div>
+      <div className="mt-3 grid gap-6 lg:grid-cols-3">
+        <div className="rounded-2xl border border-volt/30 bg-volt/5 p-5 lg:col-span-1">
+          <p className="text-[12.5px] text-slate-soft">Aktif ziyaretçi (yaklaşık)</p>
+          <p className="mt-1.5 font-mono-data text-3xl font-semibold text-volt">
+            {(activeNowRes.count ?? 0).toLocaleString("tr-TR")}
+          </p>
+          <p className="mt-1 text-[11.5px] text-slate-soft">son 15 dakikadaki sayfa görüntülemesi</p>
+        </div>
+        <div className="lg:col-span-2">
+          <RankTable title="Şu an hangi şehirlerden geliyorlar" rows={activeCities} />
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <RankTable title="En çok teklif alan sayfalar (dönüşüm)" rows={topLeadPages} />
+        <RankTable title="İllere göre talepler" rows={topProvinces} />
+        <RankTable title="Hangi reklam/kaynaktan geliyorlar" rows={topSources} />
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">

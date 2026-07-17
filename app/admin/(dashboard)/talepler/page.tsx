@@ -15,7 +15,22 @@ type LeadRow = {
   source: string;
   status: string;
   notes: string | null;
+  form_page: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  ad_click_id: string | null;
 };
+
+function describeSource(item: LeadRow): { label: string; sub?: string } {
+  if (item.utm_source || item.utm_medium) {
+    const label = [item.utm_source, item.utm_medium].filter(Boolean).join(" / ");
+    return { label, sub: item.utm_campaign ?? undefined };
+  }
+  if (item.ad_click_id?.startsWith("fbclid:")) return { label: "Meta Ads", sub: item.utm_campaign ?? undefined };
+  if (item.ad_click_id?.startsWith("gclid:")) return { label: "Google Ads", sub: item.utm_campaign ?? undefined };
+  return { label: item.source };
+}
 
 const STATUSES = ["Yeni", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"] as const;
 
@@ -138,7 +153,7 @@ export default function AdminLeadsPage() {
         ) : filtered.length === 0 ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Bu durumda talep yok.</p>
         ) : (
-          <table className="w-full min-w-[960px] text-[13.5px]">
+          <table className="w-full min-w-[1080px] text-[13.5px]">
             <thead>
               <tr className="border-b border-line text-left text-[11.5px] uppercase tracking-[0.08em] text-slate-soft">
                 <th className="px-5 py-3 font-medium">Tarih</th>
@@ -146,7 +161,8 @@ export default function AdminLeadsPage() {
                 <th className="px-5 py-3 font-medium">Telefon</th>
                 <th className="px-5 py-3 font-medium">İl</th>
                 <th className="px-5 py-3 font-medium">İhtiyaç</th>
-                <th className="px-5 py-3 font-medium">Kaynak</th>
+                <th className="px-5 py-3 font-medium">Sayfa</th>
+                <th className="px-5 py-3 font-medium">Kaynak / Reklam</th>
                 <th className="px-5 py-3 font-medium">Durum</th>
                 <th className="w-24 px-5 py-3" />
               </tr>
@@ -178,10 +194,27 @@ export default function AdminLeadsPage() {
                     </td>
                     <td className="px-5 py-3.5 text-slate">{item.province ?? "—"}</td>
                     <td className="px-5 py-3.5 text-ink">{item.need_type}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="rounded-full bg-ink/5 px-2.5 py-1 text-[11.5px] font-medium text-slate">
-                        {item.source}
+                    <td className="max-w-[160px] px-5 py-3.5">
+                      <span className="font-mono-data text-[11.5px] text-slate" title={item.form_page ?? ""}>
+                        {item.form_page ?? "—"}
                       </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {(() => {
+                        const src = describeSource(item);
+                        return (
+                          <div>
+                            <span className="rounded-full bg-ink/5 px-2.5 py-1 text-[11.5px] font-medium text-slate">
+                              {src.label}
+                            </span>
+                            {src.sub && (
+                              <p className="mt-1 max-w-[140px] truncate text-[11px] text-slate-soft" title={src.sub}>
+                                {src.sub}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-5 py-3.5">
                       <select
@@ -227,7 +260,7 @@ export default function AdminLeadsPage() {
                   </tr>
                   {expandedId === item.id && (
                     <tr className="border-b border-line bg-ink/[0.02] last:border-0">
-                      <td colSpan={8} className="px-5 py-4">
+                      <td colSpan={9} className="px-5 py-4">
                         <label className="text-[12.5px] font-medium text-slate">
                           {item.fullname} için not
                         </label>

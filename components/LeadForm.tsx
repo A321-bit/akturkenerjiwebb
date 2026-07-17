@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { trackEvent } from "@/lib/track";
+import { buildLeadAttributionFields } from "@/lib/attribution";
 import {
   Home,
   Trees,
@@ -85,7 +86,10 @@ export default function LeadForm() {
       const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify({
+          ...parsed.data,
+          ...buildLeadAttributionFields(pathname ?? "/"),
+        }),
       });
       if (!res.ok) throw new Error("failed");
       setStatus("sent");
