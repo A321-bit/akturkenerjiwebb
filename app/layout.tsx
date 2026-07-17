@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import { getSiteSettings, getServices, SITE_URL } from "@/lib/data";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
 import Analytics from "@/components/Analytics";
+
+// GA4 Ölçüm Kimliği (Measurement ID) — bu kimlik gizli değildir, her
+// sayfanın kaynak kodunda zaten herkese açık olarak yer alır.
+const GA_MEASUREMENT_ID = "G-7MWBQYG55N";
 
 // Build sırasında Vercel'in build makinesinden Supabase'e yapılan istekler
 // tutarsız şekilde "fetch failed" ile başarısız oluyor (yerelde ve runtime'da
@@ -163,6 +168,7 @@ export default async function RootLayout({
         <Footer settings={settings} services={services} />
         <FloatingActions settings={settings} />
       </body>
+      <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
     </html>
   );
 }
