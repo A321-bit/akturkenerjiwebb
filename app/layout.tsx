@@ -161,6 +161,14 @@ export default async function RootLayout({
         },
         sameAs,
       },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        name: settings.name,
+        url: SITE_URL,
+        inLanguage: "tr-TR",
+        publisher: { "@id": `${SITE_URL}/#organization` },
+      },
     ],
   };
 
