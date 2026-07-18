@@ -3,6 +3,7 @@ import { MapPin, Mail, Phone, Clock, MessageCircle, Navigation } from "lucide-re
 import { getSiteSettings, whatsappLink } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import LeadForm from "@/components/LeadForm";
+import TrackedContactLink from "@/components/TrackedContactLink";
 
 export const metadata: Metadata = buildMetadata({
   title: "İletişim",
@@ -42,7 +43,8 @@ export default async function ContactPage() {
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.2fr]">
         <div className="flex flex-col gap-4">
-          <a
+          <TrackedContactLink
+            method="whatsapp"
             href={whatsappLink(
               site.contact.whatsappNumber,
               "Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum."
@@ -58,9 +60,10 @@ export default async function ContactPage() {
               <p className="text-[14px] font-semibold text-ink">WhatsApp&apos;tan Yazın</p>
               <p className="text-[13px] text-slate">En hızlı dönüş yolu</p>
             </div>
-          </a>
+          </TrackedContactLink>
 
-          <a
+          <TrackedContactLink
+            method="call"
             href={site.contact.phoneHref}
             className="flex items-center gap-3 rounded-2xl border border-line bg-paper-raised p-5 transition-colors hover:border-brand/60"
           >
@@ -71,7 +74,7 @@ export default async function ContactPage() {
               <p className="text-[14px] font-semibold text-ink">{site.contact.phoneDisplay}</p>
               <p className="text-[13px] text-slate">Telefonla arayın</p>
             </div>
-          </a>
+          </TrackedContactLink>
 
           <a
             href={`mailto:${site.contact.email}`}

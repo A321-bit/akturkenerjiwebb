@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { MessageCircle, ArrowUpRight } from "lucide-react";
 import { whatsappLink } from "@/lib/data";
 import { trackEvent } from "@/lib/track";
+import { trackGa4WhatsappClick } from "@/lib/ga4";
 
 export default function WhatsappCtaBanner({
   title,
@@ -33,7 +34,10 @@ export default function WhatsappCtaBanner({
         href={whatsappLink(whatsappNumber, message)}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={() => trackEvent("click", pathname ?? "/", "whatsapp_cta_banner")}
+        onClick={() => {
+          trackEvent("click", pathname ?? "/", "whatsapp_cta_banner");
+          trackGa4WhatsappClick();
+        }}
         className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_30px_-8px_rgba(37,211,102,0.55)] transition-transform hover:scale-[1.03]"
       >
         <MessageCircle size={18} />
