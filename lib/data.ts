@@ -4,10 +4,6 @@ import { supabasePublic, supabaseAdmin } from "./supabase";
 export const SITE_URL = "https://akturkenerji.com";
 export const SITE_DOMAIN = "akturkenerji.com";
 export const SITE_NAME = "Aktürk Enerji Teknolojileri";
-// Meta başlık (<title>) sonuna eklenen kısa marka soneki — uzun resmi ad
-// (SITE_NAME) JSON-LD/footer gibi yerlerde kalır, sadece görünen title etiketi
-// Google'ın ~60 karakterlik kırpma sınırına daha az takılsın diye kısaltıldı.
-export const SITE_SHORT_NAME = "Aktürk Enerji";
 
 export function whatsappLink(whatsappNumber: string, message: string) {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;

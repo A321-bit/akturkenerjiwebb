@@ -147,7 +147,17 @@ export default function Footer({
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={15} className="mt-0.5 shrink-0 text-brand" />
-                <span>{settings.contact.addressLine}</span>
+                <a
+                  href={
+                    settings.contact.mapsEmbedUrl ||
+                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(settings.contact.addressLine)}`
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-ink"
+                >
+                  {settings.contact.addressLine}
+                </a>
               </li>
             </ul>
           </div>

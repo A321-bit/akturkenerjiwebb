@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MapPin, Mail, Phone, Clock, MessageCircle } from "lucide-react";
+import { MapPin, Mail, Phone, Clock, MessageCircle, Navigation } from "lucide-react";
 import { getSiteSettings, whatsappLink } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import LeadForm from "@/components/LeadForm";
@@ -86,15 +86,25 @@ export default async function ContactPage() {
             </div>
           </a>
 
-          <div className="flex items-center gap-3 rounded-2xl border border-line bg-paper-raised p-5">
+          <a
+            href={
+              site.contact.mapsEmbedUrl ||
+              `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.contact.addressLine)}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-2xl border border-line bg-paper-raised p-5 transition-colors hover:border-brand/60"
+          >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
               <MapPin size={19} />
             </span>
             <div>
               <p className="text-[14px] font-semibold text-ink">{site.contact.addressLine}</p>
-              <p className="text-[13px] text-slate">{site.city}, {site.country}</p>
+              <p className="flex items-center gap-1 text-[13px] text-slate">
+                <Navigation size={12} /> Yol tarifi al
+              </p>
             </div>
-          </div>
+          </a>
 
           <div className="flex items-center gap-3 rounded-2xl border border-line bg-paper-raised p-5">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
