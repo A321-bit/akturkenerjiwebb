@@ -16,6 +16,11 @@ const GA_MEASUREMENT_ID = "G-7MWBQYG55N";
 // Meta Pixel ID — bu da gizli değildir, her sayfanın kaynak kodunda görünür.
 const META_PIXEL_ID = "956247070771662";
 
+// Google Ads Etiketi (telefon araması dönüşümünü ölçmek için) — GA4 ile
+// aynı gtag.js/dataLayer'ı paylaşıyor, bu yüzden gtag.js'i ikinci kez
+// yüklemeden sadece ek bir 'config' çağrısı yapıyoruz.
+const GOOGLE_ADS_ID = "AW-18330659140";
+
 // Build sırasında Vercel'in build makinesinden Supabase'e yapılan istekler
 // tutarsız şekilde "fetch failed" ile başarısız oluyor (yerelde ve runtime'da
 // sorun yok). force-dynamic ile tüm sayfalar yalnızca request anında,
@@ -214,6 +219,9 @@ export default async function RootLayout({
         <FloatingActions settings={settings} />
       </body>
       <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
+      <Script id="google-ads-config" strategy="afterInteractive">
+        {`gtag('config', '${GOOGLE_ADS_ID}');`}
+      </Script>
     </html>
   );
 }
