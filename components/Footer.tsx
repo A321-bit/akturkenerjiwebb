@@ -34,7 +34,7 @@ export default function Footer({
   services: Service[];
 }) {
   const pathname = usePathname();
-  if (pathname?.startsWith("/admin")) return null;
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/teklif-al")) return null;
 
   return (
     <footer className="border-t border-line-dark bg-ink text-paper">

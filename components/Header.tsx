@@ -22,7 +22,7 @@ const nav = [
 export default function Header({ settings }: { settings: SiteSettings }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  if (pathname?.startsWith("/admin")) return null;
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/teklif-al")) return null;
 
   // Next.js <Link> normalde aynı sayfadaysan tıklamayı yok sayar (no-op).
   // Logo veya "Anasayfa"ya zaten anasayfadayken basıldığında sayfayı yenile.
