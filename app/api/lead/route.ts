@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
 
 // Bu route iki entegrasyonu da destekler; ikisi de opsiyoneldir ve ilgili
 // ortam değişkenleri (Vercel Project Settings > Environment Variables) tanımlı
@@ -9,6 +10,8 @@ import { createClient } from "@supabase/supabase-js";
 //   SUPABASE_URL                 — proje URL'i
 //   SUPABASE_SERVICE_ROLE_KEY    — "leads" tablosuna yazma izni olan servis anahtarı
 //   GOOGLE_SHEETS_WEBHOOK_URL    — Google Apps Script Web App URL'i (POST kabul eden)
+//   RESEND_API_KEY               — resend.com hesabından alınan API anahtarı (yeni talep e-postası için)
+//   LEAD_NOTIFY_EMAIL            — bildirimin gideceği adres (varsayılan: info@akturkenerji.com.tr)
 //
 // Supabase "leads" tablosu için önerilen şema: bkz. supabase/schema.sql
 
@@ -79,15 +82,20 @@ export async function POST(req: Request) {
 
   console.log("[Yeni Teklif Talebi - LeadForm]", lead);
 
-  const results = await Promise.allSettled([sendToSupabase(lead), sendToGoogleSheets(lead)]);
+  const [supabaseResult, sheetsResult, emailResult] = await Promise.allSettled([
+    sendToSupabase(lead),
+    sendToGoogleSheets(lead),
+    sendLeadNotificationEmail(lead),
+  ]);
 
-  const supabaseResult = results[0];
-  const sheetsResult = results[1];
   if (supabaseResult.status === "rejected") {
     console.error("[LeadForm] Supabase kaydı başarısız:", supabaseResult.reason);
   }
   if (sheetsResult.status === "rejected") {
     console.error("[LeadForm] Google Sheets kaydı başarısız:", sheetsResult.reason);
+  }
+  if (emailResult.status === "rejected") {
+    console.error("[LeadForm] Bildirim e-postası başarısız:", emailResult.reason);
   }
 
   return NextResponse.json({ ok: true });
@@ -167,4 +175,50 @@ async function sendToGoogleSheets(lead: LeadForStorage) {
     body: JSON.stringify(lead),
   });
   if (!res.ok) throw new Error(`Google Sheets webhook ${res.status}`);
+}
+
+async function sendLeadNotificationEmail(lead: LeadForStorage) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return; // yapılandırılmamış — sessizce atla
+
+  const to = process.env.LEAD_NOTIFY_EMAIL || "info@akturkenerji.com.tr";
+  const resend = new Resend(apiKey);
+
+  const rows: [string, string][] = [
+    ["Ad Soyad", lead.fullname],
+    ["Telefon", lead.phone],
+    ["E-posta", lead.email || "—"],
+    ["İhtiyaç türü", lead.needType],
+    ["Fatura aralığı", lead.billRange || "—"],
+    ["İl", lead.province || "—"],
+    ["Kaynak", lead.source],
+    ["Form sayfası", lead.formPage || "—"],
+    ["UTM kaynak", lead.utmSource || "—"],
+    ["UTM kampanya", lead.utmCampaign || "—"],
+  ];
+
+  const html = `
+    <div style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#1c2430">
+      <h2 style="margin:0 0 12px">Yeni teklif talebi</h2>
+      <table style="border-collapse:collapse">
+        ${rows
+          .map(
+            ([label, value]) => `
+          <tr>
+            <td style="padding:4px 12px 4px 0;color:#6b7280;white-space:nowrap">${label}</td>
+            <td style="padding:4px 0;font-weight:600">${value}</td>
+          </tr>`
+          )
+          .join("")}
+      </table>
+    </div>
+  `;
+
+  const { error } = await resend.emails.send({
+    from: "Aktürk Enerji Web <onboarding@resend.dev>",
+    to,
+    subject: `Yeni teklif talebi — ${lead.fullname} (${lead.needType})`,
+    html,
+  });
+  if (error) throw error;
 }
