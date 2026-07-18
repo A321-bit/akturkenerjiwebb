@@ -3,7 +3,7 @@ import Script from "next/script";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
-import { getSiteSettings, getServices, SITE_URL } from "@/lib/data";
+import { getSiteSettings, getServices, SITE_URL, SITE_SHORT_NAME } from "@/lib/data";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
@@ -56,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(SITE_URL),
     title: {
       default: `${settings.name} | Ankara Güneş Enerjisi Sistemleri (GES)`,
-      template: `%s | ${settings.name}`,
+      template: `%s | ${SITE_SHORT_NAME}`,
     },
     description: settings.description,
     keywords: [

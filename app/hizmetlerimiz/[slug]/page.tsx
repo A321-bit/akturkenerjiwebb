@@ -39,7 +39,7 @@ export async function generateMetadata({
   if (!service) return {};
   const content = getServiceContent(service);
   return buildMetadata({
-    title: `${service.title} | Ankara`,
+    title: service.title,
     description: service.summary,
     path: `/hizmetlerimiz/${service.slug}`,
     keywords: [
