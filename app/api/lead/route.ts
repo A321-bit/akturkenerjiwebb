@@ -198,6 +198,7 @@ async function sendLeadNotificationEmail(lead: LeadForStorage) {
   ];
 
   const html = `
+    <meta charset="utf-8" />
     <div style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#1c2430">
       <h2 style="margin:0 0 12px">Yeni teklif talebi</h2>
       <table style="border-collapse:collapse">
