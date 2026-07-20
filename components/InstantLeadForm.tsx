@@ -6,7 +6,8 @@ import { z } from "zod";
 import { trackEvent } from "@/lib/track";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
-import { trackGa4Lead } from "@/lib/ga4";
+import { trackGa4Lead, trackGa4WhatsappClick } from "@/lib/ga4";
+import { whatsappLink } from "@/lib/data";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
 import {
   Home,
@@ -18,6 +19,7 @@ import {
   MapPin,
   Loader2,
   CheckCircle2,
+  MessageCircle,
 } from "lucide-react";
 
 const needTypes = [
@@ -45,7 +47,7 @@ const leadSchema = z.object({
 
 type LeadValues = z.infer<typeof leadSchema>;
 
-export default function InstantLeadForm() {
+export default function InstantLeadForm({ whatsappNumber }: { whatsappNumber: string }) {
   const [values, setValues] = useState<LeadValues>({
     fullname: "",
     phone: "",
@@ -101,6 +103,22 @@ export default function InstantLeadForm() {
         <p className="max-w-sm text-[15px] text-slate">
           Uzman mühendisimiz en kısa sürede sizi arayarak size özel fiyat teklifini paylaşacak.
         </p>
+        <a
+          href={whatsappLink(
+            whatsappNumber,
+            `Merhaba, ben ${values.fullname}. ${values.needType} hakkında bilgi almak istiyorum. Telefon: ${values.phone}`
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => {
+            trackEvent("click", "/teklif-al", "whatsapp_button");
+            trackGa4WhatsappClick();
+          }}
+          className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-6 py-3.5 text-[15px] font-bold text-white shadow-[0_10px_30px_-8px_rgba(37,211,102,0.55)] transition-transform hover:scale-[1.03]"
+        >
+          <MessageCircle size={18} fill="currentColor" className="text-white" />
+          Hemen WhatsApp&apos;tan da Yazın
+        </a>
       </motion.div>
     );
   }

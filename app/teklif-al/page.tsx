@@ -86,7 +86,7 @@ export default async function TeklifAlPage() {
           </div>
 
           <div className="order-1 lg:order-2 lg:sticky lg:top-8">
-            <InstantLeadForm />
+            <InstantLeadForm whatsappNumber={settings.contact.whatsappNumber} />
           </div>
         </div>
       </main>
