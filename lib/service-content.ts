@@ -168,6 +168,10 @@ export const serviceContent: Record<string, ServiceContent> = {
     referenceCategories: ["Villa"],
     seoKeywords: [
       "villa çatı güneş paneli fiyatları",
+      "villa güneş paneli",
+      "villa güneş enerjisi maliyeti",
+      "müstakil ev için güneş paneli",
+      "ev tipi GES kurulumu",
       "villa GES kaç kWp",
       "villa çatısına güneş enerjisi kurulumu Ankara",
       "villa güneş enerjisi sistemi fiyatları 2026",
