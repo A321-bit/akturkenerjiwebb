@@ -6,7 +6,7 @@ import { z } from "zod";
 import { trackEvent } from "@/lib/track";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
-import { trackGa4Lead, trackGa4WhatsappClick } from "@/lib/ga4";
+import { trackGa4Lead, trackGa4WhatsappClick, trackGoogleAdsLead } from "@/lib/ga4";
 import { whatsappLink } from "@/lib/data";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
 import {
@@ -86,6 +86,7 @@ export default function InstantLeadForm({ whatsappNumber }: { whatsappNumber: st
       trackEvent("click", "/teklif-al", "lead_form_submit");
       trackMetaLead(parsed.data.needType);
       trackGa4Lead(parsed.data.needType);
+      trackGoogleAdsLead();
     } catch {
       setStatus("error");
     }

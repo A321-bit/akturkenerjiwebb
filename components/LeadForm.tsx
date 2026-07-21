@@ -7,7 +7,7 @@ import { z } from "zod";
 import { trackEvent } from "@/lib/track";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
-import { trackGa4Lead } from "@/lib/ga4";
+import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
 import {
   Home,
   Trees,
@@ -98,6 +98,7 @@ export default function LeadForm() {
       trackEvent("click", pathname ?? "/", "lead_form_submit");
       trackMetaLead(parsed.data.needType);
       trackGa4Lead(parsed.data.needType);
+      trackGoogleAdsLead();
     } catch {
       setStatus("error");
     }

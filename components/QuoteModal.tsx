@@ -10,7 +10,7 @@ import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
 import { whatsappLink } from "@/lib/data";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
-import { trackGa4Lead } from "@/lib/ga4";
+import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
 
 const quoteSchema = z.object({
   fullname: z.string().trim().min(3, "Ad soyad girin"),
@@ -120,6 +120,7 @@ export default function QuoteModal({
       trackEvent("click", pathname ?? "/", "quote_form_submit");
       trackMetaLead(parsed.data.purpose);
       trackGa4Lead(parsed.data.purpose);
+      trackGoogleAdsLead();
 
       if (redirectTo === "whatsapp") {
         const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}`;
