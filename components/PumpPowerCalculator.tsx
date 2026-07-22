@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowUpRight, Gauge } from "lucide-react";
-import { whatsappLink } from "@/lib/data";
+import { whatsappLink, SITE_URL } from "@/lib/data";
 import { PUMP_OPTIONS, calcPumpSystem } from "@/lib/pumpOptions";
 
 export default function PumpPowerCalculator({ whatsappNumber }: { whatsappNumber: string }) {
+  const pathname = usePathname();
   const [selected, setSelected] = useState<(typeof PUMP_OPTIONS)[number]>(PUMP_OPTIONS[3]);
 
   const result = useMemo(() => calcPumpSystem(selected.kw), [selected]);
@@ -62,7 +64,7 @@ export default function PumpPowerCalculator({ whatsappNumber }: { whatsappNumber
       </div>
 
       <a
-        href={whatsappLink(whatsappNumber, waMessage)}
+        href={whatsappLink(whatsappNumber, `${waMessage}\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`)}
         target="_blank"
         rel="noopener noreferrer"
         className="group mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-[14px] font-semibold text-paper transition-colors hover:bg-brand/90 sm:w-fit"

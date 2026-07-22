@@ -7,7 +7,7 @@ import { trackEvent } from "@/lib/track";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
 import { trackGa4Lead, trackGa4WhatsappClick, trackGoogleAdsLead } from "@/lib/ga4";
-import { whatsappLink } from "@/lib/data";
+import { whatsappLink, SITE_URL } from "@/lib/data";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
 import {
   Home,
@@ -107,7 +107,7 @@ export default function InstantLeadForm({ whatsappNumber }: { whatsappNumber: st
         <a
           href={whatsappLink(
             whatsappNumber,
-            `Merhaba, ben ${values.fullname}. ${values.needType} hakkında bilgi almak istiyorum. Telefon: ${values.phone}`
+            `Merhaba, ben ${values.fullname}. ${values.needType} hakkında bilgi almak istiyorum. Telefon: ${values.phone}\n\nSayfa: ${SITE_URL}/teklif-al`
           )}
           target="_blank"
           rel="noopener noreferrer"

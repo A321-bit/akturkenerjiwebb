@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck, CreditCard, Award } from "lucide-react";
-import { getServices, getReferences, getTestimonials, getSiteSettings, whatsappLink } from "@/lib/data";
+import { getServices, getReferences, getTestimonials, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import SavingsCalculator from "@/components/SavingsCalculator";
 import ServiceCard from "@/components/ServiceCard";
 import Reveal from "@/components/Reveal";
@@ -316,7 +316,7 @@ export default async function Home() {
               <a
                 href={whatsappLink(
                   site.contact.whatsappNumber,
-                  "Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum."
+                  `Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum.\n\nSayfa: ${SITE_URL}/`
                 )}
                 target="_blank"
                 rel="noopener noreferrer"

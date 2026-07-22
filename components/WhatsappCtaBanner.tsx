@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { MessageCircle, ArrowUpRight } from "lucide-react";
-import { whatsappLink } from "@/lib/data";
+import { whatsappLink, SITE_URL } from "@/lib/data";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
 
@@ -31,7 +31,7 @@ export default function WhatsappCtaBanner({
         {subtitle && <p className="mt-1.5 text-[13.5px] text-slate">{subtitle}</p>}
       </div>
       <a
-        href={whatsappLink(whatsappNumber, message)}
+        href={whatsappLink(whatsappNumber, `${message}\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`)}
         target="_blank"
         rel="noopener noreferrer"
         onClick={() => {

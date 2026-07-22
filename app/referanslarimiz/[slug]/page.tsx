@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, Zap, Calendar } from "lucide-react";
-import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink } from "@/lib/data";
+import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 import MediaCarousel from "@/components/MediaCarousel";
@@ -175,7 +175,7 @@ export default async function ReferenceDetailPage({
         <a
           href={whatsappLink(
             site.contact.whatsappNumber,
-            `Merhaba, "${reference.title}" projesi gibi bir sistem hakkında bilgi almak istiyorum.`
+            `Merhaba, "${reference.title}" projesi gibi bir sistem hakkında bilgi almak istiyorum.\n\nSayfa: ${SITE_URL}/referanslarimiz/${reference.slug}`
           )}
           target="_blank"
           rel="noopener noreferrer"

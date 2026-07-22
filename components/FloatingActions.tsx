@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { whatsappLink, type SiteSettings } from "@/lib/data";
+import { whatsappLink, SITE_URL, type SiteSettings } from "@/lib/data";
 import { MessageCircle, Phone } from "lucide-react";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick, trackGa4CallClick } from "@/lib/ga4";
@@ -27,7 +27,7 @@ export default function FloatingActions({ settings }: { settings: SiteSettings }
       <a
         href={whatsappLink(
           settings.contact.whatsappNumber,
-          "Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum."
+          `Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum.\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`
         )}
         target="_blank"
         rel="noopener noreferrer"

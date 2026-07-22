@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Zap, X, User, PhoneCall, MapPin, Wrench, Loader2, CheckCircle2 } from "lucide-react";
 import { trackEvent } from "@/lib/track";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
-import { whatsappLink } from "@/lib/data";
+import { whatsappLink, SITE_URL } from "@/lib/data";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
 import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
@@ -123,7 +123,7 @@ export default function QuoteModal({
       trackGoogleAdsLead();
 
       if (redirectTo === "whatsapp") {
-        const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}`;
+        const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`;
         window.open(whatsappLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
       } else if (redirectTo === "iletisim") {
         setTimeout(() => {
@@ -179,7 +179,7 @@ export default function QuoteModal({
                   <a
                     href={whatsappLink(
                       whatsappNumber,
-                      `Merhaba, ben ${values.fullname}. ${values.purpose} hakkında bilgi almak istiyorum. Telefon: ${values.phone}`
+                      `Merhaba, ben ${values.fullname}. ${values.purpose} hakkında bilgi almak istiyorum. Telefon: ${values.phone}\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`
                     )}
                     target="_blank"
                     rel="noopener noreferrer"

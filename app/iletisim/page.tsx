@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { MapPin, Mail, Phone, Clock, MessageCircle, Navigation } from "lucide-react";
-import { getSiteSettings, whatsappLink } from "@/lib/data";
+import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import LeadForm from "@/components/LeadForm";
 import TrackedContactLink from "@/components/TrackedContactLink";
@@ -47,7 +47,7 @@ export default async function ContactPage() {
             method="whatsapp"
             href={whatsappLink(
               site.contact.whatsappNumber,
-              "Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum."
+              `Merhaba, Aktürk Enerji'den güneş enerjisi sistemleri hakkında bilgi almak istiyorum.\n\nSayfa: ${SITE_URL}/iletisim`
             )}
             target="_blank"
             rel="noopener noreferrer"

@@ -90,7 +90,7 @@ export default async function ServiceDetailPage({
 
   const waHref = whatsappLink(
     site.contact.whatsappNumber,
-    `Merhaba, "${service.title}" hakkında bilgi almak istiyorum.`
+    `Merhaba, "${service.title}" hakkında bilgi almak istiyorum.\n\nSayfa: ${SITE_URL}/hizmetlerimiz/${service.slug}`
   );
 
   const jsonLd = {
