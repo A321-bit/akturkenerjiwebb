@@ -152,6 +152,23 @@ create table if not exists job_applications (
   created_at timestamptz not null default now()
 );
 
+-- B2B satış avı listesi: müteahhit/bayilik/kurumsal gibi kendi bulduğumuz
+-- potansiyel müşteriler — web formundan gelen "leads" tablosundan ayrı,
+-- sadece admin panelden manuel eklenip satış ekibi tarafından işlenir.
+create table if not exists potential_customers (
+  id bigint generated always as identity primary key,
+  company_name text not null,
+  contact_person text,
+  phone text,
+  district text,
+  category text,
+  note text,
+  status text not null default 'Aranmadı',
+  status_updated_at timestamptz,
+  created_at timestamptz not null default now()
+);
+alter table potential_customers enable row level security;
+
 -- Herkese açık okuma (site ziyaretçileri publishable anahtarla okuyacak),
 -- yazma işlemleri sadece sunucu tarafında secret anahtarla yapılacağı için
 -- yazma politikası eklemiyoruz (varsayılan olarak RLS her şeyi reddeder).
@@ -171,7 +188,7 @@ create policy "public read" on project_references for select using (true);
 create policy "public read" on blog_posts for select using (true);
 create policy "public read" on testimonials for select using (true);
 create policy "public read" on site_videos for select using (true);
--- leads ve job_applications tablolarına herkese açık okuma YOK — sadece secret anahtarla yazılıp okunur.
+-- leads, job_applications ve potential_customers tablolarına herkese açık okuma YOK — sadece secret anahtarla yazılıp okunur.
 
 -- Görsel yükleme için storage bucket (herkese açık okuma, yazma sadece secret anahtarla)
 insert into storage.buckets (id, name, public)
