@@ -4,6 +4,7 @@ import { supabasePublic, supabaseAdmin } from "./supabase";
 export const SITE_URL = "https://akturkenerji.com";
 export const SITE_DOMAIN = "akturkenerji.com";
 export const SITE_NAME = "Aktürk Enerji Teknolojileri";
+export const GOOGLE_MAPS_URL = "https://www.google.com/maps?cid=11525182999434304814";
 
 export function whatsappLink(whatsappNumber: string, message: string) {
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;

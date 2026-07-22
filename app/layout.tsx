@@ -3,7 +3,7 @@ import Script from "next/script";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
-import { getSiteSettings, getServices, SITE_URL } from "@/lib/data";
+import { getSiteSettings, getServices, SITE_URL, GOOGLE_MAPS_URL } from "@/lib/data";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
@@ -105,6 +105,7 @@ export default async function RootLayout({
   const services = await getServices();
 
   const sameAs = [
+    GOOGLE_MAPS_URL,
     settings.social.instagram,
     settings.social.linkedin,
     settings.social.youtube,
@@ -132,6 +133,7 @@ export default async function RootLayout({
         email: settings.contact.email,
         areaServed: "TR",
         priceRange: "$$",
+        hasMap: GOOGLE_MAPS_URL,
         sameAs,
         knowsAbout: [
           "Güneş enerjisi sistemleri",

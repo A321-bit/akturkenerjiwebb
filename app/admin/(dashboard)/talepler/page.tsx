@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { Download, PhoneCall, Trash2, MessageSquareText, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, PhoneCall, Trash2, MessageSquareText, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { whatsappLink, GOOGLE_MAPS_URL } from "@/lib/data";
 
 type LeadRow = {
   id: number;
@@ -44,6 +45,15 @@ const STATUS_STYLES: Record<string, string> = {
 
 function telHref(phone: string) {
   return `tel:${phone.replace(/\s+/g, "")}`;
+}
+
+// wa.me linki ülke koduyla başlayan, boşluksuz bir numara bekliyor —
+// müşteri numaraları formda "0532 ..." gibi yerel formatta giriliyor.
+function reviewRequestHref(item: LeadRow) {
+  const digits = item.phone.replace(/\D/g, "");
+  const intl = digits.startsWith("90") ? digits : digits.startsWith("0") ? `90${digits.slice(1)}` : `90${digits}`;
+  const message = `Merhaba ${item.fullname}, Aktürk Enerji'den yazıyoruz. Sistem kurulumunuzdan memnun kaldıysanız bizi Google'da değerlendirmeniz çok değerli olur:\n\n${GOOGLE_MAPS_URL}\n\nTeşekkür ederiz!`;
+  return whatsappLink(intl, message);
 }
 
 export default function AdminLeadsPage() {
@@ -234,6 +244,16 @@ export default function AdminLeadsPage() {
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <a
+                          href={reviewRequestHref(item)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-lg p-2 text-slate hover:bg-sun/10 hover:text-sun-soft"
+                          aria-label="Google yorumu iste"
+                          title="WhatsApp'tan Google yorumu iste"
+                        >
+                          <Star size={16} />
+                        </a>
                         <button
                           onClick={() => openNotes(item)}
                           className={`rounded-lg p-2 hover:bg-ink/5 ${
