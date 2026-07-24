@@ -82,20 +82,30 @@ export async function POST(req: Request) {
 
   console.log("[Yeni Teklif Talebi - LeadForm]", lead);
 
-  const [supabaseResult, sheetsResult, emailResult] = await Promise.allSettled([
-    sendToSupabase(lead),
+  // Supabase, admin panelinin okuduğu tek gerçek kaynak — bu yüzden diğer
+  // ikisinden (Sheets, e-posta bildirimi) ayrı bekleniyor. Onlar başarısız
+  // olsa da talep kaybolmuyor; ama Supabase başarısız olursa müşteriye
+  // "alındı" diye yanlış bir onay vermemek için isteği hata olarak döndürüyoruz.
+  const supabaseResult = await Promise.allSettled([sendToSupabase(lead)]);
+
+  const [sheetsResult, emailResult] = await Promise.allSettled([
     sendToGoogleSheets(lead),
     sendLeadNotificationEmail(lead),
   ]);
 
-  if (supabaseResult.status === "rejected") {
-    console.error("[LeadForm] Supabase kaydı başarısız:", supabaseResult.reason);
-  }
   if (sheetsResult.status === "rejected") {
     console.error("[LeadForm] Google Sheets kaydı başarısız:", sheetsResult.reason);
   }
   if (emailResult.status === "rejected") {
     console.error("[LeadForm] Bildirim e-postası başarısız:", emailResult.reason);
+  }
+
+  if (supabaseResult[0].status === "rejected") {
+    console.error("[LeadForm] Supabase kaydı başarısız:", supabaseResult[0].reason);
+    return NextResponse.json(
+      { error: "Talebiniz kaydedilemedi, lütfen tekrar deneyin." },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ ok: true });
