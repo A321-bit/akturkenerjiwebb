@@ -21,6 +21,7 @@ type LeadRow = {
   utm_medium: string | null;
   utm_campaign: string | null;
   ad_click_id: string | null;
+  review_requested_at: string | null;
 };
 
 function describeSource(item: LeadRow): { label: string; sub?: string } {
@@ -80,6 +81,17 @@ export default function AdminLeadsPage() {
     refresh();
   }
 
+  function markReviewRequested(id: number) {
+    setItems((prev) =>
+      prev?.map((it) => (it.id === id ? { ...it, review_requested_at: new Date().toISOString() } : it)) ?? prev
+    );
+    fetch(`/api/admin/leads/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewRequested: true }),
+    });
+  }
+
   async function handleStatusChange(id: number, status: string) {
     setItems((prev) => prev?.map((it) => (it.id === id ? { ...it, status } : it)) ?? prev);
     setSavingId(id);
@@ -123,6 +135,11 @@ export default function AdminLeadsPage() {
     return activeStatus === "Tümü" ? items : items.filter((it) => it.status === activeStatus);
   }, [items, activeStatus]);
 
+  const olumluBeklemede = useMemo(
+    () => items?.filter((it) => it.status === "Olumlu" && !it.review_requested_at).length ?? 0,
+    [items]
+  );
+
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -140,6 +157,18 @@ export default function AdminLeadsPage() {
           <Download size={16} /> Excel&apos;e Aktar
         </a>
       </div>
+
+      {olumluBeklemede > 0 && (
+        <div className="mt-5 rounded-2xl border border-sun/40 bg-sun/10 p-4 text-[13.5px] text-sun-soft">
+          <p className="font-semibold">
+            {olumluBeklemede} olumlu sonuçlanmış müşteriden henüz Google yorumu istenmedi.
+          </p>
+          <p className="mt-1">
+            &quot;Olumlu&quot; filtresine geçip sarı yıldız ikonuna tıklayarak WhatsApp&apos;tan yorum isteyebilirsiniz —
+            bir kez istenen müşteriler burada tekrar görünmez.
+          </p>
+        </div>
+      )}
 
       <div className="mt-5 flex flex-wrap gap-2">
         {["Tümü", ...STATUSES].map((s) => (
@@ -248,11 +277,18 @@ export default function AdminLeadsPage() {
                           href={reviewRequestHref(item)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-lg p-2 text-slate hover:bg-sun/10 hover:text-sun-soft"
+                          onClick={() => markReviewRequested(item.id)}
+                          className={`rounded-lg p-2 hover:bg-sun/10 hover:text-sun-soft ${
+                            item.review_requested_at ? "text-sun-soft" : "text-slate"
+                          }`}
                           aria-label="Google yorumu iste"
-                          title="WhatsApp'tan Google yorumu iste"
+                          title={
+                            item.review_requested_at
+                              ? `Yorum ${new Date(item.review_requested_at).toLocaleDateString("tr-TR")} tarihinde istendi`
+                              : "WhatsApp'tan Google yorumu iste"
+                          }
                         >
-                          <Star size={16} />
+                          <Star size={16} fill={item.review_requested_at ? "currentColor" : "none"} />
                         </a>
                         <button
                           onClick={() => openNotes(item)}

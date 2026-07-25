@@ -36,6 +36,10 @@ function minutesAgoIso(minutes: number): string {
   return new Date(Date.now() - minutes * 60 * 1000).toISOString();
 }
 
+function daysSince(iso: string): number {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / (24 * 60 * 60 * 1000));
+}
+
 type LeadSourceRow = {
   utm_source: string | null;
   utm_medium: string | null;
@@ -102,6 +106,7 @@ export default async function AdminDashboardPage() {
     byLabelRes,
     totalLeadsRes,
     leads7Res,
+    lastLeadRes,
     leadsByPageRes,
     leadsByProvinceRes,
     leadsSourceRes,
@@ -132,6 +137,7 @@ export default async function AdminDashboardPage() {
     client.from("analytics_events").select("path, label").eq("type", "click").not("label", "is", null),
     client.from("leads").select("*", { count: "exact", head: true }),
     client.from("leads").select("*", { count: "exact", head: true }).gte("created_at", since7),
+    client.from("leads").select("created_at").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     client.from("leads").select("form_page").not("form_page", "is", null),
     client.from("leads").select("province").not("province", "is", null),
     client.from("leads").select("utm_source, utm_medium, ad_click_id, source"),
@@ -167,6 +173,10 @@ export default async function AdminDashboardPage() {
     quote_form_submit: "Hızlı teklif formu gönderimi",
   };
 
+  const lastLeadAt = lastLeadRes.data?.created_at as string | undefined;
+  const daysSinceLastLead = lastLeadAt ? daysSince(lastLeadAt) : null;
+  const trafficButNoLeads = (views7Res.count ?? 0) >= 10 && (daysSinceLastLead === null || daysSinceLastLead >= 5);
+
   const pageName = buildPageNameResolver(services, references, posts);
   const topLabels = countByPathLabel((byLabelRes.data ?? []) as ClickEventRow[], (row) => {
     if (!row.label) return null;
@@ -181,6 +191,19 @@ export default async function AdminDashboardPage() {
         Genel Bakış
       </p>
       <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">Site Analitiği</h1>
+
+      {trafficButNoLeads && (
+        <div className="mt-6 rounded-2xl border border-red-300 bg-red-50 p-4 text-[13.5px] text-red-800">
+          <p className="font-semibold">
+            Dikkat: son 7 günde {views7Res.count} sayfa görüntüleme oldu ama{" "}
+            {daysSinceLastLead === null ? "hiç talep gelmedi" : `${daysSinceLastLead} gündür yeni talep gelmedi`}.
+          </p>
+          <p className="mt-1 text-red-700">
+            Bu normal bir sessizlik olabilir, ama teklif formunun (LeadForm/QuoteModal) hâlâ çalıştığını
+            elle test etmekte fayda var — daha önce bir kez form sessizce başarısız olmuştu.
+          </p>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="Toplam sayfa görüntüleme" value={totalViewsRes.count ?? 0} />

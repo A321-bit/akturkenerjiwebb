@@ -8,7 +8,11 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
 
-  const { status, notes } = body as { status?: string; notes?: string };
+  const { status, notes, reviewRequested } = body as {
+    status?: string;
+    notes?: string;
+    reviewRequested?: boolean;
+  };
   const update: Record<string, unknown> = {};
   if (status !== undefined) {
     if (!VALID_STATUSES.includes(status)) {
@@ -18,6 +22,9 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
     update.status_updated_at = new Date().toISOString();
   }
   if (notes !== undefined) update.notes = notes;
+  if (reviewRequested !== undefined) {
+    update.review_requested_at = reviewRequested ? new Date().toISOString() : null;
+  }
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Güncellenecek alan yok." }, { status: 400 });

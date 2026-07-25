@@ -141,6 +141,7 @@ alter table leads add column if not exists utm_campaign text;
 alter table leads add column if not exists utm_content text;
 alter table leads add column if not exists utm_term text;
 alter table leads add column if not exists ad_click_id text;
+alter table leads add column if not exists review_requested_at timestamptz;
 
 create table if not exists job_applications (
   id bigint generated always as identity primary key,
