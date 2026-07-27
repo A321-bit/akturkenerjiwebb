@@ -16,6 +16,10 @@ const GA_MEASUREMENT_ID = "G-7MWBQYG55N";
 // Meta Pixel ID — bu da gizli değildir, her sayfanın kaynak kodunda görünür.
 const META_PIXEL_ID = "956247070771662";
 
+// Microsoft Clarity Proje Kimliği — oturum kaydı (session replay) ve ısı
+// haritası (heatmap) için; bu da gizli değildir.
+const CLARITY_PROJECT_ID = "xsw2u5pknm";
+
 // Google Ads Etiketi (telefon araması dönüşümünü ölçmek için) — GA4 ile
 // aynı gtag.js/dataLayer'ı paylaşıyor, bu yüzden gtag.js'i ikinci kez
 // yüklemeden sadece ek bir 'config' çağrısı yapıyoruz.
@@ -191,6 +195,15 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Analytics />
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");
+          `}
+        </Script>
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
