@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { preconnect } from "react-dom";
 import Script from "next/script";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
@@ -182,6 +183,13 @@ export default async function RootLayout({
       },
     ],
   };
+
+  // Reklam trafiğinin çok geldiği sayfalarda (ör. /teklif-al) görsellerin
+  // ve izleme scriptlerinin bağlantısı, tarayıcı bu kaynakları HTML'i
+  // parse ederken keşfetmeden önce paralelde kurulsun diye erken açılıyor.
+  preconnect("https://tzibyocqotqcowebswlq.supabase.co");
+  preconnect("https://connect.facebook.net");
+  preconnect("https://www.clarity.ms");
 
   return (
     <html

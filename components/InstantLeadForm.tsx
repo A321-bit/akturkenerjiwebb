@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { z } from "zod";
 import { trackEvent } from "@/lib/track";
 import { buildLeadAttributionFields } from "@/lib/attribution";
@@ -94,10 +93,8 @@ export default function InstantLeadForm({ whatsappNumber }: { whatsappNumber: st
 
   if (status === "sent") {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-paper-raised p-8 text-center sm:p-10"
+      <div
+        className="animate-rise flex flex-col items-center gap-3 rounded-2xl border border-line bg-paper-raised p-8 text-center sm:p-10"
       >
         <CheckCircle2 size={44} className="text-volt" />
         <p className="font-display text-xl font-semibold text-ink">Talebiniz alındı</p>
@@ -120,7 +117,7 @@ export default function InstantLeadForm({ whatsappNumber }: { whatsappNumber: st
           <MessageCircle size={18} fill="currentColor" className="text-white" />
           Hemen WhatsApp&apos;tan da Yazın
         </a>
-      </motion.div>
+      </div>
     );
   }
 
