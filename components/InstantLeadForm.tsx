@@ -51,7 +51,7 @@ export default function InstantLeadForm({ whatsappNumber }: { whatsappNumber: st
   const [values, setValues] = useState<LeadValues>({
     fullname: "",
     phone: "",
-    province: "",
+    province: "Ankara",
     needType: "",
     billRange: "",
   });
