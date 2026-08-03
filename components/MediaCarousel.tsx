@@ -46,7 +46,12 @@ export default function MediaCarousel({
             allowFullScreen
           />
         ) : (
-          <Image src={current.src} alt={title} fill className="object-contain" />
+          <Image
+            src={current.src}
+            alt={`${title} - ${index + 1}. fotoğraf`}
+            fill
+            className="object-contain"
+          />
         )}
 
         {slides.length > 1 && (
@@ -88,7 +93,7 @@ export default function MediaCarousel({
                   <PlayCircle size={20} />
                 </span>
               ) : (
-                <Image src={s.src} alt="" fill className="object-cover" />
+                <Image src={s.src} alt={`${title} - ${i + 1}. fotoğraf küçük resmi`} fill className="object-cover" />
               )}
             </button>
           ))}
