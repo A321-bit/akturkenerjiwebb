@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MDXRemote } from "next-mdx-remote/rsc";
 import { notFound } from "next/navigation";
 import { MapPin, Zap, Calendar } from "lucide-react";
 import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
@@ -74,9 +75,9 @@ export default async function ReferenceDetailPage({
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
         {reference.title}
       </h1>
-      <p className="mt-4 text-[16px] leading-relaxed text-slate">
-        {reference.description ?? reference.summary}
-      </p>
+      <div className="prose prose-neutral mt-4 max-w-none text-[16px] leading-relaxed prose-p:text-slate prose-a:text-brand">
+        <MDXRemote source={reference.description ?? reference.summary} />
+      </div>
 
       <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl border border-sun/40 bg-sun/10 p-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-display text-[16px] font-semibold leading-snug text-ink">
