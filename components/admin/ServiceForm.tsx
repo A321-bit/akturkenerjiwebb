@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
+import MarkdownEditorField from "./MarkdownEditorField";
 
 export type ServiceFormValues = {
   id?: number;
@@ -82,13 +83,7 @@ export default function ServiceForm({ initial }: { initial: ServiceFormValues })
         />
       </Field>
       <Field label="Uzun açıklama (sayfa içi metin)">
-        <textarea
-          required
-          rows={8}
-          value={values.description}
-          onChange={(e) => set("description", e.target.value)}
-          className="admin-input"
-        />
+        <MarkdownEditorField rows={10} value={values.description} onChange={(v) => set("description", v)} />
       </Field>
       <Field label="Madde listesi (her satır bir madde)">
         <textarea

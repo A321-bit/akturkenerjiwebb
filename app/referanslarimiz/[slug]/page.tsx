@@ -4,7 +4,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { notFound } from "next/navigation";
 import { MapPin, Zap, Calendar } from "lucide-react";
 import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
-import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
+import { buildMetadata, breadcrumbJsonLd, stripMarkdown } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 import MediaCarousel from "@/components/MediaCarousel";
 import QuoteModal from "@/components/QuoteModal";
@@ -19,7 +19,7 @@ export async function generateMetadata({
   if (!reference) return {};
   return buildMetadata({
     title: reference.title,
-    description: reference.description ?? reference.summary,
+    description: stripMarkdown(reference.description ?? reference.summary),
     path: `/referanslarimiz/${reference.slug}`,
     keywords: [reference.title, reference.category, reference.location, "güneş enerjisi sistemi", "GES"],
   });
@@ -41,7 +41,7 @@ export default async function ReferenceDetailPage({
       {
         "@type": "Project",
         name: reference.title,
-        description: reference.description ?? reference.summary,
+        description: stripMarkdown(reference.description ?? reference.summary),
         locationCreated: reference.location,
         dateCreated: reference.year,
       },

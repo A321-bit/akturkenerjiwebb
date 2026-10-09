@@ -52,3 +52,14 @@ export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
     })),
   };
 }
+
+// Admin panelinden markdown olarak girilen metni meta açıklama ve JSON-LD için düz metne çevirir.
+export function stripMarkdown(text: string) {
+  return text
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}(#{1,6}|>|[-*+])\s+/gm, "")
+    .replace(/(\*\*|__|\*|_)(.+?)\1/g, "$2")
+    .replace(/\s+/g, " ")
+    .trim();
+}

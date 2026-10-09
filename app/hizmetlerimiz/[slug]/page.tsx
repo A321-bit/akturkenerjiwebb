@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowUpRight, BadgeCheck, Check, ChevronDown, MessageCircle } from "lucide-react";
 import {
   getServices,
@@ -13,7 +14,7 @@ import {
   SITE_NAME,
 } from "@/lib/data";
 import { getServiceContent } from "@/lib/service-content";
-import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
+import { buildMetadata, breadcrumbJsonLd, stripMarkdown } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
 import SunGlow from "@/components/SunGlow";
@@ -99,7 +100,7 @@ export default async function ServiceDetailPage({
       {
         "@type": "Service",
         name: service.title,
-        description: service.description,
+        description: stripMarkdown(service.description),
         provider: { "@type": "LocalBusiness", name: SITE_NAME, url: SITE_URL },
         areaServed: "TR",
         audience: service.audience,
@@ -290,7 +291,9 @@ export default async function ServiceDetailPage({
             <h2 className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
               Nasıl çalışıyoruz
             </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-slate">{service.description}</p>
+            <div className="prose prose-neutral mt-4 max-w-none text-[15px] leading-relaxed prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-8 prose-h2:text-xl prose-h3:text-lg">
+              <MDXRemote source={service.description} />
+            </div>
           </div>
           <div className="h-fit rounded-2xl border border-line bg-paper p-6">
             <h2 className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
