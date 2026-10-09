@@ -64,9 +64,25 @@ const LEGACY_REDIRECTS: [string, string][] = [
   ["/blog.html", "/blog"],
 ];
 
+// 300 kelime civarındaki ince blog yazıları (SEO denetimi, 2026-10-09) aynı
+// konuyu çok daha kapsamlı anlatan hizmet sayfalarına yönlendirildi. Yazılar
+// silinmedi: published_at 2099-12-31 yapılarak gizlendi. Geri almak için
+// eski tarihleri yazıp bu satırları kaldırın: id 1 → 2026-03-18,
+// id 2 → 2026-02-09, id 3 → 2026-04-03, id 4 → 2026-05-12.
+const RETIRED_POST_REDIRECTS: [string, string][] = [
+  ["/blog/lityum-batarya-depolama-ne-zaman-gerekli", "/hizmetlerimiz/lityum-batarya-depolama"],
+  ["/blog/muteahhitler-icin-ges-proje-entegrasyonu", "/hizmetlerimiz/muteahhit-ges"],
+  ["/blog/tarimsal-sulama-gunes-enerjisi-pompa", "/hizmetlerimiz/tarimsal-sulama"],
+  ["/blog/villa-cati-kac-kwp-ges-sistemi", "/hizmetlerimiz/villa-cati-ges"],
+];
+
 const nextConfig: NextConfig = {
   async redirects() {
-    return LEGACY_REDIRECTS.map(([source, destination]) => ({ source, destination, permanent: true }));
+    return [...LEGACY_REDIRECTS, ...RETIRED_POST_REDIRECTS].map(([source, destination]) => ({
+      source,
+      destination,
+      permanent: true,
+    }));
   },
   images: {
     // Vercel hesabının aylık "Görsel Optimizasyonu" kotası dolduğunda

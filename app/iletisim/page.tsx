@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { MapPin, Mail, Phone, Clock, MessageCircle, Navigation } from "lucide-react";
-import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
+import Link from "next/link";
+import { getReferences, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
+import { serviceAreas } from "@/lib/reference-links";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import LeadForm from "@/components/LeadForm";
 import TrackedContactLink from "@/components/TrackedContactLink";
@@ -22,7 +24,8 @@ const jsonLd = {
 };
 
 export default async function ContactPage() {
-  const site = await getSiteSettings();
+  const [site, references] = await Promise.all([getSiteSettings(), getReferences()]);
+  const areas = serviceAreas(references);
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
@@ -122,6 +125,29 @@ export default async function ContactPage() {
 
         <LeadForm />
       </div>
+
+      <section className="mt-12">
+        <h2 className="font-display text-xl font-semibold tracking-tight">Hizmet verdiğimiz bölgeler</h2>
+        <p className="mt-2 max-w-3xl text-[14.5px] leading-relaxed text-slate">
+          Keçiören&apos;deki ofisimizden Ankara&apos;nın tüm ilçelerine keşif ve kurulum yapıyoruz; daha
+          büyük projelerde Türkiye geneline çalışıyoruz. Aşağıdaki bölgelerde tamamlanmış projelerimiz var:
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {areas.districts.map(([name, count]) => (
+            <span key={name} className="rounded-full border border-line bg-paper-raised px-3 py-1 text-[13px] text-ink">
+              {name}, Ankara <span className="text-slate-soft">· {count} proje</span>
+            </span>
+          ))}
+          {areas.cities.map(([name, count]) => (
+            <span key={name} className="rounded-full border border-line bg-paper-raised px-3 py-1 text-[13px] text-ink">
+              {name} <span className="text-slate-soft">· {count} proje</span>
+            </span>
+          ))}
+        </div>
+        <Link href="/referanslarimiz" className="mt-3 inline-block text-[14px] font-semibold text-brand hover:underline">
+          Tüm projelerimizi inceleyin →
+        </Link>
+      </section>
 
       <div className="mt-10">
         <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">

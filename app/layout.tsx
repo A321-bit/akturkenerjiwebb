@@ -208,7 +208,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Analytics />
-        <Script id="microsoft-clarity" strategy="afterInteractive">
+        <Script id="microsoft-clarity" strategy="lazyOnload">
           {/* Admin paneli ziyaretleri Clarity verisini kirletiyordu (en çok
               ziyaret edilen sayfalar arasında /admin vardı); orada yüklenmez. */}
           {`

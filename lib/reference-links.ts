@@ -57,3 +57,42 @@ export function relatedServiceSlugs(reference: Reference) {
   if (/şarj/.test(text)) slugs.add("elektrikli-arac-sarj-istasyonu");
   return [...slugs];
 }
+
+const ANKARA_DISTRICTS = [
+  "Akyurt", "Altındağ", "Ayaş", "Bala", "Beypazarı", "Çamlıdere", "Çankaya", "Çubuk", "Elmadağ",
+  "Etimesgut", "Evren", "Gölbaşı", "Güdül", "Haymana", "Kahramankazan", "Kalecik", "Keçiören",
+  "Kızılcahamam", "Mamak", "Nallıhan", "Polatlı", "Pursaklar", "Sincan", "Şereflikoçhisar", "Yenimahalle",
+];
+// Referans konumlarında ilçe yerine semt yazılmış olabilir.
+const NEIGHBORHOOD_DISTRICT: Record<string, string> = {
+  Beytepe: "Çankaya",
+  Ümitköy: "Çankaya",
+  Alacaatlı: "Çankaya",
+  İncek: "Gölbaşı",
+  Tulumtaş: "Gölbaşı",
+  Bağlıca: "Etimesgut",
+  Kazan: "Kahramankazan",
+  Ovacık: "Keçiören",
+};
+const OTHER_CITIES = ["İstanbul", "Muğla", "Çankırı", "Çanakkale", "İzmir", "Antalya", "Konya", "Eskişehir", "Bolu", "Kırıkkale"];
+
+// Gerçek referans konumlarından, proje yapılmış Ankara ilçelerini ve diğer
+// illeri proje sayısıyla çıkarır (iletişim sayfasındaki hizmet bölgeleri için).
+export function serviceAreas(references: Reference[]) {
+  const districts = new Map<string, number>();
+  const cities = new Map<string, number>();
+  for (const r of references) {
+    const words = r.location.split(/[,/\s]+/).map((w) => w.trim()).filter(Boolean);
+    if (words.some((w) => w === "Ankara") || words.some((w) => ANKARA_DISTRICTS.includes(w))) {
+      const district =
+        words.find((w) => ANKARA_DISTRICTS.includes(w)) ??
+        words.map((w) => NEIGHBORHOOD_DISTRICT[w]).find(Boolean);
+      if (district) districts.set(district, (districts.get(district) ?? 0) + 1);
+    } else {
+      const city = words.find((w) => OTHER_CITIES.includes(w));
+      if (city) cities.set(city, (cities.get(city) ?? 0) + 1);
+    }
+  }
+  const sorted = (m: Map<string, number>) => [...m.entries()].sort((a, b) => b[1] - a[1]);
+  return { districts: sorted(districts), cities: sorted(cities) };
+}
