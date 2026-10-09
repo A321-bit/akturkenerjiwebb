@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
 import GalleryUploadField from "./GalleryUploadField";
+import MarkdownEditorField from "./MarkdownEditorField";
 
 const KNOWN_CATEGORIES = ["Villa", "Müteahhit", "Tarım", "Telekomünikasyon", "Hobi Bahçesi", "Karavan", "Fabrika"];
 
@@ -153,11 +154,11 @@ export default function ReferenceForm({ initial }: { initial: ReferenceFormValue
         />
       </Field>
       <Field label="Uzun açıklama (sayfa içi metin)">
-        <textarea
-          rows={6}
+        <MarkdownEditorField
+          required={false}
+          rows={10}
           value={values.description ?? ""}
-          onChange={(e) => set("description", e.target.value || null)}
-          className="admin-input"
+          onChange={(v) => set("description", v || null)}
         />
       </Field>
       <Field label="Kapak görseli">

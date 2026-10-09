@@ -1,16 +1,20 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Bold, Italic, Heading2, List, Quote, Link2, ImageUp, Loader2 } from "lucide-react";
+import { Bold, Italic, Heading2, Heading3, List, Quote, Link2, ImageUp, Loader2 } from "lucide-react";
 import { supabasePublic } from "@/lib/supabase";
 import { processImageForUpload } from "@/lib/imageProcessing";
 
 export default function MarkdownEditorField({
   value,
   onChange,
+  required = true,
+  rows = 16,
 }: {
   value: string;
   onChange: (value: string) => void;
+  required?: boolean;
+  rows?: number;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -93,6 +97,9 @@ export default function MarkdownEditorField({
         <ToolbarButton label="Alt başlık" onClick={() => wrapSelection("\n## ", "\n", "Alt Başlık")}>
           <Heading2 size={15} />
         </ToolbarButton>
+        <ToolbarButton label="Küçük alt başlık" onClick={() => wrapSelection("\n### ", "\n", "Küçük Alt Başlık")}>
+          <Heading3 size={15} />
+        </ToolbarButton>
         <ToolbarButton label="Liste" onClick={() => wrapSelection("\n- ", "", "liste öğesi")}>
           <List size={15} />
         </ToolbarButton>
@@ -121,8 +128,8 @@ export default function MarkdownEditorField({
       </div>
       <textarea
         ref={textareaRef}
-        required
-        rows={16}
+        required={required}
+        rows={rows}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="admin-input rounded-t-none font-mono text-[13.5px]"

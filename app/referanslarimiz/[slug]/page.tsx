@@ -75,7 +75,7 @@ export default async function ReferenceDetailPage({
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
         {reference.title}
       </h1>
-      <div className="prose prose-neutral mt-4 max-w-none text-[16px] leading-relaxed prose-p:text-slate prose-a:text-brand">
+      <div className="prose prose-neutral mt-4 max-w-none text-[16px] leading-relaxed prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-8 prose-h2:text-xl prose-h3:text-lg">
         <MDXRemote source={reference.description ?? reference.summary} />
       </div>
 
