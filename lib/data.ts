@@ -22,6 +22,8 @@ function todayIso(): string {
 export type SiteSettings = {
   name: string;
   shortName: string;
+  seoTitle: string;
+  siteName: string;
   foundedYear: number;
   city: string;
   country: string;
@@ -83,6 +85,8 @@ export type BlogPost = {
 type SiteSettingsRow = {
   name: string;
   short_name: string;
+  seo_title: string | null;
+  site_name: string | null;
   founded_year: number;
   city: string;
   country: string;
@@ -105,6 +109,8 @@ function mapSiteSettings(row: SiteSettingsRow): SiteSettings {
   return {
     name: row.name,
     shortName: row.short_name,
+    seoTitle: row.seo_title?.trim() || `${row.name} | Ankara Güneş Enerjisi Sistemleri (GES)`,
+    siteName: row.site_name?.trim() || row.name,
     foundedYear: row.founded_year,
     city: row.city,
     country: row.country,

@@ -65,7 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      default: `${settings.name} | Ankara Güneş Enerjisi Sistemleri (GES)`,
+      default: settings.seoTitle,
       template: `%s | ${settings.shortName}`,
     },
     description: settings.description,
@@ -84,13 +84,13 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "tr_TR",
       url: SITE_URL,
-      siteName: settings.name,
-      title: `${settings.name} | Ankara Güneş Enerjisi Sistemleri`,
+      siteName: settings.siteName,
+      title: settings.seoTitle,
       description: settings.description,
     },
     twitter: {
       card: "summary_large_image",
-      title: `${settings.name} | Ankara Güneş Enerjisi Sistemleri`,
+      title: settings.seoTitle,
       description: settings.description,
     },
     robots: {
@@ -176,7 +176,8 @@ export default async function RootLayout({
       {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
-        name: settings.name,
+        name: settings.siteName,
+        alternateName: [settings.name, settings.shortName].filter((n) => n && n !== settings.siteName),
         url: SITE_URL,
         inLanguage: "tr-TR",
         publisher: { "@id": `${SITE_URL}/#organization` },

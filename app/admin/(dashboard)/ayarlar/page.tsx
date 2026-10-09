@@ -6,6 +6,8 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 type Settings = {
   name: string;
   short_name: string;
+  seo_title: string | null;
+  site_name: string | null;
   founded_year: number;
   city: string;
   country: string;
@@ -128,7 +130,31 @@ export default function AdminSettingsPage() {
               className="admin-input"
             />
           </Field>
-          <Field label="Şirket açıklaması (meta açıklama / hakkımızda özeti)">
+        </Section>
+
+        <Section title="Google Arama Görünümü">
+          <p className="text-[12.5px] leading-relaxed text-slate-soft">
+            Boş bırakılırsa şirket adı kullanılır. Değişikliklerin Google&apos;da görünmesi birkaç gün ile birkaç
+            hafta sürebilir; Search Console&apos;dan ana sayfa için &quot;Dizine eklenmesini iste&quot; ile
+            hızlandırabilirsiniz.
+          </p>
+          <Field label="Site adı (arama sonucunda logonun yanında görünen isim)">
+            <input
+              placeholder={settings.name}
+              value={settings.site_name ?? ""}
+              onChange={(e) => set("site_name", e.target.value || null)}
+              className="admin-input"
+            />
+          </Field>
+          <Field label={`Ana sayfa başlığı (mavi başlık) — ${(settings.seo_title ?? "").length}/60 karakter önerilir`}>
+            <input
+              placeholder={`${settings.name} | Ankara Güneş Enerjisi Sistemleri (GES)`}
+              value={settings.seo_title ?? ""}
+              onChange={(e) => set("seo_title", e.target.value || null)}
+              className="admin-input"
+            />
+          </Field>
+          <Field label={`Ana sayfa açıklaması (başlığın altındaki gri metin) — ${settings.description.length}/160 karakter önerilir`}>
             <textarea
               rows={3}
               value={settings.description}
