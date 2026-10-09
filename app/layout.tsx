@@ -79,7 +79,6 @@ export async function generateMetadata(): Promise<Metadata> {
       "lityum batarya depolama",
     ],
     authors: [{ name: settings.name }],
-    alternates: { canonical: "/" },
     openGraph: {
       type: "website",
       locale: "tr_TR",

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck, CreditCard, Award } from "lucide-react";
@@ -13,6 +14,12 @@ import LeadForm from "@/components/LeadForm";
 import VideosSection from "@/components/VideosSection";
 import QuoteModal from "@/components/QuoteModal";
 import WhatsappCtaBanner from "@/components/WhatsappCtaBanner";
+
+// Canonical layout'ta değil burada: layout'ta olunca 404 gibi kendi
+// canonical'ı olmayan her sayfa ana sayfayı canonical gösteriyordu.
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function Home() {
   const [services, references, testimonials, site] = await Promise.all([
