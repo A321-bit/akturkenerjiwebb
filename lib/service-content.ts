@@ -45,6 +45,9 @@ import type { Service } from "./data";
 // sayfa, buildFallbackContent ile çekirdek veriden genel bir içerik üretir.
 
 export type ServiceContent = {
+  /** Sayfanın H1'i ve meta title'ı: aranan ifade (hizmet + Ankara). Slogan
+   * (hero.headline) görsel başlık olarak kalır ama H1 değildir. */
+  seo: { heading: string; title: string };
   hero: { headline: string; sub: string };
   benefits: { icon: LucideIcon; title: string; text: string }[];
   table?: {
@@ -94,6 +97,10 @@ const OFFGRID_STEPS: ServiceContent["steps"] = [
 
 export const serviceContent: Record<string, ServiceContent> = {
   "villa-cati-ges": {
+    seo: {
+      heading: "Ankara Villa ve Müstakil Ev Çatı GES Kurulumu",
+      title: "Ankara Villa Çatı GES Kurulumu",
+    },
     hero: {
       headline: "Elektrik faturası derdine son.",
       sub: "Villanızın çatısına özel projelendirilmiş güneş enerjisi sistemiyle faturanızı sıfıra yaklaştırın: elektrikli aracınızı güneşten şarj edin, ısı pompanızla tasarrufu katlayın, depolamalı sistemle elektrik kesintisini unutun.",
@@ -241,6 +248,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "isi-pompasi-entegrasyonu": {
+    seo: {
+      heading: "Ankara Isı Pompası ve Güneş Enerjisi Entegrasyonu",
+      title: "Ankara Isı Pompası ve GES Entegrasyonu",
+    },
     hero: {
       headline: "Isınma, soğutma ve havuz suyu — tek sistemle, güneşten besleyerek çözün.",
       sub: "Villanızdan işletmenize, özel havuzunuzdan fabrika tesisinize kadar her ölçekte hava kaynaklı ısı pompası kuruyoruz — mevcut ya da yeni güneş enerjisi sisteminize entegre ederek işletme maliyetini düşürüyoruz.",
@@ -371,6 +382,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "muteahhit-ges": {
+    seo: {
+      heading: "Ankara Müteahhit, Site ve Toplu Konut GES Kurulumu",
+      title: "Ankara Müteahhit ve Toplu Konut GES Kurulumu",
+    },
     hero: {
       headline: "Projenize güneş enerjisi ekleyin — teslim tarihinizi riske atmadan.",
       sub: "2000 m² üzeri inşaat projelerinde yenilenebilir enerji kaynağı kullanımı artık yasal bir zorunluluk — bu şart karşılanmadan iskân alınamıyor. Ön mühendislikten blok bazlı kurulum takvimine kadar tek muhatapla çalışın, iskân sürecinizi riske atmayın.",
@@ -503,6 +518,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "tarimsal-sulama": {
+    seo: {
+      heading: "Ankara Tarımsal Sulama Güneş Enerjisi Sistemleri",
+      title: "Ankara Tarımsal Sulama GES Sistemleri",
+    },
     hero: {
       headline: "Mazot parası bitmez — güneş her gün doğar.",
       sub: "Elektrik hattı olmayan arazinizde kuyunuzu güneşe bağlayın: dizel jeneratör masrafı sıfırlansın; sulama sezonu boyunca yakıt derdi, hat çekme yatırımı ve fatura olmadan üretin.",
@@ -617,6 +636,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "ruzgar-hibrit": {
+    seo: {
+      heading: "Ankara Rüzgar Türbini ve Güneş Hibrit Enerji Sistemleri",
+      title: "Rüzgar Türbini ve Güneş Hibrit Sistemleri",
+    },
     hero: {
       headline: "Güneş battığında üretiminiz durmasın.",
       sub: "Rüzgar türbini ile güneş panelini tek sistemde birleştirin: gündüz güneşten, gece ve bulutlu havada rüzgardan üretin. Şebekeden tamamen bağımsız tesisler için en güvenilir kombinasyon.",
@@ -727,6 +750,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "lityum-batarya-depolama": {
+    seo: {
+      heading: "Ankara Hibrit ve Lityum Bataryalı GES Sistemleri",
+      title: "Ankara Hibrit ve Bataryalı GES Sistemleri",
+    },
     hero: {
       headline: "Elektrik kesildiğinde eviniz karanlıkta kalmasın.",
       sub: "LiFePO4 batarya sistemiyle gündüz ürettiğinizi gece kullanın; kesinti anında sistem otomatik devreye girsin — buzdolabı, kombi ve internet hiç durmasın.",
@@ -841,6 +868,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "off-grid-sebekeden-bagimsiz": {
+    seo: {
+      heading: "Ankara Off-Grid (Şebekeden Bağımsız) Güneş Enerjisi Sistemleri",
+      title: "Ankara Off-Grid Güneş Enerjisi Sistemleri",
+    },
     hero: {
       headline: "Şebeke yoksa sorun yok — güneş her yerde var.",
       sub: "Hobi bahçenizden karavanınıza, şebekenin ulaşmadığı her noktaya kompakt ve taşınabilir güneş enerjisi sistemleri kuruyoruz — EDAŞ başvurusu ya da hat çekme derdi olmadan.",
@@ -953,6 +984,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "elektrikli-arac-sarj-istasyonu": {
+    seo: {
+      heading: "Ankara Elektrikli Araç Şarj İstasyonu Kurulumu",
+      title: "Ankara Elektrikli Araç Şarj İstasyonu Kurulumu",
+    },
     hero: {
       headline: "Aracınızı evde, güneşten şarj edin.",
       sub: "Villanıza, işletmenize ya da mevcut güneş enerjisi sisteminize entegre AC Tip 2 duvar tipi şarj istasyonu kuruyoruz — akıllı uygulamadan takip ve programlama dahil.",
@@ -1067,6 +1102,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "malzeme-tedarik-toptan-perakende": {
+    seo: {
+      heading: "Güneş Paneli, İnverter ve Batarya Tedariği: Toptan ve Perakende",
+      title: "Güneş Paneli, İnverter ve Batarya Satışı",
+    },
     hero: {
       headline: "Doğru malzeme, garantili ürün, rekabetçi fiyat.",
       sub: "Panel, invertör, batarya ve montaj ekipmanında orijinal ve garanti belgeli ürünleri tek noktadan tedarik edin — ister tek proje için perakende, ister bayilik ölçeğinde toptan.",
@@ -1182,6 +1221,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "distributorluk-bayilik": {
+    seo: {
+      heading: "Güneş Enerjisi Bayilik ve Distribütörlük",
+      title: "Güneş Enerjisi Bayilik ve Distribütörlük",
+    },
     hero: {
       headline: "Büyüyen solar pazarında bölgenizin markası olun.",
       sub: "Türkiye'de güneş enerjisi pazarı her yıl büyüyor. Aktürk Enerji bayilik modeliyle bu büyümeden payınızı alın: eğitim, tedarik avantajı ve saha desteği bizden — bölgenizdeki iş sizden.",
@@ -1293,6 +1336,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "projelendirme-muhendislik-basvuru": {
+    seo: {
+      heading: "GES Projelendirme, Mühendislik ve EDAŞ Başvuru İşlemleri",
+      title: "GES Projelendirme ve EDAŞ Başvuru İşlemleri",
+    },
     hero: {
       headline: "GES bürokrasisini biz üstlenelim, siz işinize bakın.",
       sub: "Statik rapor, elektrik projesi, tek hat şeması, EDAŞ bağlantı anlaşması… Kâğıt işi kurulum kadar kritiktir. Mühendislik ekibimiz tüm süreci sizin adınıza yürütür — ister bizim kurulumumuz olsun, ister başka firmanın.",
@@ -1404,6 +1451,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "fabrika-cati-ges": {
+    seo: {
+      heading: "Ankara Fabrika ve İşyeri Çatı GES Kurulumu",
+      title: "Ankara Fabrika Çatı GES Kurulumu",
+    },
     hero: {
       headline: "Fabrikanızın çatısı, en büyük enerji kaynağınız olsun.",
       sub: "Üretim tesisinizin geniş çatı alanını, gündüz yoğun elektrik tüketiminizi karşılayan büyük ölçekli bir güneş enerjisi santraline dönüştürün — üretim durmadan, vardiya planınıza uygun kurulumla.",
@@ -1518,6 +1569,10 @@ export const serviceContent: Record<string, ServiceContent> = {
   },
 
   "taahhut-isletme-bakim": {
+    seo: {
+      heading: "Ankara GES Bakım, Temizlik ve İşletme Hizmetleri",
+      title: "Ankara GES Bakım ve İşletme Hizmetleri",
+    },
     hero: {
       headline: "Kurulum bitince iş bitmiyor — biz orada da yanınızdayız.",
       sub: "Kurumsal ve kamu projelerinde taahhüt yüklenimi, devreye alınmış sistemlerde ise düzenli işletme ve bakım. Sisteminizi başka bir firma kurmuş olsa bile bakımını devralabiliriz.",
@@ -1636,6 +1691,7 @@ export const serviceContent: Record<string, ServiceContent> = {
 // çekirdek Supabase verisinden genel bir sayfa içeriği üretir.
 export function buildFallbackContent(service: Service): ServiceContent {
   return {
+    seo: { heading: service.title, title: service.title },
     hero: { headline: service.title, sub: service.summary },
     benefits: service.bullets.slice(0, 4).map((b) => ({
       icon: Check,

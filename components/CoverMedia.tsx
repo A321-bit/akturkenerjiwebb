@@ -38,6 +38,8 @@ export default function CoverMedia({
   className = "",
   aspect = "aspect-[16/10]",
   iconSize = 56,
+  sizes = "(min-width: 1024px) 50vw, 100vw",
+  preload = false,
 }: {
   src?: string;
   alt: string;
@@ -45,6 +47,10 @@ export default function CoverMedia({
   className?: string;
   aspect?: string;
   iconSize?: number;
+  sizes?: string;
+  // Sayfanın en üstündeki (LCP) görsel için: tembel yükleme yerine hemen ve
+  // yüksek öncelikle indirilir.
+  preload?: boolean;
 }) {
   const matchedKey = label in ICONS ? label : Object.keys(ICONS).find((key) => label.includes(key));
   const Icon = matchedKey ? ICONS[matchedKey] : Sun;
@@ -52,7 +58,15 @@ export default function CoverMedia({
   if (src) {
     return (
       <div className={`relative overflow-hidden rounded-2xl ${aspect} ${className}`}>
-        <Image src={src} alt={alt} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={sizes}
+          loading={preload ? "eager" : "lazy"}
+          fetchPriority={preload ? "high" : "auto"}
+          className="object-cover"
+        />
       </div>
     );
   }

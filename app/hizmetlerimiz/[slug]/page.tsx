@@ -14,7 +14,7 @@ import {
   SITE_NAME,
 } from "@/lib/data";
 import { getServiceContent } from "@/lib/service-content";
-import { buildMetadata, breadcrumbJsonLd, stripMarkdown } from "@/lib/seo";
+import { buildMetadata, breadcrumbJsonLd, stripMarkdown, AREA_SERVED } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
 import SunGlow from "@/components/SunGlow";
@@ -30,6 +30,13 @@ const LEGACY_SLUG_REDIRECTS: Record<string, string> = {
   "karavan-sistemleri": "off-grid-sebekeden-bagimsiz",
 };
 
+// Build'de hiçbir slug önceden üretilmez; her sayfa ilk ziyarette üretilip
+// önbelleğe alınır (ISR). Build makinesinden Supabase'e onlarca istek atmak
+// ara sıra "fetch failed" ile build'i düşürüyordu.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -40,7 +47,7 @@ export async function generateMetadata({
   if (!service) return {};
   const content = getServiceContent(service);
   return buildMetadata({
-    title: service.title,
+    title: content.seo.title,
     description: service.summary,
     path: `/hizmetlerimiz/${service.slug}`,
     keywords: [
@@ -102,7 +109,7 @@ export default async function ServiceDetailPage({
         name: service.title,
         description: stripMarkdown(service.description),
         provider: { "@type": "LocalBusiness", name: SITE_NAME, url: SITE_URL },
-        areaServed: "TR",
+        areaServed: AREA_SERVED,
         audience: service.audience,
       },
       ...(content.faqs.length > 0
@@ -144,18 +151,18 @@ export default async function ServiceDetailPage({
             >
               ← Tüm hizmetler
             </Link>
-            <p className="mt-5 font-mono-data text-[12px] uppercase tracking-[0.18em] text-sun-soft">
-              {service.eyebrow} · {service.title}
-            </p>
+            <h1 className="mt-5 font-mono-data text-[12px] uppercase tracking-[0.18em] text-sun-soft">
+              {content.seo.heading}
+            </h1>
             {content.turnkeyInstall !== false && (
               <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-sun/40 bg-sun/10 px-4 py-1.5 text-[13px] font-semibold text-sun-soft">
                 <BadgeCheck size={16} />
                 Anahtar Teslim Kurulum Hizmeti
               </div>
             )}
-            <h1 className="mt-4 font-display text-[2rem] font-semibold leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.75rem]">
+            <p className="mt-4 font-display text-[2rem] font-semibold leading-[1.12] tracking-tight sm:text-4xl lg:text-[2.75rem]">
               {content.hero.headline}
-            </h1>
+            </p>
             <p className="mt-4 max-w-xl text-[15.5px] leading-relaxed text-slate-soft">
               {content.hero.sub}
             </p>
@@ -187,6 +194,7 @@ export default async function ServiceDetailPage({
             label={service.eyebrow}
             aspect="aspect-[4/3]"
             iconSize={72}
+            preload
             className="shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]"
           />
         </div>
@@ -263,6 +271,7 @@ export default async function ServiceDetailPage({
                     label={r.category}
                     aspect="aspect-[16/11]"
                     iconSize={40}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                   />
                   <div className="flex items-center justify-between pt-4">
                     <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">

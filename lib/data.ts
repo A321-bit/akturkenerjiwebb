@@ -51,6 +51,7 @@ export type Service = {
   bullets: string[];
   audience: string;
   image?: string;
+  updatedAt?: string;
 };
 
 export type Reference = {
@@ -67,6 +68,7 @@ export type Reference = {
   image?: string;
   gallery?: string[];
   video?: string;
+  updatedAt?: string;
 };
 
 export type Testimonial = { id?: number; name: string; role: string; quote: string };
@@ -79,6 +81,7 @@ export type BlogPost = {
   category: string;
   content: string;
   publishedAt: string;
+  updatedAt?: string;
   readingTime: string;
 };
 
@@ -156,6 +159,7 @@ type ServiceRow = {
   bullets: string[] | null;
   audience: string;
   image: string | null;
+  updated_at?: string;
 };
 
 function mapService(row: ServiceRow): Service {
@@ -169,6 +173,7 @@ function mapService(row: ServiceRow): Service {
     bullets: row.bullets ?? [],
     audience: row.audience,
     image: row.image ?? undefined,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -197,6 +202,7 @@ type ReferenceRow = {
   image: string | null;
   gallery: string[] | null;
   video_url: string | null;
+  updated_at?: string;
 };
 
 function mapReference(row: ReferenceRow): Reference {
@@ -214,6 +220,7 @@ function mapReference(row: ReferenceRow): Reference {
     image: row.image ?? undefined,
     gallery: row.gallery ?? [],
     video: row.video_url ?? undefined,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -224,7 +231,7 @@ function mapReference(row: ReferenceRow): Reference {
 export const getReferences = cache(async (): Promise<Reference[]> => {
   const { data, error } = await supabasePublic
     .from("project_references")
-    .select("id, slug, title, category, location, address, capacity, year, summary, image")
+    .select("id, slug, title, category, location, address, capacity, year, summary, image, updated_at")
     .order("sort_order");
   if (error) throw new Error(error.message);
   return (data as ReferenceRow[]).map(mapReference);
@@ -273,6 +280,7 @@ type BlogPostRow = {
   category: string;
   content: string;
   published_at: string;
+  updated_at?: string;
 };
 
 function readingTimeFor(content: string): string {
@@ -289,6 +297,7 @@ function mapBlogPost(row: BlogPostRow): BlogPost {
     category: row.category,
     content: row.content,
     publishedAt: row.published_at,
+    updatedAt: row.updated_at,
     readingTime: readingTimeFor(row.content),
   };
 }

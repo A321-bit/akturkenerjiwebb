@@ -46,7 +46,7 @@ export default function ReferenceGrid({
               href={`/referanslarimiz/${r.slug}`}
               className="group flex flex-col rounded-2xl border border-line bg-paper-raised p-4 transition-colors hover:border-sun/60 hover:shadow-[0_20px_44px_-24px_rgba(11,20,32,0.45)]"
             >
-              <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={40} />
+              <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={40} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
               <div className="flex items-center justify-between pt-4">
                 <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
                   {r.category}

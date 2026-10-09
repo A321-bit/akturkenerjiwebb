@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
 import Analytics from "@/components/Analytics";
+import { AREA_SERVED, openingHoursFromText } from "@/lib/seo";
 
 // GA4 Ölçüm Kimliği (Measurement ID) — bu kimlik gizli değildir, her
 // sayfanın kaynak kodunda zaten herkese açık olarak yer alır.
@@ -26,12 +27,13 @@ const CLARITY_PROJECT_ID = "xsw2u5pknm";
 // yüklemeden sadece ek bir 'config' çağrısı yapıyoruz.
 const GOOGLE_ADS_ID = "AW-18330659140";
 
-// Build sırasında Vercel'in build makinesinden Supabase'e yapılan istekler
-// tutarsız şekilde "fetch failed" ile başarısız oluyor (yerelde ve runtime'da
-// sorun yok). force-dynamic ile tüm sayfalar yalnızca request anında,
-// dağıtılmış fonksiyon ortamında render edilir — hem build hatasını ortadan
-// kaldırır hem de admin panel değişikliklerinin anında yansımasını sağlar.
-export const dynamic = "force-dynamic";
+// Sayfalar önbellekten (CDN) sunulur ve en geç saatte bir yenilenir; admin
+// panelinden yapılan her kayıt lib/admin-crud.ts içinde tüm siteyi anında
+// yeniden doğrular (revalidatePath). Eskiden force-dynamic vardı: her istek
+// sunucuda yeniden render ediliyor, TTFB 0,6–1 sn oluyordu. Build sırasındaki
+// ara sıra "fetch failed" hataları lib/supabase.ts'deki tekrar deneme ile
+// karşılanıyor; [slug] sayfaları build'de değil ilk ziyarette üretiliyor.
+export const revalidate = 3600;
 
 // Üçü de globalde (html class'ında) tanımlı olduğu için Next.js varsayılan
 // olarak tüm ağırlıkları <link rel="preload"> ile render-blocking şekilde
@@ -116,6 +118,8 @@ export default async function RootLayout({
     settings.social.facebook,
   ].filter(Boolean);
 
+  const openingHours = openingHoursFromText(settings.contact.workingHours);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -135,7 +139,8 @@ export default async function RootLayout({
         },
         telephone: settings.contact.phoneHref.replace("tel:", ""),
         email: settings.contact.email,
-        areaServed: "TR",
+        areaServed: AREA_SERVED,
+        ...(openingHours ? { openingHoursSpecification: openingHours } : {}),
         priceRange: "$$",
         hasMap: GOOGLE_MAPS_URL,
         sameAs,
@@ -167,7 +172,7 @@ export default async function RootLayout({
           telephone: settings.contact.phoneHref.replace("tel:", ""),
           email: settings.contact.email,
           contactType: "customer service",
-          areaServed: "TR",
+          areaServed: AREA_SERVED,
           availableLanguage: "Turkish",
         },
         sameAs,
@@ -204,8 +209,10 @@ export default async function RootLayout({
         />
         <Analytics />
         <Script id="microsoft-clarity" strategy="afterInteractive">
+          {/* Admin paneli ziyaretleri Clarity verisini kirletiyordu (en çok
+              ziyaret edilen sayfalar arasında /admin vardı); orada yüklenmez. */}
           {`
-            (function(c,l,a,r,i,t,y){
+            if (location.pathname.indexOf("/admin") !== 0) (function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
                 t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
                 y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);

@@ -19,6 +19,13 @@ function findMidArticleSplit(content: string): number | null {
   );
 }
 
+// Build'de hiçbir slug önceden üretilmez; her sayfa ilk ziyarette üretilip
+// önbelleğe alınır (ISR). Build makinesinden Supabase'e onlarca istek atmak
+// ara sıra "fetch failed" ile build'i düşürüyordu.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({
   params,
 }: {

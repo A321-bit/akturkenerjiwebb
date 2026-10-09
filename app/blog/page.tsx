@@ -6,7 +6,7 @@ import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Blog",
+  title: "Güneş Enerjisi Rehberi ve Blog",
   description:
     "Güneş enerjisi sistemleri hakkında teknik rehberler, sektör bilgileri ve sıkça sorulan sorular.",
   path: "/blog",

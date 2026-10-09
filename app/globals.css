@@ -117,8 +117,10 @@ body {
   }
 }
 
+/* Opaklık 0'dan başlamıyor: ana sayfa hero'su LCP öğesi ve Chrome görünmez
+   (opacity: 0) öğeyi LCP saymıyor; animasyon bitene kadar LCP gecikiyordu. */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0.4; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-rise {

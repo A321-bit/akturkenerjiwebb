@@ -3,11 +3,20 @@ import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { notFound } from "next/navigation";
 import { MapPin, Zap, Calendar } from "lucide-react";
-import { getReferences, getReferenceBySlug, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
+import { getReferences, getReferenceBySlug, getServices, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
+import { relatedReferences, relatedServiceSlugs } from "@/lib/reference-links";
+import { getServiceContent } from "@/lib/service-content";
 import { buildMetadata, breadcrumbJsonLd, stripMarkdown } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 import MediaCarousel from "@/components/MediaCarousel";
 import QuoteModal from "@/components/QuoteModal";
+
+// Build'de hiçbir slug önceden üretilmez; her sayfa ilk ziyarette üretilip
+// önbelleğe alınır (ISR). Build makinesinden Supabase'e onlarca istek atmak
+// ara sıra "fetch failed" ile build'i düşürüyordu.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({
   params,
@@ -53,8 +62,11 @@ export default async function ReferenceDetailPage({
     ],
   };
 
-  const allReferences = await getReferences();
-  const others = allReferences.filter((r) => r.slug !== reference.slug).slice(0, 3);
+  const [allReferences, services] = await Promise.all([getReferences(), getServices()]);
+  const others = relatedReferences(reference, allReferences);
+  const relatedServices = relatedServiceSlugs(reference)
+    .map((slug) => services.find((s) => s.slug === slug))
+    .filter((s) => s !== undefined);
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-16 sm:px-8 sm:py-20">
@@ -78,10 +90,20 @@ export default async function ReferenceDetailPage({
       <div className="prose prose-neutral mt-4 max-w-none text-[16px] leading-relaxed prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-8 prose-h2:text-xl prose-h3:text-lg">
         <MDXRemote source={reference.description ?? reference.summary} />
       </div>
+      {relatedServices.length > 0 && (
+        <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[14px] text-slate">
+          <span>İlgili hizmet:</span>
+          {relatedServices.map((s) => (
+            <Link key={s.slug} href={`/hizmetlerimiz/${s.slug}`} className="font-semibold text-brand hover:underline">
+              {getServiceContent(s).seo.heading} →
+            </Link>
+          ))}
+        </p>
+      )}
 
       <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl border border-sun/40 bg-sun/10 p-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-display text-[16px] font-semibold leading-snug text-ink">
-          Sizde çatınızdan bedava elektrik üretmek için şimdi ücretsiz teklif alın.
+          Siz de çatınızdan bedava elektrik üretmek için şimdi ücretsiz teklif alın.
         </p>
         <QuoteModal
           defaultPurpose={reference.category}
@@ -96,6 +118,8 @@ export default async function ReferenceDetailPage({
         label={reference.category}
         aspect="aspect-[16/9]"
         iconSize={72}
+        sizes="(min-width: 1152px) 1152px, 100vw"
+        preload
         className="mt-8"
       />
 
@@ -204,7 +228,7 @@ export default async function ReferenceDetailPage({
               href={`/referanslarimiz/${r.slug}`}
               className="group flex flex-col rounded-2xl border border-line bg-paper-raised p-4 hover:border-sun/60"
             >
-              <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={32} />
+              <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={32} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
               <p className="mt-3 font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
                 {r.category}
               </p>

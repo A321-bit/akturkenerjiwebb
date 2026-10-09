@@ -4,9 +4,9 @@ import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ReferenceGrid from "@/components/ReferenceGrid";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Referanslarımız",
+  title: "Ankara GES Projeleri ve Referanslarımız",
   description:
-    "Türkiye genelinde tamamladığımız villa, müteahhit, tarımsal ve fabrika çatı güneş enerjisi projelerinden referanslar.",
+    "Ankara Gölbaşı, Beytepe, Çankaya, Keçiören, Ümitköy ve Türkiye genelinde kurduğumuz villa, işyeri, fabrika, hibrit ve off-grid güneş enerjisi projeleri.",
   path: "/referanslarimiz",
   keywords: ["güneş enerjisi referansları", "GES projeleri Türkiye", "solar enerji örnekleri", "Ankara"],
 });
@@ -32,7 +32,7 @@ export default async function ReferencesPage() {
         Referanslarımız
       </p>
       <h1 className="mt-2 max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-        Tamamladığımız projelerden bir kesit
+        Ankara ve Türkiye genelinde tamamladığımız GES projeleri
       </h1>
       <p className="mt-4 max-w-2xl text-[15.5px] leading-relaxed text-slate">
         2016&apos;dan bu yana Türkiye genelinde villa, tarımsal, fabrika ve

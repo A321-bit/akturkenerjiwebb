@@ -50,6 +50,7 @@ export default function MediaCarousel({
             src={current.src}
             alt={`${title} - ${index + 1}. fotoğraf`}
             fill
+            sizes="(min-width: 1152px) 1152px, 100vw"
             className="object-contain"
           />
         )}
@@ -93,7 +94,7 @@ export default function MediaCarousel({
                   <PlayCircle size={20} />
                 </span>
               ) : (
-                <Image src={s.src} alt={`${title} - ${i + 1}. fotoğraf küçük resmi`} fill className="object-cover" />
+                <Image src={s.src} alt={`${title} - ${i + 1}. fotoğraf küçük resmi`} fill sizes="96px" className="object-cover" />
               )}
             </button>
           ))}

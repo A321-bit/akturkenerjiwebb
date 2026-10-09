@@ -42,6 +42,7 @@ export default function ServiceCard({ service }: { service: Service }) {
           label={service.eyebrow}
           aspect="aspect-[16/11]"
           iconSize={40}
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
         />
         <p className="mt-4 font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
           {service.eyebrow}

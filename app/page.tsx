@@ -38,17 +38,17 @@ export default async function Home() {
         <SunGlow className="pointer-events-none absolute -right-24 -top-24 h-[520px] w-[520px] opacity-70 lg:-right-10 lg:top-[-140px]" />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
           <div className="animate-rise">
-            <p className="font-mono-data text-[13px] uppercase tracking-[0.18em] text-sun-soft">
-              <span className="font-semibold text-sun">Aktürk Enerji</span> · {site.city} Merkezli ·{" "}
-              {site.foundedYear}&apos;dan beri
-            </p>
-            <h1 className="mt-4 font-display text-[2.35rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+            <h1 className="font-mono-data text-[13px] uppercase tracking-[0.18em] text-sun-soft">
+              <span className="font-semibold text-sun">{site.city} Güneş Enerjisi Sistemleri</span> · Anahtar
+              Teslim GES Kurulumu · {site.foundedYear}&apos;dan beri
+            </h1>
+            <p className="mt-4 font-display text-[2.35rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
               Çatınızdan araziye,
               <br />
               güneşi elektriğe
               <br />
               <span className="text-sun-soft">biz çeviriyoruz.</span>
-            </h1>
+            </p>
             <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-slate-soft">
               Villa, hobi bahçesi, tarımsal arazi ve toplu inşaat projeleri için
               keşiften mühendislik başvurusuna, kurulumdan garantiye kadar
@@ -245,7 +245,7 @@ export default async function Home() {
                   href={`/referanslarimiz/${r.slug}`}
                   className="group flex flex-col rounded-2xl border border-line bg-paper p-4 transition-transform duration-300 hover:-translate-y-1"
                 >
-                  <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={40} />
+                  <CoverMedia src={r.image} alt={r.title} label={r.category} aspect="aspect-[16/11]" iconSize={40} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
                   <div className="flex items-center justify-between pt-4">
                     <span className="font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
                       {r.category}

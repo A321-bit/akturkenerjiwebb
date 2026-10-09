@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
+import { revalidateSite } from "@/lib/admin-crud";
 
 export async function GET() {
   const { data, error } = await adminClient().from("site_settings").select("*").eq("id", 1).single();
@@ -18,5 +19,6 @@ export async function PUT(req: Request) {
     .select()
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidateSite();
   return NextResponse.json(data);
 }
