@@ -78,11 +78,22 @@ const RETIRED_POST_REDIRECTS: [string, string][] = [
 
 const nextConfig: NextConfig = {
   async redirects() {
-    return [...LEGACY_REDIRECTS, ...RETIRED_POST_REDIRECTS].map(([source, destination]) => ({
-      source,
-      destination,
-      permanent: true,
-    }));
+    return [
+      // www.akturkenerji.com sitenin kopyasını 200 ile sunuyordu ve Google bazı
+      // sayfaları www adresiyle listeliyordu (Search Console, Ekim 2026).
+      // Tek adres için www'den gelen her istek www'siz adrese kalıcı yönlenir.
+      {
+        source: "/:path*",
+        has: [{ type: "host" as const, value: "www.akturkenerji.com" }],
+        destination: "https://akturkenerji.com/:path*",
+        permanent: true,
+      },
+      ...[...LEGACY_REDIRECTS, ...RETIRED_POST_REDIRECTS].map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: true,
+      })),
+    ];
   },
   images: {
     // Vercel hesabının aylık "Görsel Optimizasyonu" kotası dolduğunda
