@@ -76,12 +76,6 @@ const RETIRED_POST_REDIRECTS: [string, string][] = [
   ["/blog/villa-cati-kac-kwp-ges-sistemi", "/hizmetlerimiz/villa-cati-ges"],
 ];
 
-// Yazı yeniden yazılıp yılsız, kalıcı adrese taşındı (2026-10-12); eski
-// adres Google'da dizindeydi, değeri yeni adrese geçsin.
-const MOVED_POST_REDIRECTS: [string, string][] = [
-  ["/blog/ankara-gunes-paneli-fiyatlari-2026", "/blog/ankara-gunes-paneli-fiyatlari"],
-];
-
 const nextConfig: NextConfig = {
   async redirects() {
     return [
@@ -94,7 +88,7 @@ const nextConfig: NextConfig = {
         destination: "https://akturkenerji.com/:path*",
         permanent: true,
       },
-      ...[...LEGACY_REDIRECTS, ...RETIRED_POST_REDIRECTS, ...MOVED_POST_REDIRECTS].map(([source, destination]) => ({
+      ...[...LEGACY_REDIRECTS, ...RETIRED_POST_REDIRECTS].map(([source, destination]) => ({
         source,
         destination,
         permanent: true,
