@@ -325,7 +325,9 @@ export const getBlogPostBySlug = cache(async (slug: string): Promise<BlogPost | 
   return data ? mapBlogPost(data as BlogPostRow) : null;
 });
 
-export type BlogPostSummary = Pick<BlogPost, "slug" | "title" | "description" | "category">;
+export type BlogPostSummary = Pick<BlogPost, "slug" | "title" | "description" | "category" | "image"> & {
+  publishedAt: string;
+};
 
 // "İlgili Yazılar" gibi liste/önizleme bölümleri okuma süresi göstermediği için
 // ağır "content" (1000+ kelimelik makale gövdesi) sütununu hiç çekmiyoruz —
@@ -334,11 +336,13 @@ export type BlogPostSummary = Pick<BlogPost, "slug" | "title" | "description" | 
 export const getBlogPostSummaries = cache(async (): Promise<BlogPostSummary[]> => {
   const { data, error } = await supabasePublic
     .from("blog_posts")
-    .select("slug, title, description, category")
+    .select("slug, title, description, category, image, published_at")
     .lte("published_at", todayIso())
     .order("published_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return data as BlogPostSummary[];
+  return (data as (Omit<BlogPostSummary, "image" | "publishedAt"> & { image: string | null; published_at: string })[]).map(
+    ({ image, published_at, ...rest }) => ({ ...rest, image: image ?? undefined, publishedAt: published_at })
+  );
 });
 
 // ── Admin (secret anahtar, sadece sunucu tarafı route'larda kullanılır) ──

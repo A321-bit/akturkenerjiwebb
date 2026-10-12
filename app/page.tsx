@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck, CreditCard, Award } from "lucide-react";
-import { getServices, getReferences, getTestimonials, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
+import { getServices, getReferences, getTestimonials, getSiteSettings, getBlogPostSummaries, whatsappLink, SITE_URL } from "@/lib/data";
 import SavingsCalculator from "@/components/SavingsCalculator";
 import ServiceCard from "@/components/ServiceCard";
 import Reveal from "@/components/Reveal";
@@ -22,11 +22,12 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [services, references, testimonials, site] = await Promise.all([
+  const [services, references, testimonials, site, posts] = await Promise.all([
     getServices(),
     getReferences(),
     getTestimonials(),
     getSiteSettings(),
+    getBlogPostSummaries(),
   ]);
   const stats = site.stats;
 
@@ -338,6 +339,60 @@ export default async function Home() {
           </Reveal>
         </div>
       </section>
+
+      {/* BLOG */}
+      {posts.length > 0 && (
+        <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
+          <Reveal>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Blog</p>
+                <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Güneş Enerjisi Rehberi
+                </h2>
+              </div>
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-brand"
+              >
+                Tüm yazılar
+                <ArrowUpRight size={15} />
+              </Link>
+            </div>
+          </Reveal>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {posts.slice(0, 3).map((p, i) => (
+              <Reveal key={p.slug} delay={i * 60} className="h-full">
+                <Link
+                  href={`/blog/${p.slug}`}
+                  className="group flex h-full flex-col rounded-2xl border border-line bg-paper-raised p-4 transition-transform duration-300 hover:-translate-y-1"
+                >
+                  <CoverMedia
+                    src={p.image}
+                    alt={p.title}
+                    label={p.category}
+                    aspect="aspect-[16/11]"
+                    iconSize={40}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  />
+                  <span className="mt-4 font-mono-data text-[11px] uppercase tracking-[0.14em] text-brand">
+                    {p.category}
+                  </span>
+                  <h3 className="mt-2 font-display text-[17px] font-semibold leading-snug">{p.title}</h3>
+                  <p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-slate">{p.description}</p>
+                  <span className="mt-auto flex items-center justify-between border-t border-line pt-3 text-[12.5px] text-slate-soft">
+                    {new Date(p.publishedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+                    <span className="inline-flex items-center gap-1 font-semibold text-ink group-hover:text-brand">
+                      Oku <ArrowUpRight size={14} />
+                    </span>
+                  </span>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }
