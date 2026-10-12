@@ -127,6 +127,19 @@ body {
   animation: rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* İletişim formunda adım geçişi (eskiden framer-motion ile yapılıyordu;
+   tek bir efekt için ~70 KB JS yükleniyordu). */
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-step {
+  animation: step-in 0.25s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-step { animation: none; }
+}
+
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

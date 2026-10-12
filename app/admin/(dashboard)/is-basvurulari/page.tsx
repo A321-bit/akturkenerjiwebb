@@ -13,22 +13,36 @@ type JobApplicationRow = {
   cv_url: string | null;
 };
 
+async function fetchApplications(): Promise<{ items: JobApplicationRow[]; error: string }> {
+  const res = await fetch("/api/admin/job-applications");
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !Array.isArray(body)) {
+    return { items: [], error: body?.error ?? "Başvurular yüklenemedi." };
+  }
+  return { items: body, error: "" };
+}
+
 function telHref(phone: string) {
   return `tel:${phone.replace(/\s+/g, "")}`;
 }
 
 export default function AdminJobApplicationsPage() {
   const [items, setItems] = useState<JobApplicationRow[] | null>(null);
+  const [error, setError] = useState("");
+
+  // API hata dönerse (ör. tablo yoksa) yanıt bir dizi değil { error } olur;
+  // eskiden bu doğrudan items.map'e gidip sayfayı çökertiyordu.
+  function apply(result: { items: JobApplicationRow[]; error: string }) {
+    setError(result.error);
+    setItems(result.items);
+  }
 
   useEffect(() => {
-    fetch("/api/admin/job-applications")
-      .then((r) => r.json())
-      .then(setItems);
+    fetchApplications().then(apply);
   }, []);
 
   async function refresh() {
-    const res = await fetch("/api/admin/job-applications");
-    setItems(await res.json());
+    apply(await fetchApplications());
   }
 
   async function handleDelete(id: number) {
@@ -47,7 +61,9 @@ export default function AdminJobApplicationsPage() {
       </h1>
 
       <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper-raised">
-        {items === null ? (
+        {error ? (
+          <p className="p-5 text-[13.5px] text-red-600">Başvurular yüklenemedi: {error}</p>
+        ) : items === null ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Yükleniyor...</p>
         ) : items.length === 0 ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Henüz gelen bir başvuru yok.</p>

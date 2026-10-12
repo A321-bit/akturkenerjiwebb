@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { preconnect } from "react-dom";
-import Script from "next/script";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import { getSiteSettings, getServices, SITE_URL, GOOGLE_MAPS_URL } from "@/lib/data";
 import Header from "@/components/Header";
@@ -101,6 +99,41 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   };
 }
+
+// Google (Analytics + Ads), Meta Pixel ve Clarity mobilde ana iş parçacığını
+// ~1,5 sn tıkıyordu (PageSpeed TBT 1.270 ms). Sayfa açılırken yalnızca
+// olayları biriktiren küçük kuyruklar (gtag/fbq/clarity) kurulur; asıl
+// scriptler ilk etkileşimde (kaydırma, dokunma, tıklama, tuş) ya da en geç
+// 4 sn sonra yüklenir ve kuyruktaki olayları gönderir. Admin panelinde hiçbiri
+// yüklenmez (kendi ziyaretlerimiz ölçümleri kirletmesin).
+const deferredTagsScript = `
+(function(w,d){
+  if (location.pathname.indexOf("/admin") === 0) return;
+  w.dataLayer = w.dataLayer || [];
+  w.gtag = function(){ w.dataLayer.push(arguments); };
+  w.gtag("js", new Date());
+  w.gtag("config", "${GA_MEASUREMENT_ID}");
+  w.gtag("config", "${GOOGLE_ADS_ID}");
+  var n = w.fbq = function(){ n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+  if (!w._fbq) w._fbq = n;
+  n.push = n; n.loaded = true; n.version = "2.0"; n.queue = [];
+  w.fbq("init", "${META_PIXEL_ID}");
+  w.fbq("track", "PageView");
+  w.clarity = w.clarity || function(){ (w.clarity.q = w.clarity.q || []).push(arguments); };
+  var loaded = false;
+  var events = ["scroll", "pointerdown", "touchstart", "keydown", "mousemove"];
+  function add(src){ var s = d.createElement("script"); s.async = true; s.src = src; d.head.appendChild(s); }
+  function load(){
+    if (loaded) return; loaded = true;
+    events.forEach(function(e){ w.removeEventListener(e, load, { passive: true }); });
+    add("https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}");
+    add("https://connect.facebook.net/en_US/fbevents.js");
+    add("https://www.clarity.ms/tag/${CLARITY_PROJECT_ID}");
+  }
+  events.forEach(function(e){ w.addEventListener(e, load, { once: true, passive: true }); });
+  setTimeout(load, 4000);
+})(window, document);
+`;
 
 export default async function RootLayout({
   children,
@@ -208,31 +241,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Analytics />
-        <Script id="microsoft-clarity" strategy="lazyOnload">
-          {/* Admin paneli ziyaretleri Clarity verisini kirletiyordu (en çok
-              ziyaret edilen sayfalar arasında /admin vardı); orada yüklenmez. */}
-          {`
-            if (location.pathname.indexOf("/admin") !== 0) (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");
-          `}
-        </Script>
-        <Script id="meta-pixel" strategy="afterInteractive">
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${META_PIXEL_ID}');
-            fbq('track', 'PageView');
-          `}
-        </Script>
+        <script dangerouslySetInnerHTML={{ __html: deferredTagsScript }} />
         <noscript>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -248,10 +257,6 @@ export default async function RootLayout({
         <Footer settings={settings} services={services} />
         <FloatingActions settings={settings} />
       </body>
-      <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
-      <Script id="google-ads-config" strategy="afterInteractive">
-        {`gtag('config', '${GOOGLE_ADS_ID}');`}
-      </Script>
     </html>
   );
 }

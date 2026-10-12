@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 import { z } from "zod";
 import { trackEvent } from "@/lib/track";
 import { buildLeadAttributionFields } from "@/lib/attribution";
@@ -138,12 +137,7 @@ export default function LeadForm() {
 
       <form onSubmit={handleSubmit} className="mt-8">
         {step === 0 && (
-            <motion.div
-              key={`step-${step}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
+            <div key={`step-${step}`} className="animate-step">
               <p className="font-display text-[17px] font-semibold text-ink">
                 Hangi ihtiyacınız için teklif almak istiyorsunuz?
               </p>
@@ -164,16 +158,11 @@ export default function LeadForm() {
                   </button>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
         {step === 1 && (
-            <motion.div
-              key={`step-${step}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
+            <div key={`step-${step}`} className="animate-step">
               <p className="font-display text-[17px] font-semibold text-ink">
                 Aylık ortalama elektrik faturanız ne kadar?
               </p>
@@ -198,16 +187,11 @@ export default function LeadForm() {
               >
                 ← Geri dön
               </button>
-            </motion.div>
+            </div>
           )}
 
         {step === 2 && (
-            <motion.div
-              key={`step-${step}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
+            <div key={`step-${step}`} className="animate-step">
               <p className="font-display text-[17px] font-semibold text-ink">
                 Sizi arayabilmemiz için iletişim bilgilerinizi bırakın
               </p>
@@ -288,7 +272,7 @@ export default function LeadForm() {
                   Bir sorun oluştu, lütfen tekrar deneyin ya da doğrudan WhatsApp&apos;tan yazın.
                 </p>
               )}
-            </motion.div>
+            </div>
         )}
       </form>
     </div>
