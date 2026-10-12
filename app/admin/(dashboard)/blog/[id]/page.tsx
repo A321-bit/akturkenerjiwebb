@@ -24,6 +24,7 @@ export default async function EditBlogPostPage({
           category: data.category,
           content: data.content,
           published_at: data.published_at,
+          image: data.image ?? null,
         }}
       />
     </div>

@@ -30,6 +30,8 @@ create table if not exists site_settings (
 -- Admin panelinden düzenlenen Google başlığı / site adı (sonradan eklendi)
 alter table site_settings add column if not exists seo_title text;
 alter table site_settings add column if not exists site_name text;
+-- Blog kapak görseli (sonradan eklendi)
+alter table blog_posts add column if not exists image text;
 
 create table if not exists services (
   id bigint generated always as identity primary key,

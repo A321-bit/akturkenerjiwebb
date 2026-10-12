@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { getBlogPostBySlug, getSiteSettings, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import QuoteModal from "@/components/QuoteModal";
+import CoverMedia from "@/components/CoverMedia";
 
 function findMidArticleSplit(content: string): number | null {
   const positions: number[] = [];
@@ -66,6 +67,7 @@ export default async function BlogPostPage({
         datePublished: post.publishedAt,
         dateModified: post.publishedAt,
         mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+        ...(post.image ? { image: post.image } : {}),
         author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
         publisher: {
           "@type": "Organization",
@@ -107,6 +109,18 @@ export default async function BlogPostPage({
       <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
         {post.title}
       </h1>
+
+      {post.image && (
+        <CoverMedia
+          src={post.image}
+          alt={post.title}
+          label={post.category}
+          aspect="aspect-[16/9]"
+          sizes="(min-width: 768px) 768px, 100vw"
+          preload
+          className="mt-6"
+        />
+      )}
 
       <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl border border-sun/40 bg-sun/10 p-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-display text-[15px] font-semibold leading-snug text-ink">

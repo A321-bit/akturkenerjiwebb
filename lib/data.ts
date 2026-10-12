@@ -82,6 +82,7 @@ export type BlogPost = {
   content: string;
   publishedAt: string;
   updatedAt?: string;
+  image?: string;
   readingTime: string;
 };
 
@@ -281,6 +282,7 @@ type BlogPostRow = {
   content: string;
   published_at: string;
   updated_at?: string;
+  image?: string | null;
 };
 
 function readingTimeFor(content: string): string {
@@ -298,6 +300,7 @@ function mapBlogPost(row: BlogPostRow): BlogPost {
     content: row.content,
     publishedAt: row.published_at,
     updatedAt: row.updated_at,
+    image: row.image ?? undefined,
     readingTime: readingTimeFor(row.content),
   };
 }

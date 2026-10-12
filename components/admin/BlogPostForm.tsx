@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import MarkdownEditorField from "./MarkdownEditorField";
+import ImageUploadField from "./ImageUploadField";
 
 export type BlogPostFormValues = {
   id?: number;
@@ -13,6 +14,7 @@ export type BlogPostFormValues = {
   category: string;
   content: string;
   published_at: string;
+  image?: string | null;
 };
 
 export default function BlogPostForm({ initial }: { initial: BlogPostFormValues }) {
@@ -34,7 +36,9 @@ export default function BlogPostForm({ initial }: { initial: BlogPostFormValues 
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
+      // Görsel hiç yoksa alan gönderilmez (veritabanında image sütunu henüz
+      // yoksa kayıt hata vermesin); var olan görsel kaldırıldıysa null gider.
+      body: JSON.stringify(values.image || initial.image ? values : { ...values, image: undefined }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -81,6 +85,9 @@ export default function BlogPostForm({ initial }: { initial: BlogPostFormValues 
           onChange={(e) => set("description", e.target.value)}
           className="admin-input"
         />
+      </Field>
+      <Field label="Kapak görseli (blog listesinde ve yazının başında görünür)">
+        <ImageUploadField value={values.image ?? null} onChange={(url) => set("image", url)} />
       </Field>
       <Field label="İçerik (araç çubuğundan görsel ve bağlantı ekleyebilirsiniz)">
         <MarkdownEditorField value={values.content} onChange={(v) => set("content", v)} />
