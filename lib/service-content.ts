@@ -44,10 +44,19 @@ import type { Service } from "./data";
 // tutulur. Admin panelden eklenen yeni bir hizmetin slug'ı bu haritada yoksa
 // sayfa, buildFallbackContent ile çekirdek veriden genel bir içerik üretir.
 
+/** Rehber makalesinde paragraf dışı içerik. Metinlerde [link metni](/adres)
+ * ve **kalın** yazılabilir. */
+export type ArticleBlock =
+  | { p: string }
+  | { h4: string }
+  | { ul: string[] }
+  | { ol: string[] }
+  | { table: { columns: string[]; rows: string[][]; note?: string } };
+
 export type ServiceContent = {
   /** Sayfanın H1'i ve meta title'ı: aranan ifade (hizmet + Ankara). Slogan
    * (hero.headline) görsel başlık olarak kalır ama H1 değildir. */
-  seo: { heading: string; title: string };
+  seo: { heading: string; title: string; description?: string };
   hero: { headline: string; sub: string };
   benefits: { icon: LucideIcon; title: string; text: string }[];
   table?: {
@@ -74,8 +83,9 @@ export type ServiceContent = {
    * Gerçek arama niyetine göre yazılmış H3 alt başlıklı derinlemesine rehber içerik. */
   article?: {
     title: string;
+    /** Paragraflar boş satırla ("\n\n") ayrılır. */
     intro: string;
-    sections: { heading: string; paragraphs: string[] }[];
+    sections: { heading: string; paragraphs?: string[]; blocks?: ArticleBlock[] }[];
   };
 };
 
@@ -98,8 +108,10 @@ const OFFGRID_STEPS: ServiceContent["steps"] = [
 export const serviceContent: Record<string, ServiceContent> = {
   "villa-cati-ges": {
     seo: {
-      heading: "Ankara Villa ve Müstakil Ev Çatı GES Kurulumu",
-      title: "Ankara Villa Çatı GES Kurulumu",
+      heading: "Ankara'da Müstakil Ev ve Villa Çatısına Güneş Enerjisi Sistemi",
+      title: "Müstakil Ev ve Villa Güneş Paneli Sistemi | Ankara",
+      description:
+        "Müstakil eviniz için kaç kW güneş paneli gerekir, maliyeti ne kadar, kaç yılda kendini öder? 2016'dan beri Ankara'da ev çatılarına GES kuran ekibimizden fiyat aralıkları ve gerçek tecrübeler.",
     },
     hero: {
       headline: "Elektrik faturası derdine son.",
@@ -140,20 +152,32 @@ export const serviceContent: Record<string, ServiceContent> = {
     steps: INSTALL_STEPS,
     faqs: [
       {
+        q: "Bir ev için kaç tane güneş paneli lazım?",
+        a: "Günümüzün 550–630 W panelleriyle 5 kW bir sistem yaklaşık 9, 10 kW bir sistem yaklaşık 17–18 panelden oluşur. Panel sayısını tüketiminiz ve çatınızın alanı birlikte belirler.",
+      },
+      {
+        q: "Güneş panelleri kaç yıl dayanır?",
+        a: "Kaliteli paneller genellikle 25–30 yıl performans garantisiyle gelir ve bu sürenin sonunda bile ilk güçlerinin yaklaşık yüzde 80–85'ini korur. İnvertörlerin ömrü daha kısadır; 10–15 yıl içinde bir kez değişmesi gerekebilir.",
+      },
+      {
+        q: "Panellerin bakımı ve temizliği gerekir mi?",
+        a: "Eğimli çatılardaki paneller yağmurla büyük ölçüde kendini temizler. Toz ve polenin yoğun olduğu dönemlerde yılda 1–2 kez yıkama ve genel kontrol, üretim kaybını önler. Sistemin üretimini telefonunuzdan takip ettiğiniz için bir sorun olduğunda hemen fark edersiniz.",
+      },
+      {
+        q: "Kiracıysam çatıya güneş paneli kurabilir miyim?",
+        a: "Mal sahibinin yazılı izni (muvafakatname) ile kurulum yapılabilir. Elektrik aboneliğinin kimin adına olduğu başvuru açısından önemlidir.",
+      },
+      {
+        q: "Elektrik kesildiğinde güneş paneli çalışır mı?",
+        a: "Bataryasız on-grid sistemler, güvenlik gereği şebeke kesildiğinde otomatik olarak durur. Kesintide de elektrik istiyorsanız sisteme batarya ve hibrit invertör eklenmesi gerekir.",
+      },
+      {
+        q: "Kurulum ne kadar sürer?",
+        a: "Çatıdaki montaj ev sistemlerinde genellikle 1–3 gün sürer. Başvurudan sistemin resmi olarak devreye alınmasına kadar geçen toplam süre ise çoğunlukla 1,5–3 aydır.",
+      },
+      {
         q: "Çatım güneş enerjisine uygun mu?",
         a: "Kiremit, sac ve düz teras çatıların büyük bölümü uygundur. Keşifte çatınızın yönünü, eğimini ve gölgelenme durumunu ölçüyor, statik taşıma kapasitesini kontrol ediyoruz — uygun değilse zorlamıyoruz, açıkça söylüyoruz.",
-      },
-      {
-        q: "Sistem kaç yılda kendini amorti eder?",
-        a: "Tüketiminize ve sistem boyutuna göre genellikle 5-9 yıl aralığında. Elektrikli araç ve ısı pompası kullanıyorsanız tasarruf büyüdüğü için süre kısalır. Panellerin ömrü 25 yılın üzerinde — amorti sonrası üretim tamamen kârdır.",
-      },
-      {
-        q: "Elektrik kesildiğinde ne olur?",
-        a: "Standart şebeke bağlantılı sistem, güvenlik gereği kesintide durur. Depolamalı (bataryalı) sistem tercih ederseniz kesinti anında otomatik olarak bataryaya geçilir, eviniz elektriksiz kalmaz.",
-      },
-      {
-        q: "Bakım masrafı var mı?",
-        a: "Hareketli parça yok; yılda bir görsel kontrol ve panel temizliği yeterli. Üretimi mobil uygulamadan izlediğiniz için olağan dışı bir düşüş zaten hemen fark edilir.",
       },
       {
         q: "İzin ve EDAŞ süreci uğraştırır mı?",
@@ -170,77 +194,192 @@ export const serviceContent: Record<string, ServiceContent> = {
     ],
     closing: {
       title: "Villanız için ücretsiz keşif planlayalım",
-      text: "Çatınızı görelim, faturanızı inceleyelim; size özel sistem boyutunu ve net teklifi hızlıca önünüze koyalım.",
+      text: "Müstakil eviniz ya da villanız için kaç kW sistem gerektiğini, size özel fiyatı ve geri ödeme süresini öğrenmek için son faturanızın fotoğrafını WhatsApp'tan gönderin ya da teklif formunu doldurun. Ankara ve çevresinde çatınızı ücretsiz inceliyor, gerçek tüketiminize göre hazırlanmış yazılı teklifimizi paylaşıyoruz.",
     },
     referenceCategories: ["Villa"],
     seoKeywords: [
-      "villa çatı güneş paneli fiyatları",
-      "villa güneş paneli",
-      "villa güneş enerjisi maliyeti",
       "müstakil ev için güneş paneli",
-      "ev tipi GES kurulumu",
-      "villa GES kaç kWp",
-      "villa çatısına güneş enerjisi kurulumu Ankara",
-      "villa güneş enerjisi sistemi fiyatları 2026",
-      "güneş enerjisi sistemi kaç yılda amorti eder",
-      "mahsuplaşma nasıl çalışır",
-      "EDAŞ başvurusu kaç gün sürer",
-      "güneş enerjisi kredisi taksit",
+      "ev için güneş paneli fiyatları",
+      "ev tipi güneş enerjisi fiyatları",
+      "müstakil ev güneş enerjisi maliyeti",
+      "bir ev için kaç kW güneş paneli gerekli",
+      "çatıya güneş paneli",
+      "çatı GES",
+      "saatlik mahsuplaşma",
+      "villa güneş paneli",
+      "10 kW güneş paneli kaç m2",
+      "Ankara güneş enerjisi firmaları",
     ],
     blogCategory: "Villa GES",
     relatedServiceSlugs: ["isi-pompasi-entegrasyonu", "lityum-batarya-depolama", "elektrikli-arac-sarj-istasyonu"],
     article: {
-      title: "Villa Güneş Enerjisi Sistemi Rehberi: Fiyatlar, kWp Hesabı, Geri Ödeme ve Mahsuplaşma",
+      title: "Müstakil Ev ve Villa İçin Güneş Paneli Rehberi: kW Hesabı, 2026 Fiyatları ve Geri Ödeme",
       intro:
-        "Villanız için güneş enerjisi sistemi araştırırken karşınıza çıkan \"kaç kWp yeterli\", \"ne kadar tutar\", \"kaç yılda kendini öder\" gibi soruların hepsini tek yerde, gerçekçi rakamlarla topladık. Aşağıdaki rehber, 2016'dan beri Ankara'da yüzlerce villa projesi kurmuş ekibimizin sahada edindiği tecrübeye dayanıyor.",
+        "Müstakil bir evde oturuyorsanız elektrik faturasının yükünü en iyi siz bilirsiniz: geniş yaşam alanı, klima, ısı pompası, belki bir havuz ya da elektrikli araç. Güzel haber şu ki aynı evin çatısı, bu elektriğin büyük kısmını kendi başına üretebilecek bir alana sahip. Ev tipi güneş enerjisi sistemi (çatı GES), gün boyunca çatınızdaki güneş panellerinden elektrik üretir, ürettiğinizi önce müstakil evinizde kullanır, fazlasını şebekeye verir ve faturanızdan düşer. Ya da bir diğer farklı sistem olan lityum bataryalara depolayarak bataryalardan tüketim yapmanızı sağlayabilir." +
+        "\n\n" +
+        "Aktürk Enerji Teknolojileri olarak 2016'dan beri Ankara'da müstakil ev, villa, yazlık ve hobi bahçesi çatılarına güneş enerjisi sistemi kuruyoruz. Bu sayfada, keşfe gittiğimiz her evde bize sorulan soruları tek yerde topladık: Bir ev için kaç kW güneş paneli gerekir? Müstakil ev güneş enerjisi maliyeti ne kadar? Güneş paneli evin bütün elektriğini karşılar mı? Kaç yılda kendini öder? Hangi belgeler gerekir? Aşağıda bunların hepsini, sahada gördüklerimizle ve gerçekçi fiyat aralıklarıyla anlatıyoruz." +
+        "\n\n" +
+        "Müstakil ev için güneş paneli sistemi kurarak elektrik faturanızı karşılayabilir, elektrikli aracınızı şarj edebilir, ısı pompası ile evinizi ısıtabilir hatta soğutabilirsiniz. Kurmuş olduğumuz villa çatılarına güneş paneli sistemleri ile Ankara’da yaklaşık 650 referansımız bulunmaktadır. Ankara’nın her bölgesinde 6 kWp güç ile başlayan ve 25 kWp güce kadar mesken çatılarına GES kurulumları sağlayan bir firmayız. Tecrübemiz ile sizlerin de ihtiyacı olan sistemi en uygun fiyata en kaliteli malzemeler kullanarak tasarlıyor, projelendiriyor ve kurulumunu sağlıyoruz.",
       sections: [
         {
-          heading: "Villa için kaç kWp güneş paneli sistemi gerekir?",
-          paragraphs: [
-            "Sistem boyutu, yıllık elektrik tüketiminize ve çatınızın güneşlenme potansiyeline göre hesaplanır. Ankara'da ortalama günlük tepe güneşlenme süresi yaklaşık 4,5-5 saat kabul edilir; bu nedenle aylık 500 kWh tüketen bir villa için kabaca 3-4 kWp'lik bir sistem yeterli olur.",
-            "Standart bir villa genellikle 5-8 kWp aralığında bir sistemle tüketiminin büyük bölümünü karşılar. Elektrikli araç şarjı, ısı pompası veya havuz pompası gibi ek yükleriniz varsa bu rakam 10-15 kWp'ye, geniş çatılı ve yüksek tüketimli villalarda ise 25 kWp'a kadar çıkabilir. Kesin rakam, son 12 aylık faturalarınızın incelendiği ücretsiz keşif sonrası netleşir.",
+          heading: "Ev Tipi Güneş Enerjisi Sistemi Nasıl Çalışır?",
+          blocks: [
+            { p: "Ev tipi güneş enerjisi sistemi 3 farklı modda çalışabilmektedir. Şebeke elektriğiniz var ise şebeke bağlantılı sistemlerde öztüketim modu ile çalıştırabiliriz. Bu mod sayesinde gündüz üretmiş olduğunuz elektrik direk evdeki tüketime gider ve fazlasını şebekeye basmaz. Tüketiminiz ne kadar ise güneş paneli o kadar enerji üreterek gündüz faturanızı karşılar. Bir diğer sistem bataryalı olursa eğer fazla üretmiş olduğu enerjiyi bataryalara depolar ve hangi saatler arasında kullanmak istiyorsanız o saatlerde inverter batarya üzerinden evinize güç verebilir. Üçüncüsü ve en yaygını ise aşağıda anlattığımız, fazla üretimi şebekeye verip faturadan düşen mahsuplaşmalı çalışmadır." },
+            { p: "Şebeke bağlantılı (on-grid) bir ev sistemi dört ana parçadan oluşur: çatıdaki güneş panelleri, panellerin ürettiği doğru akımı evde kullanılan alternatif akıma çeviren invertör, panelleri çatıya sabitleyen konstrüksiyon ve şebekeyle aranızdaki alış-verişi ölçen çift yönlü sayaç." },
+            { p: "Gündüz paneller üretmeye başladığında evinizdeki buzdolabı, klima, çamaşır makinesi, ısı pompası gibi cihazlar önce güneşten gelen elektriği kullanır. Üretim tüketimden fazlaysa fazlası şebekeye akar; akşam ve gece güneş yokken ise elektriği yine şebekeden çekersiniz. Dönem sonunda şebekeye verdiğiniz ve şebekeden çektiğiniz enerji mahsuplaştırılır, faturanıza yalnızca aradaki fark yansır." },
+            { p: "Elektrik kesintisinde de evinizin çalışmaya devam etmesini istiyorsanız sisteme lityum (LiFePO4) batarya eklenebilir. Bu durumda gündüz fazla üretim önce bataryayı doldurur, kesinti olduğunda ya da akşam saatlerinde ev bataryadan beslenir. Lityum Bataryalı (hibrit) sistemleri aşağıda ayrıca anlatıyoruz." },
           ],
         },
         {
-          heading: "Villa güneş paneli fiyatları ne kadar? (2026)",
-          paragraphs: [
-            "Villa tipi güneş enerjisi sistemlerinde yatırım tutarı; panel markası, invertör kalitesi, çatı tipi (kiremit, sac, düz teras) ve sistem gücüne göre değişir. Piyasada 5 kWp'lik anahtar teslim bir sistem ile 25 kWp'lik depolamalı, elektrikli araç şarjlı büyük bir sistem arasında geniş bir fiyat aralığı vardır.",
-            "Bu nedenle internette gördüğünüz genel fiyat listelerine göre karar vermek yerine, çatınıza özel hazırlanan net teklifi almanızı öneririz — çatı yönü, gölgelenme durumu ve tüketiminiz fiyatı doğrudan etkiler. Ücretsiz keşif sonrası size kalem kalem, sürpriz maliyet içermeyen bir teklif sunuyoruz.",
+          heading: "Bir Ev İçin Kaç kW Güneş Paneli Gerekir?",
+          blocks: [
+            { p: "Bu sorunun cevabı evin büyüklüğünden değil, yıllık elektrik tüketiminizden çıkar. 300 m² bir villada yıllık 5.000 kWh tüketen bir aile de olabilir, 150 m² bir evde ısı pompası ve elektrikli araçla yıllık 12.000 kWh tüketen bir aile de. Bu yüzden keşfe gelmeden önce sizden son 12 ayın faturalarını istiyoruz." },
+            { p: "Hesabın kısa yolu şu: Ankara'da iyi yönlenmiş, gölgesiz bir çatıda 1 kW güneş paneli yılda yaklaşık 1.400–1.550 kWh elektrik üretir. Yıllık tüketiminizi bu sayıya bölerseniz ihtiyacınız olan sistem gücüne yaklaşık olarak ulaşırsınız. Örneğin yıllık 7.500 kWh tüketen bir ev için yaklaşık 5 kW, 15.000 kWh tüketen bir ev için yaklaşık 10 kW sistem gerekir." },
+            {
+              table: {
+                columns: ["Evin tüketim profili","Yıllık tüketim (yaklaşık)","Önerilen sistem gücü"],
+                rows: [
+                  ["Klimasız, doğalgazlı müstakil ev","4.000 – 6.000 kWh","3 – 5 kW"],
+                  ["Klimalı villa, doğalgazlı ısınma","6.000 – 9.000 kWh","5 – 7 kW"],
+                  ["Isı pompalı ya da havuzlu villa","10.000 – 15.000 kWh","8 – 10 kW"],
+                  ["Isı pompası + elektrikli araç","15.000 – 22.000 kWh","10 – 15 kW"],
+                ],
+              },
+            },
+            { p: "Bir uyarı: Kış ve yaz tüketiminiz arasında büyük fark varsa (örneğin kışın ısı pompası çalışıyorsa) sistemi yıllık ortalamaya göre değil, yıllık toplama göre boyutlandırmak gerekir. Ankara'da aralık ayındaki üretim temmuz ayının yarısına bile ulaşmaz; yazın fazla üretip kışın eksik ürettiğiniz enerji, mahsuplaşma sayesinde dengelenir." },
+            { p: "Sistemin gücünü belirleyen ikinci sınır, elektrik aboneliğinizin sözleşme gücüdür. Kuracağınız sistem, sözleşme gücünüzden büyük olamaz; gerekirse önce dağıtım şirketine güç artırımı başvurusu yapılır. Sayacınızın monofaze (220 V) mi trifaze (380 V) mi olduğu da invertör seçimini belirler. 10 kW ve üzeri sistemlerde trifaze bağlantı neredeyse her zaman gerekir." },
           ],
         },
         {
-          heading: "Sistem kaç yılda kendini amorti eder?",
-          paragraphs: [
-            "Doğru boyutlandırılmış bir villa GES sistemi, Türkiye'de genellikle 5-9 yıl içinde kendini amorti eder. Elektrikli araç şarjı ve ısı pompası gibi ek tüketimleri güneşten karşıladığınızda tasarruf büyüdüğü için bu süre kısalır.",
-            "Panellerin ömrü 25 yılın üzerindedir; amortisman tamamlandıktan sonraki 15-20 yıl boyunca ürettiğiniz enerji neredeyse tamamen kârdır. Amortisman süresini etkileyen en büyük değişkenler çatı açısı/yönü, gölgelenme durumu ve güncel elektrik birim fiyatıdır.",
+          heading: "10 kW Güneş Paneli Çatıda Kaç m² Yer Kaplar?",
+          blocks: [
+            { p: "Günümüzde müstakil ev için güneş paneli sistemlerinde çoğunlukla 550–630 W gücünde paneller kullanıyoruz. Bu güçteki bir panel yaklaşık 2,6–2,8 m² alan kaplar. Paneller arası boşluklar ve çatı kenarında bırakılması gereken güvenlik payıyla birlikte, eğimli bir çatıda 1 kW için yaklaşık 5–6 m², düz bir çatıda ise panellerin birbirine gölge yapmaması için 1 kW başına 8–10 m² alan hesaplamak gerekir." },
+            {
+              ul: [
+                "5 kW sistem: eğimli çatıda yaklaşık 25–30 m², 9 panel civarı",
+                "10 kW sistem: eğimli çatıda yaklaşık 50–60 m², 17–18 panel civarı",
+                "15 kW sistem: eğimli çatıda yaklaşık 75–90 m², 25–27 panel civarı",
+              ],
+            },
+            { p: "Çatının yönü de en az alanı kadar önemlidir. En verimli yön güneydir; doğu ve batıya bakan çatılarda üretim yaklaşık yüzde 10–15 düşer ama sistem yine rahatlıkla kârlı olur. Kuzeye bakan çatı yüzeylerini genellikle önermiyoruz. Bacalar, ağaçlar ve komşu binaların gölgesi ise öğle saatlerinde bile üretimi ciddi şekilde azaltabileceği için keşifte gölge analizini mutlaka yerinde yapıyoruz." },
           ],
         },
         {
-          heading: "Mahsuplaşma nasıl çalışır?",
-          paragraphs: [
-            "On-grid (şebeke bağlantılı) villa sistemlerinde, gündüz ürettiğiniz ve anlık kullanmadığınız fazla enerji şebekeye verilir; ay sonunda tükettiğiniz ile ürettiğiniz enerji karşılıklı olarak mahsuplaşır (netleştirilir). Sadece net farkınız için fatura ödersiniz.",
-            "Bir ay fazla ürettiyseniz, oluşan fazlalık bir sonraki döneme taşınabilir — yani yaz aylarında ürettiğiniz fazla enerji kışın tüketiminizde işinize yarayabilir. Mahsuplaşma sürecine hiç girmeden, tamamen kendi bataryanızda depolayarak bağımsız çalışan hibrit sistemler de kuruyoruz; ikisi arasındaki farkı keşifte birlikte değerlendiriyoruz.",
+          heading: "Müstakil Ev Güneş Enerjisi Maliyeti: 2026 Fiyat Aralıkları",
+          blocks: [
+            { p: "Ev tipi güneş enerjisi fiyatları; sistem gücüne, panel ve invertör markasına, çatının tipine ve bataryalı olup olmamasına göre değişir. Aşağıdaki aralıklar, Ankara'da anahtar teslim kurduğumuz şebeke bağlantılı (on-grid) sistemler için güncel ortalamalardır. Panel, invertör, konstrüksiyon, kablolama, koruma ekipmanları, elektrik projesi, EDAŞ başvurusu ve kurulum işçiliği fiyata dahildir. Sadece panel adet fiyatlarını merak ediyorsanız [Ankara güneş paneli fiyatları](/blog/ankara-gunes-paneli-fiyatlari) yazımıza bakabilirsiniz." },
+            {
+              table: {
+                columns: ["Sistem gücü","Uygun olduğu ev","Anahtar teslim fiyat aralığı (KDV dahil)"],
+                rows: [
+                  ["5 kW","Doğalgazlı, klimalı müstakil ev","200.000 – 240.000 TL"],
+                  ["7,5 kW","Klimalı villa","270.000 – 310.000 TL"],
+                  ["10 kW","Isı pompalı / havuzlu villa","330.000 – 380.000 TL"],
+                  ["15 kW","Isı pompası + elektrikli araç","470.000 – 540.000 TL"],
+                  ["20 kW","Büyük villa, yüksek tüketim","600.000 – 700.000 TL"],
+                ],
+              },
+            },
+            { p: "Tabloda dikkatinizi çekecek bir şey var: Sistem büyüdükçe toplam fiyat artar ama kW başına maliyet düşer. Bunun sebebi proje, EDAŞ başvurusu, nakliye ve kurulum organizasyonu gibi sabit masrafların büyük sistemde daha fazla kW'a bölünmesidir. Bu yüzden ihtiyacınızın sınırında kalıyorsanız bir üst kademeyi değerlendirmek çoğu zaman mantıklıdır." },
+            { h4: "Bataryalı (hibrit) sistemlerin fiyatı" },
+            { p: "Elektrik kesintisinde evinizin çalışmasını istiyorsanız sisteme lityum batarya ve hibrit invertör eklenir. Bataryalı bir sistem, aynı güçteki on-grid sisteme göre batarya kapasitesine bağlı olarak yaklaşık 80.000 – 250.000 TL daha pahalıdır. Kesintide sadece buzdolabı, aydınlatma, internet ve kombi gibi temel yükleri beslemek için 5 kWh civarı bir batarya çoğu evde yeterli olur; evin tamamını saatlerce çalıştırmak istiyorsanız 10–15 kWh gerekir. Detaylar için [lityum batarya depolama sayfamıza](/hizmetlerimiz/lityum-batarya-depolama) bakabilirsiniz." },
+            { h4: "Fiyatı neler değiştirir?" },
+            {
+              ul: [
+                "Panel ve invertör markası: A kalite, etiketli ve üretici garantili paneller ile B / A- kalite paneller arasında ciddi fiyat farkı vardır. Ucuz teklifin sırrı çoğu zaman buradadır.",
+                "Çatının tipi: Kiremit, sandviç panel, membran ya da düz beton çatı farklı montaj aparatları ve işçilik gerektirir.",
+                "Çatının yüksekliği ve erişimi: İskele ya da vinç gereken çatılarda işçilik maliyeti artar.",
+                "Pano ve kablo mesafesi: İnvertörün ana panoya uzaklığı kablo maliyetini etkiler.",
+                "Güç artırımı veya trifazeye geçiş: Gerekiyorsa dağıtım şirketinin bedeli ayrıca ödenir.",
+              ],
+            },
+            { p: "Birden fazla firmadan teklif aldığınızda sadece toplam rakamı karşılaştırmayın. Panel ve invertörün marka-modelini, garanti sürelerini, sistem gücünü (kWp), EDAŞ başvurusunun ve projenin fiyata dahil olup olmadığını ve satış sonrası desteği yan yana koyun. Bu kalemlerin yazmadığı bir teklif, ucuz görünse de karşılaştırılamaz." },
           ],
         },
         {
-          heading: "EDAŞ başvurusu ve kurulum süreci ne kadar sürer?",
-          paragraphs: [
-            "Süreç dört ana adımdan oluşur: keşif ve tüketim analizi, statik/elektrik projesinin çizilmesi, EDAŞ bağlantı anlaşması başvurusu ve fiziksel kurulum. Keşiften kurulumun tamamlanmasına kadar toplam süre, dosyanın EDAŞ'taki inceleme temposuna bağlı olarak genellikle birkaç hafta ile birkaç ay arasında değişir.",
-            "Panel ve invertör montajının kendisi çatı büyüklüğüne göre çoğu villada 1-3 gün içinde tamamlanır. Statik rapor, tek hat şeması ve EDAŞ başvurusu dahil tüm evrak sürecini sizin adınıza biz yürütüyoruz — sizden randevu vermeniz dışında bir uğraş beklemiyoruz.",
+          heading: "Güneş Paneli Kaç Yılda Kendini Öder?",
+          blocks: [
+            { p: "Geri ödeme süresi, sistemin yıllık ürettiği enerjinin size kazandırdığı tutara bağlıdır. 10 kW bir sistem Ankara'da yılda yaklaşık 14.000–15.000 kWh üretir. Bu enerjiyi şebekeden almak zorunda kalmadığınız için, mesken tarifesinde vergiler dahil kWh başına ödediğiniz tutar kadar tasarruf edersiniz." },
+            { p: "Basit bir hesapla: 10 kW sistem yılda 14.500 kWh üretiyor, siz de kWh başına vergiler dahil yaklaşık 4 TL ödüyorsanız, yıllık kazancınız 58.000 TL civarındadır. 350.000 TL'lik bir sistem bu durumda yaklaşık 6 yılda kendini öder. Elektrik fiyatları her yıl arttığı için gerçek geri ödeme süresi genellikle bu hesaptan daha kısa olur. Panellerin 25–30 yıllık ömrü düşünüldüğünde, sistem geri kalan yirmi yılı aşkın süre boyunca neredeyse bedava elektrik üretir." },
+            { p: "Geri ödemeyi en çok hızlandıran şey, ürettiğiniz elektriği gündüz kendi evinizde tüketmenizdir. Çamaşır ve bulaşık makinesini, havuz pompasını, elektrikli araç şarjını gündüz saatlerine kaydırmak, güneşten gelen enerjinin değerini en yüksek seviyeye çıkarır." },
           ],
         },
         {
-          heading: "Kredi ve taksit imkanı var mı?",
-          paragraphs: [
-            "Evet — anlaşmalı bankalarla kredi kartına taksit imkanı sunuyoruz, ayrıca bazı bankaların düşük faizli yeşil enerji/GES kredisi seçenekleri de mevcut. Birçok müşterimiz, kredi taksitini sistemin sağladığı fatura tasarrufuna yakın bir tutarda planlayarak yatırımı adeta \"kendi kendini ödeyen\" bir modele dönüştürüyor.",
-            "Size uygun ödeme planını, keşif sonrası net teklifle birlikte karşılaştırmalı olarak sunuyoruz; hangi banka ve vade seçeneğinin sizin için en avantajlı olduğunu birlikte değerlendiriyoruz.",
+          heading: "Güneş Paneli Evin Bütün Elektriğini Karşılar mı?",
+          blocks: [
+            { p: "Doğru boyutlandırılmış bir sistem, yıl genelinde evin tüketiminin tamamına yakınını karşılayabilir; ama bu \"her an\" karşılar anlamına gelmez. Gündüz güneşli saatlerde ev çoğu zaman tamamen güneşten beslenir ve fazlası şebekeye gider. Akşam ve gece ise elektrik şebekeden gelir. Yılın sonunda verdiğiniz ve aldığınız enerji mahsuplaştırıldığında faturanız sıfıra yaklaşır." },
+            { p: "Kışın ne olur? Ankara'da kış aylarında gün kısa, güneş açısı düşük olduğu için üretim belirgin şekilde azalır. Panellerin üzerindeki kar genellikle güneş çıktıktan kısa süre sonra kayar; 30–35 derece eğimli çatılarda bu süre daha da kısadır. Soğuk hava ise sanılanın aksine panellerin verimini artırır, panelleri asıl zorlayan şey yaz sıcağıdır. Yani kışın üretim düşer ama sistem çalışmaya devam eder; yaz fazlası mahsuplaşmayla kışı dengeler." },
           ],
         },
         {
-          heading: "Villanızı hibrit batarya, ısı pompası ve EV şarjıyla tamamen bağımsız hale getirin",
-          paragraphs: [
-            "Villa GES sistemi tek başına da güçlü bir yatırımdır; ama asıl fark, onu hibrit lityum batarya, ısı pompası entegrasyonu ve elektrikli araç şarj istasyonuyla birleştirdiğinizde ortaya çıkar. Bu sayfanın üst kısmındaki \"Tek çatı, tek sistem, dört çözüm\" bölümünde anlattığımız gibi, bu dördünü tek entegre sistemde kurarak villanızı elektrik faturasından büyük ölçüde ya da tamamen bağımsız hale getirebiliyoruz.",
-            "Hangi kombinasyonun sizin tüketim profilinize ve bütçenize en uygun olduğunu belirlemek için ücretsiz keşif talep edebilir, ya da doğrudan WhatsApp'tan sorularınızı iletebilirsiniz.",
+          heading: "Saatlik Mahsuplaşma Nedir, Fazla Elektriği Satabilir miyim?",
+          blocks: [
+            { p: "Mahsuplaşma, şebekeye verdiğiniz elektrik ile şebekeden çektiğiniz elektriğin belirli bir dönem içinde karşılaştırılıp birbirinden düşülmesidir. Aylık mahsuplaşmada ay boyunca verilen ve çekilen toplam enerji karşılaştırılır. Saatlik mahsuplaşmada ise bu karşılaştırma her saat için ayrı yapılır: gündüz bir saatte ürettiğiniz fazla enerji, yalnızca o saat içindeki tüketiminizden düşülür, kalan fazla şebekeye satılmış sayılır." },
+            { p: "Pratikte bunun anlamı şu: Saatlik mahsuplaşmada, gündüz ürettiğiniz enerjiyi gündüz kullanmanız çok daha değerli hale gelir. Bu yüzden saatlik mahsuplaşmaya tabi sistemlerde, gündüz tüketimi artırmak ya da fazla üretimi bataryada saklamak geri ödeme süresini kısaltır." },
+            { p: "Mesken aboneleri ihtiyaçlarını aşan üretimi sınırsız şekilde satamaz; sistem, tüketiminizle uyumlu boyutta olmalıdır. Hangi mahsuplaşma yönteminin sizin aboneliğinize uygulanacağı, abonelik türüne ve başvuru tarihine göre değişebiliyor. Keşifte bunu sizin aboneliğinize göre netleştiriyoruz." },
+          ],
+        },
+        {
+          heading: "Çatıya Güneş Paneli Kurmak İçin Gerekli Belgeler ve Süreç",
+          blocks: [
+            { p: "Çatı GES kurulumunun en çok merak edilen ama en az bilinen kısmı başvuru sürecidir. Ankara'da başvurular Başkent EDAŞ'a yapılır ve [projelendirme ve başvuru sürecinin](/hizmetlerimiz/projelendirme-muhendislik-basvuru) tamamını biz yürütüyoruz. Sizden istenenler genellikle şunlardır:" },
+            {
+              ul: [
+                "Tapu fotokopisi (kiracıysanız mal sahibinin muvafakatnamesi)",
+                "Elektrik aboneliği bilgileri ve son faturanız",
+                "Kimlik fotokopisi, şirket adına başvuruda imza sirküleri ve vergi levhası",
+                "Çatının taşıyıcı sisteminin uygunluğunu gösteren statik uygunluk raporu (biz hazırlatıyoruz)",
+                "Elektrik projesi ve tek hat şeması (biz hazırlıyoruz)",
+              ],
+            },
+            { h4: "Adım adım kurulum süreci" },
+            {
+              ol: [
+                "Ücretsiz keşif: Çatınızı yerinde inceliyor, yön ve gölge analizini yapıyor, faturalarınızdan tüketiminizi çıkarıyoruz.",
+                "Teklif: Sistem gücünü, ekipman markalarını, garanti sürelerini ve toplam fiyatı yazılı olarak sunuyoruz.",
+                "Başvuru ve çağrı mektubu: Başkent EDAŞ'a bağlantı başvurusunu yapıyor, olumlu görüş (çağrı mektubu) alıyoruz.",
+                "Proje onayı: Elektrik projesini onaya sunuyoruz.",
+                "Kurulum: Ev sistemlerinin montajı hava koşullarına göre genellikle 1–3 gün sürer.",
+                "Kabul ve devreye alma: Dağıtım şirketinin kabul işlemlerinin ardından çift yönlü sayaç takılır, sistem resmi olarak üretime başlar. Telefonunuza mobil izleme uygulamasını kurup kullanımı gösteriyoruz.",
+              ],
+            },
+            { p: "Başvurudan sistemin resmi olarak devreye girmesine kadar geçen süre, dağıtım şirketinin yoğunluğuna bağlı olarak çoğunlukla 1,5–3 ay arasındadır. Bu sürenin büyük kısmı resmi onay beklemekle geçer; çatıdaki iş birkaç günde biter." },
+          ],
+        },
+        {
+          heading: "Kiremit, Sandviç ve Düz Çatıya Montaj",
+          blocks: [
+            { p: "Ankara'daki müstakil evlerin çoğunda kiremit çatı var. Kiremit çatıya montajda kiremitler sökülmeden kanca adı verilen paslanmaz bağlantı parçaları çatının ahşap ya da çelik taşıyıcısına sabitlenir, kiremit yeniden yerine oturtulur ve paneller bu kancalara bağlanan alüminyum raylara monte edilir. Doğru yapıldığında çatıda su sızıntısı riski oluşmaz." },
+            { p: "Sandviç panel çatılarda trapez profile uygun özel aparatlar, düz beton ya da membran çatılarda ise panelleri ideal açıya getiren eğimli konstrüksiyonlar kullanılır. Membran çatılarda su yalıtımını delmemek için ağırlıklı (balastlı) sistemler tercih edilebilir. Ankara'nın kar ve rüzgâr yükü düşünülerek konstrüksiyonun statik hesabı her projede ayrıca yapılır." },
+          ],
+        },
+        {
+          heading: "Kredi ve Devlet Desteği Var mı?",
+          blocks: [
+            { p: "Ev tipi güneş enerjisi sistemleri için şu an doğrudan bir hibe ya da bedava kurulum desteği bulunmuyor. Bununla birlikte birçok banka konut çatısı GES yatırımları için özel kredi ürünleri sunuyor; bazı bankalarda vade, sistemin kendini ödeme süresine yakın tutulabiliyor. Böylece aylık kredi taksidiniz, düşen elektrik faturanıza yakın bir seviyede kalabiliyor." },
+            { p: "Ziraat Bankası başta olmak üzere bankaların güneş paneli kredisi koşullarını [ayrı bir yazımızda](/blog/gunes-paneli-kredisi-ziraat-bankasi-rehberi) anlattık. Ayrıca kredi kartına taksit ve kurulum sırasında ödeme planı seçeneklerimiz için bizimle iletişime geçebilirsiniz." },
+          ],
+        },
+        {
+          heading: "Doğalgazlı Evde Güneş Enerjisi Mantıklı mı?",
+          blocks: [
+            { p: "Evet. Doğalgazla ısınan bir evde güneş enerjisi sistemi, ısınma dışındaki tüm elektrik tüketimini karşılar: klima, beyaz eşya, aydınlatma, havuz pompası. Yaz aylarında klimayla birlikte tüketim zaten en yüksek seviyesine çıkar, bu da güneşin en güçlü olduğu döneme denk gelir." },
+            { p: "Daha büyük tasarrufu ise ısınmayı da elektriğe taşıyarak elde edersiniz. Isı pompası, harcadığı her 1 kWh elektrikle ortama 3–4 kWh ısı verir. Güneş enerjisi sistemiyle birlikte kurulduğunda, hem doğalgaz faturası ortadan kalkar hem de ısı pompasının elektriği büyük ölçüde çatıdan karşılanır. Bu kombinasyon, son yıllarda villa müşterilerimizin en çok tercih ettiği çözüm haline geldi. Detaylar için [ısı pompası sayfamıza](/hizmetlerimiz/isi-pompasi-entegrasyonu) bakabilirsiniz." },
+          ],
+        },
+        {
+          heading: "Ankara'da Güneş Enerjisi Firması Seçerken Nelere Dikkat Etmeli?",
+          blocks: [
+            {
+              ul: [
+                "Referans: Firmanın Ankara'da kurduğu sistemleri yerinde görebiliyor musunuz? Eski müşterileriyle konuşabiliyor musunuz?",
+                "Ekipman: Teklifte panel ve invertörün marka-modeli, gücü ve garanti süresi açıkça yazıyor mu?",
+                "Kendi ekibi: Kurulumu firmanın kendi ekibi mi yapıyor, yoksa taşerona mı veriliyor?",
+                "Başvuru: EDAŞ başvurusu, proje ve statik rapor fiyata dahil mi?",
+                "Satış sonrası: Sistemde bir sorun olduğunda kime ulaşacaksınız, ne kadar sürede müdahale ediliyor?",
+              ],
+            },
+            { p: "Biz kurduğumuz her sistemi kendi ekibimizle kuruyor, mobil izleme üzerinden üretimi takip ediyor ve kurulum sonrasında da bakım ve destek veriyoruz. Ankara'daki referans projelerimizi [referanslar sayfamızda](/referanslarimiz) inceleyebilirsiniz." },
           ],
         },
       ],

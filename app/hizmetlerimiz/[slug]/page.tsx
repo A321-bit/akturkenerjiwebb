@@ -22,6 +22,7 @@ import Reveal from "@/components/Reveal";
 import QuoteModal from "@/components/QuoteModal";
 import PumpPowerCalculator from "@/components/PumpPowerCalculator";
 import VillaSystemShowcase from "@/components/VillaSystemShowcase";
+import ArticleBlockView, { RichText } from "@/components/ArticleBlockView";
 
 // Hobi Bahçesi ve Karavan Sistemleri hizmetleri Off-Grid hizmetinde birleştirildi;
 // eski linkler/yer imleri 404 yerine yeni sayfaya yönlensin diye eşleme tutuyoruz.
@@ -48,7 +49,7 @@ export async function generateMetadata({
   const content = getServiceContent(service);
   return buildMetadata({
     title: content.seo.title,
-    description: service.summary,
+    description: content.seo.description ?? service.summary,
     path: `/hizmetlerimiz/${service.slug}`,
     keywords: [
       service.title,
@@ -414,17 +415,19 @@ export default async function ServiceDetailPage({
             <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
               {content.article.title}
             </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-slate">{content.article.intro}</p>
+            {content.article.intro.split("\n\n").map((p, i) => (
+              <p key={i} className="mt-4 text-[15px] leading-relaxed text-slate">
+                <RichText text={p} />
+              </p>
+            ))}
           </Reveal>
           <div className="mt-8 flex flex-col gap-8">
             {content.article.sections.map((s, i) => (
               <Reveal key={s.heading} delay={i * 50}>
                 <h3 className="font-display text-[17px] font-semibold text-ink">{s.heading}</h3>
                 <div className="mt-2.5 flex flex-col gap-3">
-                  {s.paragraphs.map((p, pi) => (
-                    <p key={pi} className="text-[14.5px] leading-relaxed text-slate">
-                      {p}
-                    </p>
+                  {(s.blocks ?? (s.paragraphs ?? []).map((p) => ({ p }))).map((b, bi) => (
+                    <ArticleBlockView key={bi} block={b} />
                   ))}
                 </div>
               </Reveal>
