@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePagePath } from "@/lib/use-page-path";
 import { trackEvent } from "@/lib/track";
 import { captureAttribution } from "@/lib/attribution";
 
@@ -12,7 +12,7 @@ declare global {
 }
 
 export default function Analytics() {
-  const pathname = usePathname();
+  const pathname = usePagePath();
   const isFirstPageview = useRef(true);
 
   useEffect(() => {

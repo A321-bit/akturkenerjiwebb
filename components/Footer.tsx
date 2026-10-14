@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePagePath } from "@/lib/use-page-path";
 import { SITE_DOMAIN, type SiteSettings, type Service } from "@/lib/data";
 import { Mail, MapPin, Phone } from "lucide-react";
 
@@ -33,8 +33,8 @@ export default function Footer({
   settings: SiteSettings;
   services: Service[];
 }) {
-  const pathname = usePathname();
-  if (pathname?.startsWith("/admin") || pathname?.startsWith("/teklif-al")) return null;
+  const pathname = usePagePath();
+  if (pathname.startsWith("/admin") || pathname.startsWith("/teklif-al")) return null;
 
   return (
     <footer className="border-t border-line-dark bg-ink text-paper">
@@ -167,7 +167,12 @@ export default function Footer({
           <p>
             © {new Date().getFullYear()} {settings.name}. Tüm hakları saklıdır.
           </p>
-          <p className="font-mono-data">{SITE_DOMAIN}</p>
+          <div className="flex items-center gap-4">
+            <Link href="/kvkk-aydinlatma-metni" className="hover:text-paper">
+              KVKK Aydınlatma Metni
+            </Link>
+            <p className="font-mono-data">{SITE_DOMAIN}</p>
+          </div>
         </div>
       </div>
     </footer>

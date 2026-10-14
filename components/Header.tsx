@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePagePath } from "@/lib/use-page-path";
 import { Menu, X } from "lucide-react";
 import type { SiteSettings } from "@/lib/data";
 import QuoteModal from "@/components/QuoteModal";
@@ -21,8 +21,8 @@ const nav = [
 
 export default function Header({ settings }: { settings: SiteSettings }) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  if (pathname?.startsWith("/admin") || pathname?.startsWith("/teklif-al")) return null;
+  const pathname = usePagePath();
+  if (pathname.startsWith("/admin") || pathname.startsWith("/teklif-al")) return null;
 
   // Next.js <Link> normalde aynı sayfadaysan tıklamayı yok sayar (no-op).
   // Logo veya "Anasayfa"ya zaten anasayfadayken basıldığında sayfayı yenile.

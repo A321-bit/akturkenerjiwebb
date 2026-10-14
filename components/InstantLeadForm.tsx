@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import { trackEvent } from "@/lib/track";
+import KvkkNotice from "@/components/KvkkNotice";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
 import { trackGa4Lead, trackGa4WhatsappClick, trackGoogleAdsLead } from "@/lib/ga4";
@@ -245,6 +246,7 @@ export default function InstantLeadForm({ whatsappNumber }: { whatsappNumber: st
           "Ücretsiz Teklifimi Al"
         )}
       </button>
+      <KvkkNotice />
       {status === "error" && (
         <p className="text-center text-[13.5px] text-red-600">
           Bir sorun oluştu, lütfen tekrar deneyin.

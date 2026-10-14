@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePagePath } from "@/lib/use-page-path";
 import { ArrowUpRight, Zap, BatteryCharging, Gauge } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { PUMP_OPTIONS, calcPumpSystem } from "@/lib/pumpOptions";
@@ -21,7 +21,7 @@ const roofTypes = [
 ] as const;
 
 export default function SavingsCalculator({ whatsappNumber }: { whatsappNumber: string }) {
-  const pathname = usePathname();
+  const pathname = usePagePath();
   const [roofType, setRoofType] = useState<(typeof roofTypes)[number]["id"]>("villa");
   const [monthlyBill, setMonthlyBill] = useState(2500);
   const [dailyNeedKWh, setDailyNeedKWh] = useState(8);
@@ -235,7 +235,7 @@ export default function SavingsCalculator({ whatsappNumber }: { whatsappNumber: 
       )}
 
       <a
-        href={whatsappLink(whatsappNumber, `${waMessage}\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`)}
+        href={whatsappLink(whatsappNumber, `${waMessage}\n\nSayfa: ${SITE_URL}${pathname}`)}
         target="_blank"
         rel="noopener noreferrer"
         className="group mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-sun px-5 py-3 text-[14px] font-semibold text-ink transition-colors hover:bg-sun-soft"

@@ -33,7 +33,9 @@ export default function Reveal({
           observer.disconnect();
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+      // Eleman ekrana girer girmez görünür; eskiden %15 + 40px beklendiği için
+      // form ve blog kartları bir süre boş alan gibi duruyordu.
+      { threshold: 0, rootMargin: "0px 0px 80px 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -43,8 +45,8 @@ export default function Reveal({
     <Tag
       ref={ref as never}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+      className={`transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
       } ${className}`}
     >
       {children}

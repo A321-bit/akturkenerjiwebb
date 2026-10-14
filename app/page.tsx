@@ -14,6 +14,8 @@ import LeadForm from "@/components/LeadForm";
 import VideosSection from "@/components/VideosSection";
 import QuoteModal from "@/components/QuoteModal";
 import WhatsappCtaBanner from "@/components/WhatsappCtaBanner";
+import GoogleReviews, { GoogleRatingBadge } from "@/components/GoogleReviews";
+import { getGoogleReviews } from "@/lib/google-reviews";
 
 // Canonical layout'ta değil burada: layout'ta olunca 404 gibi kendi
 // canonical'ı olmayan her sayfa ana sayfayı canonical gösteriyordu.
@@ -22,12 +24,13 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [services, references, testimonials, site, posts] = await Promise.all([
+  const [services, references, testimonials, site, posts, googleReviews] = await Promise.all([
     getServices(),
     getReferences(),
     getTestimonials(),
     getSiteSettings(),
     getBlogPostSummaries(),
+    getGoogleReviews(),
   ]);
   const stats = site.stats;
 
@@ -68,6 +71,11 @@ export default async function Home() {
                 Referanslarımızı İnceleyin
               </Link>
             </div>
+            {googleReviews && (
+              <div className="mt-5">
+                <GoogleRatingBadge data={googleReviews} />
+              </div>
+            )}
 
             <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-line-dark pt-8 sm:grid-cols-3">
               {stats.map((s) => (
@@ -273,6 +281,9 @@ export default async function Home() {
         <VideosSection />
       </Suspense>
 
+      {/* GOOGLE YORUMLARI */}
+      {googleReviews && <GoogleReviews data={googleReviews} />}
+
       {/* TESTIMONIALS */}
       {testimonials.length > 0 && (
         <section className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
@@ -332,11 +343,14 @@ export default async function Home() {
               >
                 Ya da WhatsApp&apos;tan Yaz
               </a>
+              {googleReviews && (
+                <div className="mt-6">
+                  <GoogleRatingBadge data={googleReviews} />
+                </div>
+              )}
             </div>
           </Reveal>
-          <Reveal delay={120}>
-            <LeadForm />
-          </Reveal>
+          <LeadForm />
         </div>
       </section>
 

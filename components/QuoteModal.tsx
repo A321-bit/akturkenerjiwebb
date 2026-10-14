@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { usePagePath } from "@/lib/use-page-path";
 import { z } from "zod";
 import { Zap, X, User, PhoneCall, MapPin, Wrench, Loader2, CheckCircle2 } from "lucide-react";
 import { trackEvent } from "@/lib/track";
+import KvkkNotice from "@/components/KvkkNotice";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { buildLeadAttributionFields } from "@/lib/attribution";
@@ -54,7 +56,7 @@ export default function QuoteModal({
   whatsappNumber: string;
   onOpen?: () => void;
 }) {
-  const pathname = usePathname();
+  const pathname = usePagePath();
   const router = useRouter();
   const styles = variantStyles[variant];
   const [open, setOpen] = useState(false);
@@ -85,7 +87,7 @@ export default function QuoteModal({
     setStatus("idle");
     setErrors({});
     setOpen(true);
-    trackEvent("click", pathname ?? "/", "quote_button_open");
+    trackEvent("click", pathname, "quote_button_open");
     onOpen?.();
   }
 
@@ -112,18 +114,18 @@ export default function QuoteModal({
           phone: parsed.data.phone,
           province: parsed.data.province,
           source: "quick_quote",
-          ...buildLeadAttributionFields(pathname ?? "/"),
+          ...buildLeadAttributionFields(pathname),
         }),
       });
       if (!res.ok) throw new Error("failed");
       setStatus("sent");
-      trackEvent("click", pathname ?? "/", "quote_form_submit");
+      trackEvent("click", pathname, "quote_form_submit");
       trackMetaLead(parsed.data.purpose);
       trackGa4Lead(parsed.data.purpose);
       trackGoogleAdsLead();
 
       if (redirectTo === "whatsapp") {
-        const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`;
+        const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}\n\nSayfa: ${SITE_URL}${pathname}`;
         window.open(whatsappLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
       } else if (redirectTo === "iletisim") {
         setTimeout(() => {
@@ -179,7 +181,7 @@ export default function QuoteModal({
                   <a
                     href={whatsappLink(
                       whatsappNumber,
-                      `Merhaba, ben ${values.fullname}. ${values.purpose} hakkında bilgi almak istiyorum. Telefon: ${values.phone}\n\nSayfa: ${SITE_URL}${pathname ?? "/"}`
+                      `Merhaba, ben ${values.fullname}. ${values.purpose} hakkında bilgi almak istiyorum. Telefon: ${values.phone}\n\nSayfa: ${SITE_URL}${pathname}`
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -293,6 +295,7 @@ export default function QuoteModal({
                       "Beni Arayın"
                     )}
                   </button>
+                  <KvkkNotice />
                   {status === "error" && (
                     <p className="text-center text-[13px] text-red-600">
                       Bir sorun oluştu, lütfen tekrar deneyin ya da doğrudan WhatsApp&apos;tan yazın.

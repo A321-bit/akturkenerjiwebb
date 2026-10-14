@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePagePath } from "@/lib/use-page-path";
 import { z } from "zod";
 import { trackEvent } from "@/lib/track";
+import KvkkNotice from "@/components/KvkkNotice";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
 import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
@@ -48,7 +49,7 @@ const leadSchema = z.object({
 type LeadFormValues = z.infer<typeof leadSchema>;
 
 export default function LeadForm() {
-  const pathname = usePathname();
+  const pathname = usePagePath();
   const [step, setStep] = useState(0);
   const [values, setValues] = useState<LeadFormValues>({
     needType: "",
@@ -89,12 +90,12 @@ export default function LeadForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...parsed.data,
-          ...buildLeadAttributionFields(pathname ?? "/"),
+          ...buildLeadAttributionFields(pathname),
         }),
       });
       if (!res.ok) throw new Error("failed");
       setStatus("sent");
-      trackEvent("click", pathname ?? "/", "lead_form_submit");
+      trackEvent("click", pathname, "lead_form_submit");
       trackMetaLead(parsed.data.needType);
       trackGa4Lead(parsed.data.needType);
       trackGoogleAdsLead();
@@ -267,6 +268,7 @@ export default function LeadForm() {
                   "Ücretsiz Teklifimi Al"
                 )}
               </button>
+              <KvkkNotice className="mt-3" />
               {status === "error" && (
                 <p className="mt-3 text-center text-[13.5px] text-red-600">
                   Bir sorun oluştu, lütfen tekrar deneyin ya da doğrudan WhatsApp&apos;tan yazın.

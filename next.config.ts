@@ -88,6 +88,10 @@ const nextConfig: NextConfig = {
         destination: "https://akturkenerji.com/:path*",
         permanent: true,
       },
+      // Next.js ana sayfayı /index adresinde de 200 ile sunuyor; WhatsApp
+      // mesajlarına bu adres sızmıştı (usePagePath ile düzeltildi). Kopya
+      // sayfa oluşmasın diye /index kalıcı olarak ana sayfaya yönlenir.
+      { source: "/index", destination: "/", permanent: true },
       ...[...LEGACY_REDIRECTS, ...RETIRED_POST_REDIRECTS].map(([source, destination]) => ({
         source,
         destination,
