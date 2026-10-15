@@ -34,7 +34,8 @@ export default function Footer({
   services: Service[];
 }) {
   const pathname = usePagePath();
-  if (pathname.startsWith("/admin") || pathname.startsWith("/teklif-al")) return null;
+  // Mağazanın kendi üst menüsü ve sayfa altı var (app/magaza/layout.tsx).
+  if (pathname.startsWith("/admin") || pathname.startsWith("/teklif-al") || pathname.startsWith("/magaza")) return null;
 
   return (
     <footer className="border-t border-line-dark bg-ink text-paper">

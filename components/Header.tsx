@@ -22,7 +22,8 @@ const nav: { href: string; label: string; external?: boolean }[] = [
 export default function Header({ settings }: { settings: SiteSettings }) {
   const [open, setOpen] = useState(false);
   const pathname = usePagePath();
-  if (pathname.startsWith("/admin") || pathname.startsWith("/teklif-al")) return null;
+  // Mağazanın kendi üst menüsü ve sayfa altı var (app/magaza/layout.tsx).
+  if (pathname.startsWith("/admin") || pathname.startsWith("/teklif-al") || pathname.startsWith("/magaza")) return null;
 
   // Next.js <Link> normalde aynı sayfadaysan tıklamayı yok sayar (no-op).
   // Logo veya "Anasayfa"ya zaten anasayfadayken basıldığında sayfayı yenile.

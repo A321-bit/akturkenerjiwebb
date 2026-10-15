@@ -4,7 +4,7 @@ import { buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
 import StoreCatalog from "@/components/store/StoreCatalog";
-import { CategoryTiles, HowToOrder, StoreSubnav, TrustStrip } from "@/components/store/StoreSections";
+import { CategoryTiles, HowToOrder, TrustStrip } from "@/components/store/StoreSections";
 
 // Mağaza şablon aşamasında; ürünler ve tasarım netleşene kadar Google'a kapalı.
 export const metadata: Metadata = {
@@ -24,8 +24,6 @@ export default async function StorePage() {
 
   return (
     <>
-      <StoreSubnav />
-
       <section className="relative overflow-hidden bg-ink text-paper">
         <div className="grid-texture absolute inset-0" />
         <div className="relative mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">

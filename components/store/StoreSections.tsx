@@ -1,29 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, BadgeCheck, MessageCircle, PhoneCall, Star, Truck, Wrench } from "lucide-react";
-import { STORE_CATEGORIES, PRICES_UPDATED, type StoreCategory } from "@/lib/store";
+import { PRICES_UPDATED, type StoreCategory } from "@/lib/store";
 import type { GoogleReviews } from "@/lib/google-reviews";
-
-export function StoreSubnav({ active }: { active?: string }) {
-  const item = (isActive: boolean) =>
-    `whitespace-nowrap rounded-lg px-3 py-2 text-[13.5px] font-semibold ${
-      isActive ? "bg-ink text-paper" : "text-slate hover:bg-paper hover:text-ink"
-    }`;
-  return (
-    <div className="border-b border-line bg-paper-raised">
-      <div className="no-scrollbar mx-auto flex max-w-6xl gap-1 overflow-x-auto px-5 py-2 sm:px-8">
-        <Link href="/magaza" className={item(!active)}>
-          Tüm Ürünler
-        </Link>
-        {STORE_CATEGORIES.map((c) => (
-          <Link key={c.slug} href={`/magaza/${c.slug}`} className={item(active === c.slug)}>
-            {c.name}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function CategoryTiles({ categories }: { categories: StoreCategory[] }) {
   return (
