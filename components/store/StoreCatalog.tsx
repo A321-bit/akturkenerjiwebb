@@ -28,7 +28,7 @@ export default function StoreCatalog({
   const list = useMemo(() => {
     let l = products.filter((p) => (category === "tumu" || p.category === category) && (!installOnly || p.installIncluded));
     if (sort !== "onerilen") {
-      l = [...l].sort((a, b) => ((a.priceMin ?? 1e12) - (b.priceMin ?? 1e12)) * (sort === "artan" ? 1 : -1));
+      l = [...l].sort((a, b) => ((a.price ?? 1e12) - (b.price ?? 1e12)) * (sort === "artan" ? 1 : -1));
     }
     return l;
   }, [products, category, installOnly, sort]);

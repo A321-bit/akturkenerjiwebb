@@ -23,8 +23,10 @@ export type StoreProduct = {
   name: string;
   power: string;
   specs: string[];
-  priceMin?: number;
-  priceMax?: number;
+  /** İndirimli satış fiyatı (KDV dahil). */
+  price?: number;
+  /** Liste fiyatı; satış fiyatından yüksekse kartta üstü çizili gösterilir. */
+  listPrice?: number;
   installIncluded: boolean;
   image?: string;
 };
@@ -110,11 +112,11 @@ const P = (
   name: string,
   power: string,
   specs: string[],
-  priceMin: number,
-  priceMax: number,
+  price: number,
+  listPrice: number,
   installIncluded: boolean,
   image: string
-): StoreProduct => ({ category, slug, name, power, specs, priceMin, priceMax, installIncluded, image: `${IMG}${image}` });
+): StoreProduct => ({ category, slug, name, power, specs, price, listPrice, installIncluded, image: `${IMG}${image}` });
 
 export const STORE_PRODUCTS: StoreProduct[] = [
   P("on-grid-paketler", "5-kw-on-grid-gunes-paneli-paketi", "5 kW On Grid Güneş Paneli Paketi", "5 kW", ["On grid", "Mahsuplaşmalı"], 200000, 240000, true, "ankara-beytepe-mustakil-ev-15-kw-on-grid-gunes-paneli-opt-800.webp"),
@@ -134,6 +136,11 @@ export const STORE_PRODUCTS: StoreProduct[] = [
 ];
 
 export const PRICES_UPDATED = "15.10.2026";
+
+export function discountPercent(p: StoreProduct): number | null {
+  if (!p.price || !p.listPrice || p.listPrice <= p.price) return null;
+  return Math.round(((p.listPrice - p.price) / p.listPrice) * 100);
+}
 
 export function formatTL(n: number): string {
   return n.toLocaleString("tr-TR") + " TL";

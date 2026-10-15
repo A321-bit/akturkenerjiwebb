@@ -1,23 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { MessageCircle, Wrench, Package } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
-import { formatTL, type StoreProduct } from "@/lib/store";
+import { discountPercent, formatTL, type StoreProduct } from "@/lib/store";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
 
 export default function ProductCard({ product, whatsappNumber }: { product: StoreProduct; whatsappNumber: string }) {
-  const hasPrice = product.priceMin != null;
-  const priceText = hasPrice
-    ? product.priceMax && product.priceMax !== product.priceMin
-      ? `${formatTL(product.priceMin!)} – ${formatTL(product.priceMax)}`
-      : formatTL(product.priceMin!)
-    : "Fiyat için sorun";
-  const message = `Merhaba, *${product.name}* için sipariş vermek istiyorum.${hasPrice ? ` (Fiyat: ${priceText})` : ""}\n\nSayfa: ${SITE_URL}/magaza/${product.category}`;
+  const discount = discountPercent(product);
+  const priceText = product.price != null ? formatTL(product.price) : "Fiyat için sorun";
+  const message = `Merhaba, *${product.name}* için sipariş vermek istiyorum.${
+    product.price != null ? ` (Fiyat: ${priceText})` : ""
+  }\n\nSayfa: ${SITE_URL}/magaza/${product.category}`;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised transition-shadow hover:border-sun/60 hover:shadow-[0_20px_44px_-24px_rgba(11,20,32,0.45)]">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised transition-shadow hover:border-sun/60 hover:shadow-[0_20px_44px_-24px_rgba(11,20,32,0.45)]">
       <div className="relative aspect-[4/3] overflow-hidden bg-paper">
         {product.image && (
           <Image
@@ -31,30 +29,21 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
         <span className="absolute left-3 top-3 rounded-full bg-ink/85 px-3 py-1 font-mono-data text-[12px] font-semibold text-paper backdrop-blur">
           {product.power}
         </span>
+        {discount != null && (
+          <span className="absolute right-3 top-3 rounded-full bg-[#e8562a] px-3 py-1 text-[13px] font-bold text-white">
+            %{discount}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-4">
         <h3 className="font-display text-[16.5px] font-semibold leading-snug text-ink">{product.name}</h3>
 
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {product.specs.map((s) => (
-            <span key={s} className="rounded-md bg-paper px-2 py-1 text-[12px] font-medium text-slate">
-              {s}
-            </span>
-          ))}
-          <span
-            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium ${
-              product.installIncluded ? "bg-volt/10 text-volt" : "bg-sun/15 text-ink"
-            }`}
-          >
-            {product.installIncluded ? <Wrench size={12} /> : <Package size={12} />}
-            {product.installIncluded ? "Kurulum dahil" : "Kurulumsuz paket"}
-          </span>
-        </div>
-
-        <div className="mt-auto pt-5">
-          <p className="font-display text-[17px] font-bold tracking-tight text-ink sm:text-[18px]">{priceText}</p>
-          {hasPrice && <p className="text-[12px] text-slate-soft">KDV dahil</p>}
+        <div className="mt-auto pt-4">
+          {discount != null && product.listPrice != null && (
+            <p className="text-[14px] text-slate-soft line-through">{formatTL(product.listPrice)}</p>
+          )}
+          <p className="font-display text-[20px] font-bold tracking-tight text-ink">{priceText}</p>
           <a
             href={whatsappLink(whatsappNumber, message)}
             target="_blank"
