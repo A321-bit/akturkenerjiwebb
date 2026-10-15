@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
 import { SITE_URL, SITE_NAME } from "./data";
 
+export const TITLE_BRAND = "Aktürk Enerji";
+
+// Tüm sayfa başlıkları tek biçimde biter: "Sayfa Başlığı | Aktürk Enerji".
+// Başlık zaten markayla bitiyorsa (ör. admin'den "... | Aktürk Enerji" girilmiş
+// bir blog yazısı) marka ikinci kez eklenmez.
+export function brandTitle(title: string): string {
+  const base = title.replace(/\s*[|\-–—]\s*Aktürk Enerji( Teknolojileri)?\s*$/i, "").trim();
+  return `${base} | ${TITLE_BRAND}`;
+}
+
 export function buildMetadata({
   title,
   description,
@@ -15,13 +25,10 @@ export function buildMetadata({
   type?: "website" | "article";
 }): Metadata {
   const url = `${SITE_URL}${path}`;
-  // Layout'taki "%s | Aktürk Enerji" şablonu uzun başlıkları 60 karakterin
-  // üstüne taşıyıp arama sonucunda kesilmelerine yol açıyordu; uzun başlıkta
-  // marka eki eklenmez.
-  const pageTitle: Metadata["title"] = title.length > 44 ? { absolute: title } : title;
+  const pageTitle = brandTitle(title);
   const images = [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_NAME }];
   return {
-    title: pageTitle,
+    title: { absolute: pageTitle },
     description,
     keywords,
     alternates: { canonical: path },
@@ -30,13 +37,13 @@ export function buildMetadata({
       locale: "tr_TR",
       url,
       siteName: SITE_NAME,
-      title,
+      title: pageTitle,
       description,
       images,
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: pageTitle,
       description,
       images: images.map((i) => i.url),
     },

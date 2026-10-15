@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
 import Analytics from "@/components/Analytics";
-import { AREA_SERVED, openingHoursFromText } from "@/lib/seo";
+import { AREA_SERVED, openingHoursFromText, brandTitle, TITLE_BRAND } from "@/lib/seo";
 
 // GA4 Ölçüm Kimliği (Measurement ID) — bu kimlik gizli değildir, her
 // sayfanın kaynak kodunda zaten herkese açık olarak yer alır.
@@ -65,8 +65,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      default: settings.seoTitle,
-      template: `%s | ${settings.shortName}`,
+      default: brandTitle(settings.seoTitle),
+      template: `%s | ${TITLE_BRAND}`,
     },
     description: settings.description,
     keywords: [
@@ -84,12 +84,12 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: "tr_TR",
       url: SITE_URL,
       siteName: settings.siteName,
-      title: settings.seoTitle,
+      title: brandTitle(settings.seoTitle),
       description: settings.description,
     },
     twitter: {
       card: "summary_large_image",
-      title: settings.seoTitle,
+      title: brandTitle(settings.seoTitle),
       description: settings.description,
     },
     robots: {

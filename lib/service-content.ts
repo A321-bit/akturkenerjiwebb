@@ -109,7 +109,7 @@ export const serviceContent: Record<string, ServiceContent> = {
   "villa-cati-ges": {
     seo: {
       heading: "Ankara'da Müstakil Ev ve Villa Çatısına Güneş Enerjisi Sistemi",
-      title: "Müstakil Ev ve Villa Güneş Paneli Sistemi | Ankara",
+      title: "Ankara Müstakil Ev ve Villa Güneş Paneli Sistemi",
       description:
         "Müstakil eviniz için kaç kW güneş paneli gerekir, maliyeti ne kadar, kaç yılda kendini öder? 2016'dan beri Ankara'da ev çatılarına GES kuran ekibimizden fiyat aralıkları ve gerçek tecrübeler.",
     },

@@ -113,7 +113,7 @@ function mapSiteSettings(row: SiteSettingsRow): SiteSettings {
   return {
     name: row.name,
     shortName: row.short_name,
-    seoTitle: row.seo_title?.trim() || `${row.name} | Ankara Güneş Enerjisi Sistemleri (GES)`,
+    seoTitle: row.seo_title?.trim() || "Ankara Güneş Enerjisi Sistemleri (GES)",
     siteName: row.site_name?.trim() || row.name,
     foundedYear: row.founded_year,
     city: row.city,

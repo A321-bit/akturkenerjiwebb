@@ -8,7 +8,7 @@ import WhatsappCtaBanner from "@/components/WhatsappCtaBanner";
 import JobApplicationForm from "@/components/JobApplicationForm";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Hakkımızda | Vizyon, Misyon ve İnsan Kaynakları",
+  title: "Hakkımızda: Vizyon, Misyon ve İnsan Kaynakları",
   description:
     "2016'dan beri Ankara merkezli faaliyet gösteren Aktürk Enerji Teknolojileri hakkında — hikayemiz, vizyon ve misyonumuz, mühendislik yaklaşımımız ve insan kaynakları politikamız.",
   path: "/hakkimizda",
