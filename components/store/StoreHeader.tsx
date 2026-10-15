@@ -8,6 +8,7 @@ import { ArrowUpRight, Menu, MessageCircle, Phone, X } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
+import StoreSearch from "./StoreSearch";
 
 // Mağaza kendi başına bir e-ticaret sitesi gibi çalışır: buradaki linkler
 // müşteriyi mağazanın içinde tutar. Kurumsal siteye tek geçiş, üst şeritteki
@@ -45,15 +46,30 @@ export default function StoreHeader({
           <a href={phoneHref} className="flex items-center gap-1.5 text-paper/80 hover:text-paper">
             <Phone size={13} /> {phoneDisplay}
           </a>
-          <Link href="/" className="flex items-center gap-1 font-medium text-sun-soft hover:text-sun">
-            Aktürk Enerji Kurumsal Site <ArrowUpRight size={13} />
-          </Link>
+          <div className="flex items-center gap-5">
+            <nav className="hidden items-center gap-5 lg:flex">
+              {NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`whitespace-nowrap font-medium transition-colors ${
+                    isActive(item.href) ? "text-paper" : "text-paper/70 hover:text-paper"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <Link href="/" className="flex items-center gap-1 font-medium text-sun-soft hover:text-sun">
+              Aktürk Enerji Kurumsal Site <ArrowUpRight size={13} />
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Ana menü */}
       <div className="border-b border-line bg-paper/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-2.5 sm:px-8">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-5 px-5 py-2.5 sm:px-8">
           <Link href="/magaza" className="flex shrink-0 items-center gap-2.5" onClick={() => setOpen(false)}>
             <Image src="/logo.svg" alt="Aktürk Enerji" width={281} height={50} priority className="h-9 w-auto sm:h-10" />
             <span className="rounded-md bg-sun px-2 py-1 font-mono-data text-[11px] font-bold uppercase tracking-[0.12em] text-ink">
@@ -61,19 +77,7 @@ export default function StoreHeader({
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 lg:flex">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`whitespace-nowrap text-[14.5px] font-medium transition-colors ${
-                  isActive(item.href) ? "text-ink" : "text-slate hover:text-ink"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <StoreSearch className="hidden max-w-xl flex-1 lg:block" />
 
           <a
             href={waHref}
@@ -96,6 +100,10 @@ export default function StoreHeader({
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
+        </div>
+
+        <div className="px-5 pb-3 lg:hidden">
+          <StoreSearch />
         </div>
 
         {open && (

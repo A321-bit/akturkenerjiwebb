@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { StoreSlide } from "@/lib/store";
 
-const INTERVAL = 5000;
+const INTERVAL = 7000;
 
 // Mağaza ana sayfasındaki dönen görsel alanı: kendiliğinden döner, üzerine
 // gelince durur, ok/nokta ve mobilde parmakla kaydırma ile geçilir.
@@ -43,7 +43,7 @@ export default function StoreSlider({ slides }: { slides: StoreSlide[] }) {
       {slides.map((s, i) => (
         <div
           key={s.title}
-          className={`absolute inset-0 transition-opacity duration-700 ${i === index ? "opacity-100" : "pointer-events-none opacity-0"}`}
+          className={`absolute inset-0 transition-opacity duration-1000 ${i === index ? "opacity-100" : "pointer-events-none opacity-0"}`}
           aria-hidden={i !== index}
         >
           <Image
