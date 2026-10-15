@@ -12,6 +12,8 @@ type Row = {
   name: string;
   price: number | null;
   list_price: number | null;
+  price_usd: number | null;
+  list_price_usd: number | null;
   image: string | null;
   featured: boolean;
   active: boolean;
@@ -187,6 +189,9 @@ export default function AdminStoreProductsPage() {
                       <span className="block text-[12px] text-slate-soft line-through">{tl(r.list_price)}</span>
                     )}
                     <span className="font-semibold">{tl(r.price)}</span>
+                    {r.price_usd != null && (
+                      <span className="block text-[12px] text-slate">{Number(r.price_usd).toLocaleString("tr-TR")} USD</span>
+                    )}
                   </td>
                   <td className="px-2 py-3 text-center text-[12px] text-slate">
                     <span title="SEO makalesi">{r.content ? "✓ Açıklama" : "— Açıklama"}</span>

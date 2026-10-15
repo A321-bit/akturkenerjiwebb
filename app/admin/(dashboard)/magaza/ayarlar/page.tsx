@@ -8,6 +8,9 @@ import { Field, SaveBar, Section } from "@/components/admin/store/fields";
 
 type Item = { title: string; text: string };
 type Settings = {
+  usd_rate: number | string | null;
+  usd_rate_updated_at: string | null;
+  price_round: number;
   prices_updated: string;
   price_note: string;
   featured_title: string;
@@ -26,7 +29,8 @@ export default function AdminStoreSettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState("");
+  const [tcmb, setTcmb] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/store/settings")
@@ -38,7 +42,19 @@ export default function AdminStoreSettingsPage() {
 
   function set<K extends keyof Settings>(key: K, value: Settings[K]) {
     setS((x) => (x ? { ...x, [key]: value } : x));
-    setDone(false);
+    setDone("");
+  }
+
+  async function fetchTcmb() {
+    setTcmb("Getiriliyor...");
+    const r = await fetch("/api/admin/store/usd-rate");
+    const b = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      setTcmb(b.error ?? "Kur alınamadı.");
+      return;
+    }
+    set("usd_rate", String(b.rate).replace(".", ","));
+    setTcmb(`TCMB ${b.date} döviz satış kuru: ${b.rate}. Kaydet'e basınca tüm fiyatlar bu kurla güncellenir.`);
   }
 
   async function save(e: React.FormEvent) {
@@ -51,15 +67,47 @@ export default function AdminStoreSettingsPage() {
       body: JSON.stringify(s),
     });
     setSaving(false);
+    const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError((await res.json().catch(() => ({}))).error ?? "Kaydedilemedi.");
+      setError(body.error ?? "Kaydedilemedi.");
       return;
     }
-    setDone(true);
+    setS((x) => (x ? { ...x, usd_rate: body.usd_rate, usd_rate_updated_at: body.usd_rate_updated_at } : x));
+    setTcmb("");
+    setDone(body.repriced ? `Ayarlar kaydedildi; ${body.repriced} ürünün TL fiyatı yeni kurla güncellendi.` : "Ayarlar kaydedildi; mağazaya yansıdı.");
   }
 
   return (
     <form onSubmit={save} className="flex max-w-3xl flex-col gap-5">
+      <Section title="Döviz kuru" desc="Ürün fiyatları USD girilir; sitede bu kurla TL'ye çevrilip gösterilir. Kuru değiştirip kaydedince bütün ürünlerin TL fiyatı otomatik güncellenir.">
+        <div className="grid gap-4 sm:grid-cols-[220px_200px_1fr] sm:items-end">
+          <Field label="1 USD kaç TL?">
+            <input
+              inputMode="decimal"
+              value={s.usd_rate == null ? "" : String(s.usd_rate).replace(".", ",")}
+              onChange={(e) => set("usd_rate", e.target.value)}
+              className="admin-input"
+              placeholder="ör. 49,42"
+            />
+          </Field>
+          <Field label="TL fiyat yuvarlama">
+            <select value={s.price_round} onChange={(e) => set("price_round", Number(e.target.value))} className="admin-input">
+              <option value={1}>Yuvarlama yok</option>
+              <option value={10}>10 TL</option>
+              <option value={100}>100 TL</option>
+              <option value={1000}>1.000 TL</option>
+            </select>
+          </Field>
+          <button type="button" onClick={fetchTcmb} className="h-[46px] w-fit rounded-full border border-line px-4 text-[13.5px] font-semibold hover:border-ink">
+            TCMB kurunu getir
+          </button>
+        </div>
+        {tcmb && <p className="text-[12.5px] text-brand">{tcmb}</p>}
+        {s.usd_rate_updated_at && (
+          <p className="text-[12px] text-slate-soft">Kur en son {new Date(s.usd_rate_updated_at).toLocaleString("tr-TR")} tarihinde değişti.</p>
+        )}
+      </Section>
+
       <Section title="Fiyat bilgisi">
         <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
           <Field label="Fiyat güncelleme tarihi">
@@ -167,7 +215,7 @@ export default function AdminStoreSettingsPage() {
         </Field>
       </Section>
 
-      {done && <p className="text-[13px] text-volt">Ayarlar kaydedildi; mağazaya yansıdı.</p>}
+      {done && <p className="text-[13px] text-volt">{done}</p>}
       <SaveBar saving={saving} error={error} label="Ayarları kaydet" />
     </form>
   );

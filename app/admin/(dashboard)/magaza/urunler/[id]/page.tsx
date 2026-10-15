@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { adminClient } from "@/lib/data";
 import ProductForm, { type ProductFormValues } from "@/components/admin/store/ProductForm";
+import { getPricingSettings } from "@/lib/store-pricing";
 
 /** Son 30 günde uygulanan en düşük satış fiyatı (30 gün önce geçerli olan dahil). */
 async function lowestPriceLast30Days(productId: string): Promise<number | null> {
@@ -24,10 +25,11 @@ export default async function EditStoreProductPage({ params }: { params: Promise
   const { id } = await params;
   const db = adminClient();
   const isNew = id === "yeni";
-  const [productRes, categoriesRes, lowest30] = await Promise.all([
+  const [productRes, categoriesRes, lowest30, pricing] = await Promise.all([
     isNew ? Promise.resolve({ data: null }) : db.from("store_products").select("*").eq("id", id).single(),
     db.from("store_categories").select("slug, name").order("sort_order"),
     isNew ? Promise.resolve(null) : lowestPriceLast30Days(id),
+    getPricingSettings(db),
   ]);
   const data = productRes.data;
   if (!isNew && !data) notFound();
@@ -41,6 +43,8 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         power: data.power ?? "",
         price: data.price,
         list_price: data.list_price,
+        price_usd: data.price_usd != null ? Number(data.price_usd) : null,
+        list_price_usd: data.list_price_usd != null ? Number(data.list_price_usd) : null,
         install_included: data.install_included,
         image: data.image,
         gallery: data.gallery ?? [],
@@ -60,6 +64,8 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         power: "",
         price: null,
         list_price: null,
+        price_usd: null,
+        list_price_usd: null,
         install_included: true,
         image: null,
         gallery: [],
@@ -76,7 +82,7 @@ export default async function EditStoreProductPage({ params }: { params: Promise
   return (
     <div>
       <h2 className="mb-4 font-display text-xl font-semibold">{isNew ? "Yeni ürün" : data.name}</h2>
-      <ProductForm initial={initial} categories={categoriesRes.data ?? []} lowest30={lowest30} />
+      <ProductForm initial={initial} categories={categoriesRes.data ?? []} lowest30={lowest30} pricing={pricing} />
     </div>
   );
 }
