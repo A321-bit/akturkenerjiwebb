@@ -29,6 +29,8 @@ export type StoreProduct = {
   listPrice?: number;
   installIncluded: boolean;
   image?: string;
+  /** Kategori sayfasında yan menünün altındaki "Çok Tercih Edilenler"de gösterilir. */
+  featured?: boolean;
 };
 
 export const STORE_CATEGORIES: StoreCategory[] = [
@@ -134,6 +136,17 @@ export const STORE_PRODUCTS: StoreProduct[] = [
   P("oztuketim-paketleri", "5-kw-oztuketim-gunes-paneli-sistemi", "5 kW Öztüketim Güneş Paneli Sistemi", "5 kW", ["Öztüketim", "Sıfır besleme"], 180000, 220000, true, "kecioren-sirkeli-oztuketim-hibrit-inverter-opt-800.webp"),
   P("oztuketim-paketleri", "10-kw-oztuketim-gunes-paneli-sistemi", "10 kW Öztüketim Güneş Paneli Sistemi", "10 kW", ["Öztüketim", "Sıfır besleme"], 300000, 350000, true, "kecioren-sirkeli-oztuketim-hibrit-inverter-opt-800.webp"),
 ];
+
+// Örnek "çok tercih edilen" paketler (gerçek ürünlerde admin panelden seçilecek).
+for (const slug of [
+  "10-kw-on-grid-gunes-paneli-paketi",
+  "15-kw-hibrit-15-kwh-lityum-paket",
+  "6-2-kw-off-grid-gunes-paneli-paketi",
+  "5-kw-oztuketim-gunes-paneli-sistemi",
+]) {
+  const p = STORE_PRODUCTS.find((x) => x.slug === slug);
+  if (p) p.featured = true;
+}
 
 export const PRICES_UPDATED = "15.10.2026";
 
