@@ -82,12 +82,12 @@ export const STORE_CATEGORIES: StoreCategory[] = [
     image: `https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/ruzgar-hibrit-opt.webp`,
   },
   {
-    slug: "elektrikli-arac-sarj-paketleri",
-    name: "Elektrikli Araç Şarj İstasyonu Paketleri",
+    slug: "elektrikli-arac-sarj-istasyonu",
+    name: "Elektrikli Araç Şarj İstasyonu",
     group: "Paketler",
     short: "Aracınızı evde güneşten şarj edin",
     intro:
-      "Ev ve iş yerleri için elektrikli araç şarj istasyonu paketleri; güneş enerjisi sistemiyle birlikte kurulduğunda aracınızı güneşten şarj edin.",
+      "Ev ve iş yerleri için elektrikli araç şarj istasyonları; güneş enerjisi sistemiyle birlikte kurulduğunda aracınızı güneşten şarj edin.",
     image: `https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/4bae581c-6b41-4fe2-8f95-17b2d9e19abb-opt.webp`,
   },
   {

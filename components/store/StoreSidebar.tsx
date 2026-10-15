@@ -26,7 +26,7 @@ const ICONS: Record<string, LucideIcon> = {
   "oztuketim-paketleri": House,
   "tarimsal-sulama-paketleri": Sprout,
   "ruzgar-turbini-paketleri": Wind,
-  "elektrikli-arac-sarj-paketleri": Car,
+  "elektrikli-arac-sarj-istasyonu": Car,
   "solar-montaj-ekipmanlari": Wrench,
 };
 
