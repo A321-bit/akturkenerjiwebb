@@ -9,7 +9,7 @@ import CoverMedia from "@/components/CoverMedia";
 function categoryFor(r: Reference): string {
   const t = `${r.title} ${r.category}`.toLocaleLowerCase("tr-TR");
   if (/sulama|pompa/.test(t)) return "tarimsal-sulama-paketleri";
-  if (/rüzgar/.test(t)) return "ruzgar-turbini-paketleri";
+  if (/rüzgar/.test(t)) return "ruzgar-gunes-hibrit-sistemleri";
   if (/şarj/.test(t)) return "elektrikli-arac-sarj-istasyonu";
   if (/off-grid|off grid/.test(t)) return "off-grid-paketler";
   if (/öztüketim/.test(t)) return "oztuketim-paketleri";
