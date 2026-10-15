@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { SiteSettings } from "@/lib/data";
-import { STORE_CATEGORIES } from "@/lib/store";
+import type { StoreCategory } from "@/lib/store";
 
-export default function StoreFooter({ settings }: { settings: SiteSettings }) {
+export default function StoreFooter({
+  settings,
+  categories,
+  text,
+}: {
+  settings: SiteSettings;
+  categories: StoreCategory[];
+  text: string;
+}) {
   const col = "flex flex-col gap-2 text-[14px] text-slate-soft";
   return (
     <footer className="mt-16 bg-ink text-paper">
@@ -11,14 +19,13 @@ export default function StoreFooter({ settings }: { settings: SiteSettings }) {
         <div>
           <p className="font-display text-lg font-semibold">Aktürk Enerji Mağaza</p>
           <p className="mt-2 text-[13.5px] leading-relaxed text-slate-soft">
-            {settings.foundedYear}&apos;dan beri Ankara merkezli güneş enerjisi paketleri, ürünleri ve anahtar teslim
-            kurulum.
+            {text}
           </p>
         </div>
         <div className="sm:col-span-2">
           <p className="font-mono-data text-[12px] uppercase tracking-[0.14em] text-sun-soft">Paketler</p>
           <div className={`mt-3 grid gap-x-8 gap-y-2 sm:grid-cols-2 ${col}`}>
-            {STORE_CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <Link key={c.slug} href={`/magaza/${c.slug}`} className="hover:text-paper">
                 {c.name}
               </Link>

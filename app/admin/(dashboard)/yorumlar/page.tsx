@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, EyeOff, Star, Trash2 } from "lucide-react";
-import { STORE_PRODUCTS } from "@/lib/store";
+import StoreAdminNav from "@/components/admin/store/StoreAdminNav";
 
 type ReviewRow = {
   id: number;
@@ -15,11 +15,11 @@ type ReviewRow = {
   approved: boolean;
 };
 
-const productName = (slug: string) => STORE_PRODUCTS.find((p) => p.slug === slug)?.name ?? slug;
-
 export default function AdminReviewsPage() {
   const [items, setItems] = useState<ReviewRow[] | null>(null);
   const [error, setError] = useState("");
+  const [names, setNames] = useState<Record<string, string>>({});
+  const productName = (slug: string) => names[slug] ?? slug;
 
   async function fetchReviews() {
     const res = await fetch("/api/admin/reviews");
@@ -41,6 +41,11 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     fetchReviews().then(apply);
+    fetch("/api/admin/store/products")
+      .then((r) => r.json())
+      .then((rows: { slug: string; name: string }[]) => {
+        if (Array.isArray(rows)) setNames(Object.fromEntries(rows.map((p) => [p.slug, p.name])));
+      });
   }, []);
 
   async function setApproved(id: number, approved: boolean) {
@@ -63,7 +68,8 @@ export default function AdminReviewsPage() {
   return (
     <div>
       <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Mağaza</p>
-      <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">Ürün Yorumları</h1>
+      <h1 className="mb-4 mt-1 font-display text-2xl font-semibold tracking-tight">Ürün Yorumları</h1>
+      <StoreAdminNav />
       <p className="mt-1 text-[14px] text-slate">
         Müşterilerin yazdığı yorumlar onaylanana kadar sitede görünmez.{" "}
         {pending > 0 && <strong className="text-ink">{pending} yorum onay bekliyor.</strong>}

@@ -8,7 +8,7 @@ export function revalidateSite() {
   revalidatePath("/", "layout");
 }
 
-const TABLES_WITH_UPDATED_AT = new Set(["services", "project_references", "blog_posts"]);
+const TABLES_WITH_UPDATED_AT = new Set(["services", "project_references", "blog_posts", "store_products", "store_categories"]);
 
 export function makeListCreateHandlers(table: string, orderBy = "sort_order") {
   async function GET() {

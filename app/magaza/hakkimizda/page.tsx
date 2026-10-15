@@ -4,6 +4,9 @@ import { getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
+import { getStoreSettings } from "@/lib/store-data";
+import { priceNoteText } from "@/lib/store";
+import MdxContent from "@/components/MdxContent";
 
 export const metadata: Metadata = {
   ...buildMetadata({
@@ -15,25 +18,20 @@ export const metadata: Metadata = {
 };
 
 export default async function StoreAboutPage() {
-  const [site, google] = await Promise.all([getSiteSettings(), getGoogleReviews()]);
+  const [site, google, store] = await Promise.all([getSiteSettings(), getGoogleReviews(), getStoreSettings()]);
 
   return (
     <div className="flex flex-col gap-10">
       <section className="max-w-3xl">
         <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Hakkımızda</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-          {site.foundedYear}&apos;dan beri güneş enerjisi işindeyiz
+          {store.aboutTitle || `${site.foundedYear}'dan beri güneş enerjisi işindeyiz`}
         </h1>
-        <p className="mt-5 text-[16px] leading-relaxed text-slate">
-          {site.name}, {site.foundedYear} yılından bu yana Ankara merkezli olarak güneş enerjisi sektöründe hizmet
-          veriyor. Mağazamızdaki paketleri sahada yıllardır kurduğumuz sistemlerden yola çıkarak hazırladık; her
-          paketin arkasında kendi mühendislik ve kurulum ekibimiz var.
-        </p>
-        <p className="mt-4 text-[16px] leading-relaxed text-slate">
-          Kurulumlu paketlerde keşiften EDAŞ başvurusuna, montajdan devreye almaya kadar tüm süreci biz yürütüyoruz.
-          Kurulumsuz paketleri ise Türkiye geneline gönderiyor, kurulum ve kullanım konusunda uzaktan destek
-          veriyoruz.
-        </p>
+        {store.aboutContent && (
+          <div className="prose prose-neutral mt-5 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-[16px] prose-p:leading-relaxed prose-p:text-slate prose-li:text-slate">
+            <MdxContent source={store.aboutContent} />
+          </div>
+        )}
       </section>
 
       <section className="grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-3">
@@ -45,8 +43,8 @@ export default async function StoreAboutPage() {
         ))}
       </section>
 
-      <TrustStrip google={google} />
-      <HowToOrder />
+      <TrustStrip google={google} items={store.trustItems} />
+      <HowToOrder steps={store.orderSteps} note={priceNoteText(store)} />
 
       <div className="flex flex-wrap gap-3">
         <Link

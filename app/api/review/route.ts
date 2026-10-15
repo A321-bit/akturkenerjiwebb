@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminClient } from "@/lib/data";
-import { STORE_PRODUCTS } from "@/lib/store";
 
 // Müşteri ürün yorumu. Yorum onaysız kaydedilir; admin panelden onaylanınca
 // sitede görünür. "website" alanı botlar için tuzak (gerçek kullanıcı görmez).
@@ -21,7 +20,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Geçersiz bilgi." }, { status: 400 });
   }
   const d = parsed.data;
-  if (!STORE_PRODUCTS.some((p) => p.slug === d.productSlug)) {
+  const { data: product } = await adminClient()
+    .from("store_products")
+    .select("id")
+    .eq("slug", d.productSlug)
+    .eq("active", true)
+    .maybeSingle();
+  if (!product) {
     return NextResponse.json({ error: "Ürün bulunamadı." }, { status: 404 });
   }
 

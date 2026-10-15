@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutList, Search } from "lucide-react";
-import { formatTL, STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
+import { formatTL } from "@/lib/store";
 import { productHref } from "@/lib/store-details";
 
 const norm = (s: string) =>
@@ -21,7 +21,12 @@ const norm = (s: string) =>
 
 // Mağaza üst menüsündeki arama: "10 kw", "hibrit", "sulama" gibi yazınca
 // paketler ve kategoriler anında listelenir.
-export default function StoreSearch({ className = "" }: { className?: string }) {
+export type StoreSearchData = {
+  categories: { slug: string; name: string }[];
+  products: { slug: string; category: string; name: string; power: string; price?: number; image?: string }[];
+};
+
+export default function StoreSearch({ data, className = "" }: { data: StoreSearchData; className?: string }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -32,10 +37,10 @@ export default function StoreSearch({ className = "" }: { className?: string }) 
     if (terms.length === 0) return { cats: [], prods: [] };
     const match = (text: string) => terms.every((t) => norm(text).replace(/\s+/g, " ").includes(t) || norm(text).replace(/\s+/g, "").includes(t));
     return {
-      cats: STORE_CATEGORIES.filter((c) => match(c.name)).slice(0, 3),
-      prods: STORE_PRODUCTS.filter((p) => match(`${p.name} ${p.power}`)).slice(0, 6),
+      cats: data.categories.filter((c) => match(c.name)).slice(0, 3),
+      prods: data.products.filter((p) => match(`${p.name} ${p.power}`)).slice(0, 6),
     };
-  }, [q]);
+  }, [q, data]);
 
   const first = results.cats[0] ? `/magaza/${results.cats[0].slug}` : results.prods[0] ? productHref(results.prods[0]) : null;
   const hasResults = results.cats.length + results.prods.length > 0;

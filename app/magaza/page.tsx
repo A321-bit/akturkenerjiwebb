@@ -7,7 +7,8 @@ import BrandStrip from "@/components/store/BrandStrip";
 import InstalledProjects from "@/components/store/InstalledProjects";
 import StoreFaq from "@/components/store/StoreFaq";
 import { buildMetadata } from "@/lib/seo";
-import { STORE_CATEGORIES, STORE_PRODUCTS, STORE_SLIDES } from "@/lib/store";
+import { priceNoteText } from "@/lib/store";
+import { getStoreCategories, getStoreProducts, getStoreSettings, getStoreSlides } from "@/lib/store-data";
 import CategoryShelf from "@/components/store/CategoryShelf";
 import { withRatings } from "@/lib/reviews";
 import { HowToOrder } from "@/components/store/StoreSections";
@@ -25,11 +26,14 @@ export const metadata: Metadata = {
 };
 
 export default async function StorePage() {
-  const [site, references, google, allProducts] = await Promise.all([
+  const [site, references, google, categories, allProducts, slides, store] = await Promise.all([
     getSiteSettings(),
     getReferences(),
     getGoogleReviews(),
-    withRatings(STORE_PRODUCTS),
+    getStoreCategories(),
+    getStoreProducts().then(withRatings),
+    getStoreSlides(),
+    getStoreSettings(),
   ]);
   const featured = allProducts.filter((p) => p.featured);
 
@@ -37,9 +41,9 @@ export default async function StorePage() {
     <div className="flex flex-col gap-12">
       <h1 className="sr-only">Aktürk Enerji Mağaza: Güneş Enerjisi Paketleri ve Ürünleri</h1>
 
-      <StoreSlider slides={STORE_SLIDES} />
+      {slides.length > 0 && <StoreSlider slides={slides} />}
 
-      {STORE_CATEGORIES.map((c) => {
+      {categories.map((c) => {
         const products = allProducts.filter((p) => p.category === c.slug);
         return products.length > 0 ? (
           <CategoryShelf key={c.slug} category={c} products={products} whatsappNumber={site.contact.whatsappNumber} />
@@ -47,15 +51,15 @@ export default async function StorePage() {
       })}
 
       <ProductRail
-        title="Çok Tercih Edilen Paketler"
-        subtitle="Müşterilerimizin en çok tercih ettiği güneş enerjisi paketleri"
+        title={store.featuredTitle}
+        subtitle={store.featuredSubtitle || undefined}
         products={featured}
         whatsappNumber={site.contact.whatsappNumber}
       />
 
-      <BrandStrip />
+      <BrandStrip title={store.brandsTitle} brands={store.brands} />
 
-      <InstalledProjects references={references} />
+      <InstalledProjects references={references} categories={categories} />
 
       {google && (
         <div className="-mx-5 -my-8 sm:-mx-8">
@@ -63,8 +67,8 @@ export default async function StorePage() {
         </div>
       )}
 
-      <HowToOrder />
-      <StoreFaq />
+      <HowToOrder steps={store.orderSteps} note={priceNoteText(store)} />
+      <StoreFaq faqs={store.faqs} />
     </div>
   );
 }

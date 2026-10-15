@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, BadgeCheck, MessageCircle, PhoneCall, Star, Truck, Wrench } from "lucide-react";
-import { PRICES_UPDATED, type StoreCategory } from "@/lib/store";
+import type { StoreCategory, StoreTextItem } from "@/lib/store";
 import type { GoogleReviews } from "@/lib/google-reviews";
 
 export function CategoryTiles({ categories }: { categories: StoreCategory[] }) {
@@ -37,7 +37,7 @@ export function CategoryTiles({ categories }: { categories: StoreCategory[] }) {
   );
 }
 
-export function TrustStrip({ google }: { google: GoogleReviews | null }) {
+export function TrustStrip({ google, items: extra }: { google: GoogleReviews | null; items: StoreTextItem[] }) {
   const items = [
     google
       ? {
@@ -46,9 +46,7 @@ export function TrustStrip({ google }: { google: GoogleReviews | null }) {
           text: `${google.count} müşteri yorumu`,
         }
       : { icon: Star, title: "Müşteri memnuniyeti", text: "Google yorumlarımız" },
-    { icon: BadgeCheck, title: "2016'dan beri", text: "Ankara'da 650+ villa referansı" },
-    { icon: Wrench, title: "Kendi kurulum ekibimiz", text: "Keşiften devreye almaya" },
-    { icon: Truck, title: "Türkiye geneli", text: "Kurulumsuz paketlerde gönderim" },
+    ...extra.map((it, i) => ({ icon: [BadgeCheck, Wrench, Truck][i % 3], ...it })),
   ];
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -67,30 +65,14 @@ export function TrustStrip({ google }: { google: GoogleReviews | null }) {
   );
 }
 
-export function HowToOrder() {
-  const steps = [
-    {
-      icon: MessageCircle,
-      title: "WhatsApp'tan sipariş verin",
-      text: "Ürün kartındaki butona basın; ürün adı ve fiyatı mesaja otomatik eklenir.",
-    },
-    {
-      icon: PhoneCall,
-      title: "Uzmanımız sizi arasın",
-      text: "Sistemin evinize uygunluğunu, sözleşme gücünü ve çatı durumunu birlikte kontrol ediyoruz.",
-    },
-    {
-      icon: Wrench,
-      title: "Teslimat veya kurulum",
-      text: "Kurulumsuz paketleri gönderiyor, kurulumlu paketleri kendi ekibimizle anahtar teslim kuruyoruz.",
-    },
-  ];
+export function HowToOrder({ steps: items, note }: { steps: StoreTextItem[]; note?: string }) {
+  const steps = items.map((it, i) => ({ icon: [MessageCircle, PhoneCall, Wrench][i % 3], ...it }));
   return (
     <div className="rounded-2xl border border-line bg-paper-raised p-6 sm:p-8">
       <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Sipariş nasıl işler?</p>
-      <div className="mt-5 grid gap-6 sm:grid-cols-3">
+      <div className={`mt-5 grid gap-6 ${steps.length === 4 ? "sm:grid-cols-4" : steps.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
         {steps.map(({ icon: Icon, title, text }, i) => (
-          <div key={title}>
+          <div key={`${i}-${title}`}>
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-sun">
                 <Icon size={18} />
@@ -102,10 +84,7 @@ export function HowToOrder() {
           </div>
         ))}
       </div>
-      <p className="mt-6 border-t border-line pt-4 text-[12.5px] text-slate-soft">
-        Fiyatlar {PRICES_UPDATED} itibarıyla geçerlidir ve döviz kuruna göre güncellenebilir. Kurulumlu paketlerde kesin
-        fiyat keşif sonrası netleşir.
-      </p>
+      {note && <p className="mt-6 border-t border-line pt-4 text-[12.5px] text-slate-soft">{note}</p>}
     </div>
   );
 }

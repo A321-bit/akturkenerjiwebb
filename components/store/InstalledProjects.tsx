@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 import type { Reference } from "@/lib/data";
-import { STORE_CATEGORIES } from "@/lib/store";
+import type { StoreCategory } from "@/lib/store";
 import CoverMedia from "@/components/CoverMedia";
 
 // Referans projeyi en yakın mağaza kategorisine bağlar; böylece referanslar
@@ -17,7 +17,7 @@ function categoryFor(r: Reference): string {
   return "on-grid-paketler";
 }
 
-export default function InstalledProjects({ references }: { references: Reference[] }) {
+export default function InstalledProjects({ references, categories }: { references: Reference[]; categories: StoreCategory[] }) {
   const items = references.filter((r) => r.image).slice(0, 8);
   if (items.length === 0) return null;
 
@@ -27,7 +27,7 @@ export default function InstalledProjects({ references }: { references: Referenc
       <p className="mt-1 text-[14px] text-slate">Mağazadaki paketlerin sahadaki karşılıkları: kendi ekibimizle kurduğumuz sistemler.</p>
       <div className="no-scrollbar mt-4 flex snap-x gap-5 overflow-x-auto pb-1">
         {items.map((r) => {
-          const cat = STORE_CATEGORIES.find((c) => c.slug === categoryFor(r));
+          const cat = categories.find((c) => c.slug === categoryFor(r));
           return (
             <article
               key={r.slug}

@@ -3,48 +3,24 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import {
-  BatteryCharging,
-  Car,
-  ChevronDown,
-  ChevronRight,
-  House,
-  LayoutList,
-  Sprout,
-  Sun,
-  Thermometer,
-  Unplug,
-  Wind,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react";
-import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
+import { ChevronDown, ChevronRight, LayoutList } from "lucide-react";
+import { categoryIcon } from "./category-icons";
 
-const ICONS: Record<string, LucideIcon> = {
-  "on-grid-paketler": Sun,
-  "off-grid-paketler": Unplug,
-  "hibrit-paketler": BatteryCharging,
-  "oztuketim-paketleri": House,
-  "tarimsal-sulama-paketleri": Sprout,
-  "ruzgar-turbini-paketleri": Wind,
-  "elektrikli-arac-sarj-istasyonu": Car,
-  "isi-pompasi-urunleri": Thermometer,
-  "solar-montaj-ekipmanlari": Wrench,
-};
+export type SidebarCategory = { slug: string; name: string; icon: string; count: number };
 
 // Klasik e-ticaret düzeni: solda dikey kategori menüsü. Mobilde
 // "Kategoriler" butonuna dönüşür.
-export default function StoreSidebar() {
+export default function StoreSidebar({ categories }: { categories: SidebarCategory[] }) {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
 
   const list = (
     <nav className="flex flex-col py-2">
       <div className="py-1">
-          {STORE_CATEGORIES.map((c) => {
-            const Icon = ICONS[c.slug] ?? LayoutList;
+          {categories.map((c) => {
+            const Icon = categoryIcon(c.icon);
             const active = pathname === `/magaza/${c.slug}`;
-            const count = STORE_PRODUCTS.filter((p) => p.category === c.slug).length;
+            const count = c.count;
             return (
               <Link
                 key={c.slug}

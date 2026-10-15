@@ -8,7 +8,7 @@ import { ArrowUpRight, Menu, MessageCircle, Phone, X } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
-import StoreSearch from "./StoreSearch";
+import StoreSearch, { type StoreSearchData } from "./StoreSearch";
 
 // Mağaza kendi başına bir e-ticaret sitesi gibi çalışır: buradaki linkler
 // müşteriyi mağazanın içinde tutar. Kurumsal siteye tek geçiş, üst şeritteki
@@ -24,10 +24,12 @@ export default function StoreHeader({
   whatsappNumber,
   phoneHref,
   phoneDisplay,
+  searchData,
 }: {
   whatsappNumber: string;
   phoneHref: string;
   phoneDisplay: string;
+  searchData: StoreSearchData;
 }) {
   const pathname = usePathname() ?? "/magaza";
   const [open, setOpen] = useState(false);
@@ -77,7 +79,7 @@ export default function StoreHeader({
             </span>
           </Link>
 
-          <StoreSearch className="hidden max-w-xl flex-1 lg:block" />
+          <StoreSearch data={searchData} className="hidden max-w-xl flex-1 lg:block" />
 
           <a
             href={waHref}
@@ -103,7 +105,7 @@ export default function StoreHeader({
         </div>
 
         <div className="px-5 pb-3 lg:hidden">
-          <StoreSearch />
+          <StoreSearch data={searchData} />
         </div>
 
         {open && (

@@ -5,8 +5,9 @@ import { Download, FileText, MessageCircle, Phone } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
-import { discountPercent, formatTL, STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
-import { kwOf, productContents, productGallery, productHref } from "@/lib/store-details";
+import { discountPercent, formatTL } from "@/lib/store";
+import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
+import { kwOf, productGallery, productHref } from "@/lib/store-details";
 import ProductGallery from "@/components/store/ProductGallery";
 import TrackedContactLink from "@/components/TrackedContactLink";
 import MdxContent from "@/components/MdxContent";
@@ -15,15 +16,17 @@ import ProductRail from "@/components/store/ProductRail";
 import ReviewForm from "@/components/store/ReviewForm";
 import Stars from "@/components/store/Stars";
 
-export function generateStaticParams() {
-  return STORE_PRODUCTS.map((p) => ({ kategori: p.category, urun: p.slug }));
+export async function generateStaticParams() {
+  const products = await getStoreProducts();
+  return products.map((p) => ({ kategori: p.category, urun: p.slug }));
 }
 
 async function find(params: Promise<{ kategori: string; urun: string }>) {
   const { kategori, urun } = await params;
-  const product = STORE_PRODUCTS.find((p) => p.slug === urun && p.category === kategori);
-  const category = STORE_CATEGORIES.find((c) => c.slug === kategori);
-  return product && category ? { product, category } : null;
+  const [products, categories] = await Promise.all([getStoreProducts(), getStoreCategories()]);
+  const product = products.find((p) => p.slug === urun && p.category === kategori);
+  const category = categories.find((c) => c.slug === kategori);
+  return product && category ? { product, category, products } : null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ kategori: string; urun: string }> }): Promise<Metadata> {
@@ -32,8 +35,8 @@ export async function generateMetadata({ params }: { params: Promise<{ kategori:
   const { product, category } = found;
   return {
     ...buildMetadata({
-      title: `${product.name} Fiyatı`,
-      description: `${product.name}${product.price ? ` ${formatTL(product.price)}` : ""}. ${category.short}: paket içeriği, teknik özellikler, garanti ve WhatsApp'tan hızlı sipariş.`,
+      title: product.seoTitle || `${product.name} Fiyatı`,
+      description: product.seoDescription || `${product.name}${product.price ? ` ${formatTL(product.price)}` : ""}. ${category.short}: paket içeriği, teknik özellikler, garanti ve WhatsApp'tan hızlı sipariş.`,
       path: productHref(product),
     }),
     robots: { index: false, follow: true },
@@ -45,11 +48,11 @@ const fmtRating = (n: number) => n.toLocaleString("tr-TR", { minimumFractionDigi
 export default async function ProductPage({ params }: { params: Promise<{ kategori: string; urun: string }> }) {
   const found = await find(params);
   if (!found) notFound();
-  const { product, category } = found;
+  const { product, category, products } = found;
   const [site, reviews, others] = await Promise.all([
     getSiteSettings(),
     getApprovedReviews(product.slug),
-    withRatings(STORE_PRODUCTS.filter((p) => p.slug !== product.slug)),
+    withRatings(products.filter((p) => p.slug !== product.slug)),
   ]);
 
   const rating = reviews.length
@@ -84,7 +87,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
       "",
       `**${product.name}** paketinin içeriği:`,
       "",
-      ...productContents(product).map((c) => `- ${c}`),
+      ...product.contents.map((c) => `- ${c}`),
       "",
       "Kesin sistem gücü, panel yerleşimi ve malzeme listesi çatınızın ve tüketiminizin incelendiği keşif sonrası netleşir.",
     ].join("\n");

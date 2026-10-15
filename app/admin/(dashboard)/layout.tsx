@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/admin/hizmetler", label: "Hizmetler", icon: Wrench },
   { href: "/admin/referanslar", label: "Referanslar", icon: MapPin },
   { href: "/admin/blog", label: "Blog", icon: Newspaper },
+  { href: "/admin/magaza", label: "Mağaza", icon: Store },
   { href: "/admin/yorumlar", label: "Ürün Yorumları", icon: Star },
   { href: "/admin/videolar", label: "Videolar", icon: Video },
   { href: "/admin/ayarlar", label: "Site Ayarları", icon: Settings },

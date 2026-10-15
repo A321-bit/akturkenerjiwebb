@@ -4,32 +4,47 @@ import { notFound } from "next/navigation";
 import { getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
-import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
+import { priceNoteText } from "@/lib/store";
+import { getStoreCategories, getStoreProducts, getStoreSettings } from "@/lib/store-data";
 import StoreCatalog from "@/components/store/StoreCatalog";
 import { withRatings } from "@/lib/reviews";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
 import MdxContent from "@/components/MdxContent";
 
-export function generateStaticParams() {
-  return STORE_CATEGORIES.map((c) => ({ kategori: c.slug }));
+export async function generateStaticParams() {
+  const categories = await getStoreCategories();
+  return categories.map((c) => ({ kategori: c.slug }));
+}
+
+async function findCategory(params: Promise<{ kategori: string }>) {
+  const { kategori } = await params;
+  const categories = await getStoreCategories();
+  return { categories, category: categories.find((x) => x.slug === kategori) };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ kategori: string }> }): Promise<Metadata> {
-  const { kategori } = await params;
-  const c = STORE_CATEGORIES.find((x) => x.slug === kategori);
+  const { category: c } = await findCategory(params);
   if (!c) return {};
   return {
-    ...buildMetadata({ title: `${c.name} ve Fiyatları`, description: c.intro, path: `/magaza/${c.slug}` }),
+    ...buildMetadata({
+      title: c.seoTitle || `${c.name} ve Fiyatları`,
+      description: c.seoDescription || c.intro,
+      path: `/magaza/${c.slug}`,
+    }),
     robots: { index: false, follow: true },
   };
 }
 
 export default async function StoreCategoryPage({ params }: { params: Promise<{ kategori: string }> }) {
-  const { kategori } = await params;
-  const category = STORE_CATEGORIES.find((x) => x.slug === kategori);
+  const { categories, category } = await findCategory(params);
   if (!category) notFound();
-  const [site, google] = await Promise.all([getSiteSettings(), getGoogleReviews()]);
-  const products = await withRatings(STORE_PRODUCTS.filter((p) => p.category === category.slug));
+  const [site, google, all, store] = await Promise.all([
+    getSiteSettings(),
+    getGoogleReviews(),
+    getStoreProducts(),
+    getStoreSettings(),
+  ]);
+  const products = await withRatings(all.filter((p) => p.category === category.slug));
 
   return (
     <div className="flex min-w-0 flex-col gap-10">
@@ -46,7 +61,7 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
 
         <StoreCatalog
           products={products}
-          categories={STORE_CATEGORIES}
+          categories={categories}
           whatsappNumber={site.contact.whatsappNumber}
           showCategoryFilter={false}
           narrow
@@ -65,8 +80,8 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
           )}
         </section>
 
-        <TrustStrip google={google} />
-        <HowToOrder />
+        <TrustStrip google={google} items={store.trustItems} />
+        <HowToOrder steps={store.orderSteps} note={priceNoteText(store)} />
     </div>
   );
 }
