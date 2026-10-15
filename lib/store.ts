@@ -8,7 +8,7 @@ const IMG = "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/m
 export type StoreCategory = {
   slug: string;
   name: string;
-  group: "Paketler" | "Ürünler";
+  group: "Paketler";
   short: string;
   intro: string;
   image?: string;
@@ -64,35 +64,31 @@ export const STORE_CATEGORIES: StoreCategory[] = [
     image: `${IMG}kecioren-sirkeli-oztuketim-hibrit-inverter-opt-800.webp`,
   },
   {
-    slug: "gunes-panelleri",
-    name: "Güneş Panelleri",
-    group: "Ürünler",
-    short: "A kalite monokristal paneller",
-    intro: "Ev, villa ve işletme sistemleri için A kalite, üretici garantili monokristal güneş panelleri.",
-    image: `${IMG}kiremit-catiya-gunes-paneli-montaji-opt-800.webp`,
+    slug: "tarimsal-sulama-paketleri",
+    name: "Tarımsal Sulama Paketleri",
+    group: "Paketler",
+    short: "Güneşle çalışan sulama pompası sistemleri",
+    intro:
+      "Şebeke hattı olmayan tarla, bahçe ve seralarda dalgıç ya da yüzey pompalarını güneş enerjisiyle çalıştıran tarımsal sulama paketleri. Mazot ve elektrik faturası olmadan sulama.",
+    image: `https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/tarimsal-sulama-opt.webp`,
   },
   {
-    slug: "inverterler",
-    name: "İnvertörler",
-    group: "Ürünler",
-    short: "On grid, off grid ve hibrit invertörler",
-    intro: "Monofaze ve trifaze on grid, off grid ve hibrit invertörler.",
-    image: `${IMG}on-grid-inverter-ve-ges-panosu-opt-800.webp`,
+    slug: "ruzgar-turbini-paketleri",
+    name: "Rüzgar Türbini Paketleri",
+    group: "Paketler",
+    short: "Rüzgar + güneş hibrit enerji",
+    intro:
+      "Rüzgarı bol bölgelerde güneş panelleriyle birlikte çalışan, gece ve kışın da üretim yapan rüzgar türbini ve hibrit enerji paketleri.",
+    image: `https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/ruzgar-hibrit-opt.webp`,
   },
   {
-    slug: "lityum-bataryalar",
-    name: "Lityum Bataryalar",
-    group: "Ürünler",
-    short: "LiFePO4 depolama çözümleri",
-    intro: "Hibrit ve off grid sistemler için uzun ömürlü LiFePO4 lityum bataryalar.",
-    image: `${IMG}off-grid-inverter-ve-lityum-batarya-opt-800.webp`,
-  },
-  {
-    slug: "montaj-ve-aksesuar",
-    name: "Montaj ve Aksesuar",
-    group: "Ürünler",
-    short: "Konstrüksiyon, kablo, pano",
-    intro: "Çatı konstrüksiyonu, solar kablo, MC4 konnektör ve koruma panoları.",
+    slug: "elektrikli-arac-sarj-paketleri",
+    name: "Elektrikli Araç Şarj İstasyonu Paketleri",
+    group: "Paketler",
+    short: "Aracınızı evde güneşten şarj edin",
+    intro:
+      "Ev ve iş yerleri için elektrikli araç şarj istasyonu paketleri; güneş enerjisi sistemiyle birlikte kurulduğunda aracınızı güneşten şarj edin.",
+    image: `https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/4bae581c-6b41-4fe2-8f95-17b2d9e19abb-opt.webp`,
   },
 ];
 

@@ -4,17 +4,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
-  Battery,
   BatteryCharging,
+  Car,
   ChevronDown,
   ChevronRight,
-  Cpu,
   House,
   LayoutList,
-  SolarPanel,
+  Sprout,
   Sun,
   Unplug,
-  Wrench,
+  Wind,
   type LucideIcon,
 } from "lucide-react";
 import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
@@ -24,10 +23,9 @@ const ICONS: Record<string, LucideIcon> = {
   "off-grid-paketler": Unplug,
   "hibrit-paketler": BatteryCharging,
   "oztuketim-paketleri": House,
-  "gunes-panelleri": SolarPanel,
-  inverterler: Cpu,
-  "lityum-bataryalar": Battery,
-  "montaj-ve-aksesuar": Wrench,
+  "tarimsal-sulama-paketleri": Sprout,
+  "ruzgar-turbini-paketleri": Wind,
+  "elektrikli-arac-sarj-paketleri": Car,
 };
 
 // Klasik e-ticaret düzeni: solda dikey kategori menüsü. Mobilde
@@ -38,10 +36,8 @@ export default function StoreSidebar() {
 
   const list = (
     <nav className="flex flex-col py-2">
-      {(["Paketler", "Ürünler"] as const).map((group) => (
-        <div key={group} className="py-1">
-          <p className="px-4 pb-1 pt-2 font-mono-data text-[11px] uppercase tracking-[0.14em] text-slate-soft">{group}</p>
-          {STORE_CATEGORIES.filter((c) => c.group === group).map((c) => {
+      <div className="py-1">
+          {STORE_CATEGORIES.map((c) => {
             const Icon = ICONS[c.slug] ?? LayoutList;
             const active = pathname === `/magaza/${c.slug}`;
             const count = STORE_PRODUCTS.filter((p) => p.category === c.slug).length;
@@ -66,8 +62,7 @@ export default function StoreSidebar() {
               </Link>
             );
           })}
-        </div>
-      ))}
+      </div>
     </nav>
   );
 

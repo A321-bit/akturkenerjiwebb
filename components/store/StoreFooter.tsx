@@ -15,20 +15,10 @@ export default function StoreFooter({ settings }: { settings: SiteSettings }) {
             kurulum.
           </p>
         </div>
-        <div>
+        <div className="sm:col-span-2">
           <p className="font-mono-data text-[12px] uppercase tracking-[0.14em] text-sun-soft">Paketler</p>
-          <div className={`mt-3 ${col}`}>
-            {STORE_CATEGORIES.filter((c) => c.group === "Paketler").map((c) => (
-              <Link key={c.slug} href={`/magaza/${c.slug}`} className="hover:text-paper">
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="font-mono-data text-[12px] uppercase tracking-[0.14em] text-sun-soft">Ürünler</p>
-          <div className={`mt-3 ${col}`}>
-            {STORE_CATEGORIES.filter((c) => c.group === "Ürünler").map((c) => (
+          <div className={`mt-3 grid gap-x-8 gap-y-2 sm:grid-cols-2 ${col}`}>
+            {STORE_CATEGORIES.map((c) => (
               <Link key={c.slug} href={`/magaza/${c.slug}`} className="hover:text-paper">
                 {c.name}
               </Link>
