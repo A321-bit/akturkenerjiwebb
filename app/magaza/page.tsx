@@ -13,6 +13,7 @@ import CategoryShelf from "@/components/store/CategoryShelf";
 import { withRatings } from "@/lib/reviews";
 import { HowToOrder } from "@/components/store/StoreSections";
 import StoreSlider from "@/components/store/StoreSlider";
+import StoreSidebar from "@/components/store/StoreSidebar";
 
 // Mağaza şablon aşamasında; ürünler ve tasarım netleşene kadar Google'a kapalı.
 export const metadata: Metadata = {
@@ -41,7 +42,18 @@ export default async function StorePage() {
     <div className="flex flex-col gap-12">
       <h1 className="sr-only">Aktürk Enerji Mağaza: Güneş Enerjisi Paketleri ve Ürünleri</h1>
 
-      {slides.length > 0 && <StoreSlider slides={slides} />}
+      {/* Klasik e-ticaret girişi: solda kategori menüsü, yanında slider. */}
+      <div className="grid gap-6 lg:grid-cols-[260px_1fr] lg:items-stretch lg:gap-8">
+        <StoreSidebar
+          categories={categories.map((c) => ({
+            slug: c.slug,
+            name: c.name,
+            icon: c.icon,
+            count: allProducts.filter((p) => p.category === c.slug).length,
+          }))}
+        />
+        {slides.length > 0 && <StoreSlider slides={slides} />}
+      </div>
 
       {categories.map((c) => {
         const products = allProducts.filter((p) => p.category === c.slug);

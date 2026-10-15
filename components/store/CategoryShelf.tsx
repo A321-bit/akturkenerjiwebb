@@ -59,7 +59,7 @@ export default function CategoryShelf({
           className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-1"
         >
           {products.map((p) => (
-            <div key={p.slug} className="w-[78%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] 2xl:w-[calc((100%-40px)/3)]">
+            <div key={p.slug} className="w-[78%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] md:w-[calc((100%-40px)/3)] xl:w-[calc((100%-60px)/4)]">
               <ProductCard product={p} whatsappNumber={whatsappNumber} />
             </div>
           ))}
