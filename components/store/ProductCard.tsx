@@ -62,7 +62,7 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => {
-              trackEvent("click", `/magaza/${product.category}`, "store_whatsapp_order");
+              trackEvent("click", productHref(product), "store_whatsapp_card");
               trackGa4WhatsappClick();
             }}
             className="mt-3 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 text-[14px] font-bold text-white transition-transform hover:scale-[1.02]"

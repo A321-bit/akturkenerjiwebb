@@ -6,17 +6,20 @@ import { trackGa4WhatsappClick, trackGa4CallClick } from "@/lib/ga4";
 
 export default function TrackedContactLink({
   method,
+  label,
   children,
   ...anchorProps
 }: {
   method: "whatsapp" | "call";
+  /** Admin istatistiklerinde ayrı sayılması için özel etiket (ör. mağaza ürün sayfası). */
+  label?: string;
 } & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const pathname = usePagePath();
   return (
     <a
       {...anchorProps}
       onClick={() => {
-        trackEvent("click", pathname, method === "whatsapp" ? "whatsapp_button" : "call_button");
+        trackEvent("click", pathname, label ?? (method === "whatsapp" ? "whatsapp_button" : "call_button"));
         if (method === "whatsapp") trackGa4WhatsappClick();
         else trackGa4CallClick();
       }}

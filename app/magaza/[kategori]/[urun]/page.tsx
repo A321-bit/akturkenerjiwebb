@@ -188,6 +188,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
 
               <TrackedContactLink
                 method="whatsapp"
+                label="store_whatsapp_product"
                 href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -198,6 +199,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
               </TrackedContactLink>
               <TrackedContactLink
                 method="call"
+                label="store_call_product"
                 href={site.contact.phoneHref}
                 className="mt-2.5 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full border border-line px-5 text-[15px] font-semibold text-ink hover:border-ink"
               >
@@ -247,6 +249,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
             ) : (
               <TrackedContactLink
                 method="whatsapp"
+                label="store_whatsapp_datasheet"
                 href={datasheetWaHref}
                 target="_blank"
                 rel="noopener noreferrer"
