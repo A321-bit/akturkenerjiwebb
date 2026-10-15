@@ -33,6 +33,13 @@ const mdxComponents = {
 };
 
 // Blog yazıları ve hizmet sayfası rehberleri için ortak markdown gösterimi.
+// İçerik admin panelden düz metin olarak giriliyor; MDX "{", "}" ve "<"
+// karakterlerini kod sanıp sayfayı hata verdirir (ör. "<5 kW"). Bunlar
+// düz karakter olarak gösterilsin diye kaçışlanır.
+function escapeMdx(source: string): string {
+  return source.replace(/[{}]/g, (c) => "\\" + c).replace(/</g, "&lt;");
+}
+
 export default function MdxContent({ source }: { source: string }) {
-  return <MDXRemote source={source} options={mdxOptions} components={mdxComponents} />;
+  return <MDXRemote source={escapeMdx(source)} options={mdxOptions} components={mdxComponents} />;
 }
