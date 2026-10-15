@@ -6,7 +6,8 @@ export function productHref(p: Pick<StoreProduct, "category" | "slug">): string 
 }
 
 export function kwOf(p: StoreProduct): number {
-  return parseFloat(p.power.replace(",", "."));
+  const n = parseFloat(p.power.replace(",", "."));
+  return /mw/i.test(p.power) ? n * 1000 : n;
 }
 
 /** Ana görsel (büyük boy) + galeri görselleri, tekrarsız. */
