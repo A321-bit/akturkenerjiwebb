@@ -8,6 +8,7 @@ import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
 import StoreCatalog from "@/components/store/StoreCatalog";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
 import StoreSidebar from "@/components/store/StoreSidebar";
+import MdxContent from "@/components/MdxContent";
 
 export function generateStaticParams() {
   return STORE_CATEGORIES.map((c) => ({ kategori: c.slug }));
@@ -46,7 +47,6 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
             {category.name}
           </nav>
           <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{category.name}</h1>
-          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-slate">{category.intro}</p>
         </section>
 
         <StoreCatalog
@@ -56,6 +56,19 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
           showCategoryFilter={false}
           narrow
         />
+
+        {/* Kategori açıklaması ürünlerin altında: önce ürünler görünsün, uzun
+            SEO yazısı (markdown) aşağıda okunsun. */}
+        <section className="rounded-2xl border border-line bg-paper-raised p-6 sm:p-8">
+          <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{category.name} Hakkında</h2>
+          {category.content ? (
+            <div className="prose prose-neutral mt-4 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-table:text-[14px]">
+              <MdxContent source={category.content} />
+            </div>
+          ) : (
+            <p className="mt-3 text-[15px] leading-relaxed text-slate">{category.intro}</p>
+          )}
+        </section>
 
         <TrustStrip google={google} />
         <HowToOrder />

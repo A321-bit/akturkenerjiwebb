@@ -10,7 +10,10 @@ export type StoreCategory = {
   name: string;
   group: "Paketler";
   short: string;
+  /** Kısa açıklama (meta açıklama ve uzun yazı yokken sayfa altında). */
   intro: string;
+  /** Ürünlerin altında gösterilen uzun SEO yazısı (markdown). */
+  content?: string;
   image?: string;
 };
 
