@@ -10,7 +10,14 @@ export type SidebarCategory = { slug: string; name: string; icon: string; count:
 
 // Klasik e-ticaret düzeni: solda dikey kategori menüsü. Mobilde
 // "Kategoriler" butonuna dönüşür.
-export default function StoreSidebar({ categories }: { categories: SidebarCategory[] }) {
+export default function StoreSidebar({
+  categories,
+  attached = false,
+}: {
+  categories: SidebarCategory[];
+  /** Ana sayfada üst menünün hemen altına yapışık durur (üst köşeler düz). */
+  attached?: boolean;
+}) {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
 
@@ -49,7 +56,7 @@ export default function StoreSidebar({ categories }: { categories: SidebarCatego
   return (
     <>
       {/* Masaüstü */}
-      <aside className="hidden overflow-hidden rounded-2xl border border-line bg-paper-raised lg:block">
+      <aside className={`hidden overflow-hidden border border-line bg-paper-raised lg:block ${attached ? "rounded-b-2xl border-t-0" : "rounded-2xl"}`}>
         <Link
           href="/magaza"
           className="flex items-center gap-2 border-b border-line bg-ink px-4 py-3 font-display text-[15px] font-semibold text-paper"

@@ -10,7 +10,7 @@ export default function StoreShell({ sidebar, children }: { sidebar: React.React
   const home = pathname === "/magaza";
 
   return (
-    <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8 sm:py-8">
+    <div className={`mx-auto max-w-7xl px-5 sm:px-8 ${home ? "pb-8 pt-6 lg:pt-0" : "py-6 sm:py-8"}`}>
       {home ? (
         children
       ) : (

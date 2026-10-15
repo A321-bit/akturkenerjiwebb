@@ -23,14 +23,15 @@ function PhotoStrip({ photos, duration }: { photos: string[]; duration: number }
   const loop = [...photos, ...photos];
   return (
     <div className="relative z-10 w-full overflow-hidden py-2">
-      <div className="flex w-max gap-3" style={{ animation: `photo-slide ${duration}s linear infinite` }}>
+      <div className="flex w-max gap-3 will-change-transform" style={{ WebkitAnimation: `photo-slide ${duration}s linear infinite`, animation: `photo-slide ${duration}s linear infinite` }}>
         {loop.map((src, i) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             key={i}
             src={src}
             alt=""
-            loading={i < 8 ? "eager" : "lazy"}
+            loading="eager"
+            decoding="async"
             className="h-[22vh] w-auto shrink-0 rounded-2xl border-4 border-white object-cover shadow-[0_8px_24px_rgba(225,29,72,0.3)] sm:h-[26vh]"
           />
         ))}

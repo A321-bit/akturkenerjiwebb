@@ -43,8 +43,9 @@ export default async function StorePage() {
       <h1 className="sr-only">Aktürk Enerji Mağaza: Güneş Enerjisi Paketleri ve Ürünleri</h1>
 
       {/* Klasik e-ticaret girişi: solda kategori menüsü, yanında slider. */}
-      <div className="grid gap-6 lg:grid-cols-[260px_1fr] lg:items-stretch lg:gap-8">
+      <div className="grid gap-6 lg:grid-cols-[260px_1fr] lg:items-start lg:gap-8">
         <StoreSidebar
+          attached
           categories={categories.map((c) => ({
             slug: c.slug,
             name: c.name,
@@ -52,7 +53,11 @@ export default async function StorePage() {
             count: allProducts.filter((p) => p.category === c.slug).length,
           }))}
         />
-        {slides.length > 0 && <StoreSlider slides={slides} />}
+        {slides.length > 0 && (
+          <div className="lg:pt-6">
+            <StoreSlider slides={slides} />
+          </div>
+        )}
       </div>
 
       {categories.map((c) => {
