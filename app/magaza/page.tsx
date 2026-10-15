@@ -3,7 +3,6 @@ import { getReferences, getSiteSettings } from "@/lib/data";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import GoogleReviews from "@/components/GoogleReviews";
 import ProductRail from "@/components/store/ProductRail";
-import PackageFinder from "@/components/store/PackageFinder";
 import BrandStrip from "@/components/store/BrandStrip";
 import InstalledProjects from "@/components/store/InstalledProjects";
 import StoreFaq from "@/components/store/StoreFaq";
@@ -44,8 +43,6 @@ export default async function StorePage() {
         products={featured}
         whatsappNumber={site.contact.whatsappNumber}
       />
-
-      <PackageFinder whatsappNumber={site.contact.whatsappNumber} />
 
       {STORE_CATEGORIES.map((c) => {
         const products = STORE_PRODUCTS.filter((p) => p.category === c.slug);
