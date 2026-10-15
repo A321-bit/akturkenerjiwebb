@@ -37,19 +37,19 @@ export default async function StorePage() {
         <StoreSlider slides={STORE_SLIDES} />
       </section>
 
-      <ProductRail
-        title="Çok Tercih Edilen Paketler"
-        subtitle="Müşterilerimizin en çok tercih ettiği güneş enerjisi paketleri"
-        products={featured}
-        whatsappNumber={site.contact.whatsappNumber}
-      />
-
       {STORE_CATEGORIES.map((c) => {
         const products = STORE_PRODUCTS.filter((p) => p.category === c.slug);
         return products.length > 0 ? (
           <CategoryShelf key={c.slug} category={c} products={products} whatsappNumber={site.contact.whatsappNumber} />
         ) : null;
       })}
+
+      <ProductRail
+        title="Çok Tercih Edilen Paketler"
+        subtitle="Müşterilerimizin en çok tercih ettiği güneş enerjisi paketleri"
+        products={featured}
+        whatsappNumber={site.contact.whatsappNumber}
+      />
 
       <BrandStrip />
 
