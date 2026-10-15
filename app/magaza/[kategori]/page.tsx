@@ -7,6 +7,7 @@ import { getGoogleReviews } from "@/lib/google-reviews";
 import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
 import StoreCatalog from "@/components/store/StoreCatalog";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
+import StoreSidebar from "@/components/store/StoreSidebar";
 
 export function generateStaticParams() {
   return STORE_CATEGORIES.map((c) => ({ kategori: c.slug }));
@@ -30,8 +31,12 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
   const products = STORE_PRODUCTS.filter((p) => p.category === category.slug);
 
   return (
-    <>
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-5 py-10 sm:px-8 sm:py-12">
+    <div className="mx-auto grid max-w-6xl gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[270px_1fr] lg:items-start">
+      <div className="lg:sticky lg:top-28">
+        <StoreSidebar />
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-10">
         <section>
           <nav className="text-[13px] text-slate-soft">
             <Link href="/magaza" className="hover:text-ink">
@@ -49,11 +54,12 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
           categories={STORE_CATEGORIES}
           whatsappNumber={site.contact.whatsappNumber}
           showCategoryFilter={false}
+          narrow
         />
 
         <TrustStrip google={google} />
         <HowToOrder />
       </div>
-    </>
+    </div>
   );
 }

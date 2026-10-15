@@ -51,7 +51,7 @@ export function TrustStrip({ google }: { google: GoogleReviews | null }) {
     { icon: Truck, title: "Türkiye geneli", text: "Kurulumsuz paketlerde gönderim" },
   ];
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {items.map(({ icon: Icon, title, text }) => (
         <div key={title} className="flex items-start gap-3 rounded-2xl border border-line bg-paper-raised p-4">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sun/15 text-ink">

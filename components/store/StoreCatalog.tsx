@@ -11,11 +11,14 @@ export default function StoreCatalog({
   categories,
   whatsappNumber,
   showCategoryFilter = true,
+  narrow = false,
 }: {
   products: StoreProduct[];
   categories: StoreCategory[];
   whatsappNumber: string;
   showCategoryFilter?: boolean;
+  /** Yanında kategori menüsü olan dar alanda en fazla 3 sütun. */
+  narrow?: boolean;
 }) {
   const [category, setCategory] = useState<string>("tumu");
   const [installOnly, setInstallOnly] = useState(false);
@@ -73,7 +76,7 @@ export default function StoreCatalog({
       <p className="mt-4 text-[13px] text-slate-soft">{list.length} ürün</p>
 
       {list.length > 0 ? (
-        <div className="mt-3 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className={`mt-3 grid gap-5 sm:grid-cols-2 ${narrow ? "xl:grid-cols-3" : "lg:grid-cols-3 xl:grid-cols-4"}`}>
           {list.map((p) => (
             <ProductCard key={p.slug} product={p} whatsappNumber={whatsappNumber} />
           ))}

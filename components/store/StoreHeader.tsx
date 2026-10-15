@@ -6,7 +6,6 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Menu, MessageCircle, Phone, X } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
-import { STORE_CATEGORIES } from "@/lib/store";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
 
@@ -97,23 +96,6 @@ export default function StoreHeader({
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
-        </div>
-
-        {/* Kategori menüsü */}
-        <div className="border-t border-line bg-paper-raised">
-          <div className="no-scrollbar mx-auto flex max-w-6xl gap-1 overflow-x-auto px-5 py-2 sm:px-8">
-            {STORE_CATEGORIES.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/magaza/${c.slug}`}
-                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[13.5px] font-semibold ${
-                  pathname === `/magaza/${c.slug}` ? "bg-ink text-paper" : "text-slate hover:bg-paper hover:text-ink"
-                }`}
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
         </div>
 
         {open && (

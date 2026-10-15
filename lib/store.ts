@@ -130,3 +130,43 @@ export const PRICES_UPDATED = "15.10.2026";
 export function formatTL(n: number): string {
   return n.toLocaleString("tr-TR") + " TL";
 }
+
+export type StoreSlide = {
+  image: string;
+  eyebrow?: string;
+  title: string;
+  text?: string;
+  cta?: { label: string; href: string };
+};
+
+// Mağaza ana sayfası slider'ı (ileride admin panelden yönetilecek).
+export const STORE_SLIDES: StoreSlide[] = [
+  {
+    image: `${IMG}ankara-beytepe-mustakil-ev-15-kw-on-grid-gunes-paneli-opt.webp`,
+    eyebrow: "On Grid Paketler",
+    title: "Faturanızı güneşle sıfıra yaklaştırın",
+    text: "5 kW'tan 20 kW'a şebeke bağlantılı paketler; proje, EDAŞ başvurusu ve kurulum dahil.",
+    cta: { label: "Paketleri incele", href: "/magaza/on-grid-paketler" },
+  },
+  {
+    image: `${IMG}ankara-cayyolu-hibrit-inverter-lityum-batarya-opt.webp`,
+    eyebrow: "Hibrit Lityum Bataryalı",
+    title: "Elektrik kesilse de eviniz çalışsın",
+    text: "Fazla üretimi lityum bataryada depolayan, kesintide otomatik devreye giren hibrit sistemler.",
+    cta: { label: "Hibrit paketler", href: "/magaza/hibrit-paketler" },
+  },
+  {
+    image: `${IMG}cankiri-hobi-bahcesi-off-grid-gunes-paneli-opt.webp`,
+    eyebrow: "Off Grid Paketler",
+    title: "Şebekenin olmadığı yerde kendi elektriğiniz",
+    text: "Bağ evi, hobi bahçesi ve yazlıklar için lityum bataryalı, şebekeden bağımsız paketler.",
+    cta: { label: "Off grid paketler", href: "/magaza/off-grid-paketler" },
+  },
+  {
+    image: `${IMG}kiremit-catiya-gunes-paneli-montaji-opt.webp`,
+    eyebrow: "WhatsApp Sipariş Hattı",
+    title: "Paketinizi tek mesajla sipariş edin",
+    text: "Ürün kartındaki butona basın, uzmanımız sizi arayıp evinize uygunluğu birlikte kontrol etsin.",
+    cta: { label: "Sipariş ve iletişim", href: "/magaza/iletisim" },
+  },
+];

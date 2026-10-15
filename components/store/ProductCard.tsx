@@ -53,7 +53,7 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
         </div>
 
         <div className="mt-auto pt-5">
-          <p className="font-display text-[19px] font-bold tracking-tight text-ink">{priceText}</p>
+          <p className="font-display text-[17px] font-bold tracking-tight text-ink sm:text-[18px]">{priceText}</p>
           {hasPrice && <p className="text-[12px] text-slate-soft">KDV dahil</p>}
           <a
             href={whatsappLink(whatsappNumber, message)}
