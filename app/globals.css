@@ -180,3 +180,11 @@ body {
     animation: none !important;
   }
 }
+
+/* Yatay kayan menülerde kaydırma çubuğunu gizle (mağaza kategori menüsü). */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

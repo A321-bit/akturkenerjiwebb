@@ -8,7 +8,7 @@ import { Menu, X } from "lucide-react";
 import type { SiteSettings } from "@/lib/data";
 import QuoteModal from "@/components/QuoteModal";
 
-const nav = [
+const nav: { href: string; label: string; external?: boolean }[] = [
   { href: "/", label: "Anasayfa" },
   { href: "/hakkimizda", label: "Hakkımızda" },
   { href: "/hizmetlerimiz", label: "Hizmetlerimiz" },
@@ -16,7 +16,7 @@ const nav = [
   { href: "/blog", label: "Blog" },
   { href: "/iletisim", label: "İletişim" },
   { href: "/hizmetlerimiz/distributorluk-bayilik", label: "Bayilik" },
-  { href: "https://gunesdukkan.com", label: "E-Ticaret", external: true },
+  { href: "/magaza", label: "Mağaza" },
 ];
 
 export default function Header({ settings }: { settings: SiteSettings }) {
