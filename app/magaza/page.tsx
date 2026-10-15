@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
-import { getGoogleReviews } from "@/lib/google-reviews";
 import { STORE_CATEGORIES, STORE_PRODUCTS, STORE_SLIDES } from "@/lib/store";
-import StoreCatalog from "@/components/store/StoreCatalog";
-import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
+import CategoryShelf from "@/components/store/CategoryShelf";
+import { HowToOrder } from "@/components/store/StoreSections";
 import StoreSidebar from "@/components/store/StoreSidebar";
 import StoreSlider from "@/components/store/StoreSlider";
 
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function StorePage() {
-  const [site, google] = await Promise.all([getSiteSettings(), getGoogleReviews()]);
+  const site = await getSiteSettings();
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-10 px-5 py-6 sm:px-8 sm:py-8">
       <h1 className="sr-only">Aktürk Enerji Mağaza: Güneş Enerjisi Paketleri ve Ürünleri</h1>
@@ -30,18 +29,12 @@ export default async function StorePage() {
         <StoreSlider slides={STORE_SLIDES} />
       </section>
 
-      <TrustStrip google={google} />
-
-      <section>
-        <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">Tüm ürünler</h2>
-        <div className="mt-4">
-          <StoreCatalog
-            products={STORE_PRODUCTS}
-            categories={STORE_CATEGORIES}
-            whatsappNumber={site.contact.whatsappNumber}
-          />
-        </div>
-      </section>
+      {STORE_CATEGORIES.map((c) => {
+        const products = STORE_PRODUCTS.filter((p) => p.category === c.slug);
+        return products.length > 0 ? (
+          <CategoryShelf key={c.slug} category={c} products={products} whatsappNumber={site.contact.whatsappNumber} />
+        ) : null;
+      })}
 
       <HowToOrder />
     </div>
