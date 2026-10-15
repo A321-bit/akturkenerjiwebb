@@ -14,6 +14,7 @@ import {
   Sun,
   Unplug,
   Wind,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
@@ -26,6 +27,7 @@ const ICONS: Record<string, LucideIcon> = {
   "tarimsal-sulama-paketleri": Sprout,
   "ruzgar-turbini-paketleri": Wind,
   "elektrikli-arac-sarj-paketleri": Car,
+  "solar-montaj-ekipmanlari": Wrench,
 };
 
 // Klasik e-ticaret düzeni: solda dikey kategori menüsü. Mobilde

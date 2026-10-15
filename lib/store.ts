@@ -90,6 +90,15 @@ export const STORE_CATEGORIES: StoreCategory[] = [
       "Ev ve iş yerleri için elektrikli araç şarj istasyonu paketleri; güneş enerjisi sistemiyle birlikte kurulduğunda aracınızı güneşten şarj edin.",
     image: `https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/4bae581c-6b41-4fe2-8f95-17b2d9e19abb-opt.webp`,
   },
+  {
+    slug: "solar-montaj-ekipmanlari",
+    name: "Solar Montaj Ekipmanları",
+    group: "Paketler",
+    short: "Konstrüksiyon, ray ve bağlantı setleri",
+    intro:
+      "Kiremit, sandviç panel, trapez sac ve düz beton çatılar için güneş paneli montaj ekipmanları: alüminyum ray, kanca, kelepçe ve bağlantı setleri.",
+    image: `${IMG}kiremit-catiya-gunes-paneli-montaji-opt-800.webp`,
+  },
 ];
 
 const P = (
