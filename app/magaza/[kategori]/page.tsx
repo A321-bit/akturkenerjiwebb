@@ -7,8 +7,6 @@ import { getGoogleReviews } from "@/lib/google-reviews";
 import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
 import StoreCatalog from "@/components/store/StoreCatalog";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
-import StoreSidebar from "@/components/store/StoreSidebar";
-import FeaturedProducts from "@/components/store/FeaturedProducts";
 import MdxContent from "@/components/MdxContent";
 
 export function generateStaticParams() {
@@ -33,13 +31,7 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
   const products = STORE_PRODUCTS.filter((p) => p.category === category.slug);
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[270px_1fr] lg:items-start">
-      <div className="flex flex-col gap-4">
-        <StoreSidebar />
-        <FeaturedProducts exclude={category.slug} />
-      </div>
-
-      <div className="flex min-w-0 flex-col gap-10">
+    <div className="flex min-w-0 flex-col gap-10">
         <section>
           <nav className="text-[13px] text-slate-soft">
             <Link href="/magaza" className="hover:text-ink">
@@ -74,7 +66,6 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
 
         <TrustStrip google={google} />
         <HowToOrder />
-      </div>
     </div>
   );
 }

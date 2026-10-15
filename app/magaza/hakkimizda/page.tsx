@@ -18,7 +18,7 @@ export default async function StoreAboutPage() {
   const [site, google] = await Promise.all([getSiteSettings(), getGoogleReviews()]);
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-10 px-5 py-10 sm:px-8 sm:py-12">
+    <div className="flex flex-col gap-10">
       <section className="max-w-3xl">
         <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Hakkımızda</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">

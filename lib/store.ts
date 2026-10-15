@@ -29,8 +29,12 @@ export type StoreProduct = {
   listPrice?: number;
   installIncluded: boolean;
   image?: string;
-  /** Kategori sayfasında yan menünün altındaki "Çok Tercih Edilenler"de gösterilir. */
+  /** Öne çıkan ürün ("Çok Tercih Edilen Paketler"). */
   featured?: boolean;
+  /** Ürün sayfasındaki "Ürün Açıklaması": SEO makalesi (markdown). */
+  content?: string;
+  /** Teknik datasheet PDF bağlantısı (varsa "Datasheet'i indir" gösterilir). */
+  datasheet?: string;
 };
 
 export const STORE_CATEGORIES: StoreCategory[] = [

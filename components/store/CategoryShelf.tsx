@@ -29,7 +29,7 @@ export default function CategoryShelf({
   }
 
   return (
-    <section className="grid gap-4 lg:grid-cols-[270px_1fr]">
+    <section className="grid gap-4 lg:grid-cols-[220px_1fr]">
       <Link
         href={`/magaza/${category.slug}`}
         className="group relative flex min-h-[150px] flex-col justify-end overflow-hidden rounded-2xl bg-ink p-5 text-paper lg:min-h-full"
@@ -39,7 +39,7 @@ export default function CategoryShelf({
             src={category.image}
             alt={category.name}
             fill
-            sizes="(min-width: 1024px) 270px, 100vw"
+            sizes="(min-width: 1024px) 220px, 100vw"
             className="object-cover opacity-60 transition-transform duration-500 group-hover:scale-105"
           />
         )}
@@ -59,7 +59,7 @@ export default function CategoryShelf({
           className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-1"
         >
           {products.map((p) => (
-            <div key={p.slug} className="w-[78%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] xl:w-[calc((100%-40px)/3)]">
+            <div key={p.slug} className="w-[78%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] 2xl:w-[calc((100%-40px)/3)]">
               <ProductCard product={p} whatsappNumber={whatsappNumber} />
             </div>
           ))}

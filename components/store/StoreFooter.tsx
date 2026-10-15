@@ -7,7 +7,7 @@ export default function StoreFooter({ settings }: { settings: SiteSettings }) {
   const col = "flex flex-col gap-2 text-[14px] text-slate-soft";
   return (
     <footer className="mt-16 bg-ink text-paper">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
         <div>
           <p className="font-display text-lg font-semibold">Aktürk Enerji Mağaza</p>
           <p className="mt-2 text-[13.5px] leading-relaxed text-slate-soft">
@@ -42,7 +42,7 @@ export default function StoreFooter({ settings }: { settings: SiteSettings }) {
         </div>
       </div>
       <div className="border-t border-line-dark">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-5 text-[12.5px] text-slate-soft sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-5 text-[12.5px] text-slate-soft sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>
             © {new Date().getFullYear()} {settings.name}. Tüm hakları saklıdır.
           </p>

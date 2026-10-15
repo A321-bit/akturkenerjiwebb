@@ -42,7 +42,7 @@ export default function StoreHeader({
     <header className="sticky top-0 z-50">
       {/* Üst şerit: telefon ve kurumsal siteye tek geçiş */}
       <div className="bg-ink text-paper">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-1.5 text-[12.5px] sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-1.5 text-[12.5px] sm:px-8">
           <a href={phoneHref} className="flex items-center gap-1.5 text-paper/80 hover:text-paper">
             <Phone size={13} /> {phoneDisplay}
           </a>
@@ -69,7 +69,7 @@ export default function StoreHeader({
 
       {/* Ana menü */}
       <div className="border-b border-line bg-paper/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-5 px-5 py-2.5 sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-2.5 sm:px-8">
           <Link href="/magaza" className="flex shrink-0 items-center gap-2.5" onClick={() => setOpen(false)}>
             <Image src="/logo.svg" alt="Aktürk Enerji" width={281} height={50} priority className="h-9 w-auto sm:h-10" />
             <span className="rounded-md bg-sun px-2 py-1 font-mono-data text-[11px] font-bold uppercase tracking-[0.12em] text-ink">

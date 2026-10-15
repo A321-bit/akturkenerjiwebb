@@ -31,7 +31,7 @@ export default function InstalledProjects({ references }: { references: Referenc
           return (
             <article
               key={r.slug}
-              className="w-[78%] shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-paper-raised sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-40px)/3)] xl:w-[calc((100%-60px)/4)]"
+              className="w-[78%] shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-paper-raised sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-40px)/3)]"
             >
               <CoverMedia
                 src={r.image}

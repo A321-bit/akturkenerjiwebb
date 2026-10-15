@@ -10,7 +10,6 @@ import { buildMetadata } from "@/lib/seo";
 import { STORE_CATEGORIES, STORE_PRODUCTS, STORE_SLIDES } from "@/lib/store";
 import CategoryShelf from "@/components/store/CategoryShelf";
 import { HowToOrder } from "@/components/store/StoreSections";
-import StoreSidebar from "@/components/store/StoreSidebar";
 import StoreSlider from "@/components/store/StoreSlider";
 
 // Mağaza şablon aşamasında; ürünler ve tasarım netleşene kadar Google'a kapalı.
@@ -29,13 +28,10 @@ export default async function StorePage() {
   const featured = STORE_PRODUCTS.filter((p) => p.featured);
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-12 px-5 py-6 sm:px-8 sm:py-8">
+    <div className="flex flex-col gap-12">
       <h1 className="sr-only">Aktürk Enerji Mağaza: Güneş Enerjisi Paketleri ve Ürünleri</h1>
 
-      <section className="grid gap-4 lg:grid-cols-[270px_1fr] lg:items-stretch">
-        <StoreSidebar />
-        <StoreSlider slides={STORE_SLIDES} />
-      </section>
+      <StoreSlider slides={STORE_SLIDES} />
 
       {STORE_CATEGORIES.map((c) => {
         const products = STORE_PRODUCTS.filter((p) => p.category === c.slug);

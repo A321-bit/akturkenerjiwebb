@@ -20,7 +20,7 @@ export default async function StoreContactPage() {
   const icon = "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand";
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-5 py-10 sm:px-8 sm:py-12">
+    <div className="flex flex-col gap-8">
       <section className="max-w-3xl">
         <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">İletişim</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Sipariş ve iletişim</h1>
