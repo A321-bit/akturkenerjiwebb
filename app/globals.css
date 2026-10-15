@@ -140,6 +140,22 @@ body {
   .animate-step { animation: none; }
 }
 
+/* Mağaza "Yetkili Satış Bayiliklerimiz" logo şeridi: sonsuz, yavaş kayma.
+   Üzerine gelince durur; kenarlarda yumuşak solma. */
+@keyframes brand-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.brand-marquee {
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+.brand-marquee-track {
+  animation: brand-marquee 40s linear infinite;
+}
+.brand-marquee:hover .brand-marquee-track {
+  animation-play-state: paused;
+}
+
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

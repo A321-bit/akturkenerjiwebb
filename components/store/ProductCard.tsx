@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { discountPercent, formatTL, type StoreProduct } from "@/lib/store";
+import { productHref } from "@/lib/store-details";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
 
@@ -12,11 +14,11 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
   const priceText = product.price != null ? formatTL(product.price) : "Fiyat için sorun";
   const message = `Merhaba, *${product.name}* için sipariş vermek istiyorum.${
     product.price != null ? ` (Fiyat: ${priceText})` : ""
-  }\n\nSayfa: ${SITE_URL}/magaza/${product.category}`;
+  }\n\nÜrün: ${SITE_URL}${productHref(product)}`;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised transition-shadow hover:border-sun/60 hover:shadow-[0_20px_44px_-24px_rgba(11,20,32,0.45)]">
-      <div className="relative aspect-[4/3] overflow-hidden bg-paper">
+      <Link href={productHref(product)} className="relative block aspect-[4/3] overflow-hidden bg-paper">
         {product.image && (
           <Image
             src={product.image}
@@ -34,10 +36,14 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
             %{discount}
           </span>
         )}
-      </div>
+      </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="font-display text-[16.5px] font-semibold leading-snug text-ink">{product.name}</h3>
+        <h3 className="font-display text-[16.5px] font-semibold leading-snug text-ink">
+          <Link href={productHref(product)} className="hover:text-brand">
+            {product.name}
+          </Link>
+        </h3>
 
         <div className="mt-auto pt-4">
           {discount != null && product.listPrice != null && (

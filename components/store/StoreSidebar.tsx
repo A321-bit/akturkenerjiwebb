@@ -12,6 +12,7 @@ import {
   LayoutList,
   Sprout,
   Sun,
+  Thermometer,
   Unplug,
   Wind,
   Wrench,
@@ -27,6 +28,7 @@ const ICONS: Record<string, LucideIcon> = {
   "tarimsal-sulama-paketleri": Sprout,
   "ruzgar-turbini-paketleri": Wind,
   "elektrikli-arac-sarj-istasyonu": Car,
+  "isi-pompasi-urunleri": Thermometer,
   "solar-montaj-ekipmanlari": Wrench,
 };
 

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Flame } from "lucide-react";
 import { discountPercent, formatTL, STORE_PRODUCTS } from "@/lib/store";
+import { productHref } from "@/lib/store-details";
 
 // Kategori sayfasında yan menünün altında: çok tercih edilen paketlerin kısa listesi.
 export default function FeaturedProducts({ exclude }: { exclude?: string }) {
@@ -20,7 +21,7 @@ export default function FeaturedProducts({ exclude }: { exclude?: string }) {
           return (
             <Link
               key={p.slug}
-              href={`/magaza/${p.category}`}
+              href={productHref(p)}
               className="flex gap-3 border-b border-line px-4 py-3 last:border-b-0 hover:bg-paper"
             >
               <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-paper">

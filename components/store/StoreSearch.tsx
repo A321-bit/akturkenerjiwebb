@@ -6,6 +6,7 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutList, Search } from "lucide-react";
 import { formatTL, STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
+import { productHref } from "@/lib/store-details";
 
 const norm = (s: string) =>
   s
@@ -36,7 +37,7 @@ export default function StoreSearch({ className = "" }: { className?: string }) 
     };
   }, [q]);
 
-  const first = results.cats[0] ? `/magaza/${results.cats[0].slug}` : results.prods[0] ? `/magaza/${results.prods[0].category}` : null;
+  const first = results.cats[0] ? `/magaza/${results.cats[0].slug}` : results.prods[0] ? productHref(results.prods[0]) : null;
   const hasResults = results.cats.length + results.prods.length > 0;
 
   return (
@@ -90,7 +91,7 @@ export default function StoreSearch({ className = "" }: { className?: string }) 
           {results.prods.map((p) => (
             <Link
               key={p.slug}
-              href={`/magaza/${p.category}`}
+              href={productHref(p)}
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 border-b border-line px-4 py-2.5 last:border-b-0 hover:bg-paper"
             >

@@ -98,6 +98,15 @@ export const STORE_CATEGORIES: StoreCategory[] = [
     image: `https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/4bae581c-6b41-4fe2-8f95-17b2d9e19abb-opt.webp`,
   },
   {
+    slug: "isi-pompasi-urunleri",
+    name: "Isı Pompası Ürünleri",
+    group: "Paketler",
+    short: "Isınma, soğutma ve havuz ısıtma",
+    intro:
+      "Ev, villa ve havuzlar için hava kaynaklı ısı pompaları; güneş enerjisi sistemiyle birlikte kurulduğunda ısınma ve soğutma maliyetini en aza indirir.",
+    image: "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/services/777bd3e4-3e62-4a7f-acb8-85cc644316cc-opt.webp",
+  },
+  {
     slug: "solar-montaj-ekipmanlari",
     name: "Solar Montaj Ekipmanları",
     group: "Paketler",
