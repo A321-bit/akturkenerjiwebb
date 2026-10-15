@@ -92,6 +92,13 @@ const nextConfig: NextConfig = {
       // mesajlarına bu adres sızmıştı (usePagePath ile düzeltildi). Kopya
       // sayfa oluşmasın diye /index kalıcı olarak ana sayfaya yönlenir.
       { source: "/index", destination: "/", permanent: true },
+      // Yeni müstakil ev yazısı birkaç saat bu adreste yayında kaldı ve Google
+      // onu sıraladı; adres değişince sıralama kaybolmasın diye yönlendirilir.
+      {
+        source: "/blog/mustakil-ev-icin-gunes-paneli-sistemleri",
+        destination: "/blog/mustakil-ev-icin-gunes-paneli-sistemleri-cesitleri-ve-fiyatlari",
+        permanent: true,
+      },
       ...[...LEGACY_REDIRECTS, ...RETIRED_POST_REDIRECTS].map(([source, destination]) => ({
         source,
         destination,
