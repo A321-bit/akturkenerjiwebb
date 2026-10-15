@@ -9,6 +9,7 @@ import StoreFaq from "@/components/store/StoreFaq";
 import { buildMetadata } from "@/lib/seo";
 import { STORE_CATEGORIES, STORE_PRODUCTS, STORE_SLIDES } from "@/lib/store";
 import CategoryShelf from "@/components/store/CategoryShelf";
+import { withRatings } from "@/lib/reviews";
 import { HowToOrder } from "@/components/store/StoreSections";
 import StoreSlider from "@/components/store/StoreSlider";
 
@@ -24,8 +25,13 @@ export const metadata: Metadata = {
 };
 
 export default async function StorePage() {
-  const [site, references, google] = await Promise.all([getSiteSettings(), getReferences(), getGoogleReviews()]);
-  const featured = STORE_PRODUCTS.filter((p) => p.featured);
+  const [site, references, google, allProducts] = await Promise.all([
+    getSiteSettings(),
+    getReferences(),
+    getGoogleReviews(),
+    withRatings(STORE_PRODUCTS),
+  ]);
+  const featured = allProducts.filter((p) => p.featured);
 
   return (
     <div className="flex flex-col gap-12">
@@ -34,7 +40,7 @@ export default async function StorePage() {
       <StoreSlider slides={STORE_SLIDES} />
 
       {STORE_CATEGORIES.map((c) => {
-        const products = STORE_PRODUCTS.filter((p) => p.category === c.slug);
+        const products = allProducts.filter((p) => p.category === c.slug);
         return products.length > 0 ? (
           <CategoryShelf key={c.slug} category={c} products={products} whatsappNumber={site.contact.whatsappNumber} />
         ) : null;

@@ -8,6 +8,7 @@ import { discountPercent, formatTL, type StoreProduct } from "@/lib/store";
 import { productHref } from "@/lib/store-details";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
+import Stars from "./Stars";
 
 export default function ProductCard({ product, whatsappNumber }: { product: StoreProduct; whatsappNumber: string }) {
   const discount = discountPercent(product);
@@ -44,6 +45,12 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
             {product.name}
           </Link>
         </h3>
+        {product.rating && product.rating.count > 0 && (
+          <Link href={`${productHref(product)}#yorumlar`} className="mt-1.5 flex items-center gap-1.5 text-[12.5px] text-slate hover:text-ink">
+            <Stars value={product.rating.avg} size={13} />
+            <span>({product.rating.count})</span>
+          </Link>
+        )}
 
         <div className="mt-auto pt-4">
           {discount != null && product.listPrice != null && (

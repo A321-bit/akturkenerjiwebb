@@ -35,6 +35,8 @@ export type StoreProduct = {
   content?: string;
   /** Teknik datasheet PDF bağlantısı (varsa "Datasheet'i indir" gösterilir). */
   datasheet?: string;
+  /** Onaylı müşteri yorumlarından hesaplanır (lib/reviews.ts → withRatings). */
+  rating?: { avg: number; count: number };
 };
 
 export const STORE_CATEGORIES: StoreCategory[] = [

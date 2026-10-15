@@ -6,6 +6,7 @@ import { buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { STORE_CATEGORIES, STORE_PRODUCTS } from "@/lib/store";
 import StoreCatalog from "@/components/store/StoreCatalog";
+import { withRatings } from "@/lib/reviews";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
 import MdxContent from "@/components/MdxContent";
 
@@ -28,7 +29,7 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
   const category = STORE_CATEGORIES.find((x) => x.slug === kategori);
   if (!category) notFound();
   const [site, google] = await Promise.all([getSiteSettings(), getGoogleReviews()]);
-  const products = STORE_PRODUCTS.filter((p) => p.category === category.slug);
+  const products = await withRatings(STORE_PRODUCTS.filter((p) => p.category === category.slug));
 
   return (
     <div className="flex min-w-0 flex-col gap-10">
