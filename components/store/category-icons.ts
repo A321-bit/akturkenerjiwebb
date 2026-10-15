@@ -1,5 +1,6 @@
 import {
   BatteryCharging,
+  BatteryFull,
   Car,
   Droplets,
   Factory,
@@ -23,7 +24,8 @@ import {
 export const CATEGORY_ICONS: Record<string, { label: string; icon: LucideIcon }> = {
   sun: { label: "Güneş", icon: Sun },
   unplug: { label: "Şebekesiz (fiş)", icon: Unplug },
-  battery: { label: "Batarya", icon: BatteryCharging },
+  battery: { label: "Batarya (şarj)", icon: BatteryCharging },
+  "battery-full": { label: "Batarya (dolu)", icon: BatteryFull },
   house: { label: "Ev", icon: House },
   sprout: { label: "Tarım / Fide", icon: Sprout },
   droplets: { label: "Su", icon: Droplets },
