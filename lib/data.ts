@@ -52,6 +52,14 @@ export type Service = {
   audience: string;
   image?: string;
   updatedAt?: string;
+  /** Admin panelden düzenlenen SEO ve içerik alanları; boşsa kodaki
+   * (lib/service-content.ts) varsayılan metin kullanılır. */
+  seoTitle?: string;
+  seoDescription?: string;
+  seoHeading?: string;
+  guideTitle?: string;
+  guideContent?: string;
+  faqs?: { q: string; a: string }[];
 };
 
 export type Reference = {
@@ -161,7 +169,15 @@ type ServiceRow = {
   audience: string;
   image: string | null;
   updated_at?: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_heading?: string | null;
+  guide_title?: string | null;
+  guide_content?: string | null;
+  faqs?: { q: string; a: string }[] | null;
 };
+
+const nonEmpty = (v?: string | null) => (v && v.trim() ? v.trim() : undefined);
 
 function mapService(row: ServiceRow): Service {
   return {
@@ -175,6 +191,12 @@ function mapService(row: ServiceRow): Service {
     audience: row.audience,
     image: row.image ?? undefined,
     updatedAt: row.updated_at,
+    seoTitle: nonEmpty(row.seo_title),
+    seoDescription: nonEmpty(row.seo_description),
+    seoHeading: nonEmpty(row.seo_heading),
+    guideTitle: nonEmpty(row.guide_title),
+    guideContent: nonEmpty(row.guide_content),
+    faqs: (row.faqs ?? []).filter((f) => f?.q?.trim() && f?.a?.trim()),
   };
 }
 

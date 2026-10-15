@@ -23,6 +23,7 @@ import QuoteModal from "@/components/QuoteModal";
 import PumpPowerCalculator from "@/components/PumpPowerCalculator";
 import VillaSystemShowcase from "@/components/VillaSystemShowcase";
 import ArticleBlockView, { RichText } from "@/components/ArticleBlockView";
+import MdxContent from "@/components/MdxContent";
 
 // Hobi Bahçesi ve Karavan Sistemleri hizmetleri Off-Grid hizmetinde birleştirildi;
 // eski linkler/yer imleri 404 yerine yeni sayfaya yönlensin diye eşleme tutuyoruz.
@@ -405,8 +406,21 @@ export default async function ServiceDetailPage({
         </div>
       </section>
 
-      {/* SEO REHBER MAKALESİ */}
-      {content.article && (
+      {/* SEO REHBER YAZISI (admin panelden düzenlenen) */}
+      {content.guide && (
+        <section className="mx-auto max-w-4xl px-5 py-16 sm:px-8">
+          <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Rehber</p>
+          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+            {content.guide.title}
+          </h2>
+          <div className="prose prose-neutral mt-6 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h3:text-[17px] prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3">
+            <MdxContent source={content.guide.markdown} />
+          </div>
+        </section>
+      )}
+
+      {/* SEO REHBER MAKALESİ (kodaki varsayılan) */}
+      {!content.guide && content.article && (
         <section className="mx-auto max-w-4xl px-5 py-16 sm:px-8">
           <Reveal>
             <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">

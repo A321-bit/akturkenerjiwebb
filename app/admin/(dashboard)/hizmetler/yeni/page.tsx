@@ -18,6 +18,12 @@ export default function NewServicePage() {
           audience: "",
           image: null,
           sort_order: 0,
+          seo_title: "",
+          seo_description: "",
+          seo_heading: "",
+          guide_title: "",
+          guide_content: "",
+          faqs: [],
         }}
       />
     </div>

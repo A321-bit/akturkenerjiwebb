@@ -17,6 +17,12 @@ export type ServiceFormValues = {
   audience: string;
   image: string | null;
   sort_order: number;
+  seo_title: string;
+  seo_description: string;
+  seo_heading: string;
+  guide_title: string;
+  guide_content: string;
+  faqs: { q: string; a: string }[];
 };
 
 export default function ServiceForm({ initial }: { initial: ServiceFormValues }) {
@@ -112,6 +118,72 @@ export default function ServiceForm({ initial }: { initial: ServiceFormValues })
           className="admin-input"
         />
       </Field>
+
+      <div className="mt-6 border-t border-line pt-6">
+        <p className="font-display text-lg font-semibold">SEO ve sayfa içeriği</p>
+        <p className="mt-1 text-[13px] text-slate">
+          Boş bırakılan alanlarda sitedeki varsayılan metin kullanılır.
+        </p>
+      </div>
+      <Field label={`Meta başlık (Google'da görünen başlık) — ${values.seo_title.length} karakter`}>
+        <input value={values.seo_title} onChange={(e) => set("seo_title", e.target.value)} className="admin-input" />
+        <span className="text-[12px] text-slate-soft">
+          Sonuna &quot; | Aktürk Enerji&quot; otomatik eklenir, siz yazmayın. Google&apos;da görünen:{" "}
+          <strong>{(values.seo_title || values.title) + " | Aktürk Enerji"}</strong>
+        </span>
+      </Field>
+      <Field label={`Meta açıklama (Google'daki açıklama) — ${values.seo_description.length} karakter, ideal 140–160`}>
+        <textarea
+          rows={3}
+          value={values.seo_description}
+          onChange={(e) => set("seo_description", e.target.value)}
+          className="admin-input"
+        />
+      </Field>
+      <Field label="Sayfa ana başlığı (H1)">
+        <input value={values.seo_heading} onChange={(e) => set("seo_heading", e.target.value)} className="admin-input" />
+      </Field>
+      <Field label="Rehber yazısı başlığı (H2)">
+        <input value={values.guide_title} onChange={(e) => set("guide_title", e.target.value)} className="admin-input" />
+      </Field>
+      <Field label="Rehber yazısı (### alt başlık, - liste, tablo ve [link](/adres) kullanılabilir)">
+        <MarkdownEditorField rows={24} value={values.guide_content} onChange={(v) => set("guide_content", v)} />
+      </Field>
+
+      <div className="flex flex-col gap-3">
+        <span className="text-[13px] font-medium text-slate">Sık sorulan sorular</span>
+        {values.faqs.map((f, i) => (
+          <div key={i} className="flex flex-col gap-2 rounded-xl border border-line p-3">
+            <input
+              placeholder="Soru"
+              value={f.q}
+              onChange={(e) => set("faqs", values.faqs.map((x, j) => (j === i ? { ...x, q: e.target.value } : x)))}
+              className="admin-input font-medium"
+            />
+            <textarea
+              placeholder="Cevap"
+              rows={3}
+              value={f.a}
+              onChange={(e) => set("faqs", values.faqs.map((x, j) => (j === i ? { ...x, a: e.target.value } : x)))}
+              className="admin-input"
+            />
+            <button
+              type="button"
+              onClick={() => set("faqs", values.faqs.filter((_, j) => j !== i))}
+              className="self-end text-[12.5px] font-medium text-red-600 hover:underline"
+            >
+              Soruyu sil
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => set("faqs", [...values.faqs, { q: "", a: "" }])}
+          className="self-start rounded-full border border-line px-4 py-2 text-[13px] font-semibold hover:border-ink"
+        >
+          + Soru ekle
+        </button>
+      </div>
 
       {error && <p className="text-[13px] text-red-600">{error}</p>}
 

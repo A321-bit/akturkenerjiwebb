@@ -27,6 +27,12 @@ export default async function EditServicePage({
           audience: data.audience,
           image: data.image,
           sort_order: data.sort_order,
+          seo_title: data.seo_title ?? "",
+          seo_description: data.seo_description ?? "",
+          seo_heading: data.seo_heading ?? "",
+          guide_title: data.guide_title ?? "",
+          guide_content: data.guide_content ?? "",
+          faqs: data.faqs ?? [],
         }}
       />
     </div>

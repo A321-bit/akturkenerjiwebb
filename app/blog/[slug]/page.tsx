@@ -1,44 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MDXRemote } from "next-mdx-remote/rsc";
-import remarkGfm from "remark-gfm";
 import { ArrowLeft } from "lucide-react";
 import { getBlogPostBySlug, getSiteSettings, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import QuoteModal from "@/components/QuoteModal";
 import CoverMedia from "@/components/CoverMedia";
-
-// Yazılardaki markdown tablolarını (| a | b |) gösterebilmek için GFM.
-const mdxOptions = { mdxOptions: { remarkPlugins: [remarkGfm] } };
-// Geniş tablolar mobilde sayfayı yana taşırmasın; tablo kendi içinde kayar.
-const mdxComponents = {
-  // Yazı içi fotoğraflar: ![alt](url "alt yazı"). "-opt.webp" dosyalarının
-  // 800px kopyası telefonlarda kullanılır; başlık (title) fotoğraf altı yazısı olur.
-  img: ({ src, alt, title }: React.ComponentProps<"img">) => {
-    const url = typeof src === "string" ? src : "";
-    return (
-      <span className="my-7 block">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={url}
-          srcSet={url.endsWith("-opt.webp") ? `${url.replace(/-opt\.webp$/, "-opt-800.webp")} 800w, ${url} 1600w` : undefined}
-          sizes="(min-width: 768px) 768px, 100vw"
-          alt={alt ?? ""}
-          loading="lazy"
-          decoding="async"
-          className="mx-auto my-0 max-h-[520px] w-auto rounded-xl"
-        />
-        {title && <span className="mt-2 block text-center text-[13px] text-slate-soft">{title}</span>}
-      </span>
-    );
-  },
-  table: (props: React.ComponentProps<"table">) => (
-    <div className="overflow-x-auto">
-      <table {...props} />
-    </div>
-  ),
-};
+import MdxContent from "@/components/MdxContent";
 
 function findMidArticleSplit(content: string): number | null {
   const positions: number[] = [];
@@ -166,7 +134,7 @@ export default async function BlogPostPage({
       </div>
 
       <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3">
-        <MDXRemote source={firstHalf} options={mdxOptions} components={mdxComponents} />
+        <MdxContent source={firstHalf} />
       </div>
 
       {secondHalf && (
@@ -190,7 +158,7 @@ export default async function BlogPostPage({
           </div>
 
           <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3">
-            <MDXRemote source={secondHalf} options={mdxOptions} components={mdxComponents} />
+            <MdxContent source={secondHalf} />
           </div>
         </>
       )}

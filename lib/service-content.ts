@@ -79,6 +79,8 @@ export type ServiceContent = {
   blogCategory?: string;
   /** "İlginizi çekebilir" bölümünde rastgele değil, kürasyonlu hizmetler göstermek için slug listesi. */
   relatedServiceSlugs?: string[];
+  /** Admin panelden girilen rehber yazısı (markdown). Varsa article yerine gösterilir. */
+  guide?: { title: string; markdown: string };
   /** Sayfa içi uzun-format SEO makalesi (Süreç ile SSS arasında gösterilir).
    * Gerçek arama niyetine göre yazılmış H3 alt başlıklı derinlemesine rehber içerik. */
   article?: {
@@ -1848,5 +1850,18 @@ export function buildFallbackContent(service: Service): ServiceContent {
 }
 
 export function getServiceContent(service: Service): ServiceContent {
-  return serviceContent[service.slug] ?? buildFallbackContent(service);
+  const base = serviceContent[service.slug] ?? buildFallbackContent(service);
+  // Admin panelde doldurulan alanlar koddaki varsayılanların önüne geçer.
+  return {
+    ...base,
+    seo: {
+      heading: service.seoHeading ?? base.seo.heading,
+      title: service.seoTitle ?? base.seo.title,
+      description: service.seoDescription ?? base.seo.description,
+    },
+    faqs: service.faqs && service.faqs.length > 0 ? service.faqs : base.faqs,
+    guide: service.guideContent
+      ? { title: service.guideTitle ?? base.article?.title ?? "Rehber", markdown: service.guideContent }
+      : undefined,
+  };
 }
