@@ -2,11 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { ArrowLeft } from "lucide-react";
 import { getBlogPostBySlug, getSiteSettings, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import QuoteModal from "@/components/QuoteModal";
 import CoverMedia from "@/components/CoverMedia";
+
+// Yazılardaki markdown tablolarını (| a | b |) gösterebilmek için GFM.
+const mdxOptions = { mdxOptions: { remarkPlugins: [remarkGfm] } };
+// Geniş tablolar mobilde sayfayı yana taşırmasın; tablo kendi içinde kayar.
+const mdxComponents = {
+  table: (props: React.ComponentProps<"table">) => (
+    <div className="overflow-x-auto">
+      <table {...props} />
+    </div>
+  ),
+};
 
 function findMidArticleSplit(content: string): number | null {
   const positions: number[] = [];
@@ -133,8 +145,8 @@ export default async function BlogPostPage({
         />
       </div>
 
-      <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl">
-        <MDXRemote source={firstHalf} />
+      <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3">
+        <MDXRemote source={firstHalf} options={mdxOptions} components={mdxComponents} />
       </div>
 
       {secondHalf && (
@@ -157,8 +169,8 @@ export default async function BlogPostPage({
             />
           </div>
 
-          <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl">
-            <MDXRemote source={secondHalf} />
+          <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3">
+            <MDXRemote source={secondHalf} options={mdxOptions} components={mdxComponents} />
           </div>
         </>
       )}
