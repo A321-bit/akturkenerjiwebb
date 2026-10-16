@@ -14,6 +14,7 @@ import { withRatings } from "@/lib/reviews";
 import { HowToOrder } from "@/components/store/StoreSections";
 import StoreSlider from "@/components/store/StoreSlider";
 import StoreSidebar from "@/components/store/StoreSidebar";
+import CalculatorCta from "@/components/store/CalculatorCta";
 
 // Mağaza şablon aşamasında; ürünler ve tasarım netleşene kadar Google'a kapalı.
 export const metadata: Metadata = {
@@ -62,6 +63,8 @@ export default async function StorePage() {
           </div>
         )}
       </div>
+
+      <CalculatorCta />
 
       {categories.map((c) => {
         const products = allProducts.filter((p) => p.category === c.slug);

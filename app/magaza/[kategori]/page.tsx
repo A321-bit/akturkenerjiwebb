@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Calculator } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
@@ -11,6 +10,7 @@ import StoreCatalog from "@/components/store/StoreCatalog";
 import { withRatings } from "@/lib/reviews";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
 import MdxContent from "@/components/MdxContent";
+import CalculatorCta from "@/components/store/CalculatorCta";
 import { renderStoreTokens } from "@/lib/store-content";
 
 export async function generateStaticParams() {
@@ -62,21 +62,7 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
         </section>
 
         {category.slug === "off-grid-paketler" && (
-          <Link
-            href="/magaza/off-grid-hesaplama"
-            className="group flex items-center gap-4 rounded-2xl border border-sun/50 bg-sun/10 p-4 transition-colors hover:border-sun sm:p-5"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-sun">
-              <Calculator size={20} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block font-display text-[16px] font-semibold text-ink">Hangi paket size yeter? Ücretsiz hesaplayın</span>
-              <span className="block text-[13.5px] text-slate">Cihazlarınızı seçin; günlük tüketiminizi, panel ve batarya ihtiyacınızı ve uygun paketi hemen görün.</span>
-            </span>
-            <span className="hidden rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-paper group-hover:bg-sun group-hover:text-ink sm:block">
-              Hesapla
-            </span>
-          </Link>
+          <CalculatorCta />
         )}
 
         <StoreCatalog

@@ -15,6 +15,7 @@ import StoreSearch, { type StoreSearchData } from "./StoreSearch";
 // "Kurumsal Site" linkidir.
 const NAV = [
   { href: "/magaza", label: "Mağaza Anasayfa" },
+  { href: "/magaza/off-grid-hesaplama", label: "Paket Hesapla" },
   { href: "/magaza/hakkimizda", label: "Hakkımızda" },
   { href: "/magaza/referanslar", label: "Referanslarımız" },
   { href: "/magaza/iletisim", label: "İletişim" },
