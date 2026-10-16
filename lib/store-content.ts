@@ -5,16 +5,17 @@ import { kwOf, productHref } from "./store-details";
 // sabit yazılmaz; sayfa açıldığında mağazadaki güncel fiyat (kurla hesaplanan TL)
 // basılır, fiyat değişince yazının güncellenmesi gerekmez.
 //
-//   {{fiyat-listesi}}        bu kategorideki bütün paketler (link + fiyat)
-//   {{fiyat-listesi:5-25}}   yalnızca 5–25 kW arası paketler (aralık kW cinsinden; "30-" = 30 kW ve üstü)
-//   {{fiyat:<ürün-slug>}}    tek bir paketin fiyatı (ör. "330.000 TL")
+//   {{fiyat-listesi}}          bu kategorideki bütün paketler (link + fiyat)
+//   {{fiyat-listesi:5-25}}     yalnızca 5–25 kW arası paketler (aralık kW cinsinden; "30-" = 30 kW ve üstü)
+//   {{fiyat:<ürün-slug>}}      tek bir paketin satış fiyatı, cümle içinde (ör. "330.000 TL")
+//   {{liste-fiyat:<ürün-slug>}} tek bir paketin üstü çizili liste fiyatı
 
-function priceText(p: StoreProduct): string {
-  return p.price != null ? `${formatTL(p.price)} (KDV dahil)` : "fiyat için WhatsApp'tan sorun";
-}
+const EMPTY_LIST =
+  "_Bu gruptaki ürünlerimizin fiyatları çok yakında burada olacak. Güncel fiyat için WhatsApp hattımızdan bize yazabilirsiniz._";
 
 function listLine(p: StoreProduct): string {
-  return `- [${p.name}](${productHref(p)}) – ${priceText(p)}`;
+  const price = p.price != null ? `${formatTL(p.price)} (KDV dahil)` : "fiyat için WhatsApp'tan sorun";
+  return `- [${p.name}](${productHref(p)}) – ${price}`;
 }
 
 export function renderStoreTokens(md: string, products: StoreProduct[]): string {
@@ -26,10 +27,11 @@ export function renderStoreTokens(md: string, products: StoreProduct[]): string 
         const kw = kwOf(p);
         return Number.isNaN(kw) ? min === undefined : kw >= lo && kw <= hi;
       });
-      return list.length ? "\n" + list.map(listLine).join("\n") + "\n" : "";
+      return "\n" + (list.length ? list.map(listLine).join("\n") : EMPTY_LIST) + "\n";
     })
-    .replace(/\{\{fiyat:([a-z0-9-]+)\}\}/g, (m, slug: string) => {
+    .replace(/\{\{(fiyat|liste-fiyat):([a-z0-9-]+)\}\}/g, (m, kind: string, slug: string) => {
       const p = products.find((x) => x.slug === slug);
-      return p ? priceText(p) : m;
+      const v = kind === "fiyat" ? p?.price : p?.listPrice;
+      return v != null ? formatTL(v) : kind === "fiyat" ? "güncel fiyatı WhatsApp'tan sorabileceğiniz bir fiyat" : "";
     });
 }
