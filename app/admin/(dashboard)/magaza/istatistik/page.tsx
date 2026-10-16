@@ -14,6 +14,7 @@ const SOURCES: Record<string, string> = {
   store_whatsapp_datasheet: "Datasheet isteği",
   store_header_whatsapp: "Üst menü butonu",
   store_whatsapp_contact: "Sipariş hattı sayfası",
+  store_whatsapp_calculator: "Off grid hesaplama",
   whatsapp_button: "Sağ alttaki sabit buton",
 };
 
