@@ -71,6 +71,16 @@ export type StoreSettings = {
   footerText: string;
 };
 
+/** İstemci bileşenlerine (kart, raf, katalog) giden hafif ürün: uzun yazı ve sayfa alanları çıkarılır. */
+export function cardProduct(p: StoreProduct): StoreProduct {
+  return { ...p, content: undefined, contents: [], gallery: [], datasheet: undefined, seoTitle: undefined, seoDescription: undefined };
+}
+
+/** İstemci bileşenlerine giden hafif kategori: uzun SEO yazısı çıkarılır. */
+export function cardCategory(c: StoreCategory): StoreCategory {
+  return { ...c, content: undefined, seoTitle: undefined, seoDescription: undefined };
+}
+
 export function discountPercent(p: StoreProduct): number | null {
   if (!p.price || !p.listPrice || p.listPrice <= p.price) return null;
   return Math.round(((p.listPrice - p.price) / p.listPrice) * 100);

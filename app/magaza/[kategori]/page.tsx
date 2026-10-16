@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
-import { priceNoteText } from "@/lib/store";
+import { cardCategory, cardProduct, priceNoteText } from "@/lib/store";
 import { getStoreCategories, getStoreProducts, getStoreSettings } from "@/lib/store-data";
 import StoreCatalog from "@/components/store/StoreCatalog";
 import { withRatings } from "@/lib/reviews";
@@ -61,8 +61,8 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
         </section>
 
         <StoreCatalog
-          products={products}
-          categories={categories}
+          products={products.map(cardProduct)}
+          categories={categories.map(cardCategory)}
           whatsappNumber={site.contact.whatsappNumber}
           showCategoryFilter={false}
           narrow

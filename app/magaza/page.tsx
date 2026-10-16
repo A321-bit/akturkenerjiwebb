@@ -7,7 +7,7 @@ import BrandStrip from "@/components/store/BrandStrip";
 import InstalledProjects from "@/components/store/InstalledProjects";
 import StoreFaq from "@/components/store/StoreFaq";
 import { buildMetadata } from "@/lib/seo";
-import { priceNoteText } from "@/lib/store";
+import { cardCategory, cardProduct, priceNoteText } from "@/lib/store";
 import { getStoreCategories, getStoreProducts, getStoreSettings, getStoreSlides } from "@/lib/store-data";
 import CategoryShelf from "@/components/store/CategoryShelf";
 import { withRatings } from "@/lib/reviews";
@@ -32,7 +32,7 @@ export default async function StorePage() {
     getReferences(),
     getGoogleReviews(),
     getStoreCategories(),
-    getStoreProducts().then(withRatings),
+    getStoreProducts().then(withRatings).then((ps) => ps.map(cardProduct)),
     getStoreSlides(),
     getStoreSettings(),
   ]);
@@ -66,7 +66,7 @@ export default async function StorePage() {
       {categories.map((c) => {
         const products = allProducts.filter((p) => p.category === c.slug);
         return products.length > 0 ? (
-          <CategoryShelf key={c.slug} category={c} products={products} whatsappNumber={site.contact.whatsappNumber} />
+          <CategoryShelf key={c.slug} category={cardCategory(c)} products={products} whatsappNumber={site.contact.whatsappNumber} />
         ) : null;
       })}
 

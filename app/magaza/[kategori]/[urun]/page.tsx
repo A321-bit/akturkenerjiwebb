@@ -5,7 +5,7 @@ import { Download, FileText, MessageCircle, Phone } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
-import { discountPercent, formatTL } from "@/lib/store";
+import { cardProduct, discountPercent, formatTL } from "@/lib/store";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
 import { kwOf, productGallery, productHref } from "@/lib/store-details";
 import ProductGallery from "@/components/store/ProductGallery";
@@ -298,7 +298,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
       <ProductRail
         title="Benzer Ürünler"
         subtitle="İlginizi çekebilecek diğer paketler"
-        products={similar}
+        products={similar.map(cardProduct)}
         whatsappNumber={site.contact.whatsappNumber}
       />
     </div>
