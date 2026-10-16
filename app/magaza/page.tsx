@@ -3,7 +3,6 @@ import { getReferences, getSiteSettings } from "@/lib/data";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import GoogleReviews from "@/components/GoogleReviews";
 import ProductRail from "@/components/store/ProductRail";
-import BrandStrip from "@/components/store/BrandStrip";
 import InstalledProjects from "@/components/store/InstalledProjects";
 import StoreFaq from "@/components/store/StoreFaq";
 import { buildMetadata } from "@/lib/seo";
@@ -79,8 +78,6 @@ export default async function StorePage() {
         products={featured}
         whatsappNumber={site.contact.whatsappNumber}
       />
-
-      <BrandStrip title={store.brandsTitle} brands={store.brands} />
 
       <InstalledProjects references={references} categories={categories} />
 

@@ -4,7 +4,6 @@ import { FileText, PackageCheck, ShieldCheck, Tags } from "lucide-react";
 import { buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { CategoryTiles, HowToOrder } from "@/components/store/StoreSections";
-import BrandStrip from "@/components/store/BrandStrip";
 import { getStoreCategories, getStoreProducts, getStoreSettings } from "@/lib/store-data";
 import { priceNoteText } from "@/lib/store";
 import MdxContent from "@/components/MdxContent";
@@ -39,8 +38,8 @@ const PRINCIPLES = [
   },
   {
     icon: ShieldCheck,
-    title: "Yetkili satış",
-    text: "Paketlerdeki ürünleri yetkili satıcısı olduğumuz markalardan tedarik ediyoruz; ürünler üretici garantisiyle gönderilir.",
+    title: "Garantili ürünler",
+    text: "Paketlerdeki ürünler üretici garantisiyle gönderilir; kurulum ve kullanımda destek veriyoruz.",
   },
 ];
 
@@ -55,7 +54,6 @@ export default async function StoreAboutPage() {
   const stats = [
     { value: String(products.length), label: "Hazır paket" },
     { value: String(filled.length), label: "Ürün kategorisi" },
-    ...(store.brands.length ? [{ value: String(store.brands.length), label: "Yetkili satıcısı olduğumuz marka" }] : []),
     ...(google
       ? [{ value: google.rating.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }), label: `Google puanı (${google.count} yorum)` }]
       : []),
@@ -75,7 +73,7 @@ export default async function StoreAboutPage() {
         )}
       </section>
 
-      <section className="grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-6 rounded-2xl border border-line bg-paper-raised p-6 sm:grid-cols-3">
         {stats.map((s) => (
           <div key={s.label}>
             <p className="font-display text-2xl font-semibold text-ink">{s.value}</p>
@@ -108,8 +106,6 @@ export default async function StoreAboutPage() {
           <CategoryTiles categories={filled} />
         </div>
       </section>
-
-      <BrandStrip title={store.brandsTitle} brands={store.brands} />
 
       <HowToOrder steps={store.orderSteps} note={priceNoteText(store)} />
 
