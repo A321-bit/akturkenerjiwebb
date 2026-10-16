@@ -11,7 +11,7 @@ import MdxContent from "@/components/MdxContent";
 export const metadata: Metadata = {
   ...buildMetadata({
     title: "Mağaza Hakkında",
-    description: "Aktürk Enerji Mağaza: 2016'dan beri Ankara merkezli güneş enerjisi paketleri, ürünleri ve anahtar teslim kurulum.",
+    description: "Aktürk Enerji Mağaza: 2016'dan beri Ankara merkezli güneş enerjisi paketleri, ürünleri ve isteğe bağlı kurulum hizmeti.",
     path: "/magaza/hakkimizda",
   }),
   robots: { index: false, follow: true },

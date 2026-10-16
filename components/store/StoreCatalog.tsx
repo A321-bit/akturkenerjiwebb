@@ -21,17 +21,16 @@ export default function StoreCatalog({
   narrow?: boolean;
 }) {
   const [category, setCategory] = useState<string>("tumu");
-  const [installOnly, setInstallOnly] = useState(false);
   const [sort, setSort] = useState<Sort>("onerilen");
 
   const usedCategories = categories.filter((c) => products.some((p) => p.category === c.slug));
   const list = useMemo(() => {
-    let l = products.filter((p) => (category === "tumu" || p.category === category) && (!installOnly || p.installIncluded));
+    let l = products.filter((p) => category === "tumu" || p.category === category);
     if (sort !== "onerilen") {
       l = [...l].sort((a, b) => ((a.price ?? 1e12) - (b.price ?? 1e12)) * (sort === "artan" ? 1 : -1));
     }
     return l;
-  }, [products, category, installOnly, sort]);
+  }, [products, category, sort]);
 
   const chip = (active: boolean) =>
     `whitespace-nowrap rounded-full border px-3.5 py-2 text-[13.5px] font-semibold transition-colors ${
@@ -56,10 +55,6 @@ export default function StoreCatalog({
           <span />
         )}
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-[13.5px] font-medium text-slate">
-            <input type="checkbox" checked={installOnly} onChange={(e) => setInstallOnly(e.target.checked)} className="h-4 w-4 accent-[var(--brand)]" />
-            Kurulum dahil
-          </label>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
