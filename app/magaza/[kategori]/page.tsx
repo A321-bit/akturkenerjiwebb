@@ -10,6 +10,7 @@ import StoreCatalog from "@/components/store/StoreCatalog";
 import { withRatings } from "@/lib/reviews";
 import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
 import MdxContent from "@/components/MdxContent";
+import { renderStoreTokens } from "@/lib/store-content";
 
 export async function generateStaticParams() {
   const categories = await getStoreCategories();
@@ -73,7 +74,7 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
           <h2 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{category.name} Hakkında</h2>
           {category.content ? (
             <div className="prose prose-neutral mt-4 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-table:text-[14px]">
-              <MdxContent source={category.content} />
+              <MdxContent source={renderStoreTokens(category.content, products)} />
             </div>
           ) : (
             <p className="mt-3 text-[15px] leading-relaxed text-slate">{category.intro}</p>

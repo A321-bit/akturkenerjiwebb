@@ -11,6 +11,7 @@ import { kwOf, productGallery, productHref } from "@/lib/store-details";
 import ProductGallery from "@/components/store/ProductGallery";
 import TrackedContactLink from "@/components/TrackedContactLink";
 import MdxContent from "@/components/MdxContent";
+import { renderStoreTokens } from "@/lib/store-content";
 import ProductTabs from "@/components/store/ProductTabs";
 import ProductRail from "@/components/store/ProductRail";
 import ReviewForm from "@/components/store/ReviewForm";
@@ -221,7 +222,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
             key="aciklama"
             className="prose prose-neutral max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3"
           >
-            <MdxContent source={description} />
+            <MdxContent source={renderStoreTokens(description, products.filter((p) => p.category === product.category))} />
           </div>,
 
           <div key="datasheet" className="flex flex-col items-start gap-4 rounded-2xl border border-line bg-paper-raised p-6 sm:flex-row sm:items-center">
