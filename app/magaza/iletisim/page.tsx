@@ -5,6 +5,7 @@ import { buildMetadata } from "@/lib/seo";
 import { getStoreSettings } from "@/lib/store-data";
 import TrackedContactLink from "@/components/TrackedContactLink";
 import StoreFaq from "@/components/store/StoreFaq";
+import BankAccounts, { COMPANY_TITLE } from "@/components/BankAccounts";
 
 // Mağaza iletişim: kurumsal iletişim sayfası "ücretsiz keşif" odaklıdır; bu
 // sayfa sipariş hattına ve sipariş sürecine odaklanır.
@@ -122,6 +123,19 @@ export default async function StoreContactPage() {
               <span className="block text-[12px] text-slate">Adres</span>
             </span>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Havale / EFT</p>
+        <h2 className="mt-1.5 font-display text-lg font-semibold tracking-tight">Banka hesap bilgilerimiz</h2>
+        <p className="mt-2 max-w-3xl text-[14px] leading-relaxed text-slate">
+          Alıcı: {COMPANY_TITLE} Ödemenizi siparişiniz yazılı olarak onaylandıktan sonra yapmanızı rica ederiz;
+          açıklama kısmına adınızı ve sipariş ettiğiniz paketi yazmanız yeterli. Ödemeleriniz için yalnızca aşağıdaki
+          resmi hesaplarımızı kullanınız.
+        </p>
+        <div className="mt-5">
+          <BankAccounts copyable />
         </div>
       </section>
 

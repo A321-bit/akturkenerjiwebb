@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import BankAccounts, { COMPANY_TITLE } from "@/components/BankAccounts";
 import { MapPin, Mail, Phone, Clock, MessageCircle, Navigation } from "lucide-react";
 import Link from "next/link";
 import { getReferences, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
@@ -157,57 +158,13 @@ export default async function ContactPage() {
           Banka Hesap Bilgilerimiz
         </h2>
         <p className="mt-2 max-w-2xl text-[14px] text-slate">
-          Akturk Yenilenebilir Enerji Teknolojileri San. Tic. Ltd. Ödemeleriniz için
+          {COMPANY_TITLE} Ödemeleriniz için
           yalnızca aşağıdaki resmi hesaplarımızı kullanınız.
         </p>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <BankCard
-            bankName="VakıfBank"
-            branch="1096 - Esertepe / Ankara"
-            accounts={[
-              { label: "TL", iban: "TR06 0001 5001 5800 7314 9556 86" },
-              { label: "USD", iban: "TR18 0001 5001 5804 8020 8240 80" },
-              { label: "EURO", iban: "TR55 0001 5001 5804 8020 8240 93" },
-            ]}
-          />
-          <BankCard
-            bankName="Türkiye Ziraat Bankası"
-            branch="1274 - Esertepe / Ankara"
-            accounts={[
-              { label: "TL", iban: "TR03 0001 0021 0191 5377 6550 02" },
-              { label: "USD", iban: "TR73 0001 0021 0191 5377 6550 03" },
-              { label: "EURO", iban: "TR46 0001 0021 0191 5377 6550 04" },
-            ]}
-          />
+        <div className="mt-5">
+          <BankAccounts />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function BankCard({
-  bankName,
-  branch,
-  accounts,
-}: {
-  bankName: string;
-  branch: string;
-  accounts: { label: string; iban: string }[];
-}) {
-  return (
-    <div className="rounded-2xl border border-line bg-paper-raised p-5">
-      <p className="text-[14.5px] font-semibold text-ink">{bankName}</p>
-      <p className="text-[12.5px] text-slate-soft">{branch}</p>
-      <div className="mt-3 flex flex-col gap-2">
-        {accounts.map(({ label, iban }) => (
-          <div key={label} className="flex flex-col gap-0.5 rounded-lg bg-ink/[0.03] px-3 py-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-soft">
-              {label}
-            </span>
-            <span className="font-mono-data text-[13px] tracking-wide text-ink">{iban}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
