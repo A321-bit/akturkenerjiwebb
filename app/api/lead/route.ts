@@ -30,6 +30,8 @@ type LeadInput = {
   utmContent?: string;
   utmTerm?: string;
   adClickId?: string;
+  /** Ek bilgi (ör. off grid hesaplama sonucu); admin panelde talebin notunda görünür. */
+  notes?: string;
 };
 
 export async function POST(req: Request) {
@@ -56,6 +58,7 @@ export async function POST(req: Request) {
     utmContent,
     utmTerm,
     adClickId,
+    notes,
   } = body;
 
   if (!needType || !fullname || !phone) {
@@ -77,6 +80,7 @@ export async function POST(req: Request) {
     utmContent: utmContent || null,
     utmTerm: utmTerm || null,
     adClickId: adClickId || null,
+    notes: typeof notes === "string" ? notes.slice(0, 2000) : null,
     receivedAt: new Date().toISOString(),
   };
 
@@ -126,6 +130,7 @@ type LeadForStorage = {
   utmContent?: string | null;
   utmTerm?: string | null;
   adClickId?: string | null;
+  notes?: string | null;
   receivedAt: string;
 };
 
@@ -137,7 +142,9 @@ async function sendToSupabase(lead: LeadForStorage) {
   const supabase = createClient(url, key);
   const record: Record<string, unknown> = {
     need_type: lead.needType,
-    bill_range: lead.billRange,
+    // bill_range tabloda zorunlu; fatura sorulmayan formlarda boş gelince il ve UTM
+    // alanları da yedek denemede kayboluyordu.
+    bill_range: lead.billRange ?? "Belirtilmedi",
     fullname: lead.fullname,
     phone: lead.phone,
     email: lead.email,
@@ -151,6 +158,7 @@ async function sendToSupabase(lead: LeadForStorage) {
   if (lead.utmContent) record.utm_content = lead.utmContent;
   if (lead.utmTerm) record.utm_term = lead.utmTerm;
   if (lead.adClickId) record.ad_click_id = lead.adClickId;
+  if (lead.notes) record.notes = lead.notes;
 
   let { error } = await supabase.from("leads").insert(record);
 

@@ -8,10 +8,12 @@ import { usePathname } from "next/navigation";
 export default function StoreShell({ sidebar, children }: { sidebar: React.ReactNode; children: React.ReactNode }) {
   const pathname = usePathname();
   const home = pathname === "/magaza";
+  // Hesaplama araçları kategori menüsü olmadan, tam genişlikte açılır.
+  const tool = pathname === "/magaza/off-grid-hesaplama";
 
   return (
     <div className={`mx-auto max-w-7xl px-5 sm:px-8 ${home ? "pb-8 pt-6 lg:pt-0" : "py-6 sm:py-8"}`}>
-      {home ? (
+      {home || tool ? (
         children
       ) : (
         <div className="lg:grid lg:grid-cols-[260px_1fr] lg:items-start lg:gap-8">

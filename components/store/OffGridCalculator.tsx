@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, BatteryCharging, Gauge, MessageCircle, Minus, Plus, Sun, Trash2, Zap } from "lucide-react";
+import { AlertTriangle, BatteryCharging, CheckCircle2, Gauge, MessageCircle, Minus, Plus, Sun, Trash2, UserRound, Zap } from "lucide-react";
 import { calculate, DEVICE_PRESETS, pickPackage, type Device, type OffGridPackage, type Season } from "@/lib/offgrid-calc";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { formatTL } from "@/lib/store";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
+import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
+import KvkkNotice from "@/components/KvkkNotice";
 
 const fmt = (n: number, d = 1) => n.toLocaleString("tr-TR", { maximumFractionDigits: d });
 
@@ -21,6 +23,9 @@ export default function OffGridCalculator({ packages, whatsappNumber }: { packag
   const [together, setTogether] = useState(false);
   const [threePhase, setThreePhase] = useState(false);
   const [custom, setCustom] = useState({ name: "", watt: "", hours: "" });
+  const [contact, setContact] = useState({ name: "", phone: "", province: "Ankara", district: "" });
+  const [contactError, setContactError] = useState("");
+  const [sent, setSent] = useState(false);
 
   const r = useMemo(() => calculate(devices, season, autonomy, together), [devices, season, autonomy, together]);
   const pkg = pickPackage(packages, r.inverterKw, threePhase);
@@ -38,8 +43,15 @@ export default function OffGridCalculator({ packages, whatsappNumber }: { packag
     setCustom({ name: "", watt: "", hours: "" });
   }
 
+  const phoneDigits = contact.phone.replace(/\D/g, "");
+  const contactOk = contact.name.trim().length >= 3 && phoneDigits.length >= 10 && !!contact.province && contact.district.trim().length >= 2;
+
   const message = [
     "Merhaba, off grid paket hesaplama sonucumu gönderiyorum:",
+    "",
+    `Ad Soyad: ${contact.name.trim()}`,
+    `Telefon: ${contact.phone.trim()}`,
+    `Konum: ${contact.province} / ${contact.district.trim()}`,
     "",
     ...selected.map((d) => `• ${d.name}: ${d.qty} adet × ${d.watt} W × günde ${fmt(d.hours)} saat`),
     "",
@@ -51,9 +63,63 @@ export default function OffGridCalculator({ packages, whatsappNumber }: { packag
     `Hesaplama: ${SITE_URL}/magaza/off-grid-hesaplama`,
   ].join("\n");
 
+  function send() {
+    if (!contactOk) {
+      setContactError("Sonucu gönderebilmemiz için ad soyad, telefon, il ve ilçe bilgilerinizi doldurun.");
+      document.getElementById("musteri-bilgileri")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    setContactError("");
+    // WhatsApp hemen açılır (açılır pencere engeline takılmasın); talep arka planda admin paneline kaydedilir.
+    window.open(whatsappLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
+    trackEvent("click", "/magaza/off-grid-hesaplama", "store_whatsapp_calculator");
+    trackGa4WhatsappClick();
+    fetch("/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        needType: "Off grid paket hesaplama",
+        fullname: contact.name.trim(),
+        phone: contact.phone.trim(),
+        province: `${contact.province} / ${contact.district.trim()}`,
+        source: "offgrid_calculator",
+        formPage: "/magaza/off-grid-hesaplama",
+        notes: message,
+      }),
+    }).catch(() => {});
+    setSent(true);
+  }
+
   const input = "w-full rounded-lg border border-line bg-paper px-2.5 py-1.5 text-[13.5px] text-ink outline-none focus:border-brand";
 
+  const field = "rounded-lg border border-line bg-paper px-3.5 py-2.5 text-[14.5px] text-ink outline-none focus:border-brand";
+
   return (
+    <div className="flex flex-col gap-6">
+      <section id="musteri-bilgileri" className="scroll-mt-32 rounded-2xl border border-line bg-paper-raised p-5 sm:p-6">
+        <p className="flex items-center gap-2 font-display text-[17px] font-semibold text-ink">
+          <UserRound size={19} className="text-brand" /> 1. Bilgileriniz
+        </p>
+        <p className="mt-1 text-[13.5px] text-slate">Hesap sonucunuzu ve size uygun paketi bu bilgilerle değerlendirip size dönüş yapıyoruz.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <input aria-label="Ad Soyad" placeholder="Ad Soyad" autoComplete="name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} className={field} />
+          <input aria-label="Telefon" placeholder="Telefon (05xx xxx xx xx)" type="tel" inputMode="tel" autoComplete="tel" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} className={field} />
+          <select aria-label="İl" value={contact.province} onChange={(e) => setContact({ ...contact, province: e.target.value })} className={field}>
+            {[...TURKISH_PROVINCES].sort((a, b) => a.localeCompare(b, "tr")).map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <input aria-label="İlçe" placeholder="İlçe" value={contact.district} onChange={(e) => setContact({ ...contact, district: e.target.value })} className={field} />
+        </div>
+        {contactError && <p className="mt-3 text-[13px] font-medium text-red-600">{contactError}</p>}
+        <KvkkNotice className="mt-3 !text-left" />
+      </section>
+
+      <p className="-mb-2 font-display text-[17px] font-semibold text-ink">2. Kullandığınız cihazlar</p>
+
     <div className="grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
       {/* Cihaz listesi */}
       <div className="rounded-2xl border border-line bg-paper-raised">
@@ -188,19 +254,21 @@ export default function OffGridCalculator({ packages, whatsappNumber }: { packag
             )}
           </div>
 
-          <a
-            href={whatsappLink(whatsappNumber, message)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => {
-              trackEvent("click", "/magaza/off-grid-hesaplama", "store_whatsapp_calculator");
-              trackGa4WhatsappClick();
-            }}
+          <button
+            type="button"
+            onClick={send}
             className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 text-[14.5px] font-bold text-white transition-transform hover:scale-[1.02]"
           >
             <MessageCircle size={18} fill="currentColor" />
             Sonucu WhatsApp&apos;tan gönder
-          </a>
+          </button>
+          {sent ? (
+            <p className="mt-2 flex items-center gap-1.5 text-[12.5px] text-[#7ee2a8]">
+              <CheckCircle2 size={14} /> Bilgileriniz alındı; WhatsApp açılmadıysa sizi biz arayacağız.
+            </p>
+          ) : (
+            !contactOk && <p className="mt-2 text-[12px] text-paper/60">Göndermek için üstteki bilgilerinizi doldurun.</p>
+          )}
         </div>
 
         {(r.heaters.length > 0 || r.hasMotor) && (
@@ -218,6 +286,7 @@ export default function OffGridCalculator({ packages, whatsappNumber }: { packag
           </div>
         )}
       </aside>
+    </div>
     </div>
   );
 }
