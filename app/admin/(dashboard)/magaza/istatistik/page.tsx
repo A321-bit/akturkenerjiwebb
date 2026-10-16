@@ -13,11 +13,12 @@ const SOURCES: Record<string, string> = {
   store_whatsapp_product: "Ürün sayfası butonu",
   store_whatsapp_datasheet: "Datasheet isteği",
   store_header_whatsapp: "Üst menü butonu",
+  store_whatsapp_contact: "Sipariş hattı sayfası",
   whatsapp_button: "Sağ alttaki sabit buton",
 };
 
 const isWhatsapp = (l: string | null) => Boolean(l && (l in SOURCES || l.includes("whatsapp")));
-const isCall = (l: string | null) => l === "call_button" || l === "store_call_product";
+const isCall = (l: string | null) => l === "call_button" || l === "store_call_product" || l === "store_call_contact";
 
 /** Seçilen dönemin başlangıcı ve grafikteki günler (en fazla 30, eskiden yeniye). */
 function dateWindow(days: number) {
