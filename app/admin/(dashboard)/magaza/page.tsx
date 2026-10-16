@@ -22,6 +22,7 @@ type Row = {
   content: string | null;
   cost_usd: number | null;
   margin_pct: number | null;
+  list_margin_pct: number | null;
 };
 type Cat = { slug: string; name: string; margin_pct: number | null };
 
@@ -37,6 +38,7 @@ export default function AdminStoreProductsPage() {
   const [includeList, setIncludeList] = useState(true);
   const [msg, setMsg] = useState("");
   const [marginIn, setMarginIn] = useState("");
+  const [listMarginIn, setListMarginIn] = useState("");
   const [marginMsg, setMarginMsg] = useState("");
 
   const fetchRows = () => fetch("/api/admin/store/products").then((r) => r.json());
@@ -99,15 +101,19 @@ export default function AdminStoreProductsPage() {
 
   async function bulkMargin() {
     if (selected.size === 0) return;
-    const t = marginIn.trim();
-    const m = t === "" ? null : Number(t.replace(",", "."));
-    if (m !== null && !Number.isFinite(m)) return;
-    const text = m === null ? "ürüne özel kâr marjı kaldırılacak (kategori/genel marj geçerli olur)" : `kâr marjı %${m} yapılacak`;
-    if (!confirm(`${selected.size} üründe ${text}. Onaylıyor musunuz?`)) return;
+    const parse = (s: string) => (s.trim() === "" ? null : Number(s.replace(",", ".")));
+    const m = parse(marginIn);
+    const lm = parse(listMarginIn);
+    if ((m !== null && !Number.isFinite(m)) || (lm !== null && !Number.isFinite(lm))) return;
+    const text = [
+      m === null ? "ürüne özel kâr marjı kalkacak" : `kâr marjı %${m}`,
+      lm === null ? "ürüne özel üstü çizili marjı kalkacak" : `üstü çizili fiyat marjı %${lm}`,
+    ].join(", ");
+    if (!confirm(`${selected.size} üründe ${text} olacak (boş olanlarda kategori/genel değer geçerli olur). Onaylıyor musunuz?`)) return;
     const res = await fetch("/api/admin/store/products/bulk-margin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: [...selected], margin_pct: m }),
+      body: JSON.stringify({ ids: [...selected], margin_pct: m, list_margin_pct: lm }),
     });
     const body = await res.json().catch(() => ({}));
     setMarginMsg(res.ok ? `${body.updated} ürünün marjı kaydedildi; ${body.repriced} ürünün fiyatı yeniden hesaplandı.` : body.error ?? "Güncellenemedi.");
@@ -178,6 +184,10 @@ export default function AdminStoreProductsPage() {
         <label className="flex flex-col gap-1">
           <span className="text-[12px] text-slate">Kâr marjı (%)</span>
           <input value={marginIn} onChange={(e) => setMarginIn(e.target.value)} placeholder="ör. 25" className="admin-input w-32" />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-[12px] text-slate">Üstü çizili marjı (%)</span>
+          <input value={listMarginIn} onChange={(e) => setListMarginIn(e.target.value)} placeholder="ör. 65" className="admin-input w-32" />
         </label>
         <button
           type="button"

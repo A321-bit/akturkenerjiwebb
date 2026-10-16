@@ -13,6 +13,7 @@ type Settings = {
   price_round: number;
   vat_pct: number | string | null;
   default_margin_pct: number | string | null;
+  default_list_margin_pct: number | string | null;
   prices_updated: string;
   price_note: string;
   featured_title: string;
@@ -76,7 +77,7 @@ export default function AdminStoreSettingsPage() {
     }
     setS((x) => (x ? { ...x, usd_rate: body.usd_rate, usd_rate_updated_at: body.usd_rate_updated_at } : x));
     setTcmb("");
-    setS((x) => (x ? { ...x, vat_pct: body.vat_pct, default_margin_pct: body.default_margin_pct } : x));
+    setS((x) => (x ? { ...x, vat_pct: body.vat_pct, default_margin_pct: body.default_margin_pct, default_list_margin_pct: body.default_list_margin_pct } : x));
     setDone(body.repriced ? `Ayarlar kaydedildi; ${body.repriced} ürünün fiyatı güncellendi.` : "Ayarlar kaydedildi; mağazaya yansıdı.");
   }
 
@@ -123,6 +124,14 @@ export default function AdminStoreSettingsPage() {
               onChange={(e) => set("default_margin_pct", e.target.value)}
               className="admin-input"
               placeholder="ör. 20"
+            />
+          </Field>
+          <Field label="Genel üstü çizili fiyat marjı (%)" hint="Üstü çizili fiyat = alış (KDV dahil) × (1 + bu oran). Boş bırakılabilir.">
+            <input
+              inputMode="decimal"
+              value={s.default_list_margin_pct == null ? "" : String(s.default_list_margin_pct).replace(".", ",")}
+              onChange={(e) => set("default_list_margin_pct", e.target.value)}
+              className="admin-input"
             />
           </Field>
           <Field label="KDV oranı (%)" hint="Alış fiyatlarına eklenen KDV.">

@@ -22,6 +22,7 @@ export type CategoryFormValues = {
   active: boolean;
   /** Kâr marjı (%) metin olarak; boş = genel marj. */
   margin_pct: string;
+  list_margin_pct: string;
 };
 
 export default function CategoryForm({ initial }: { initial: CategoryFormValues }) {
@@ -43,6 +44,7 @@ export default function CategoryForm({ initial }: { initial: CategoryFormValues 
     const payload = {
       ...v,
       margin_pct: v.margin_pct.trim() === "" ? null : Number(v.margin_pct.replace(",", ".")),
+      list_margin_pct: v.list_margin_pct.trim() === "" ? null : Number(v.list_margin_pct.replace(",", ".")),
       content: v.content.trim() || null,
       seo_title: v.seo_title.trim() || null,
       seo_description: v.seo_description.trim() || null,
@@ -122,6 +124,9 @@ export default function CategoryForm({ initial }: { initial: CategoryFormValues 
       >
         <Field label="Kategori kâr marjı (%)" hint="Boş bırakılırsa Mağaza Ayarları'ndaki genel marj uygulanır.">
           <input inputMode="decimal" value={v.margin_pct} onChange={(e) => set("margin_pct", e.target.value)} className="admin-input w-40" placeholder="ör. 25" />
+        </Field>
+        <Field label="Üstü çizili fiyat marjı (%)" hint="Üstü çizili fiyat = alış (KDV dahil) × (1 + bu oran). Boşsa genel değer; o da yoksa elle girilir.">
+          <input inputMode="decimal" value={v.list_margin_pct} onChange={(e) => set("list_margin_pct", e.target.value)} className="admin-input w-40" />
         </Field>
       </Section>
 

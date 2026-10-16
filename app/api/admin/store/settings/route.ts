@@ -15,8 +15,8 @@ export async function PUT(req: Request) {
   delete body.id;
   delete body.usd_rate_updated_at;
 
-  const { data: before } = await db.from("store_settings").select("usd_rate, price_round, vat_pct, default_margin_pct").eq("id", 1).single();
-  for (const k of ["vat_pct", "default_margin_pct"] as const) {
+  const { data: before } = await db.from("store_settings").select("usd_rate, price_round, vat_pct, default_margin_pct, default_list_margin_pct").eq("id", 1).single();
+  for (const k of ["vat_pct", "default_margin_pct", "default_list_margin_pct"] as const) {
     if (!(k in body)) continue;
     const n = Number(String(body[k] ?? "").replace(",", "."));
     body[k] = body[k] === "" || body[k] === null || !Number.isFinite(n) ? (k === "vat_pct" ? 20 : null) : n;
@@ -34,7 +34,7 @@ export async function PUT(req: Request) {
   // Kur ya da yuvarlama değiştiyse USD fiyatlı ürünlerin TL fiyatları güncellenir.
   let repriced = 0;
   const changed = (k: string) => String((before as Record<string, unknown> | null)?.[k] ?? "") !== String((data as Record<string, unknown>)[k] ?? "");
-  if (["usd_rate", "price_round", "vat_pct", "default_margin_pct"].some(changed)) {
+  if (["usd_rate", "price_round", "vat_pct", "default_margin_pct", "default_list_margin_pct"].some(changed)) {
     repriced = await recomputeAllPrices(db);
   }
   revalidateSite();

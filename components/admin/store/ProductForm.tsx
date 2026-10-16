@@ -32,6 +32,7 @@ export type ProductFormValues = {
   cost_usd: number | null;
   bom: { name: string; qty: number; unit: number }[];
   margin_pct: number | null;
+  list_margin_pct: number | null;
 };
 
 type BomRow = { name: string; qty: string; unit: string };
@@ -68,9 +69,9 @@ export default function ProductForm({
   /** Son 30 günün en düşük satış fiyatı (fiyat geçmişinden). */
   lowest30?: number | null;
   /** Mağaza Ayarları'ndaki USD kuru ve TL yuvarlama basamağı. */
-  pricing: { rate: number | null; round: number; vatPct: number; defaultMargin: number | null };
-  /** Kategori kâr marjları (slug → %). */
-  categoryMargins?: Record<string, number | null>;
+  pricing: { rate: number | null; round: number; vatPct: number; defaultMargin: number | null; defaultListMargin: number | null };
+  /** Kategori marjları (slug → satış % / üstü çizili %). */
+  categoryMargins?: Record<string, { margin: number | null; list: number | null }>;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initial);
@@ -83,6 +84,7 @@ export default function ProductForm({
   );
   const [costIn, setCostIn] = useState(usdText(initial.cost_usd));
   const [marginIn, setMarginIn] = useState(pctText(initial.margin_pct));
+  const [listMarginIn, setListMarginIn] = useState(pctText(initial.list_margin_pct));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -100,8 +102,9 @@ export default function ProductForm({
       bom: bomParsed,
       cost_usd: cost,
       margin_pct: parseNum(marginIn),
+      list_margin_pct: parseNum(listMarginIn),
       price_usd: autoUsd ?? parseUsd(usdIn),
-      list_price_usd: parseUsd(listUsdIn),
+      list_price_usd: autoListUsd ?? parseUsd(listUsdIn),
       contents: contentsText.split("\n").map((x) => x.trim()).filter(Boolean),
       content: v.content.trim() || null,
       seo_title: v.seo_title.trim() || null,
@@ -132,14 +135,18 @@ export default function ProductForm({
   const cost = bomParsed.length ? Math.round(bomParsed.reduce((t, r) => t + r.qty * r.unit, 0) * 100) / 100 : parseUsd(costIn);
   const costVat = cost != null ? Math.round(cost * (1 + pricing.vatPct / 100) * 100) / 100 : null;
   const ownMargin = parseNum(marginIn);
-  const catMargin = categoryMargins[v.category] ?? null;
+  const catMargin = categoryMargins[v.category]?.margin ?? null;
   const margin = ownMargin ?? catMargin ?? pricing.defaultMargin;
   const marginSource = ownMargin != null ? "ürün" : catMargin != null ? "kategori" : pricing.defaultMargin != null ? "genel" : null;
   const autoUsd = costVat != null && margin != null ? Math.round(costVat * (1 + margin / 100) * 100) / 100 : null;
+  const ownListMargin = parseNum(listMarginIn);
+  const catListMargin = categoryMargins[v.category]?.list ?? null;
+  const listMargin = ownListMargin ?? catListMargin ?? pricing.defaultListMargin;
+  const autoListUsd = costVat != null && listMargin != null ? Math.round(costVat * (1 + listMargin / 100) * 100) / 100 : null;
   const setRow = (i: number, k: keyof BomRow, val: string) => setBomRows((rows) => rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
 
   const usd = autoUsd ?? parseUsd(usdIn);
-  const listUsd = parseUsd(listUsdIn);
+  const listUsd = autoListUsd ?? parseUsd(listUsdIn);
   // USD girildiyse TL fiyat kurla hesaplanır; girilmediyse TL elle yazılır.
   const shownPrice = usd != null ? toTl(usd) : v.price;
   const shownList = listUsd != null ? toTl(listUsd) : v.list_price;
@@ -274,6 +281,20 @@ export default function ProductForm({
           >
             <input inputMode="decimal" value={marginIn} onChange={(e) => setMarginIn(e.target.value)} className="admin-input" />
           </Field>
+          <Field
+            label="Üstü çizili fiyat marjı (%)"
+            hint={
+              ownListMargin != null
+                ? "Bu ürüne özel."
+                : catListMargin != null
+                  ? `Boş: kategori değeri %${pctText(catListMargin)} uygulanır.`
+                  : pricing.defaultListMargin != null
+                    ? `Boş: genel değer %${pctText(pricing.defaultListMargin)} uygulanır.`
+                    : "Boşsa üstü çizili fiyat elle girilir."
+            }
+          >
+            <input inputMode="decimal" value={listMarginIn} onChange={(e) => setListMarginIn(e.target.value)} className="admin-input" />
+          </Field>
         </div>
         {costVat != null && (
           <div className="grid gap-1 rounded-lg bg-paper px-3 py-2.5 text-[13px] sm:grid-cols-3">
@@ -286,6 +307,11 @@ export default function ProductForm({
             <span>
               Satış: <strong>{autoUsd != null ? `${money(autoUsd)}${toTl(autoUsd) ? ` = ${tl(toTl(autoUsd)!)}` : ""}` : "marj girin"}</strong>
             </span>
+            {autoListUsd != null && (
+              <span className="sm:col-span-3">
+                Üstü çizili: <strong>{money(autoListUsd)}{toTl(autoListUsd) ? ` = ${tl(toTl(autoListUsd)!)}` : ""}</strong> (%{pctText(listMargin)})
+              </span>
+            )}
             {autoUsd != null && (
               <span className="text-slate-soft sm:col-span-3">Kâr: {money(Math.round((autoUsd - costVat) * 100) / 100)} (KDV dahil tutarlar üzerinden)</span>
             )}
@@ -311,7 +337,11 @@ export default function ProductForm({
             )}
           </Field>
           <Field label="Üstü çizili eski fiyat (USD)" hint={listUsd != null && shownList ? `= ${tl(shownList)}${discount ? ` · kartta %${discount} indirim` : ""}` : "İndirim yoksa boş bırakın."}>
-            <input inputMode="decimal" value={listUsdIn} onChange={(e) => setListUsdIn(e.target.value)} className="admin-input" />
+            {autoListUsd != null ? (
+              <input readOnly value={usdText(autoListUsd)} className="admin-input bg-paper" title="Maliyet ve üstü çizili fiyat marjından otomatik hesaplanıyor" />
+            ) : (
+              <input inputMode="decimal" value={listUsdIn} onChange={(e) => setListUsdIn(e.target.value)} className="admin-input" />
+            )}
           </Field>
         </div>
         {(usd == null || listUsd == null) && (

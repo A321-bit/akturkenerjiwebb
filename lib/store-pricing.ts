@@ -7,9 +7,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // kâr marjı varsa satış fiyatı otomatik hesaplanır:
 //   satış USD = alış × (1 + KDV) × (1 + kâr %)
 // Kâr marjı önceliği: ürün → kategori → genel (Mağaza Ayarları). Hiçbiri
-// girilmemişse ürünün elle girilen USD fiyatı kullanılır.
+// girilmemişse ürünün elle girilen USD fiyatı kullanılır. Üstü çizili fiyat da
+// aynı şekilde "liste marjı"ndan hesaplanır.
 
-export type PricingSettings = { rate: number | null; round: number; vatPct: number; defaultMargin: number | null };
+export type PricingSettings = {
+  rate: number | null;
+  round: number;
+  vatPct: number;
+  defaultMargin: number | null;
+  defaultListMargin: number | null;
+};
 
 const num = (v: unknown): number | null => (v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
 
@@ -21,6 +28,7 @@ export async function getPricingSettings(db: SupabaseClient): Promise<PricingSet
     round: Math.max(1, Number(data?.price_round) || 1),
     vatPct: num(data?.vat_pct) ?? 20,
     defaultMargin: num(data?.default_margin_pct),
+    defaultListMargin: num(data?.default_list_margin_pct),
   };
 }
 
@@ -32,6 +40,10 @@ export function usdToTl(usd: number, s: PricingSettings): number | null {
 
 export function effectiveMargin(productMargin: unknown, categoryMargin: unknown, s: PricingSettings): number | null {
   return num(productMargin) ?? num(categoryMargin) ?? s.defaultMargin;
+}
+
+export function effectiveListMargin(productMargin: unknown, categoryMargin: unknown, s: PricingSettings): number | null {
+  return num(productMargin) ?? num(categoryMargin) ?? s.defaultListMargin;
 }
 
 /** Alış maliyeti (KDV hariç) ve kâr marjından KDV dahil satış fiyatı (USD). */
@@ -65,25 +77,31 @@ export function applyUsd(body: Record<string, unknown>, s: PricingSettings) {
  */
 export async function recomputePrices(db: SupabaseClient, filter: { ids?: number[]; category?: string } = {}): Promise<number> {
   const s = await getPricingSettings(db);
-  let q = db.from("store_products").select("id, category, price, list_price, price_usd, list_price_usd, cost_usd, margin_pct");
+  let q = db.from("store_products").select("id, category, price, list_price, price_usd, list_price_usd, cost_usd, margin_pct, list_margin_pct");
   if (filter.ids?.length) q = q.in("id", filter.ids);
   if (filter.category) q = q.eq("category", filter.category);
-  const [{ data: products }, { data: cats }] = await Promise.all([q, db.from("store_categories").select("slug, margin_pct")]);
+  const [{ data: products }, { data: cats }] = await Promise.all([q, db.from("store_categories").select("slug, margin_pct, list_margin_pct")]);
   const catMargin = new Map((cats ?? []).map((c) => [c.slug, c.margin_pct]));
+  const catListMargin = new Map((cats ?? []).map((c) => [c.slug, c.list_margin_pct]));
 
   let n = 0;
   for (const p of products ?? []) {
     const patch: Record<string, number | null> = {};
     const cost = num(p.cost_usd);
     const margin = effectiveMargin(p.margin_pct, catMargin.get(p.category), s);
+    const listMargin = effectiveListMargin(p.list_margin_pct, catListMargin.get(p.category), s);
     let priceUsd = num(p.price_usd);
+    let listUsd = num(p.list_price_usd);
     if (cost !== null && cost > 0 && margin !== null) {
       priceUsd = priceFromCost(cost, margin, s);
       if (priceUsd !== num(p.price_usd)) patch.price_usd = priceUsd;
     }
+    if (cost !== null && cost > 0 && listMargin !== null) {
+      listUsd = priceFromCost(cost, listMargin, s);
+      if (listUsd !== num(p.list_price_usd)) patch.list_price_usd = listUsd;
+    }
     if (s.rate) {
       if (priceUsd !== null) patch.price = usdToTl(priceUsd, s);
-      const listUsd = num(p.list_price_usd);
       if (listUsd !== null) patch.list_price = usdToTl(listUsd, s);
     }
     const changed = Object.entries(patch).some(([k, v]) => num((p as Record<string, unknown>)[k]) !== v);
@@ -94,5 +112,5 @@ export async function recomputePrices(db: SupabaseClient, filter: { ids?: number
   return n;
 }
 
-/** Kur, KDV, yuvarlama ya da genel marj değişince bütün ürünler. */
+/** Kur, KDV, yuvarlama ya da genel marjlar değişince bütün ürünler. */
 export const recomputeAllPrices = (db: SupabaseClient) => recomputePrices(db);

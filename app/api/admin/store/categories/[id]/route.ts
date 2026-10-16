@@ -11,9 +11,9 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
   const { id } = await ctx.params;
   const db = adminClient();
   const raw = await req.json();
-  const marginChanged = "margin_pct" in raw;
+  const marginChanged = "margin_pct" in raw || "list_margin_pct" in raw;
   const body = { ...raw };
-  if (marginChanged) body.margin_pct = sanitizeCostFields({ margin_pct: raw.margin_pct }).margin_pct;
+  for (const k of ["margin_pct", "list_margin_pct"]) if (k in raw) body[k] = sanitizeCostFields({ [k]: raw[k] })[k];
   delete body.id;
   body.updated_at = new Date().toISOString();
   const { data, error } = await db.from("store_categories").update(body).eq("id", id).select().single();

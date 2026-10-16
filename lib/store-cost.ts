@@ -22,9 +22,10 @@ export function sanitizeCostFields(body: Record<string, unknown>) {
     const c = toNum(body.cost_usd);
     body.cost_usd = c !== null && c > 0 ? c : null;
   }
-  if ("margin_pct" in body) {
-    const m = toNum(body.margin_pct);
-    body.margin_pct = m !== null && m > -100 ? m : null;
+  for (const k of ["margin_pct", "list_margin_pct"]) {
+    if (!(k in body)) continue;
+    const m = toNum(body[k]);
+    body[k] = m !== null && m > -100 ? m : null;
   }
   return body;
 }
