@@ -1,10 +1,14 @@
 import { cache } from "react";
-import { supabasePublic } from "./supabase";
+import { supabaseAdmin, supabasePublic } from "./supabase";
 import type { StoreCategory, StoreProduct, StoreSettings, StoreSlide } from "./store";
 
-// Mağaza verisi: admin panelden yönetilen store_* tabloları. Ziyaretçi
-// yalnızca aktif (yayında) kayıtları görür (RLS). Hata olursa mağaza boş
-// görünür ama sayfa çökmez.
+// Mağaza verisi: admin panelden yönetilen store_* tabloları. Hata olursa
+// mağaza boş görünür ama sayfa çökmez.
+//
+// Ürün, kategori ve ayar tablolarında alış maliyeti ve kâr marjı sütunları
+// var; bu yüzden anon (tarayıcıdaki public anahtar) bu tablolara erişemez,
+// burada sunucu tarafı anahtarla okunur. Yalnızca aktif kayıtlar alınır.
+const storeDb = supabaseAdmin();
 
 type CategoryRow = {
   id: number;
@@ -86,14 +90,14 @@ export function mapProduct(r: ProductRow): StoreProduct {
 }
 
 export const getStoreCategories = cache(async (): Promise<StoreCategory[]> => {
-  const { data, error } = await supabasePublic.from("store_categories").select("*").order("sort_order").order("id");
+  const { data, error } = await storeDb.from("store_categories").select("*").eq("active", true).order("sort_order").order("id");
   if (error || !data) return [];
   return (data as CategoryRow[]).map(mapCategory);
 });
 
 export const getStoreProducts = cache(async (): Promise<StoreProduct[]> => {
   const [{ data, error }, categories] = await Promise.all([
-    supabasePublic.from("store_products").select("*").order("sort_order").order("id"),
+    storeDb.from("store_products").select("*").eq("active", true).order("sort_order").order("id"),
     getStoreCategories(),
   ]);
   if (error || !data) return [];
@@ -130,7 +134,7 @@ const EMPTY_SETTINGS: StoreSettings = {
 };
 
 export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
-  const { data, error } = await supabasePublic.from("store_settings").select("*").eq("id", 1).single();
+  const { data, error } = await storeDb.from("store_settings").select("*").eq("id", 1).single();
   if (error || !data) return EMPTY_SETTINGS;
   return {
     pricesUpdated: data.prices_updated ?? "",

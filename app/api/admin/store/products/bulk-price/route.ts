@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   const pricing = await getPricingSettings(db);
   const { data, error } = await db
     .from("store_products")
-    .select("id, price, list_price, price_usd, list_price_usd")
+    .select("id, price, list_price, price_usd, list_price_usd, cost_usd")
     .in("id", ids);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -34,7 +34,13 @@ export async function POST(req: Request) {
   const usd = (v: number | null) => (v == null ? null : Math.round(Number(v) * f * 100) / 100);
 
   let updated = 0;
+  let skipped = 0;
   for (const p of data ?? []) {
+    // Maliyetten fiyatlanan ürünlerde fiyat kâr marjıyla değişir; toplu % burada uygulanmaz.
+    if (p.cost_usd != null) {
+      skipped++;
+      continue;
+    }
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (p.price_usd != null) {
       patch.price_usd = usd(p.price_usd);
@@ -55,5 +61,5 @@ export async function POST(req: Request) {
     updated++;
   }
   revalidateSite();
-  return NextResponse.json({ ok: true, updated });
+  return NextResponse.json({ ok: true, updated, skipped });
 }

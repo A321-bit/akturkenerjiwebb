@@ -20,8 +20,10 @@ type Row = {
   sort_order: number;
   datasheet: string | null;
   content: string | null;
+  cost_usd: number | null;
+  margin_pct: number | null;
 };
-type Cat = { slug: string; name: string };
+type Cat = { slug: string; name: string; margin_pct: number | null };
 
 const tl = (n: number | null) => (n == null ? "—" : n.toLocaleString("tr-TR") + " TL");
 
@@ -34,6 +36,8 @@ export default function AdminStoreProductsPage() {
   const [roundTo, setRoundTo] = useState(1000);
   const [includeList, setIncludeList] = useState(true);
   const [msg, setMsg] = useState("");
+  const [marginIn, setMarginIn] = useState("");
+  const [marginMsg, setMarginMsg] = useState("");
 
   const fetchRows = () => fetch("/api/admin/store/products").then((r) => r.json());
 
@@ -84,8 +88,29 @@ export default function AdminStoreProductsPage() {
       body: JSON.stringify({ percent: p, ids: [...selected], roundTo, includeList }),
     });
     const body = await res.json().catch(() => ({}));
-    setMsg(res.ok ? `${body.updated} ürünün fiyatı güncellendi.` : body.error ?? "Güncellenemedi.");
+    setMsg(
+      res.ok
+        ? `${body.updated} ürünün fiyatı güncellendi.${body.skipped ? ` ${body.skipped} ürün maliyetten fiyatlandığı için atlandı (kâr marjıyla değişir).` : ""}`
+        : body.error ?? "Güncellenemedi.",
+    );
     setPercent("");
+    reload();
+  }
+
+  async function bulkMargin() {
+    if (selected.size === 0) return;
+    const t = marginIn.trim();
+    const m = t === "" ? null : Number(t.replace(",", "."));
+    if (m !== null && !Number.isFinite(m)) return;
+    const text = m === null ? "ürüne özel kâr marjı kaldırılacak (kategori/genel marj geçerli olur)" : `kâr marjı %${m} yapılacak`;
+    if (!confirm(`${selected.size} üründe ${text}. Onaylıyor musunuz?`)) return;
+    const res = await fetch("/api/admin/store/products/bulk-margin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [...selected], margin_pct: m }),
+    });
+    const body = await res.json().catch(() => ({}));
+    setMarginMsg(res.ok ? `${body.updated} ürünün marjı kaydedildi; ${body.repriced} ürünün fiyatı yeniden hesaplandı.` : body.error ?? "Güncellenemedi.");
     reload();
   }
 
@@ -141,6 +166,30 @@ export default function AdminStoreProductsPage() {
         {msg && <p className="w-full text-[13px] text-volt">{msg}</p>}
       </div>
 
+      {/* Toplu kâr marjı */}
+      <div className="mt-3 flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-paper-raised p-4">
+        <div className="flex flex-col gap-0.5">
+          <span className="flex items-center gap-2 text-[13.5px] font-semibold text-ink">
+            <Percent size={16} className="text-brand" /> Toplu kâr marjı
+            <span className="font-normal text-slate">({selected.size} ürün seçili)</span>
+          </span>
+          <span className="text-[12px] text-slate-soft">Yalnızca alış maliyeti girilmiş ürünlerin fiyatını değiştirir. Boş bırakıp uygularsanız ürün marjı kalkar.</span>
+        </div>
+        <label className="flex flex-col gap-1">
+          <span className="text-[12px] text-slate">Kâr marjı (%)</span>
+          <input value={marginIn} onChange={(e) => setMarginIn(e.target.value)} placeholder="ör. 25" className="admin-input w-32" />
+        </label>
+        <button
+          type="button"
+          onClick={bulkMargin}
+          disabled={selected.size === 0}
+          className="rounded-full bg-ink px-4 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-sun hover:text-ink disabled:opacity-40"
+        >
+          Marjı uygula
+        </button>
+        {marginMsg && <p className="w-full text-[13px] text-volt">{marginMsg}</p>}
+      </div>
+
       <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-paper-raised">
         {rows === null ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Yükleniyor...</p>
@@ -191,6 +240,16 @@ export default function AdminStoreProductsPage() {
                     <span className="font-semibold">{tl(r.price)}</span>
                     {r.price_usd != null && (
                       <span className="block text-[12px] text-slate">{Number(r.price_usd).toLocaleString("tr-TR")} USD</span>
+                    )}
+                    {r.cost_usd != null && (
+                      <span className="block text-[11.5px] text-slate-soft" title="Alış (KDV hariç) · kâr marjı">
+                        alış {Number(r.cost_usd).toLocaleString("tr-TR")} $ · marj{" "}
+                        {r.margin_pct != null
+                          ? `%${Number(r.margin_pct).toLocaleString("tr-TR")}`
+                          : cats.find((c) => c.slug === r.category)?.margin_pct != null
+                            ? `%${Number(cats.find((c) => c.slug === r.category)!.margin_pct).toLocaleString("tr-TR")} (kat.)`
+                            : "—"}
+                      </span>
                     )}
                   </td>
                   <td className="px-2 py-3 text-center text-[12px] text-slate">

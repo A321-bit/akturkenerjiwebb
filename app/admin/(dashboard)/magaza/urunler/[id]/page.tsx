@@ -27,7 +27,7 @@ export default async function EditStoreProductPage({ params }: { params: Promise
   const isNew = id === "yeni";
   const [productRes, categoriesRes, lowest30, pricing] = await Promise.all([
     isNew ? Promise.resolve({ data: null }) : db.from("store_products").select("*").eq("id", id).single(),
-    db.from("store_categories").select("slug, name").order("sort_order"),
+    db.from("store_categories").select("slug, name, margin_pct").order("sort_order"),
     isNew ? Promise.resolve(null) : lowestPriceLast30Days(id),
     getPricingSettings(db),
   ]);
@@ -56,6 +56,9 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         sort_order: data.sort_order,
         seo_title: data.seo_title ?? "",
         seo_description: data.seo_description ?? "",
+        cost_usd: data.cost_usd != null ? Number(data.cost_usd) : null,
+        bom: Array.isArray(data.bom) ? data.bom : [],
+        margin_pct: data.margin_pct != null ? Number(data.margin_pct) : null,
       }
     : {
         slug: "",
@@ -66,7 +69,7 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         list_price: null,
         price_usd: null,
         list_price_usd: null,
-        install_included: true,
+        install_included: false,
         image: null,
         gallery: [],
         contents: [],
@@ -77,12 +80,21 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         sort_order: 100,
         seo_title: "",
         seo_description: "",
+        cost_usd: null,
+        bom: [],
+        margin_pct: null,
       };
 
   return (
     <div>
       <h2 className="mb-4 font-display text-xl font-semibold">{isNew ? "Yeni ürün" : data.name}</h2>
-      <ProductForm initial={initial} categories={categoriesRes.data ?? []} lowest30={lowest30} pricing={pricing} />
+      <ProductForm
+        initial={initial}
+        categories={categoriesRes.data ?? []}
+        categoryMargins={Object.fromEntries((categoriesRes.data ?? []).map((c) => [c.slug, c.margin_pct != null ? Number(c.margin_pct) : null]))}
+        lowest30={lowest30}
+        pricing={pricing}
+      />
     </div>
   );
 }

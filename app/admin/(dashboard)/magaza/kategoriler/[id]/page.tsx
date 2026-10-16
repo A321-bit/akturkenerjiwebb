@@ -22,6 +22,7 @@ export default async function EditStoreCategoryPage({ params }: { params: Promis
         seo_description: data.seo_description ?? "",
         sort_order: data.sort_order,
         active: data.active,
+        margin_pct: data.margin_pct != null ? String(data.margin_pct).replace(".", ",") : "",
       }
     : {
         slug: "",
@@ -35,6 +36,7 @@ export default async function EditStoreCategoryPage({ params }: { params: Promis
         seo_description: "",
         sort_order: 100,
         active: true,
+        margin_pct: "",
       };
 
   return (

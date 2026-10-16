@@ -29,7 +29,21 @@ export type ProductFormValues = {
   sort_order: number;
   seo_title: string;
   seo_description: string;
+  cost_usd: number | null;
+  bom: { name: string; qty: number; unit: number }[];
+  margin_pct: number | null;
 };
+
+type BomRow = { name: string; qty: string; unit: string };
+const pctText = (n: number | null | undefined) => (n == null ? "" : String(n).replace(".", ","));
+/** Yüzde / adet: boşsa null, virgüllü ondalık kabul eder. */
+function parseNum(s: string): number | null {
+  const t = s.trim();
+  if (!t) return null;
+  const n = Number(t.replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+const money = (n: number) => n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
 
 const tl = (n: number) => n.toLocaleString("tr-TR") + " TL";
 const usdText = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
@@ -47,13 +61,16 @@ export default function ProductForm({
   categories,
   lowest30,
   pricing,
+  categoryMargins = {},
 }: {
   initial: ProductFormValues;
   categories: { slug: string; name: string }[];
   /** Son 30 günün en düşük satış fiyatı (fiyat geçmişinden). */
   lowest30?: number | null;
   /** Mağaza Ayarları'ndaki USD kuru ve TL yuvarlama basamağı. */
-  pricing: { rate: number | null; round: number };
+  pricing: { rate: number | null; round: number; vatPct: number; defaultMargin: number | null };
+  /** Kategori kâr marjları (slug → %). */
+  categoryMargins?: Record<string, number | null>;
 }) {
   const router = useRouter();
   const [v, setV] = useState(initial);
@@ -61,6 +78,11 @@ export default function ProductForm({
   const [slugTouched, setSlugTouched] = useState(Boolean(initial.id));
   const [usdIn, setUsdIn] = useState(usdText(initial.price_usd));
   const [listUsdIn, setListUsdIn] = useState(usdText(initial.list_price_usd));
+  const [bomRows, setBomRows] = useState<BomRow[]>(
+    initial.bom.map((b) => ({ name: b.name, qty: String(b.qty).replace(".", ","), unit: usdText(b.unit) })),
+  );
+  const [costIn, setCostIn] = useState(usdText(initial.cost_usd));
+  const [marginIn, setMarginIn] = useState(pctText(initial.margin_pct));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -75,7 +97,10 @@ export default function ProductForm({
     setError("");
     const payload = {
       ...v,
-      price_usd: parseUsd(usdIn),
+      bom: bomParsed,
+      cost_usd: cost,
+      margin_pct: parseNum(marginIn),
+      price_usd: autoUsd ?? parseUsd(usdIn),
       list_price_usd: parseUsd(listUsdIn),
       contents: contentsText.split("\n").map((x) => x.trim()).filter(Boolean),
       content: v.content.trim() || null,
@@ -100,7 +125,20 @@ export default function ProductForm({
 
   const toTl = (usd: number | null) =>
     usd != null && pricing.rate ? Math.max(pricing.round, Math.round((usd * pricing.rate) / pricing.round) * pricing.round) : null;
-  const usd = parseUsd(usdIn);
+  // Maliyet: malzeme listesi doluysa satırların toplamı, değilse elle girilen alış tutarı (KDV hariç).
+  const bomParsed = bomRows
+    .map((r) => ({ name: r.name.trim(), qty: parseNum(r.qty) ?? 0, unit: parseUsd(r.unit) ?? 0 }))
+    .filter((r) => r.name && r.qty > 0);
+  const cost = bomParsed.length ? Math.round(bomParsed.reduce((t, r) => t + r.qty * r.unit, 0) * 100) / 100 : parseUsd(costIn);
+  const costVat = cost != null ? Math.round(cost * (1 + pricing.vatPct / 100) * 100) / 100 : null;
+  const ownMargin = parseNum(marginIn);
+  const catMargin = categoryMargins[v.category] ?? null;
+  const margin = ownMargin ?? catMargin ?? pricing.defaultMargin;
+  const marginSource = ownMargin != null ? "ürün" : catMargin != null ? "kategori" : pricing.defaultMargin != null ? "genel" : null;
+  const autoUsd = costVat != null && margin != null ? Math.round(costVat * (1 + margin / 100) * 100) / 100 : null;
+  const setRow = (i: number, k: keyof BomRow, val: string) => setBomRows((rows) => rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
+
+  const usd = autoUsd ?? parseUsd(usdIn);
   const listUsd = parseUsd(listUsdIn);
   // USD girildiyse TL fiyat kurla hesaplanır; girilmediyse TL elle yazılır.
   const shownPrice = usd != null ? toTl(usd) : v.price;
@@ -160,6 +198,102 @@ export default function ProductForm({
       </Section>
 
       <Section
+        title="Maliyet ve kâr marjı"
+        desc={`Yalnızca yönetim panelinde görünür, sitede gösterilmez. Satış fiyatı = alış (KDV hariç) × %${pricing.vatPct} KDV × (1 + kâr marjı).`}
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-[13px]">
+            <thead>
+              <tr className="text-left text-slate">
+                <th className="pb-1.5 font-medium">Malzeme</th>
+                <th className="w-20 pb-1.5 font-medium">Adet</th>
+                <th className="w-28 pb-1.5 font-medium">Birim alış ($)</th>
+                <th className="w-28 pb-1.5 text-right font-medium">Tutar</th>
+                <th className="w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {bomRows.map((r, i) => {
+                const line = (parseNum(r.qty) ?? 0) * (parseUsd(r.unit) ?? 0);
+                return (
+                  <tr key={i}>
+                    <td className="py-1 pr-2">
+                      <input value={r.name} onChange={(e) => setRow(i, "name", e.target.value)} className="admin-input" />
+                    </td>
+                    <td className="py-1 pr-2">
+                      <input inputMode="decimal" value={r.qty} onChange={(e) => setRow(i, "qty", e.target.value)} className="admin-input" />
+                    </td>
+                    <td className="py-1 pr-2">
+                      <input inputMode="decimal" value={r.unit} onChange={(e) => setRow(i, "unit", e.target.value)} className="admin-input" />
+                    </td>
+                    <td className="py-1 text-right tabular-nums">{line ? money(line) : "–"}</td>
+                    <td className="py-1 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setBomRows((rows) => rows.filter((_, j) => j !== i))}
+                        className="rounded px-1.5 text-red-600 hover:bg-red-50"
+                        aria-label="Satırı sil"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <button
+          type="button"
+          onClick={() => setBomRows((rows) => [...rows, { name: "", qty: "1", unit: "" }])}
+          className="self-start rounded-lg border border-line px-3 py-1.5 text-[13px] font-medium hover:bg-paper"
+        >
+          + Malzeme ekle
+        </button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {bomParsed.length ? (
+            <Field label="Toplam alış (KDV hariç)" hint="Malzeme listesinin toplamı.">
+              <input readOnly value={cost != null ? money(cost) : ""} className="admin-input bg-paper" />
+            </Field>
+          ) : (
+            <Field label="Toplam alış (USD, KDV hariç)" hint="Malzeme listesi girmeden toplam maliyet yazabilirsiniz.">
+              <input inputMode="decimal" value={costIn} onChange={(e) => setCostIn(e.target.value)} className="admin-input" />
+            </Field>
+          )}
+          <Field
+            label="Kâr marjı (%)"
+            hint={
+              ownMargin != null
+                ? "Bu ürüne özel marj."
+                : catMargin != null
+                  ? `Boş: kategori marjı %${pctText(catMargin)} uygulanır.`
+                  : pricing.defaultMargin != null
+                    ? `Boş: genel marj %${pctText(pricing.defaultMargin)} uygulanır.`
+                    : "Boş ve kategori/genel marj yoksa fiyat elle girilir."
+            }
+          >
+            <input inputMode="decimal" value={marginIn} onChange={(e) => setMarginIn(e.target.value)} className="admin-input" />
+          </Field>
+        </div>
+        {costVat != null && (
+          <div className="grid gap-1 rounded-lg bg-paper px-3 py-2.5 text-[13px] sm:grid-cols-3">
+            <span>
+              Alış KDV dahil: <strong>{money(costVat)}</strong>
+            </span>
+            <span>
+              Kâr marjı: <strong>{margin != null ? `%${pctText(margin)} (${marginSource})` : "yok"}</strong>
+            </span>
+            <span>
+              Satış: <strong>{autoUsd != null ? `${money(autoUsd)}${toTl(autoUsd) ? ` = ${tl(toTl(autoUsd)!)}` : ""}` : "marj girin"}</strong>
+            </span>
+            {autoUsd != null && (
+              <span className="text-slate-soft sm:col-span-3">Kâr: {money(Math.round((autoUsd - costVat) * 100) / 100)} (KDV dahil tutarlar üzerinden)</span>
+            )}
+          </div>
+        )}
+      </Section>
+
+      <Section
         title="Fiyat"
         desc={rateText ? `Fiyatı USD (KDV dahil) girin; TL fiyat kurla otomatik hesaplanır. Güncel kur: 1 USD = ${rateText} TL` : undefined}
       >
@@ -170,7 +304,11 @@ export default function ProductForm({
         )}
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Satış fiyatı (USD, KDV dahil)" hint={usd != null && shownPrice ? `= ${tl(shownPrice)} (sitede görünen)` : "Boş bırakılırsa aşağıdaki TL fiyat kullanılır."}>
-            <input inputMode="decimal" value={usdIn} onChange={(e) => setUsdIn(e.target.value)} className="admin-input" placeholder="ör. 6.700" />
+            {autoUsd != null ? (
+              <input readOnly value={usdText(autoUsd)} className="admin-input bg-paper" title="Maliyet ve kâr marjından otomatik hesaplanıyor" />
+            ) : (
+              <input inputMode="decimal" value={usdIn} onChange={(e) => setUsdIn(e.target.value)} className="admin-input" placeholder="ör. 6.700" />
+            )}
           </Field>
           <Field label="Üstü çizili eski fiyat (USD)" hint={listUsd != null && shownList ? `= ${tl(shownList)}${discount ? ` · kartta %${discount} indirim` : ""}` : "İndirim yoksa boş bırakın."}>
             <input inputMode="decimal" value={listUsdIn} onChange={(e) => setListUsdIn(e.target.value)} className="admin-input" />

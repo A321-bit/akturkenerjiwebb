@@ -20,6 +20,8 @@ export type CategoryFormValues = {
   seo_description: string;
   sort_order: number;
   active: boolean;
+  /** Kâr marjı (%) metin olarak; boş = genel marj. */
+  margin_pct: string;
 };
 
 export default function CategoryForm({ initial }: { initial: CategoryFormValues }) {
@@ -40,6 +42,7 @@ export default function CategoryForm({ initial }: { initial: CategoryFormValues 
     setError("");
     const payload = {
       ...v,
+      margin_pct: v.margin_pct.trim() === "" ? null : Number(v.margin_pct.replace(",", ".")),
       content: v.content.trim() || null,
       seo_title: v.seo_title.trim() || null,
       seo_description: v.seo_description.trim() || null,
@@ -111,6 +114,15 @@ export default function CategoryForm({ initial }: { initial: CategoryFormValues 
           </Field>
         </div>
         <Toggle checked={v.active} onChange={(x) => set("active", x)} label="Yayında (kapalıysa kategori ve ürünleri gizlenir)" />
+      </Section>
+
+      <Section
+        title="Kâr marjı"
+        desc="Bu kategorideki, alış maliyeti girilmiş ürünlerin satış fiyatı: alış (KDV dahil) × (1 + marj). Üründe ayrı marj varsa o geçerlidir. Yalnızca panelde görünür."
+      >
+        <Field label="Kategori kâr marjı (%)" hint="Boş bırakılırsa Mağaza Ayarları'ndaki genel marj uygulanır.">
+          <input inputMode="decimal" value={v.margin_pct} onChange={(e) => set("margin_pct", e.target.value)} className="admin-input w-40" placeholder="ör. 25" />
+        </Field>
       </Section>
 
       <Section title="Kategori görseli" desc="Ana sayfadaki kategori rafının sol banner'ı.">

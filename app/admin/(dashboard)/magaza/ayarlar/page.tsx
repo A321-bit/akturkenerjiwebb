@@ -11,6 +11,8 @@ type Settings = {
   usd_rate: number | string | null;
   usd_rate_updated_at: string | null;
   price_round: number;
+  vat_pct: number | string | null;
+  default_margin_pct: number | string | null;
   prices_updated: string;
   price_note: string;
   featured_title: string;
@@ -74,7 +76,8 @@ export default function AdminStoreSettingsPage() {
     }
     setS((x) => (x ? { ...x, usd_rate: body.usd_rate, usd_rate_updated_at: body.usd_rate_updated_at } : x));
     setTcmb("");
-    setDone(body.repriced ? `Ayarlar kaydedildi; ${body.repriced} ürünün TL fiyatı yeni kurla güncellendi.` : "Ayarlar kaydedildi; mağazaya yansıdı.");
+    setS((x) => (x ? { ...x, vat_pct: body.vat_pct, default_margin_pct: body.default_margin_pct } : x));
+    setDone(body.repriced ? `Ayarlar kaydedildi; ${body.repriced} ürünün fiyatı güncellendi.` : "Ayarlar kaydedildi; mağazaya yansıdı.");
   }
 
   return (
@@ -106,6 +109,31 @@ export default function AdminStoreSettingsPage() {
         {s.usd_rate_updated_at && (
           <p className="text-[12px] text-slate-soft">Kur en son {new Date(s.usd_rate_updated_at).toLocaleString("tr-TR")} tarihinde değişti.</p>
         )}
+      </Section>
+
+      <Section
+        title="Kâr marjı"
+        desc="Alış maliyeti girilmiş ürünlerde satış fiyatı = alış (KDV hariç) × (1 + KDV) × (1 + kâr marjı). Öncelik: ürün marjı → kategori marjı → buradaki genel marj. Alış fiyatları ve marjlar sitede gösterilmez."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Genel kâr marjı (%)" hint="Ürün ve kategoride marj yoksa uygulanır. Boş bırakılabilir.">
+            <input
+              inputMode="decimal"
+              value={s.default_margin_pct == null ? "" : String(s.default_margin_pct).replace(".", ",")}
+              onChange={(e) => set("default_margin_pct", e.target.value)}
+              className="admin-input"
+              placeholder="ör. 20"
+            />
+          </Field>
+          <Field label="KDV oranı (%)" hint="Alış fiyatlarına eklenen KDV.">
+            <input
+              inputMode="decimal"
+              value={s.vat_pct == null ? "" : String(s.vat_pct).replace(".", ",")}
+              onChange={(e) => set("vat_pct", e.target.value)}
+              className="admin-input"
+            />
+          </Field>
+        </div>
       </Section>
 
       <Section title="Fiyat bilgisi">
