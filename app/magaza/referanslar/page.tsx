@@ -4,6 +4,7 @@ import { MapPin, Zap } from "lucide-react";
 import { getReferences } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 
+// Kurumsal /referanslarimiz sayfasıyla aynı içerik (kopya içerik olmasın diye Google'a kapalı).
 export const metadata: Metadata = {
   ...buildMetadata({
     title: "Mağaza Referanslarımız",

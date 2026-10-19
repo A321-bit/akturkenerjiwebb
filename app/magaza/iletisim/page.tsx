@@ -16,7 +16,6 @@ export const metadata: Metadata = {
       "Aktürk Enerji Mağaza sipariş hattı: WhatsApp'tan sipariş, siparişte gereken bilgiler, teslimat ve kurulum talebi, sipariş soruları.",
     path: "/magaza/iletisim",
   }),
-  robots: { index: false, follow: true },
 };
 
 const ORDER_INFO = [

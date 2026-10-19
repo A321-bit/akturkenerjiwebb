@@ -1,13 +1,17 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL, getServices, getReferences, getBlogPosts } from "@/lib/data";
+import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
+import { productHref } from "@/lib/store-details";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [services, references, posts] = await Promise.all([
+  const [services, references, posts, storeCategories, storeProducts] = await Promise.all([
     getServices(),
     getReferences(),
     getBlogPosts(),
+    getStoreCategories(),
+    getStoreProducts(),
   ]);
 
   // lastmod: Google yalnızca güvenilir lastmod değerini dikkate alır; her
@@ -46,5 +50,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date(p.updatedAt ?? p.publishedAt),
   }));
 
-  return [...staticRoutes, ...serviceRoutes, ...referenceRoutes, ...postRoutes];
+  // Mağaza: ürünü olmayan kategoriler ("çok yakında") ve mağaza referansları
+  // (kurumsal referansların kopyası) Google'a kapalı olduğu için listelenmez.
+  const storeRoutes = [
+    "/magaza",
+    "/magaza/hakkimizda",
+    "/magaza/iletisim",
+    "/magaza/off-grid-hesaplama",
+    ...storeCategories.filter((c) => storeProducts.some((p) => p.category === c.slug)).map((c) => `/magaza/${c.slug}`),
+    ...storeProducts.map(productHref),
+  ].map((route) => ({ url: `${SITE_URL}${route}` }));
+
+  return [...staticRoutes, ...serviceRoutes, ...referenceRoutes, ...postRoutes, ...storeRoutes];
 }

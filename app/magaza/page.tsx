@@ -15,7 +15,6 @@ import StoreSlider from "@/components/store/StoreSlider";
 import StoreSidebar from "@/components/store/StoreSidebar";
 import CalculatorCta from "@/components/store/CalculatorCta";
 
-// Mağaza şablon aşamasında; ürünler ve tasarım netleşene kadar Google'a kapalı.
 export const metadata: Metadata = {
   ...buildMetadata({
     title: "Güneş Enerjisi Paketleri ve Ürünleri Mağazası",
@@ -23,7 +22,6 @@ export const metadata: Metadata = {
       "On grid, off grid, hibrit lityum bataryalı ve öztüketim güneş paneli paketleri; güneş paneli, invertör ve lityum batarya. Fiyatlı paketler, WhatsApp'tan hızlı sipariş.",
     path: "/magaza",
   }),
-  robots: { index: false, follow: true },
 };
 
 export default async function StorePage() {

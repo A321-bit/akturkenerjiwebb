@@ -40,7 +40,6 @@ export async function generateMetadata({ params }: { params: Promise<{ kategori:
       description: product.seoDescription || `${product.name}${product.price ? ` ${formatTL(product.price)}` : ""}. ${category.short}: paket içeriği, teknik özellikler, garanti ve WhatsApp'tan hızlı sipariş.`,
       path: productHref(product),
     }),
-    robots: { index: false, follow: true },
   };
 }
 
@@ -100,7 +99,8 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
         "@type": "Product",
         name: product.name,
         image: gallery,
-        description: category.intro,
+        description: product.seoDescription || category.intro,
+        sku: product.slug,
         category: category.name,
         brand: { "@type": "Brand", name: "Aktürk Enerji" },
         // Puan yalnızca gerçek, onaylı yorum varsa eklenir.
@@ -129,6 +129,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
                 price: product.price,
                 priceCurrency: "TRY",
                 availability: "https://schema.org/InStock",
+                itemCondition: "https://schema.org/NewCondition",
                 url,
                 seller: { "@type": "Organization", name: site.name },
               },

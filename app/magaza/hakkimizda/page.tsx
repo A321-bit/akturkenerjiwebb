@@ -17,7 +17,6 @@ export const metadata: Metadata = {
       "Aktürk Enerji Mağaza: sahada denenmiş ürünlerden hazırlanan, içeriği ve fiyatı açık güneş enerjisi paketleri. WhatsApp'tan sipariş, Türkiye geneline gönderim.",
     path: "/magaza/hakkimizda",
   }),
-  robots: { index: false, follow: true },
 };
 
 const PRINCIPLES = [

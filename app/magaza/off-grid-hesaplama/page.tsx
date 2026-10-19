@@ -13,7 +13,6 @@ export const metadata: Metadata = {
       "Bağ eviniz, yayla eviniz ya da çiftliğiniz için kullanacağınız cihazları girin; size uygun off grid güneş enerjisi paketini ücretsiz hesaplayıp WhatsApp'tan iletelim.",
     path: "/magaza/off-grid-hesaplama",
   }),
-  robots: { index: false, follow: true },
 };
 
 export default async function OffGridCalculatorPage() {

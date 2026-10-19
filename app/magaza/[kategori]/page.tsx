@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getSiteSettings } from "@/lib/data";
+import { SITE_URL, getSiteSettings } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { cardCategory, cardProduct, priceNoteText } from "@/lib/store";
@@ -12,6 +12,7 @@ import { HowToOrder, TrustStrip } from "@/components/store/StoreSections";
 import MdxContent from "@/components/MdxContent";
 import CalculatorCta from "@/components/store/CalculatorCta";
 import { renderStoreTokens } from "@/lib/store-content";
+import { productHref } from "@/lib/store-details";
 
 export async function generateStaticParams() {
   const categories = await getStoreCategories();
@@ -27,13 +28,15 @@ async function findCategory(params: Promise<{ kategori: string }>) {
 export async function generateMetadata({ params }: { params: Promise<{ kategori: string }> }): Promise<Metadata> {
   const { category: c } = await findCategory(params);
   if (!c) return {};
+  // Ürünü henüz olmayan kategori yalnızca "çok yakında" gösterir: Google'a kapalı.
+  const hasProducts = (await getStoreProducts()).some((p) => p.category === c.slug);
   return {
     ...buildMetadata({
       title: c.seoTitle || `${c.name} ve Fiyatları`,
       description: c.seoDescription || c.intro,
       path: `/magaza/${c.slug}`,
     }),
-    robots: { index: false, follow: true },
+    ...(hasProducts ? {} : { robots: { index: false, follow: true } }),
   };
 }
 
@@ -48,8 +51,42 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
   ]);
   const products = await withRatings(all.filter((p) => p.category === category.slug));
 
+  const url = `${SITE_URL}/magaza/${category.slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": url,
+        url,
+        name: category.name,
+        description: category.seoDescription || category.intro,
+        inLanguage: "tr-TR",
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        mainEntity: {
+          "@type": "ItemList",
+          numberOfItems: products.length,
+          itemListElement: products.map((p, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            url: `${SITE_URL}${productHref(p)}`,
+            name: p.name,
+          })),
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Mağaza", item: `${SITE_URL}/magaza` },
+          { "@type": "ListItem", position: 2, name: category.name, item: url },
+        ],
+      },
+    ],
+  };
+
   return (
     <div className="flex min-w-0 flex-col gap-10">
+        {products.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
         <section>
           <nav className="text-[13px] text-slate-soft">
             <Link href="/magaza" className="hover:text-ink">
