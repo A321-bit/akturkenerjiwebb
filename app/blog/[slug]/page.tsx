@@ -7,6 +7,8 @@ import { buildMetadata, breadcrumbJsonLd, ogImagePath } from "@/lib/seo";
 import QuoteModal from "@/components/QuoteModal";
 import CoverMedia from "@/components/CoverMedia";
 import MdxContent from "@/components/MdxContent";
+import { renderStoreTokens } from "@/lib/store-content";
+import { getStoreProducts } from "@/lib/store-data";
 
 function findMidArticleSplit(content: string): number | null {
   const positions: number[] = [];
@@ -54,9 +56,11 @@ export default async function BlogPostPage({
   const [post, site] = await Promise.all([getBlogPostBySlug(slug), getSiteSettings()]);
   if (!post) notFound();
 
-  const splitIndex = findMidArticleSplit(post.content);
-  const firstHalf = splitIndex ? post.content.slice(0, splitIndex) : post.content;
-  const secondHalf = splitIndex ? post.content.slice(splitIndex) : "";
+  // Yazıdaki canlı fiyat etiketleri ({{fiyat-listesi}}, {{fiyat:slug}}) mağazanın güncel fiyatıyla dolar.
+  const content = post.content.includes("{{") ? renderStoreTokens(post.content, await getStoreProducts()) : post.content;
+  const splitIndex = findMidArticleSplit(content);
+  const firstHalf = splitIndex ? content.slice(0, splitIndex) : content;
+  const secondHalf = splitIndex ? content.slice(splitIndex) : "";
 
   const jsonLd = {
     "@context": "https://schema.org",

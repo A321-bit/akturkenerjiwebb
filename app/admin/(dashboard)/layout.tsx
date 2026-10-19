@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2 } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
@@ -18,6 +18,7 @@ const navItems = [
   { href: "/admin/yorumlar", label: "Ürün Yorumları", icon: Star },
   { href: "/admin/videolar", label: "Videolar", icon: Video },
   { href: "/admin/ayarlar", label: "Site Ayarları", icon: Settings },
+  { href: "/admin/guvenlik", label: "Güvenlik", icon: ShieldCheck },
 ];
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {

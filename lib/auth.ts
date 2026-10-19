@@ -1,42 +1,37 @@
-// Web Crypto API (crypto.subtle) kullanılıyor — hem Node.js hem Edge (middleware)
-// runtime'ında çalışır. Node'un "crypto" modülü middleware içinde çalışmaz.
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { supabaseAdmin } from "./supabase";
+
+// Admin oturumu: çerezde "<oturum-id>.<imza>" durur. İmza (HMAC-SHA256,
+// ADMIN_SESSION_SECRET) çerezin değiştirilmediğini, veritabanındaki kayıt
+// (admin_sessions) oturumun hâlâ geçerli olduğunu gösterir: çıkışta ya da
+// "tüm oturumları kapat"ta kayıt iptal edilir ve çerez çalınmış olsa bile
+// işe yaramaz. Proxy Node.js runtime'ında çalışır (Next 16).
 
 export const ADMIN_COOKIE_NAME = "admin_session";
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 gün
+export const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 gün
 
-const encoder = new TextEncoder();
+const sign = (id: string) => createHmac("sha256", process.env.ADMIN_SESSION_SECRET!).update(`session:${id}`).digest("hex");
 
-function bufToHex(buf: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+export function sessionCookieValue(id: string): string {
+  return `${id}.${sign(id)}`;
 }
 
-async function hmacHex(secret: string, payload: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
-  return bufToHex(sig);
-}
-
-export async function createSessionToken(): Promise<string> {
-  const expires = Date.now() + SESSION_TTL_MS;
-  const payload = String(expires);
-  const sig = await hmacHex(process.env.ADMIN_SESSION_SECRET!, payload);
-  return `${payload}.${sig}`;
+/** Çerezdeki imzayı (sabit sürede) doğrular ve oturum kimliğini döner. */
+export function sessionIdFromCookie(token: string | undefined | null): string | null {
+  if (!token) return null;
+  const dot = token.lastIndexOf(".");
+  if (dot <= 0) return null;
+  const id = token.slice(0, dot);
+  const sig = token.slice(dot + 1);
+  if (!/^[0-9a-f-]{36}$/.test(id) || !/^[0-9a-f]{64}$/.test(sig)) return null;
+  const expected = Buffer.from(sign(id), "hex");
+  const given = Buffer.from(sig, "hex");
+  return expected.length === given.length && timingSafeEqual(expected, given) ? id : null;
 }
 
 export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
-  if (!token) return false;
-  const [payload, sig] = token.split(".");
-  if (!payload || !sig) return false;
-  const expected = await hmacHex(process.env.ADMIN_SESSION_SECRET!, payload);
-  if (expected.length !== sig.length || expected !== sig) return false;
-  const expires = Number(payload);
-  return Number.isFinite(expires) && Date.now() < expires;
+  const id = sessionIdFromCookie(token);
+  if (!id) return false;
+  const { data } = await supabaseAdmin().from("admin_sessions").select("expires_at, revoked_at").eq("id", id).maybeSingle();
+  return Boolean(data && !data.revoked_at && new Date(data.expires_at).getTime() > Date.now());
 }

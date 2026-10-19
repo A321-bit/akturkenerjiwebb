@@ -76,10 +76,27 @@ const RETIRED_POST_REDIRECTS: [string, string][] = [
   ["/blog/villa-cati-kac-kwp-ges-sistemi", "/hizmetlerimiz/villa-cati-ges"],
 ];
 
+// Admin sayfaları başka sitelere gömülemez, önbelleğe alınmaz, arama motorlarına kapalıdır.
+const ADMIN_HEADERS = [
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "same-origin" },
+  { key: "Cache-Control", value: "no-store" },
+  { key: "X-Robots-Tag", value: "noindex, nofollow" },
+];
+
 const nextConfig: NextConfig = {
   // Paylaşım görseli (app/social) yazı tipini dosyadan okur; sunucu paketine dahil edilsin.
   outputFileTracingIncludes: {
     "/social/**": ["./node_modules/@fontsource/space-grotesk/files/space-grotesk-latin*-{500,700}-normal.woff"],
+  },
+  async headers() {
+    return [
+      { source: "/admin/:path*", headers: ADMIN_HEADERS },
+      { source: "/admin", headers: ADMIN_HEADERS },
+      { source: "/api/admin/:path*", headers: ADMIN_HEADERS },
+    ];
   },
   async redirects() {
     return [
