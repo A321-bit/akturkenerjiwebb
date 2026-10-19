@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SITE_URL, getSiteSettings } from "@/lib/data";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, ogImagePath } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { cardCategory, cardProduct, priceNoteText } from "@/lib/store";
 import { getStoreCategories, getStoreProducts, getStoreSettings } from "@/lib/store-data";
@@ -35,6 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ kategori:
       title: c.seoTitle || `${c.name} ve Fiyatları`,
       description: c.seoDescription || c.intro,
       path: `/magaza/${c.slug}`,
+      image: hasProducts ? ogImagePath("kategori", c.slug) : undefined,
     }),
     ...(hasProducts ? {} : { robots: { index: false, follow: true } }),
   };

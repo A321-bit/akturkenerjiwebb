@@ -6,7 +6,7 @@ import { MapPin, Zap, Calendar } from "lucide-react";
 import { getReferences, getReferenceBySlug, getServices, getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { relatedReferences, relatedServiceSlugs } from "@/lib/reference-links";
 import { getServiceContent } from "@/lib/service-content";
-import { buildMetadata, breadcrumbJsonLd, stripMarkdown } from "@/lib/seo";
+import { buildMetadata, breadcrumbJsonLd, stripMarkdown, ogImagePath } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
 import MediaCarousel from "@/components/MediaCarousel";
 import QuoteModal from "@/components/QuoteModal";
@@ -30,6 +30,7 @@ export async function generateMetadata({
     title: reference.title,
     description: stripMarkdown(reference.description ?? reference.summary),
     path: `/referanslarimiz/${reference.slug}`,
+    image: ogImagePath("referans", reference.slug),
     keywords: [reference.title, reference.category, reference.location, "güneş enerjisi sistemi", "GES"],
   });
 }

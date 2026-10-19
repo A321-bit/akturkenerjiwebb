@@ -17,16 +17,19 @@ export function buildMetadata({
   path,
   keywords,
   type = "website",
+  image,
 }: {
   title: string;
   description: string;
   path: string;
   keywords?: string[];
   type?: "website" | "article";
+  /** Sayfaya özel paylaşım görseli (ör. /social/urun/<slug>); yoksa sitenin genel görseli. */
+  image?: string;
 }): Metadata {
   const url = `${SITE_URL}${path}`;
   const pageTitle = brandTitle(title);
-  const images = [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_NAME }];
+  const images = [{ url: image ?? "/opengraph-image", width: 1200, height: 630, alt: image ? pageTitle : SITE_NAME }];
   return {
     title: { absolute: pageTitle },
     description,
@@ -49,6 +52,11 @@ export function buildMetadata({
     },
   };
 }
+
+export type SocialType = "urun" | "kategori" | "referans" | "blog" | "hizmet";
+
+/** Sayfanın paylaşım görseli (Facebook / WhatsApp önizlemesi, app/social route'u üretir). */
+export const ogImagePath = (type: SocialType, slug: string) => `/social/${type}/${encodeURIComponent(slug)}`;
 
 export type BreadcrumbItem = { name: string; path: string };
 

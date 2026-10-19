@@ -14,7 +14,7 @@ import {
   SITE_NAME,
 } from "@/lib/data";
 import { getServiceContent } from "@/lib/service-content";
-import { buildMetadata, breadcrumbJsonLd, stripMarkdown, AREA_SERVED } from "@/lib/seo";
+import { buildMetadata, breadcrumbJsonLd, stripMarkdown, AREA_SERVED, ogImagePath } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
 import SunGlow from "@/components/SunGlow";
@@ -52,6 +52,7 @@ export async function generateMetadata({
     title: content.seo.title,
     description: content.seo.description ?? service.summary,
     path: `/hizmetlerimiz/${service.slug}`,
+    image: ogImagePath("hizmet", service.slug),
     keywords: [
       service.title,
       service.eyebrow,

@@ -77,6 +77,10 @@ const RETIRED_POST_REDIRECTS: [string, string][] = [
 ];
 
 const nextConfig: NextConfig = {
+  // Paylaşım görseli (app/social) yazı tipini dosyadan okur; sunucu paketine dahil edilsin.
+  outputFileTracingIncludes: {
+    "/social/**": ["./node_modules/@fontsource/space-grotesk/files/space-grotesk-latin*-{500,700}-normal.woff"],
+  },
   async redirects() {
     return [
       // www.akturkenerji.com sitenin kopyasını 200 ile sunuyordu ve Google bazı

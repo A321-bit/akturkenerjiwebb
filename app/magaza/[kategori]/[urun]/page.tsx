@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download, FileText, MessageCircle } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, ogImagePath } from "@/lib/seo";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
 import { cardProduct, discountPercent, priceLabel } from "@/lib/store";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
@@ -40,6 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ kategori:
       title: product.seoTitle || `${product.name} Fiyatı`,
       description: product.seoDescription || `${product.name}${product.price ? ` ${priceLabel(product)}` : ""}. ${category.short}: paket içeriği, teknik özellikler, garanti ve WhatsApp'tan hızlı sipariş.`,
       path: productHref(product),
+      image: ogImagePath("urun", product.slug),
     }),
   };
 }

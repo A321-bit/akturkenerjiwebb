@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getBlogPostBySlug, getSiteSettings, SITE_URL, SITE_NAME } from "@/lib/data";
-import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
+import { buildMetadata, breadcrumbJsonLd, ogImagePath } from "@/lib/seo";
 import QuoteModal from "@/components/QuoteModal";
 import CoverMedia from "@/components/CoverMedia";
 import MdxContent from "@/components/MdxContent";
@@ -39,6 +39,7 @@ export async function generateMetadata({
     title: post.title,
     description: post.description,
     path: `/blog/${post.slug}`,
+    image: ogImagePath("blog", post.slug),
     keywords: [post.category, "güneş enerjisi", "GES", "Ankara"],
     type: "article",
   });
