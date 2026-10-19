@@ -1,6 +1,6 @@
-import { getSiteSettings } from "@/lib/data";
+import { SITE_URL, getSiteSettings } from "@/lib/data";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
-import { buildListing } from "@/lib/listing";
+import { buildListing, buildListingHtml } from "@/lib/listing";
 import SahibindenListings, { type ListingItem } from "@/components/admin/store/SahibindenListings";
 
 // Sahibinden.com ilan metinleri: her paket için başlık, açıklama ve fiyat hazır;
@@ -24,7 +24,7 @@ export default async function SahibindenPage() {
   const items: ListingItem[] = products
     .map((p) => {
       const cat = categories.find((c) => c.slug === p.category);
-      return cat ? { slug: p.slug, name: p.name, category: cat.name, pick: PICKS.indexOf(p.slug), ...buildListing(p, cat, site) } : null;
+      return cat ? { slug: p.slug, name: p.name, category: cat.name, pick: PICKS.indexOf(p.slug), ...buildListing(p, cat, site), html: buildListingHtml(p, cat, site, SITE_URL) } : null;
     })
     .filter((x): x is ListingItem => x !== null)
     .sort((a, b) => (a.pick < 0 ? 99 : a.pick) - (b.pick < 0 ? 99 : b.pick));

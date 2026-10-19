@@ -90,6 +90,7 @@ const nextConfig: NextConfig = {
   // Paylaşım görseli (app/social) yazı tipini dosyadan okur; sunucu paketine dahil edilsin.
   outputFileTracingIncludes: {
     "/social/**": ["./node_modules/@fontsource/space-grotesk/files/space-grotesk-latin*-{500,700}-normal.woff"],
+    "/sahibinden/**": ["./node_modules/@fontsource/space-grotesk/files/space-grotesk-latin*-{500,700}-normal.woff"],
   },
   async headers() {
     return [

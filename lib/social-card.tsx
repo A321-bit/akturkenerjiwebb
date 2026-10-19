@@ -19,7 +19,7 @@ type Card = { title: string; eyebrow: string; image?: string; price?: string; pl
 // Space Grotesk (sitenin başlık yazı tipi); Türkçe harfler latin-ext dosyasında.
 const FONT_DIR = join(process.cwd(), "node_modules/@fontsource/space-grotesk/files");
 let fontsPromise: Promise<{ name: string; data: Buffer; weight: 500 | 700; style: "normal" }[]> | null = null;
-function fonts() {
+export function fonts() {
   fontsPromise ??= Promise.all(
     (["latin", "latin-ext"] as const).flatMap((subset) =>
       ([500, 700] as const).map(async (weight) => ({
