@@ -136,7 +136,7 @@ export function buildListingHtml(p: StoreProduct, category: StoreCategory, site:
   const runs = whatItRuns(p, category.slug, kw, kwp);
   const stats = site.stats.filter((x) => x.value && x.label && !/beri/i.test(x.value)).map((x) => `${x.value} ${x.label.toLocaleLowerCase("tr")}`);
   return [
-    `<p style="text-align:center"><img src="${siteUrl}/sahibinden/${encodeURIComponent(p.slug)}" alt="Aktürk Enerji ${esc(p.name)}" width="685" /></p>`,
+    `<p style="text-align:center"><img src="${siteUrl}/sahibinden/akturk-enerji.jpg" alt="Aktürk Enerji" width="685" style="max-width:100%;height:auto" /></p>`,
     para("AKTÜRK ENERJİ TEKNOLOJİLERİ", { center: true, color: BLUE, bold: true, size: "17pt" }),
     para("Güneşten veya rüzgârdan kendi elektriğinizi üretin!", { center: true, color: RED, bold: true, size: "13pt" }),
     para(
