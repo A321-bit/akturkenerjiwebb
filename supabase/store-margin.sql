@@ -21,3 +21,7 @@ alter table store_products add column if not exists list_margin_pct numeric(6,2)
 alter table store_categories add column if not exists list_margin_pct numeric(6,2);
 alter table store_settings add column if not exists default_list_margin_pct numeric(6,2);
 notify pgrst, 'reload schema';
+
+-- 4) Ürün seçenekleri (kablo uzunluğu, montaj seti panel sayısı) (2026-10-19)
+alter table store_products add column if not exists options jsonb not null default '[]'::jsonb;
+notify pgrst, 'reload schema';

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FileText, MessageCircle, Phone } from "lucide-react";
+import { Download, FileText, MessageCircle } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
-import { cardProduct, discountPercent, formatTL } from "@/lib/store";
+import { cardProduct, discountPercent, priceLabel } from "@/lib/store";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
 import { kwOf, productGallery, productHref } from "@/lib/store-details";
 import ProductGallery from "@/components/store/ProductGallery";
@@ -16,6 +16,7 @@ import ProductTabs from "@/components/store/ProductTabs";
 import ProductRail from "@/components/store/ProductRail";
 import ReviewForm from "@/components/store/ReviewForm";
 import Stars from "@/components/store/Stars";
+import ProductBuyBox from "@/components/store/ProductBuyBox";
 
 export async function generateStaticParams() {
   const products = await getStoreProducts();
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ kategori:
   return {
     ...buildMetadata({
       title: product.seoTitle || `${product.name} Fiyatı`,
-      description: product.seoDescription || `${product.name}${product.price ? ` ${formatTL(product.price)}` : ""}. ${category.short}: paket içeriği, teknik özellikler, garanti ve WhatsApp'tan hızlı sipariş.`,
+      description: product.seoDescription || `${product.name}${product.price ? ` ${priceLabel(product)}` : ""}. ${category.short}: paket içeriği, teknik özellikler, garanti ve WhatsApp'tan hızlı sipariş.`,
       path: productHref(product),
     }),
   };
@@ -69,11 +70,8 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
 
   const url = `${SITE_URL}${productHref(product)}`;
   const discount = discountPercent(product);
+  const optionPrices = product.options.map((o) => o.price).filter((n): n is number => n != null);
   const gallery = productGallery(product);
-  const waHref = whatsappLink(
-    site.contact.whatsappNumber,
-    `Merhaba, *${product.name}* için sipariş vermek istiyorum.${product.price ? ` (Fiyat: ${formatTL(product.price)})` : ""}\n\nÜrün: ${url}`
-  );
   const datasheetWaHref = whatsappLink(
     site.contact.whatsappNumber,
     `Merhaba, *${product.name}* paketinin teknik datasheet dosyasını alabilir miyim?\n\nÜrün: ${url}`
@@ -122,7 +120,20 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
               })),
             }
           : {}),
-        ...(product.price
+        ...(optionPrices.length > 1
+          ? {
+              offers: {
+                "@type": "AggregateOffer",
+                lowPrice: Math.min(...optionPrices),
+                highPrice: Math.max(...optionPrices),
+                offerCount: optionPrices.length,
+                priceCurrency: "TRY",
+                availability: "https://schema.org/InStock",
+                url,
+                seller: { "@type": "Organization", name: site.name },
+              },
+            }
+          : product.price
           ? {
               offers: {
                 "@type": "Offer",
@@ -176,38 +187,16 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
               )}
             </a>
 
-            <div className="mt-5 rounded-2xl border border-line bg-paper-raised p-5">
-              {discount != null && product.listPrice != null && (
-                <div className="flex items-center gap-2">
-                  <span className="text-[15px] text-slate-soft line-through">{formatTL(product.listPrice)}</span>
-                  <span className="rounded-full bg-[#e8562a] px-2.5 py-0.5 text-[12.5px] font-bold text-white">%{discount} indirim</span>
-                </div>
-              )}
-              <p className="mt-1 font-display text-[2rem] font-bold leading-tight tracking-tight text-ink">
-                {product.price != null ? formatTL(product.price) : "Fiyat için sorun"}
-              </p>
-              <p className="text-[13px] font-medium text-slate">KDV Dahil</p>
-
-              <TrackedContactLink
-                method="whatsapp"
-                label="store_whatsapp_product"
-                href={waHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 flex min-h-[54px] w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 text-[16px] font-bold text-white transition-transform hover:scale-[1.02]"
-              >
-                <MessageCircle size={19} fill="currentColor" />
-                WhatsApp&apos;tan Sipariş Ver
-              </TrackedContactLink>
-              <TrackedContactLink
-                method="call"
-                label="store_call_product"
-                href={site.contact.phoneHref}
-                className="mt-2.5 flex min-h-[50px] w-full items-center justify-center gap-2 rounded-full border border-line px-5 text-[15px] font-semibold text-ink hover:border-ink"
-              >
-                <Phone size={17} /> Bizi Arayın: {site.contact.phoneDisplay}
-              </TrackedContactLink>
-            </div>
+            <ProductBuyBox
+              name={product.name}
+              url={url}
+              price={product.price}
+              listPrice={product.listPrice}
+              options={product.options}
+              whatsappNumber={site.contact.whatsappNumber}
+              phoneHref={site.contact.phoneHref}
+              phoneDisplay={site.contact.phoneDisplay}
+            />
           </div>
         </section>
       </div>

@@ -33,7 +33,10 @@ export type ProductFormValues = {
   bom: { name: string; qty: number; unit: number }[];
   margin_pct: number | null;
   list_margin_pct: number | null;
+  options: { label: string; cost_usd: number | null; price_usd: number | null; list_price_usd: number | null }[];
 };
+
+type OptionRow = { label: string; cost: string; sale: string; list: string };
 
 type BomRow = { name: string; qty: string; unit: string };
 const pctText = (n: number | null | undefined) => (n == null ? "" : String(n).replace(".", ","));
@@ -85,6 +88,9 @@ export default function ProductForm({
   const [costIn, setCostIn] = useState(usdText(initial.cost_usd));
   const [marginIn, setMarginIn] = useState(pctText(initial.margin_pct));
   const [listMarginIn, setListMarginIn] = useState(pctText(initial.list_margin_pct));
+  const [optRows, setOptRows] = useState<OptionRow[]>(
+    initial.options.map((o) => ({ label: o.label, cost: usdText(o.cost_usd), sale: usdText(o.price_usd), list: usdText(o.list_price_usd) })),
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -103,6 +109,9 @@ export default function ProductForm({
       cost_usd: cost,
       margin_pct: parseNum(marginIn),
       list_margin_pct: parseNum(listMarginIn),
+      options: optRows
+        .filter((o) => o.label.trim())
+        .map((o) => ({ label: o.label.trim(), cost_usd: parseUsd(o.cost), price_usd: parseUsd(o.sale), list_price_usd: parseUsd(o.list) })),
       price_usd: autoUsd ?? parseUsd(usdIn),
       list_price_usd: autoListUsd ?? parseUsd(listUsdIn),
       contents: contentsText.split("\n").map((x) => x.trim()).filter(Boolean),
@@ -143,6 +152,12 @@ export default function ProductForm({
   const catListMargin = categoryMargins[v.category]?.list ?? null;
   const listMargin = ownListMargin ?? catListMargin ?? pricing.defaultListMargin;
   const autoListUsd = costVat != null && listMargin != null ? Math.round(costVat * (1 + listMargin / 100) * 100) / 100 : null;
+  // Seçenek satış fiyatı: alış girildiyse marjla, girilmediyse elle yazılan USD.
+  const fromCost = (cost: number | null, m: number | null) =>
+    cost != null && m != null ? Math.round(cost * (1 + pricing.vatPct / 100) * (1 + m / 100) * 100) / 100 : null;
+  const optSale = (o: OptionRow) => fromCost(parseUsd(o.cost), margin) ?? parseUsd(o.sale);
+  const optList = (o: OptionRow) => fromCost(parseUsd(o.cost), listMargin) ?? parseUsd(o.list);
+  const setOpt = (i: number, k: keyof OptionRow, val: string) => setOptRows((rows) => rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
   const setRow = (i: number, k: keyof BomRow, val: string) => setBomRows((rows) => rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
 
   const usd = autoUsd ?? parseUsd(usdIn);
@@ -317,6 +332,76 @@ export default function ProductForm({
             )}
           </div>
         )}
+      </Section>
+
+      <Section
+        title="Seçenekler"
+        desc="Ürün farklı seçeneklerle satılıyorsa (ör. kablo 20 / 50 / 100 metre, montaj seti 2 / 4 / 6 panel) her seçeneği ayrı satır olarak girin. Sayfada seçim butonları çıkar; ürünün fiyatı en ucuz seçenekten gelir. Alış girerseniz satış fiyatı ürünün kâr marjıyla hesaplanır, girmezseniz satış fiyatını USD (KDV dahil) yazın."
+      >
+        {optRows.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-[13px]">
+              <thead>
+                <tr className="text-left text-slate">
+                  <th className="pb-1.5 font-medium">Seçenek adı</th>
+                  <th className="w-28 pb-1.5 font-medium">Alış $ (KDV hariç)</th>
+                  <th className="w-28 pb-1.5 font-medium">Satış $ (KDV dahil)</th>
+                  <th className="w-28 pb-1.5 font-medium">Üstü çizili $</th>
+                  <th className="w-28 pb-1.5 text-right font-medium">Sitede</th>
+                  <th className="w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {optRows.map((o, i) => {
+                  const sale = optSale(o);
+                  const auto = parseUsd(o.cost) != null && margin != null;
+                  return (
+                    <tr key={i}>
+                      <td className="py-1 pr-2">
+                        <input value={o.label} onChange={(e) => setOpt(i, "label", e.target.value)} className="admin-input" placeholder="ör. 100 metre" />
+                      </td>
+                      <td className="py-1 pr-2">
+                        <input inputMode="decimal" value={o.cost} onChange={(e) => setOpt(i, "cost", e.target.value)} className="admin-input" />
+                      </td>
+                      <td className="py-1 pr-2">
+                        {auto ? (
+                          <input readOnly value={usdText(sale)} className="admin-input bg-paper" title="Alış ve kâr marjından hesaplanıyor" />
+                        ) : (
+                          <input inputMode="decimal" value={o.sale} onChange={(e) => setOpt(i, "sale", e.target.value)} className="admin-input" />
+                        )}
+                      </td>
+                      <td className="py-1 pr-2">
+                        {parseUsd(o.cost) != null && listMargin != null ? (
+                          <input readOnly value={usdText(optList(o))} className="admin-input bg-paper" />
+                        ) : (
+                          <input inputMode="decimal" value={o.list} onChange={(e) => setOpt(i, "list", e.target.value)} className="admin-input" />
+                        )}
+                      </td>
+                      <td className="py-1 text-right tabular-nums">{sale != null && toTl(sale) ? tl(toTl(sale)!) : "–"}</td>
+                      <td className="py-1 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setOptRows((rows) => rows.filter((_, j) => j !== i))}
+                          className="rounded px-1.5 text-red-600 hover:bg-red-50"
+                          aria-label="Seçeneği sil"
+                        >
+                          ×
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setOptRows((rows) => [...rows, { label: "", cost: "", sale: "", list: "" }])}
+          className="self-start rounded-lg border border-line px-3 py-1.5 text-[13px] font-medium hover:bg-paper"
+        >
+          + Seçenek ekle
+        </button>
       </Section>
 
       <Section

@@ -41,9 +41,13 @@ export type StoreProduct = {
   datasheet?: string;
   seoTitle?: string;
   seoDescription?: string;
+  /** Seçenekler (ör. kablo uzunluğu, montaj setinde panel sayısı). Varsa fiyat en ucuz seçenektir. */
+  options: StoreProductOption[];
   /** Onaylı müşteri yorumlarından hesaplanır (lib/reviews.ts → withRatings). */
   rating?: { avg: number; count: number };
 };
+
+export type StoreProductOption = { label: string; price?: number; listPrice?: number };
 
 export type StoreSlide = {
   image: string;
@@ -84,6 +88,12 @@ export function cardCategory(c: StoreCategory): StoreCategory {
 export function discountPercent(p: StoreProduct): number | null {
   if (!p.price || !p.listPrice || p.listPrice <= p.price) return null;
   return Math.round(((p.listPrice - p.price) / p.listPrice) * 100);
+}
+
+/** Kartta ve listelerde fiyat metni: seçenekli üründe "… TL'den başlayan". */
+export function priceLabel(p: Pick<StoreProduct, "price" | "options">): string {
+  if (p.price == null) return "Fiyat için sorun";
+  return p.options.length > 1 ? `${formatTL(p.price)}'den başlayan` : formatTL(p.price);
 }
 
 export function formatTL(n: number): string {

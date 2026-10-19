@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutList, Search } from "lucide-react";
-import { formatTL } from "@/lib/store";
+import { priceLabel } from "@/lib/store";
 import { productHref } from "@/lib/store-details";
 
 const norm = (s: string) =>
@@ -23,7 +23,7 @@ const norm = (s: string) =>
 // paketler ve kategoriler anında listelenir.
 export type StoreSearchData = {
   categories: { slug: string; name: string }[];
-  products: { slug: string; category: string; name: string; power: string; price?: number; image?: string }[];
+  products: { slug: string; category: string; name: string; power: string; price?: number; options: { label: string }[]; image?: string }[];
 };
 
 export default function StoreSearch({ data, className = "" }: { data: StoreSearchData; className?: string }) {
@@ -104,7 +104,7 @@ export default function StoreSearch({ data, className = "" }: { data: StoreSearc
                 {p.image && <Image src={p.image} alt="" fill sizes="40px" className="object-cover" />}
               </span>
               <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-ink">{p.name}</span>
-              {p.price != null && <span className="text-[13px] font-bold text-ink">{formatTL(p.price)}</span>}
+              {p.price != null && <span className="text-[13px] font-bold text-ink">{priceLabel(p)}</span>}
             </Link>
           ))}
         </div>

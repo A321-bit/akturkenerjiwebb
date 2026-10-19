@@ -23,6 +23,8 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       name: p.name,
       power: p.power,
       price: p.price,
+      // Arama sonucunda "… TL'den başlayan" yazabilmek için yalnızca seçenek sayısı kadar boş kayıt.
+      options: p.options.map(() => ({ label: "" })),
       image: p.image,
     })),
   };

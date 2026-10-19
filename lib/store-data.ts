@@ -40,6 +40,7 @@ type ProductRow = {
   featured: boolean;
   seo_title: string | null;
   seo_description: string | null;
+  options: { label?: string; price?: number | null; list_price?: number | null }[] | null;
 };
 
 type SlideRow = {
@@ -86,6 +87,10 @@ export function mapProduct(r: ProductRow): StoreProduct {
     datasheet: opt(r.datasheet),
     seoTitle: opt(r.seo_title),
     seoDescription: opt(r.seo_description),
+    // Yalnızca satış bilgisi: seçeneğin alış maliyeti ziyaretçiye gitmez.
+    options: (r.options ?? [])
+      .filter((o) => o.label)
+      .map((o) => ({ label: String(o.label), price: opt(o.price ?? null), listPrice: opt(o.list_price ?? null) })),
   };
 }
 

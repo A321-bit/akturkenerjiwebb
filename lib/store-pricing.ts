@@ -10,6 +10,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // girilmemişse ürünün elle girilen USD fiyatı kullanılır. Üstü çizili fiyat da
 // aynı şekilde "liste marjı"ndan hesaplanır.
 
+/** Ürün seçeneği (veritabanı): alış (KDV hariç) ya da elle satış USD'si girilir, TL fiyatlar hesaplanır. */
+export type ProductOption = {
+  label: string;
+  cost_usd?: number | null;
+  price_usd?: number | null;
+  list_price_usd?: number | null;
+  sale_usd?: number | null;
+  price?: number | null;
+  list_price?: number | null;
+};
+
 export type PricingSettings = {
   rate: number | null;
   round: number;
@@ -77,7 +88,7 @@ export function applyUsd(body: Record<string, unknown>, s: PricingSettings) {
  */
 export async function recomputePrices(db: SupabaseClient, filter: { ids?: number[]; category?: string } = {}): Promise<number> {
   const s = await getPricingSettings(db);
-  let q = db.from("store_products").select("id, category, price, list_price, price_usd, list_price_usd, cost_usd, margin_pct, list_margin_pct");
+  let q = db.from("store_products").select("id, category, price, list_price, price_usd, list_price_usd, cost_usd, margin_pct, list_margin_pct, options");
   if (filter.ids?.length) q = q.in("id", filter.ids);
   if (filter.category) q = q.eq("category", filter.category);
   const [{ data: products }, { data: cats }] = await Promise.all([q, db.from("store_categories").select("slug, margin_pct, list_margin_pct")]);
@@ -100,13 +111,36 @@ export async function recomputePrices(db: SupabaseClient, filter: { ids?: number
       listUsd = priceFromCost(cost, listMargin, s);
       if (listUsd !== num(p.list_price_usd)) patch.list_price_usd = listUsd;
     }
-    if (s.rate) {
+    // Seçenekli ürün: her seçeneğin fiyatı kendi alışından (marjla) ya da elle girilen
+    // USD fiyatından hesaplanır; ürünün fiyatı en ucuz seçeneğinkidir.
+    let optionsOut: ProductOption[] | null = null;
+    const opts = Array.isArray(p.options) ? (p.options as ProductOption[]) : [];
+    if (opts.length) {
+      optionsOut = opts.map((o) => {
+        const oc = num(o.cost_usd);
+        const sale = oc !== null && oc > 0 && margin !== null ? priceFromCost(oc, margin, s) : num(o.price_usd);
+        const list = oc !== null && oc > 0 && listMargin !== null ? priceFromCost(oc, listMargin, s) : num(o.list_price_usd);
+        return {
+          ...o,
+          sale_usd: sale,
+          price: sale !== null && s.rate ? usdToTl(sale, s) : num(o.price),
+          list_price: list !== null && s.rate ? usdToTl(list, s) : num(o.list_price),
+        };
+      });
+      const cheapest = optionsOut.filter((o) => o.price != null).sort((a, b) => Number(a.price) - Number(b.price))[0];
+      priceUsd = cheapest?.sale_usd ?? null;
+      patch.price_usd = priceUsd;
+      patch.price = cheapest?.price ?? null;
+      patch.list_price_usd = null;
+      patch.list_price = cheapest?.list_price ?? null;
+    } else if (s.rate) {
       if (priceUsd !== null) patch.price = usdToTl(priceUsd, s);
       if (listUsd !== null) patch.list_price = usdToTl(listUsd, s);
     }
-    const changed = Object.entries(patch).some(([k, v]) => num((p as Record<string, unknown>)[k]) !== v);
+    const optionsChanged = optionsOut !== null && JSON.stringify(optionsOut) !== JSON.stringify(p.options);
+    const changed = optionsChanged || Object.entries(patch).some(([k, v]) => num((p as Record<string, unknown>)[k]) !== v);
     if (!changed) continue;
-    const r = await db.from("store_products").update(patch).eq("id", p.id);
+    const r = await db.from("store_products").update(optionsOut ? { ...patch, options: optionsOut } : patch).eq("id", p.id);
     if (!r.error) n++;
   }
   return n;

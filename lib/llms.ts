@@ -1,5 +1,5 @@
 import { SITE_URL, getBlogPostSummaries, getReferences, getServices, getSiteSettings } from "./data";
-import { formatTL } from "./store";
+import { formatTL, priceLabel } from "./store";
 import { getStoreCategories, getStoreProducts, getStoreSettings } from "./store-data";
 import { productHref } from "./store-details";
 
@@ -117,7 +117,10 @@ export async function buildLlmsFullTxt(): Promise<string> {
     lines.push(`### ${c.name}`, "", `Kategori sayfası: ${abs(`/magaza/${c.slug}`)}`, "", oneLine(c.intro), "");
     for (const p of c.products) {
       lines.push(`#### ${p.name}`, "");
-      lines.push(`- Fiyat: ${p.price != null ? `${formatTL(p.price)} (KDV dahil)` : "WhatsApp hattından sorulur"}`);
+      lines.push(`- Fiyat: ${p.price != null ? `${priceLabel(p)} (KDV dahil)` : "WhatsApp hattından sorulur"}`);
+      if (p.options.length > 1) {
+        lines.push(`- Seçenekler: ${p.options.map((o) => `${o.label}${o.price != null ? ` ${formatTL(o.price)}` : ""}`).join("; ")}`);
+      }
       lines.push(`- Sayfa: ${abs(productHref(p))}`);
       if (p.seoDescription) lines.push(`- Özet: ${oneLine(p.seoDescription)}`);
       if (p.contents.length) {

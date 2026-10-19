@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
-import { discountPercent, formatTL, type StoreProduct } from "@/lib/store";
+import { discountPercent, formatTL, priceLabel, type StoreProduct } from "@/lib/store";
 import { productHref } from "@/lib/store-details";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick } from "@/lib/ga4";
@@ -12,9 +12,10 @@ import Stars from "./Stars";
 
 export default function ProductCard({ product, whatsappNumber }: { product: StoreProduct; whatsappNumber: string }) {
   const discount = discountPercent(product);
-  const priceText = product.price != null ? formatTL(product.price) : "Fiyat için sorun";
+  const priceText = priceLabel(product);
+  const hasOptions = product.options.length > 1;
   const message = `Merhaba, *${product.name}* için sipariş vermek istiyorum.${
-    product.price != null ? ` (Fiyat: ${priceText})` : ""
+    product.price != null && !hasOptions ? ` (Fiyat: ${priceText})` : ""
   }\n\nÜrün: ${SITE_URL}${productHref(product)}`;
 
   return (
@@ -29,9 +30,11 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         )}
-        <span className="absolute left-3 top-3 rounded-full bg-ink/85 px-3 py-1 font-mono-data text-[12px] font-semibold text-paper backdrop-blur">
-          {product.power}
-        </span>
+        {product.power && (
+          <span className="absolute left-3 top-3 rounded-full bg-ink/85 px-3 py-1 font-mono-data text-[12px] font-semibold text-paper backdrop-blur">
+            {product.power}
+          </span>
+        )}
         {discount != null && (
           <span className="absolute right-3 top-3 rounded-full bg-[#e8562a] px-3 py-1 text-[13px] font-bold text-white">
             %{discount}
@@ -53,7 +56,7 @@ export default function ProductCard({ product, whatsappNumber }: { product: Stor
         )}
 
         <div className="mt-auto pt-4">
-          {discount != null && product.listPrice != null && (
+          {discount != null && product.listPrice != null && !hasOptions && (
             <p className="text-[14px] text-slate-soft line-through">{formatTL(product.listPrice)}</p>
           )}
           <p className="font-display text-[20px] font-bold tracking-tight text-ink">{priceText}</p>

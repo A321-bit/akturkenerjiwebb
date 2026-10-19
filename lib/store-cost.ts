@@ -22,6 +22,19 @@ export function sanitizeCostFields(body: Record<string, unknown>) {
     const c = toNum(body.cost_usd);
     body.cost_usd = c !== null && c > 0 ? c : null;
   }
+  if ("options" in body) {
+    const raw = Array.isArray(body.options) ? body.options : [];
+    body.options = raw
+      .map((o) => {
+        const x = o as Record<string, unknown>;
+        const pos = (v: unknown) => {
+          const n = toNum(v);
+          return n !== null && n > 0 ? n : null;
+        };
+        return { label: String(x.label ?? "").trim(), cost_usd: pos(x.cost_usd), price_usd: pos(x.price_usd), list_price_usd: pos(x.list_price_usd) };
+      })
+      .filter((o) => o.label);
+  }
   for (const k of ["margin_pct", "list_margin_pct"]) {
     if (!(k in body)) continue;
     const m = toNum(body[k]);

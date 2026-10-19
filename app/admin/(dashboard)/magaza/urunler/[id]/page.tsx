@@ -60,6 +60,14 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         bom: Array.isArray(data.bom) ? data.bom : [],
         margin_pct: data.margin_pct != null ? Number(data.margin_pct) : null,
         list_margin_pct: data.list_margin_pct != null ? Number(data.list_margin_pct) : null,
+        options: (Array.isArray(data.options) ? data.options : []).map(
+          (o: { label: string; cost_usd?: number | null; price_usd?: number | null; list_price_usd?: number | null }) => ({
+            label: o.label,
+            cost_usd: o.cost_usd ?? null,
+            price_usd: o.price_usd ?? null,
+            list_price_usd: o.list_price_usd ?? null,
+          }),
+        ),
       }
     : {
         slug: "",
@@ -85,6 +93,7 @@ export default async function EditStoreProductPage({ params }: { params: Promise
         bom: [],
         margin_pct: null,
         list_margin_pct: null,
+        options: [],
       };
 
   return (
