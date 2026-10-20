@@ -7,7 +7,7 @@ import { buildMetadata, ogImagePath } from "@/lib/seo";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
 import { cardProduct, discountPercent, priceLabel } from "@/lib/store";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
-import { kwOf, productGallery, productHref } from "@/lib/store-details";
+import { kwOf, productBrand, productGallery, productHref } from "@/lib/store-details";
 import ProductGallery from "@/components/store/ProductGallery";
 import TrackedContactLink from "@/components/TrackedContactLink";
 import MdxContent from "@/components/MdxContent";
@@ -104,7 +104,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
         description: product.seoDescription || category.intro,
         sku: product.slug,
         category: category.name,
-        brand: { "@type": "Brand", name: "Aktürk Enerji" },
+        brand: { "@type": "Brand", name: productBrand(product) },
         // Puan yalnızca gerçek, onaylı yorum varsa eklenir.
         ...(rating
           ? {

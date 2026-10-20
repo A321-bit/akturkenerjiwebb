@@ -135,6 +135,11 @@ const nextConfig: NextConfig = {
     // önceden sıkıştırılmış WebP olarak yüklenir, loader genişliğe göre seçer.
     loader: "custom",
     loaderFile: "./lib/imageLoader.ts",
+    // Supabase'te her görselin yalnızca iki boyu var (800 px ve tam boy); uzun
+    // srcset listesi aynı dosyaları tekrar edip HTML'i şişiriyordu. 1200 px'e kadar
+    // (bütün telefonlar, 3x ekran dahil) 800 px kopya, üstü tam boy.
+    deviceSizes: [828, 1200, 1920],
+    imageSizes: [384],
     formats: ["image/avif", "image/webp"],
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",

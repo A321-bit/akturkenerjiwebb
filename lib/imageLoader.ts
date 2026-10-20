@@ -4,7 +4,8 @@
 // küçük kopya). Bu loader, next/image'ın istediği genişliğe göre uygun
 // kopyayı seçer; böylece telefonlar ve kartlar küçük dosyayı indirir.
 export default function imageLoader({ src, width }: { src: string; width: number }) {
-  if (src.endsWith("-opt.webp") && width <= 828) {
+  // Telefonlar (3x ekranda ~1170 px'e kadar) küçük kopyayı indirir: LCP için en büyük kazanç.
+  if (src.endsWith("-opt.webp") && width <= 1200) {
     return src.replace(/-opt\.webp$/, "-opt-800.webp");
   }
   return src;

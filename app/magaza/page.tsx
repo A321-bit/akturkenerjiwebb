@@ -64,7 +64,8 @@ export default async function StorePage() {
       <CalculatorCta />
 
       {categories.map((c) => {
-        const products = allProducts.filter((p) => p.category === c.slug);
+        // Ana sayfa hafif kalsın (mobil LCP): rafta ilk 8 ürün, tamamı "Tümünü Gör"de.
+        const products = allProducts.filter((p) => p.category === c.slug).slice(0, 8);
         return products.length > 0 ? (
           <CategoryShelf key={c.slug} category={cardCategory(c)} products={products} whatsappNumber={site.contact.whatsappNumber} />
         ) : null;
