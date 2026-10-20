@@ -7,6 +7,7 @@ import { kwOf, productHref } from "./store-details";
 //
 //   {{fiyat-listesi}}          bu kategorideki bütün paketler (link + fiyat)
 //   {{fiyat-listesi:5-25}}     yalnızca 5–25 kW arası paketler (aralık kW cinsinden; "30-" = 30 kW ve üstü)
+//   {{fiyat-listesi:on-grid-paketler:5-25}}  yalnızca o kategoriden (blog yazılarında; orada tüm ürünler gelir)
 //   {{fiyat:<ürün-slug>}}      tek bir paketin satış fiyatı, cümle içinde (ör. "330.000 TL")
 //   {{liste-fiyat:<ürün-slug>}} tek bir paketin üstü çizili liste fiyatı
 
@@ -20,10 +21,11 @@ function listLine(p: StoreProduct): string {
 
 export function renderStoreTokens(md: string, products: StoreProduct[]): string {
   return md
-    .replace(/\{\{fiyat-listesi(?::(\d*(?:[.,]\d+)?)-(\d*(?:[.,]\d+)?))?\}\}/g, (_, min?: string, max?: string) => {
+    .replace(/\{\{fiyat-listesi(?::([a-z][a-z0-9-]*))?(?::(\d*(?:[.,]\d+)?)-(\d*(?:[.,]\d+)?))?\}\}/g, (_, cat?: string, min?: string, max?: string) => {
       const lo = min ? parseFloat(min.replace(",", ".")) : -Infinity;
       const hi = max ? parseFloat(max.replace(",", ".")) : Infinity;
       const list = products.filter((p) => {
+        if (cat && p.category !== cat) return false;
         const kw = kwOf(p);
         return Number.isNaN(kw) ? min === undefined : kw >= lo && kw <= hi;
       });
