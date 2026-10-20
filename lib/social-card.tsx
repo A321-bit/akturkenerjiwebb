@@ -98,7 +98,8 @@ export async function renderSocialCard(type: SocialType, slug: string, format: S
   const png = new ImageResponse(
     (
       <div style={{ width, height, display: "flex", position: "relative", background: "#0e1626", fontFamily: "Space Grotesk" }}>
-        {img && <img src={img} width={width} height={height} style={{ position: "absolute", top: 0, left: 0 }} />}
+        {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse (Satori) yalnızca düz img destekler */}
+        {img && <img src={img} width={width} height={height} alt="" style={{ position: "absolute", top: 0, left: 0 }} />}
         <div
           style={{
             position: "absolute",

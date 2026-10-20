@@ -39,7 +39,7 @@ export default function ProductGallery({ images, alt, badge }: { images: string[
                 i === active ? "border-sun" : "border-transparent hover:border-line"
               }`}
             >
-              <Image src={src} alt="" fill sizes="140px" className="object-cover" />
+              <Image src={src} alt={`${alt} – görsel ${i + 1}`} fill sizes="140px" className="object-cover" />
             </button>
           ))}
         </div>

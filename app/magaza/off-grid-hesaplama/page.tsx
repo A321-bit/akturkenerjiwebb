@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSiteSettings } from "@/lib/data";
-import { buildMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 import { getStoreProducts } from "@/lib/store-data";
 import { kwOf, productHref } from "@/lib/store-details";
 import OffGridCalculator from "@/components/store/OffGridCalculator";
 
 export const metadata: Metadata = {
   ...buildMetadata({
-    title: "Off Grid Paket Hesaplama: Bağ Evi İçin Kaç kW Güneş Paneli?",
+    title: "Off Grid Paket Hesaplama: Kaç kW Gerekir?",
     description:
-      "Bağ eviniz, yayla eviniz ya da çiftliğiniz için kullanacağınız cihazları girin; size uygun off grid güneş enerjisi paketini ücretsiz hesaplayıp WhatsApp'tan iletelim.",
+      "Bağ eviniz, yayla eviniz ya da çiftliğiniz için cihazlarınızı girin; size uygun off grid güneş enerjisi paketini ücretsiz hesaplayıp WhatsApp'tan iletelim.",
     path: "/magaza/off-grid-hesaplama",
   }),
 };
@@ -30,6 +30,18 @@ export default async function OffGridCalculatorPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            ...breadcrumbJsonLd([
+              { name: "Mağaza", path: "/magaza" },
+              { name: "Off Grid Paket Hesaplama", path: "/magaza/off-grid-hesaplama" },
+            ]),
+          }),
+        }}
+      />
       <section className="max-w-3xl">
         <nav aria-label="Sayfa yolu" className="text-[13px] text-slate-soft">
           <Link href="/magaza" className="hover:text-ink">Mağaza</Link>

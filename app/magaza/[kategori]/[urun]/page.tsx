@@ -40,11 +40,18 @@ export async function generateMetadata({ params }: { params: Promise<{ kategori:
   return {
     ...buildMetadata({
       title: product.seoTitle || `${product.name} Fiyatı`,
-      description: product.seoDescription || `${product.name}${product.price ? ` ${priceLabel(product)}` : ""}. ${category.short}: paket içeriği, teknik özellikler, garanti ve WhatsApp'tan hızlı sipariş.`,
+      description: product.seoDescription || autoDescription(product, category.short),
       path: productHref(product),
       image: ogImagePath("urun", product.slug),
     }),
   };
+}
+
+/** SEO açıklaması girilmemiş ürün için kısa, doğru açıklama (en fazla ~160 karakter). */
+function autoDescription(p: { name: string; price?: number; options: unknown[] }, short: string): string {
+  const price = p.price ? ` ${priceLabel(p as Parameters<typeof priceLabel>[0])}.` : ".";
+  const text = `${p.name}${price} ${short}. Güncel fiyat ve WhatsApp'tan hızlı sipariş.`;
+  return text.length <= 160 ? text : `${text.slice(0, 157).replace(/\s+\S*$/, "")}…`;
 }
 
 const fmtRating = (n: number) => n.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -97,7 +104,9 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
-      {
+      // Fiyatı ve onaylı yorumu olmayan üründe Product işaretlemesi Search Console'da
+      // "offers/review eksik" hatası verir; o durumda yalnızca breadcrumb gönderilir.
+      ...(product.price || optionPrices.length || rating ? [{
         "@type": "Product",
         name: product.name,
         image: gallery,
@@ -150,7 +159,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
               },
             }
           : {}),
-      },
+      }] : []),
       {
         "@type": "BreadcrumbList",
         itemListElement: [

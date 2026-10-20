@@ -5,8 +5,11 @@ import type { SocialPost } from "@/lib/social";
 // Sosyal medya planı: Facebook + Instagram otomatik paylaşım (lib/social.ts).
 export const dynamic = "force-dynamic";
 
+/** Son 30 gün (sunucuda, istek anında). */
+const since30 = () => new Date(Date.now() - 30 * 86400000).toISOString();
+
 export default async function SocialPage() {
-  const since = new Date(Date.now() - 30 * 86400000).toISOString();
+  const since = since30();
   const { data } = await adminClient().from("social_posts").select("*").gte("scheduled_at", since).order("scheduled_at").limit(1000);
   return (
     <div className="flex flex-col gap-5">

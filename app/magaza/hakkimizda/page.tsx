@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileText, PackageCheck, ShieldCheck, Tags } from "lucide-react";
-import { buildMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { CategoryTiles, HowToOrder } from "@/components/store/StoreSections";
 import { getStoreCategories, getStoreProducts, getStoreSettings } from "@/lib/store-data";
@@ -60,6 +60,18 @@ export default async function StoreAboutPage() {
 
   return (
     <div className="flex flex-col gap-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            ...breadcrumbJsonLd([
+              { name: "Mağaza", path: "/magaza" },
+              { name: "Hakkımızda", path: "/magaza/hakkimizda" },
+            ]),
+          }),
+        }}
+      />
       <section className="max-w-3xl">
         <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Mağaza Hakkında</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">

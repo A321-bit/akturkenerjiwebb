@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { CheckCircle2, Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
-import { buildMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 import { getStoreSettings } from "@/lib/store-data";
 import TrackedContactLink from "@/components/TrackedContactLink";
 import StoreFaq from "@/components/store/StoreFaq";
@@ -38,6 +38,18 @@ export default async function StoreContactPage() {
 
   return (
     <div className="flex flex-col gap-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            ...breadcrumbJsonLd([
+              { name: "Mağaza", path: "/magaza" },
+              { name: "İletişim", path: "/magaza/iletisim" },
+            ]),
+          }),
+        }}
+      />
       <section className="max-w-3xl">
         <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Sipariş Hattı</p>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Sipariş hattı ve müşteri hizmetleri</h1>

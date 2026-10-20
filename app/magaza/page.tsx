@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: "Güneş Enerjisi Paketleri ve Ürünleri Mağazası",
     description:
-      "On grid, off grid, hibrit lityum bataryalı ve öztüketim güneş paneli paketleri; güneş paneli, invertör ve lityum batarya. Fiyatlı paketler, WhatsApp'tan hızlı sipariş.",
+      "On grid, off grid, hibrit lityum bataryalı ve öztüketim güneş paneli paketleri; inverter, lityum batarya ve montaj ürünleri. Fiyatlı paketler, WhatsApp'tan sipariş.",
     path: "/magaza",
   }),
 };
