@@ -11,6 +11,7 @@ export type PcData = {
   /** Seçenek etiketleri "10 panel" biçiminde (panel sayısına göre set). */
   trapezSet?: { name: string; options: PcOption[] };
   kiremitSet?: { name: string; options: PcOption[] };
+  kenetSet?: { name: string; options: PcOption[] };
   /** Panel başına fiyat. */
   zemin?: { name: string; price: number };
   /** Seçenek etiketleri "50 metre" biçiminde. */

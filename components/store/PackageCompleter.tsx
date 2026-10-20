@@ -7,12 +7,13 @@ import { formatTL } from "@/lib/store";
 import { mc4Count, pickCable, pickSets, suggestedPanels, type PcData } from "@/lib/package-complete";
 import TrackedContactLink from "@/components/TrackedContactLink";
 
-type Roof = "kiremit" | "trapez" | "zemin" | "yok";
+type Roof = "kiremit" | "trapez" | "kenet" | "zemin" | "yok";
 type Line = { label: string; price: number };
 
 const ROOFS: { key: Roof; label: string }[] = [
   { key: "kiremit", label: "Kiremit çatı" },
   { key: "trapez", label: "Trapez / sandviç çatı" },
+  { key: "kenet", label: "Kenetli metal çatı" },
   { key: "zemin", label: "Zemin (arazi)" },
   { key: "yok", label: "Montaj istemiyorum" },
 ];
@@ -53,7 +54,7 @@ export default function PackageCompleter({
 
     const montaj: Line[] = [];
     if (roof === "zemin" && data.zemin) montaj.push({ label: `${count} × ${data.zemin.name} (panel başına)`, price: count * data.zemin.price });
-    const set = roof === "kiremit" ? data.kiremitSet : roof === "trapez" ? data.trapezSet : undefined;
+    const set = roof === "kiremit" ? data.kiremitSet : roof === "trapez" ? data.trapezSet : roof === "kenet" ? data.kenetSet : undefined;
     if (set) for (const s of pickSets(count, set.options)) montaj.push({ label: `${s.count > 1 ? `${s.count} × ` : ""}${set.name} (${s.label})`, price: s.count * s.price });
     if (montaj.length) out.push({ key: "montaj", items: montaj });
 
@@ -143,7 +144,7 @@ export default function PackageCompleter({
           <div>
             <p className="text-[13px] font-semibold text-slate">Çatı / kurulum yeri</p>
             <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Çatı tipi">
-              {ROOFS.filter((r) => r.key === "yok" || (r.key === "kiremit" ? data.kiremitSet : r.key === "trapez" ? data.trapezSet : data.zemin)).map((r) => (
+              {ROOFS.filter((r) => r.key === "yok" || { kiremit: data.kiremitSet, trapez: data.trapezSet, kenet: data.kenetSet, zemin: data.zemin }[r.key]).map((r) => (
                 <button
                   key={r.key}
                   type="button"
@@ -156,7 +157,7 @@ export default function PackageCompleter({
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 text-[12.5px] text-slate-soft">Kenetli metal çatı için bize yazın; aparat sayısını çatınıza göre belirleyelim.</p>
+            <p className="mt-1.5 text-[12.5px] text-slate-soft">Setler panellerin tek sıra dizilimine göre hesaplanır; farklı dizilim için bize yazın.</p>
           </div>
         </div>
 
