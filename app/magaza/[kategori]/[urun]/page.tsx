@@ -17,6 +17,8 @@ import ProductRail from "@/components/store/ProductRail";
 import ReviewForm from "@/components/store/ReviewForm";
 import Stars from "@/components/store/Stars";
 import ProductBuyBox from "@/components/store/ProductBuyBox";
+import PackageCompleter from "@/components/store/PackageCompleter";
+import { PACKAGE_COMPLETE_CATEGORIES, packageCompleteData } from "@/lib/package-complete-data";
 
 export async function generateStaticParams() {
   const products = await getStoreProducts();
@@ -51,10 +53,11 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
   const found = await find(params);
   if (!found) notFound();
   const { product, category, products } = found;
-  const [site, reviews, others] = await Promise.all([
+  const [site, reviews, others, completeData] = await Promise.all([
     getSiteSettings(),
     getApprovedReviews(product.slug),
     withRatings(products.filter((p) => p.slug !== product.slug)),
+    PACKAGE_COMPLETE_CATEGORIES.has(product.category) ? packageCompleteData(product) : Promise.resolve(null),
   ]);
 
   const rating = reviews.length
@@ -201,6 +204,17 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
           </div>
         </section>
       </div>
+
+      {completeData && (
+        <PackageCompleter
+          baseName={product.name}
+          basePrice={product.price}
+          inverterKw={kw}
+          url={url}
+          data={completeData}
+          whatsappNumber={site.contact.whatsappNumber}
+        />
+      )}
 
       <ProductTabs
         tabs={[

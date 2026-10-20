@@ -111,6 +111,14 @@ export const getStoreProducts = cache(async (): Promise<StoreProduct[]> => {
   return (data as ProductRow[]).filter((r) => live.has(r.category)).map(mapProduct);
 });
 
+/** Slug ile ürünler, pasif olanlar dahil (ör. satışa kapalı tekli paneller "Paketi Tamamla"da fiyat kaynağıdır). */
+export const getProductsBySlugs = cache(async (slugs: string[]): Promise<StoreProduct[]> => {
+  if (!slugs.length) return [];
+  const { data, error } = await storeDb.from("store_products").select("*").in("slug", slugs);
+  if (error || !data) return [];
+  return (data as ProductRow[]).map(mapProduct);
+});
+
 export const getStoreSlides = cache(async (): Promise<StoreSlide[]> => {
   const { data, error } = await supabasePublic.from("store_slides").select("*").order("sort_order").order("id");
   if (error || !data) return [];
