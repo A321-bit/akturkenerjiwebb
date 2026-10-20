@@ -46,7 +46,11 @@ export async function getPricingSettings(db: SupabaseClient): Promise<PricingSet
 export function usdToTl(usd: number, s: PricingSettings): number | null {
   if (!s.rate) return null;
   const tl = usd * s.rate;
-  return Math.max(s.round, Math.round(tl / s.round) * s.round);
+  // Küçük ürünlerde (kelepçe, kanca…) yuvarlama adımı fiyatın büyüklüğüne iner:
+  // 1.000'lik adım paketler içindir; 129 TL'lik ürün 1.000 TL olmasın, 130 TL olsun.
+  let step = s.round;
+  while (step > 1 && tl < step * 10) step /= 10;
+  return Math.max(step, Math.round(tl / step) * step);
 }
 
 export function effectiveMargin(productMargin: unknown, categoryMargin: unknown, s: PricingSettings): number | null {
