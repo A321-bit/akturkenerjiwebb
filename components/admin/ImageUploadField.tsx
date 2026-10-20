@@ -9,9 +9,12 @@ import { processImageForUpload } from "@/lib/imageProcessing";
 export default function ImageUploadField({
   value,
   onChange,
+  watermark = true,
 }: {
   value: string | null;
   onChange: (url: string | null) => void;
+  /** false: mağaza ürünü gibi filigransız yükleme. */
+  watermark?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -21,7 +24,7 @@ export default function ImageUploadField({
     setUploading(true);
     setError("");
     try {
-      const processed = await processImageForUpload(file);
+      const processed = await processImageForUpload(file, { watermark });
       const urlRes = await fetch("/api/admin/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

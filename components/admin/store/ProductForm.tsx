@@ -457,10 +457,10 @@ export default function ProductForm({
 
       <Section title="Görseller">
         <Field label="Ana görsel (kartta ve galeride ilk sırada)">
-          <ImageUploadField value={v.image} onChange={(url) => set("image", url)} />
+          <ImageUploadField value={v.image} onChange={(url) => set("image", url)} watermark={false} />
         </Field>
         <Field label="Galeri (ürün sayfasında ana görselin yanında)">
-          <GalleryUploadField value={v.gallery} onChange={(urls) => set("gallery", urls)} />
+          <GalleryUploadField value={v.gallery} onChange={(urls) => set("gallery", urls)} watermark={false} />
         </Field>
       </Section>
 
@@ -474,7 +474,7 @@ export default function ProductForm({
       </Section>
 
       <Section title="Ürün açıklaması (SEO makalesi)" desc="Ürün sayfasındaki &quot;Ürün Açıklaması&quot; sekmesi. Başlıklar için ## kullanın; S.S.S. de buraya yazılabilir.">
-        <MarkdownEditorField value={v.content} onChange={(x) => set("content", x)} required={false} rows={18} />
+        <MarkdownEditorField value={v.content} onChange={(x) => set("content", x)} required={false} rows={18} watermark={false} />
       </Section>
 
       <Section title="SEO" desc="Boş bırakılırsa otomatik oluşturulur.">

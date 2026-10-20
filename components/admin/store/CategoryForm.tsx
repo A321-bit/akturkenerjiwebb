@@ -131,11 +131,11 @@ export default function CategoryForm({ initial }: { initial: CategoryFormValues 
       </Section>
 
       <Section title="Kategori görseli" desc="Ana sayfadaki kategori rafının sol banner'ı.">
-        <ImageUploadField value={v.image} onChange={(url) => set("image", url)} />
+        <ImageUploadField value={v.image} onChange={(url) => set("image", url)} watermark={false} />
       </Section>
 
       <Section title="Kategori SEO yazısı" desc="Kategori sayfasında ürünlerin altında &quot;… Hakkında&quot; başlığıyla görünür.">
-        <MarkdownEditorField value={v.content} onChange={(x) => set("content", x)} required={false} rows={18} />
+        <MarkdownEditorField value={v.content} onChange={(x) => set("content", x)} required={false} rows={18} watermark={false} />
       </Section>
 
       <Section title="SEO" desc="Boş bırakılırsa otomatik oluşturulur.">

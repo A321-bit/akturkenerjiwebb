@@ -99,7 +99,7 @@ export default function AdminStoreSliderPage() {
               key: "image",
               label: "Görsel",
               type: "custom",
-              render: (val, set) => <ImageUploadField value={(val as string) || null} onChange={(u) => set((u ?? "") as never)} />,
+              render: (val, set) => <ImageUploadField value={(val as string) || null} onChange={(u) => set((u ?? "") as never)} watermark={false} />,
             },
             { key: "eyebrow", label: "Üst etiket (küçük yazı)", placeholder: "On Grid Paketler" },
             { key: "title", label: "Başlık", placeholder: "Faturanızı güneşle sıfıra yaklaştırın" },

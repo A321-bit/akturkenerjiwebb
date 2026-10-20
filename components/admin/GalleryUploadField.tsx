@@ -9,9 +9,12 @@ import { processImageForUpload } from "@/lib/imageProcessing";
 export default function GalleryUploadField({
   value,
   onChange,
+  watermark = true,
 }: {
   value: string[];
   onChange: (urls: string[]) => void;
+  /** false: mağaza ürünü gibi filigransız yükleme. */
+  watermark?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +26,7 @@ export default function GalleryUploadField({
     const uploaded: string[] = [];
     for (const file of Array.from(files)) {
       try {
-        const processed = await processImageForUpload(file);
+        const processed = await processImageForUpload(file, { watermark });
         const urlRes = await fetch("/api/admin/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

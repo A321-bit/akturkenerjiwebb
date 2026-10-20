@@ -41,7 +41,7 @@ function drawTiledWatermark(ctx: CanvasRenderingContext2D, width: number, height
   ctx.restore();
 }
 
-export async function processImageForUpload(file: File): Promise<File> {
+export async function processImageForUpload(file: File, opts: { watermark?: boolean } = {}): Promise<File> {
   if (!file.type.startsWith("image/") || file.type === "image/svg+xml") {
     return file;
   }
@@ -60,11 +60,14 @@ export async function processImageForUpload(file: File): Promise<File> {
   ctx.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
 
-  try {
-    const logo = await loadLogo();
-    drawTiledWatermark(ctx, width, height, logo);
-  } catch {
-    // Logo yüklenemezse filigransız devam et; boyut küçültme yine de uygulanmış olur.
+  // Mağaza ürünleri filigransız yüklenir (watermark: false); referans/blog görselleri filigranlı.
+  if (opts.watermark !== false) {
+    try {
+      const logo = await loadLogo();
+      drawTiledWatermark(ctx, width, height, logo);
+    } catch {
+      // Logo yüklenemezse filigransız devam et; boyut küçültme yine de uygulanmış olur.
+    }
   }
 
   const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", JPEG_QUALITY));

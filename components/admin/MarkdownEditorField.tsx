@@ -10,11 +10,14 @@ export default function MarkdownEditorField({
   onChange,
   required = true,
   rows = 16,
+  watermark = true,
 }: {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
   rows?: number;
+  /** false: mağaza içerikleri gibi filigransız görsel yükleme. */
+  watermark?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,7 +66,7 @@ export default function MarkdownEditorField({
     setUploading(true);
     setError("");
     try {
-      const processed = await processImageForUpload(file);
+      const processed = await processImageForUpload(file, { watermark });
       const urlRes = await fetch("/api/admin/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
