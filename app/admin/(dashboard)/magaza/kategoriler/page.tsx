@@ -54,11 +54,11 @@ export default function AdminStoreCategoriesPage() {
           <Plus size={16} /> Yeni Kategori
         </Link>
       </div>
-      <div className="mt-4 overflow-hidden rounded-2xl border border-line bg-paper-raised">
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-line bg-paper-raised">
         {rows === null ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Yükleniyor...</p>
         ) : (
-          <table className="w-full text-[14px]">
+          <table className="w-full min-w-[620px] text-[14px]">
             <tbody>
               {rows.map((r) => {
                 const Icon = categoryIcon(r.icon);

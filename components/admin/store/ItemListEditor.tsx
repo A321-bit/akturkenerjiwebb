@@ -41,7 +41,7 @@ export default function ItemListEditor<T extends Record<string, unknown>>({
     <div className="flex flex-col gap-3">
       {items.map((item, i) => (
         <div key={i} className="flex flex-col gap-2 rounded-xl border border-line bg-paper p-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-[12.5px] font-semibold text-slate">{itemTitle ? itemTitle(item, i) : `#${i + 1}`}</span>
             <div className="flex items-center gap-1">
               <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="rounded p-1.5 text-slate hover:bg-ink/5 disabled:opacity-30" aria-label="Yukarı taşı">

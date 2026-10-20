@@ -278,7 +278,7 @@ function RankTable({ title, rows }: { title: string; rows: [string, number][] })
       ) : (
         <ul className="mt-3 flex flex-col gap-2">
           {rows.map(([label, count]) => (
-            <li key={label} className="flex items-center justify-between text-[13.5px]">
+            <li key={label} className="flex flex-wrap items-center justify-between gap-3 text-[13.5px]">
               <span className="truncate text-slate">{label}</span>
               <span className="font-mono-data font-semibold text-ink">{count}</span>
             </li>

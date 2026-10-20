@@ -142,7 +142,7 @@ export default function AdminLeadsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Talepler</p>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">

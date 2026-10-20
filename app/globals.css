@@ -59,6 +59,9 @@
   font-size: 14.5px;
   outline: none;
   min-height: 44px;
+  /* Telefonda uzun seçenekli açılır liste ve yan yana kutular ekrandan taşmasın. */
+  max-width: 100%;
+  min-width: 0;
 }
 .admin-input:focus {
   border-color: var(--sun);

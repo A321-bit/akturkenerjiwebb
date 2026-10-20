@@ -28,7 +28,7 @@ export default function AdminServicesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
             Hizmetler
@@ -45,13 +45,13 @@ export default function AdminServicesPage() {
         </Link>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-paper-raised">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-paper-raised">
         {items === null ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Yükleniyor...</p>
         ) : items.length === 0 ? (
           <p className="p-5 text-[13.5px] text-slate-soft">Henüz hizmet eklenmemiş.</p>
         ) : (
-          <table className="w-full text-[14px]">
+          <table className="w-full min-w-[620px] text-[14px]">
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className="border-b border-line last:border-0">

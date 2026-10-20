@@ -58,7 +58,7 @@ export default function BlogPostForm({ initial }: { initial: BlogPostFormValues 
       <Field label="Başlık">
         <input required value={values.title} onChange={(e) => set("title", e.target.value)} className="admin-input" />
       </Field>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Kategori">
           <input
             required

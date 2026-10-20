@@ -287,7 +287,7 @@ export default function AdminSettingsPage() {
       </form>
 
       <div className="mt-12 max-w-2xl">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-display text-lg font-semibold">Müşteri Yorumları</h2>
           <button
             onClick={addTestimonial}
