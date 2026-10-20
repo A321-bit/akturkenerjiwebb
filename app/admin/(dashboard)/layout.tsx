@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin/referanslar", label: "Referanslar", icon: MapPin },
   { href: "/admin/blog", label: "Blog", icon: Newspaper },
   { href: "/admin/magaza", label: "Mağaza", icon: Store },
+  { href: "/admin/analytics", label: "Google Analytics", icon: BarChart3 },
   { href: "/admin/seo", label: "SEO · Anahtar Kelimeler", icon: TrendingUp },
   { href: "/admin/sosyal-medya", label: "Sosyal Medya", icon: Share2 },
   { href: "/admin/yorumlar", label: "Ürün Yorumları", icon: Star },
