@@ -105,6 +105,7 @@ export async function adsReport(period: AdsPeriod) {
     period,
     total: total[0] ? metrics(total[0]) : metrics({}),
     daily: daily.map((r) => ({ date: r.date_start ?? "", ...metrics(r) })),
+    rawDaily: daily.slice(-2),
     campaigns: byCampaign
       .map((r) => {
         const c = campaignInfo.get(r.campaign_id ?? "");
