@@ -96,11 +96,14 @@ export async function gaOverview() {
  * Google Ads (Analytics'e bağlı hesaplar): kampanya bazında maliyet, tıklama, gösterim,
  * reklamdan gelen oturum ve önemli etkinlik (dönüşüm); günlük maliyet.
  */
+export const GOOGLE_ADS_CUSTOMER = "3342768968";
+
 export async function gaGoogleAds(days: number) {
   const token = await googleAccessToken(SCOPE);
   const dateRanges = [{ startDate: `${days}daysAgo`, endDate: "yesterday" }];
   const metrics = ["advertiserAdCost", "advertiserAdClicks", "advertiserAdImpressions", "sessions", "keyEvents"].map((name) => ({ name }));
-  const filter = { notExpression: { filter: { fieldName: "sessionGoogleAdsCampaignName", stringFilter: { value: "(not set)" } } } };
+  // Yalnızca kullandığımız Google Ads hesabı (334-276-8968); Analytics'e bağlı diğer hesap hariç.
+  const filter = { filter: { fieldName: "sessionGoogleAdsCustomerId", stringFilter: { value: GOOGLE_ADS_CUSTOMER } } };
   const [byCampaign, daily, events] = await Promise.all([
     call(token, "runReport", {
       dateRanges,
