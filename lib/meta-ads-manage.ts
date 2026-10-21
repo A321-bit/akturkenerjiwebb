@@ -40,37 +40,49 @@ export async function searchTargeting(kind: "konum" | "ilgi", q: string) {
 
 const DAY = 86400;
 export const AUDIENCES = {
-  site: "AKT · Site ziyaretçileri 180 gün",
-  instagram: "AKT · Instagram etkileşim 365 gün",
-  page: "AKT · Facebook sayfa etkileşim 365 gün",
-  formOpened: "AKT · Formu açanlar 90 gün",
-  formSubmitted: "AKT · Formu gönderenler 90 gün",
+  site: "AKT · Site ziyaretçileri",
+  instagram: "AKT · Instagram etkileşim",
+  page: "AKT · Facebook sayfa etkileşim",
+  formOpened: "AKT · Formu açanlar",
+  formSubmitted: "AKT · Formu gönderenler",
 } as const;
 
-/** Yeniden pazarlama kitlelerini (yoksa) oluşturur; ad → kimlik döner. Para harcamaz. */
+/**
+ * Yeniden pazarlama kitlelerini (yoksa) oluşturur; ad → kimlik döner. Para harcamaz.
+ * Kaynağın verisi istenen süreden kısaysa Meta "Retention too long" der; o zaman süre kısaltılarak
+ * yeniden denenir ve kitle adına gerçek süre yazılır ("AKT · Site ziyaretçileri 90 gün").
+ */
 export async function ensureAudiences(): Promise<Record<keyof typeof AUDIENCES, string>> {
   const existing = await call<{ data: { id: string; name: string }[] }>("GET", `${AD_ACCOUNT}/customaudiences`, { fields: "id,name", limit: "200" });
-  const byName = new Map(existing.data.map((a) => [a.name, a.id]));
   const { igId } = await metaAccount();
-  const engagement = (sourceType: string, sourceId: string, event: string, days: number) => ({
-    inclusions: { operator: "or", rules: [{ event_sources: [{ type: sourceType, id: sourceId }], retention_seconds: days * DAY, filter: { operator: "and", filters: [{ field: "event", operator: "eq", value: event }] } }] },
+  const rule = (sourceType: string, sourceId: string, filter: Record<string, string>) => (days: number) => ({
+    inclusions: { operator: "or", rules: [{ event_sources: [{ type: sourceType, id: sourceId }], retention_seconds: days * DAY, filter: { operator: "and", filters: [filter] } }] },
   });
-  const specs: Record<keyof typeof AUDIENCES, Record<string, unknown> | null> = {
-    site: {
-      rule: { inclusions: { operator: "or", rules: [{ event_sources: [{ type: "pixel", id: META_DATASET_ID }], retention_seconds: 180 * DAY, filter: { operator: "and", filters: [{ field: "url", operator: "i_contains", value: "akturkenerji.com" }] } }] } },
-    },
-    instagram: igId ? { rule: engagement("ig_business", igId, "ig_business_profile_all", 365) } : null,
-    page: { rule: engagement("page", META_PAGE_ID, "page_engaged", 365) },
-    formOpened: { rule: engagement("lead", META_PAGE_ID, "lead_generation_opened", 90) },
-    formSubmitted: { rule: engagement("lead", META_PAGE_ID, "lead_generation_submitted", 90) },
+  const event = (value: string) => ({ field: "event", operator: "eq", value });
+  const specs: Record<keyof typeof AUDIENCES, { days: number[]; rule: (days: number) => unknown } | null> = {
+    site: { days: [180, 90, 30], rule: rule("pixel", META_DATASET_ID, { field: "url", operator: "i_contains", value: "akturkenerji.com" }) },
+    instagram: igId ? { days: [365, 180, 90], rule: rule("ig_business", igId, event("ig_business_profile_all")) } : null,
+    page: { days: [365, 180, 90], rule: rule("page", META_PAGE_ID, event("page_engaged")) },
+    formOpened: { days: [90, 60, 30], rule: rule("lead", META_PAGE_ID, event("lead_generation_opened")) },
+    formSubmitted: { days: [90, 60, 30], rule: rule("lead", META_PAGE_ID, event("lead_generation_submitted")) },
   };
   const out = {} as Record<keyof typeof AUDIENCES, string>;
   for (const key of Object.keys(AUDIENCES) as (keyof typeof AUDIENCES)[]) {
-    const name = AUDIENCES[key];
+    const label = AUDIENCES[key];
+    const found = existing.data.find((a) => a.name.startsWith(label));
     const spec = specs[key];
-    if (byName.has(name)) out[key] = byName.get(name)!;
-    else if (spec) out[key] = (await call<{ id: string }>("POST", `${AD_ACCOUNT}/customaudiences`, { name, ...spec, prefill: true })).id;
-    // (Meta v23: kitle türü "subtype" parametresi kaldırıldı; tür kuraldaki olay kaynağından anlaşılıyor.)
+    if (found) out[key] = found.id;
+    else if (spec) {
+      for (const [i, days] of spec.days.entries()) {
+        try {
+          // (Meta v23: kitle türü "subtype" parametresi kaldırıldı; tür kuraldaki olay kaynağından anlaşılıyor.)
+          out[key] = (await call<{ id: string }>("POST", `${AD_ACCOUNT}/customaudiences`, { name: `${label} ${days} gün`, rule: spec.rule(days), prefill: true })).id;
+          break;
+        } catch (e) {
+          if (i === spec.days.length - 1 || !String(e).includes("Retention too long")) throw new Error(`${label}: ${e instanceof Error ? e.message : e}`);
+        }
+      }
+    }
   }
   return out;
 }
