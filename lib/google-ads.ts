@@ -152,3 +152,14 @@ export function setDailyBudget(budgetResource: string, amountTl: number) {
     { update: { resourceName: budgetResource, amountMicros: String(Math.round(amountTl * 100) * 10000) }, updateMask: "amount_micros" },
   ]);
 }
+
+/** Birden çok kaynak türünü tek atomik istekte değiştirir (geçici negatif kimliklerle birbirine bağlanır). */
+export async function adsBatch(mutateOperations: unknown[], validateOnly = false) {
+  const res = await fetch(`${API()}/customers/${ADS_CUSTOMER}/googleAds:mutate`, {
+    method: "POST",
+    headers: await headers(),
+    body: JSON.stringify({ mutateOperations, validateOnly }),
+    cache: "no-store",
+  });
+  return parse<{ mutateOperationResponses?: Record<string, { resourceName?: string }>[] }>(res);
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Ban, Pause, Play, Plus, Trash2 } from "lucide-react";
+import { Ban, Pencil, Pause, Play, Plus, Trash2, X } from "lucide-react";
 import GoogleAdsReport from "@/components/admin/GoogleAdsReport";
 
 // Admin "Google Ads" (hesap 334-276-8968): genel bakış, anahtar kelimeler, arama terimleri,
@@ -11,8 +11,8 @@ type Perf = { cost: number; clicks: number; impressions: number; conversions: nu
 type Keyword = Perf & { id: string; campaignId: string; campaign: string; campaignStatus: string; adGroupId: string; adGroup: string; text: string; match: string; status: string; quality: number | null };
 type Term = Perf & { term: string; status: string; campaignId: string; campaign: string; adGroupId: string; adGroup: string };
 type Negative = { id: string; campaignId: string; campaign: string; text: string; match: string };
-type Ad = { id: string; campaign: string; adGroup: string; status: string; strength: string; approval: string; type: string; headlines: string[]; descriptions: string[]; url: string };
-type Asset = { level: string; campaign: string; type: string; text: string; status: string };
+type Ad = { id: string; adId: string; adGroupId: string; campaignId: string; campaign: string; campaignStatus: string; adGroup: string; status: string; strength: string; approval: string; type: string; headlines: string[]; descriptions: string[]; url: string; path1: string; path2: string };
+type Asset = { resource: string; level: string; campaign: string; campaignId: string; type: string; text: string; detail: string; url: string; status: string };
 type Campaign = { id: string; name: string; status: string };
 
 const TABS = [
@@ -145,7 +145,7 @@ export default function GoogleAdsPage() {
       {tab === "terimler" && <Terms list={terms} negatives={negs.data ?? []} busy={busy} act={act} afterNeg={negs.reload} />}
       {tab === "negatifler" && <Negatives list={negs} campaigns={campaigns} busy={busy} act={act} />}
       {tab === "reklamlar" && <Ads list={ads} busy={busy} act={act} />}
-      {tab === "uzantilar" && <Assets list={assets} />}
+      {tab === "uzantilar" && <Assets list={assets} campaigns={campaigns} busy={busy} act={act} />}
     </div>
   );
 }
@@ -470,21 +470,143 @@ function Negatives({ list, campaigns, busy, act }: { list: List<Negative>; campa
   );
 }
 
+const APPROVAL: Record<string, string> = { APPROVED: "Onaylı", APPROVED_LIMITED: "Sınırlı onay", DISAPPROVED: "Reddedildi", UNDER_REVIEW: "İnceleniyor", UNKNOWN: "İncelenmedi" };
+
+type Draft = { headlines: string[]; descriptions: string[]; finalUrl: string; path1: string; path2: string };
+const pad = (xs: string[], n: number) => [...xs, ...Array(Math.max(0, n - xs.length)).fill("")].slice(0, n);
+
+/** Duyarlı arama reklamı düzenleyici: 15 başlık (≤30), 4 açıklama (≤90), adres ve görünen yol. */
+function RsaEditor({ initial, busy, onSave, onCancel, saveLabel }: { initial: Draft; busy: boolean; onSave: (d: Draft) => void; onCancel: () => void; saveLabel: string }) {
+  const [d, setD] = useState<Draft>({ ...initial, headlines: pad(initial.headlines, 15), descriptions: pad(initial.descriptions, 4) });
+  const set = (k: "headlines" | "descriptions", i: number, v: string) => setD((x) => ({ ...x, [k]: x[k].map((y, j) => (j === i ? v : y)) }));
+  const filledH = d.headlines.filter((x) => x.trim()).length;
+  const filledD = d.descriptions.filter((x) => x.trim()).length;
+  const bad = d.headlines.some((x) => x.length > 30) || d.descriptions.some((x) => x.length > 90) || d.path1.length > 15 || d.path2.length > 15;
+  const counter = (n: number, max: number) => <span className={`w-12 shrink-0 text-right text-[11px] tabular-nums ${n > max ? "font-bold text-red-600" : "text-slate-soft"}`}>{n}/{max}</span>;
+
+  return (
+    <div className="mt-3 rounded-xl border border-line bg-paper p-4">
+      <p className="text-[13px] font-semibold">Başlıklar ({filledH}/15, en az 3)</p>
+      <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+        {d.headlines.map((h, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <input value={h} onChange={(e) => set("headlines", i, e.target.value)} placeholder={`Başlık ${i + 1}`} className="admin-input flex-1 text-[13px]" />
+            {counter(h.length, 30)}
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-[13px] font-semibold">Açıklamalar ({filledD}/4, en az 2)</p>
+      <div className="mt-2 flex flex-col gap-1.5">
+        {d.descriptions.map((h, i) => (
+          <div key={i} className="flex items-center gap-1.5">
+            <input value={h} onChange={(e) => set("descriptions", i, e.target.value)} placeholder={`Açıklama ${i + 1}`} className="admin-input flex-1 text-[13px]" />
+            {counter(h.length, 90)}
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_160px_160px]">
+        <label className="flex flex-col gap-1 text-[12px]">
+          <span className="font-semibold">Gideceği sayfa</span>
+          <input value={d.finalUrl} onChange={(e) => setD((x) => ({ ...x, finalUrl: e.target.value }))} className="admin-input text-[13px]" />
+        </label>
+        <label className="flex flex-col gap-1 text-[12px]">
+          <span className="font-semibold">Görünen yol 1</span>
+          <input value={d.path1} onChange={(e) => setD((x) => ({ ...x, path1: e.target.value }))} className="admin-input text-[13px]" />
+        </label>
+        <label className="flex flex-col gap-1 text-[12px]">
+          <span className="font-semibold">Görünen yol 2</span>
+          <input value={d.path2} onChange={(e) => setD((x) => ({ ...x, path2: e.target.value }))} className="admin-input text-[13px]" />
+        </label>
+      </div>
+      <p className="mt-2 text-[12px] text-slate">
+        Önizleme: <span className="text-brand">{d.headlines.filter((x) => x.trim()).slice(0, 3).join(" | ")}</span> · akturkenerji.com/{[d.path1, d.path2].filter(Boolean).join("/")}
+      </p>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          disabled={busy || bad || filledH < 3 || filledD < 2}
+          onClick={() => onSave({ ...d, headlines: d.headlines.filter((x) => x.trim()), descriptions: d.descriptions.filter((x) => x.trim()) })}
+          className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-paper disabled:opacity-40"
+        >
+          {saveLabel}
+        </button>
+        <button type="button" onClick={onCancel} className={btn}>
+          <X size={12} /> Vazgeç
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Ads({ list, busy, act }: { list: List<Ad>; busy: boolean; act: Act }) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [newIn, setNewIn] = useState<string>("");
+  const [campaign, setCampaign] = useState("tumu");
+  const all = list.data ?? [];
+  const campaigns = [...new Map(all.map((a) => [a.campaignId, `${a.campaign}${a.campaignStatus === "PAUSED" ? " (durdu)" : ""}`])).entries()];
+  const adGroups = [...new Map(all.map((a) => [a.adGroupId, a])).values()];
+  const shown = all.filter((a) => campaign === "tumu" || a.campaignId === campaign);
+  const draftOf = (a: Ad): Draft => ({ headlines: a.headlines, descriptions: a.descriptions, finalUrl: a.url, path1: a.path1, path2: a.path2 });
+  const template = adGroups.find((a) => a.adGroupId === newIn);
+
   return (
     <section className={card}>
+      <div className="flex flex-wrap items-center gap-2">
+        <select value={campaign} onChange={(e) => setCampaign(e.target.value)} className="admin-input w-auto max-w-full">
+          <option value="tumu">Tüm kampanyalar</option>
+          {campaigns.map(([id, name]) => (
+            <option key={id} value={id}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <span className="flex-1" />
+        <select value={newIn} onChange={(e) => setNewIn(e.target.value)} className="admin-input w-auto max-w-full">
+          <option value="">+ Yeni reklam: reklam grubu seçin…</option>
+          {adGroups.map((a) => (
+            <option key={a.adGroupId} value={a.adGroupId}>
+              {a.campaign} › {a.adGroup}
+            </option>
+          ))}
+        </select>
+      </div>
+      {template && (
+        <div className="mt-3">
+          <p className="text-[13px] font-semibold">
+            Yeni reklam: {template.campaign} › {template.adGroup} <span className="font-normal text-slate">(mevcut reklamdan kopyalandı, değiştirip kaydedin)</span>
+          </p>
+          <RsaEditor
+            initial={draftOf(template)}
+            busy={busy}
+            saveLabel="Reklamı oluştur"
+            onCancel={() => setNewIn("")}
+            onSave={(d) =>
+              confirm("Yeni reklam oluşturulsun mu? Google incelemesinden sonra yayına girer.") &&
+              act({ action: "reklam-ekle", adGroupId: template.adGroupId, rsa: d }, "Yeni reklam oluşturuldu.", () => {
+                setNewIn("");
+                return list.reload();
+              })
+            }
+          />
+        </div>
+      )}
       <State list={list} empty="Reklam yok." />
-      <ul className="flex flex-col divide-y divide-line">
-        {(list.data ?? []).map((a) => (
-          <li key={a.id} className={`py-4 ${a.status === "PAUSED" ? "opacity-60" : ""}`}>
+      <ul className="mt-2 flex flex-col divide-y divide-line">
+        {shown.map((a) => (
+          <li key={a.id} className={`py-4 ${a.status === "PAUSED" && editing !== a.id ? "opacity-60" : ""}`}>
             <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
               <span className="font-semibold">
                 {a.campaign} › {a.adGroup}
               </span>
               <span className="rounded-full bg-paper px-2 py-0.5">{a.status === "ENABLED" ? "Aktif" : "Durdu"}</span>
               {a.strength && <span className="rounded-full bg-paper px-2 py-0.5">Güç: {STRENGTH[a.strength] ?? a.strength}</span>}
-              {a.approval && a.approval !== "APPROVED" && <span className="rounded-full bg-sun/20 px-2 py-0.5">{a.approval}</span>}
+              {a.approval && <span className={`rounded-full px-2 py-0.5 ${a.approval === "DISAPPROVED" ? "bg-red-50 text-red-700" : "bg-paper"}`}>{APPROVAL[a.approval] ?? a.approval}</span>}
               <span className="flex-1" />
+              {a.type === "RESPONSIVE_SEARCH_AD" && (
+                <button type="button" disabled={busy} onClick={() => setEditing(editing === a.id ? null : a.id)} className={btn}>
+                  <Pencil size={12} /> Düzenle
+                </button>
+              )}
               <button
                 type="button"
                 disabled={busy}
@@ -505,9 +627,31 @@ function Ads({ list, busy, act }: { list: List<Ad>; busy: boolean; act: Act }) {
                 )}
               </button>
             </div>
-            {a.headlines.length > 0 && <p className="mt-2 text-[13.5px] text-brand">{a.headlines.join(" | ")}</p>}
-            {a.descriptions.length > 0 && <p className="mt-1 text-[13px] text-slate">{a.descriptions.join(" · ")}</p>}
-            {a.url && <p className="mt-1 truncate text-[12px] text-slate-soft">{a.url}</p>}
+            {editing === a.id ? (
+              <RsaEditor
+                initial={draftOf(a)}
+                busy={busy}
+                saveLabel="Değişiklikleri kaydet"
+                onCancel={() => setEditing(null)}
+                onSave={(d) =>
+                  confirm("Reklam güncellensin mi? Google yeniden inceler; inceleme bitene kadar eski hâli yayında kalabilir.") &&
+                  act({ action: "reklam-duzenle", adId: a.adId, rsa: d }, "Reklam güncellendi.", () => {
+                    setEditing(null);
+                    return list.reload();
+                  })
+                }
+              />
+            ) : (
+              <>
+                {a.headlines.length > 0 && <p className="mt-2 text-[13.5px] text-brand">{a.headlines.join(" | ")}</p>}
+                {a.descriptions.length > 0 && <p className="mt-1 text-[13px] text-slate">{a.descriptions.join(" · ")}</p>}
+                {a.url && (
+                  <p className="mt-1 truncate text-[12px] text-slate-soft">
+                    {a.url} {a.path1 ? `· /${[a.path1, a.path2].filter(Boolean).join("/")}` : ""}
+                  </p>
+                )}
+              </>
+            )}
           </li>
         ))}
       </ul>
@@ -515,31 +659,101 @@ function Ads({ list, busy, act }: { list: List<Ad>; busy: boolean; act: Act }) {
   );
 }
 
-function Assets({ list }: { list: List<Asset> }) {
+function Assets({ list, campaigns, busy, act }: { list: List<Asset>; campaigns: Campaign[]; busy: boolean; act: Act }) {
+  const [campaign, setCampaign] = useState("");
+  const [kind, setKind] = useState<"SITELINK" | "CALLOUT">("SITELINK");
+  const [f, setF] = useState({ text: "", d1: "", d2: "", url: "https://akturkenerji.com/" });
+  const groups = useMemo(() => {
+    const m = new Map<string, Asset[]>();
+    for (const a of list.data ?? []) {
+      const k = a.level === "Hesap" ? "Tüm hesap" : a.campaign;
+      m.set(k, [...(m.get(k) ?? []), a]);
+    }
+    return [...m];
+  }, [list.data]);
+  const max = kind === "SITELINK" ? 25 : 25;
+
   return (
-    <section className={card}>
-      <State list={list} empty="Uzantı yok." />
-      {(list.data ?? []).length > 0 && (
-        <table className="w-full text-left text-[13px]">
-          <thead className="text-[12px] text-slate">
-            <tr>
-              <th className="py-2 pr-3">Tür</th>
-              <th className="pr-3">Metin</th>
-              <th className="pr-3">Düzey</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {(list.data ?? []).map((a, i) => (
-              <tr key={i}>
-                <td className="py-2 pr-3">{FIELD[a.type] ?? a.type}</td>
-                <td className="pr-3">{a.text}</td>
-                <td className="pr-3 text-slate">{a.level === "Hesap" ? "Tüm hesap" : a.campaign}</td>
-              </tr>
+    <div className="flex flex-col gap-4">
+      <section className={card}>
+        <p className="text-[14px] font-semibold">Uzantı ekle</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_200px]">
+          <select value={campaign} onChange={(e) => setCampaign(e.target.value)} className="admin-input">
+            <option value="">Kampanya seçin…</option>
+            {campaigns.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} {c.status === "PAUSED" ? "(durdu)" : ""}
+              </option>
             ))}
-          </tbody>
-        </table>
-      )}
-      <p className="mt-3 text-[12px] text-slate">Site bağlantıları, açıklama metinleri ve snippet&apos;ler yeni kampanya kurulurken eklenecek.</p>
-    </section>
+          </select>
+          <select value={kind} onChange={(e) => setKind(e.target.value as "SITELINK" | "CALLOUT")} className="admin-input">
+            <option value="SITELINK">Site bağlantısı</option>
+            <option value="CALLOUT">Açıklama metni</option>
+          </select>
+        </div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <input value={f.text} onChange={(e) => setF({ ...f, text: e.target.value })} placeholder={kind === "SITELINK" ? "Bağlantı metni (≤25)" : "Açıklama metni (≤25)"} className="admin-input text-[13px]" />
+          <span className={`self-center text-[11px] ${f.text.length > max ? "font-bold text-red-600" : "text-slate-soft"}`}>
+            {f.text.length}/{max}
+          </span>
+          {kind === "SITELINK" && (
+            <>
+              <input value={f.d1} onChange={(e) => setF({ ...f, d1: e.target.value })} placeholder="Açıklama satırı 1 (≤35)" className="admin-input text-[13px]" />
+              <input value={f.d2} onChange={(e) => setF({ ...f, d2: e.target.value })} placeholder="Açıklama satırı 2 (≤35)" className="admin-input text-[13px]" />
+              <input value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} placeholder="https://akturkenerji.com/…" className="admin-input text-[13px] sm:col-span-2" />
+            </>
+          )}
+        </div>
+        <button
+          type="button"
+          disabled={busy || !campaign || !f.text.trim() || f.text.length > max}
+          onClick={() =>
+            act(
+              kind === "SITELINK" ? { action: "sitelink-ekle", campaignId: campaign, ...f } : { action: "callout-ekle", campaignId: campaign, text: f.text },
+              "Uzantı eklendi.",
+              () => {
+                setF({ text: "", d1: "", d2: "", url: "https://akturkenerji.com/" });
+                return list.reload();
+              },
+            )
+          }
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-paper disabled:opacity-40"
+        >
+          <Plus size={14} /> Ekle
+        </button>
+        <p className="mt-2 text-[12px] text-slate">Bir uzantının metnini değiştirmek için eskisini kaldırıp yenisini ekleyin.</p>
+      </section>
+
+      <section className={card}>
+        <State list={list} empty="Uzantı yok." />
+        {groups.map(([g, items]) => (
+          <div key={g} className="mb-4">
+            <p className="text-[12.5px] font-semibold text-slate">{g}</p>
+            <ul className="mt-2 divide-y divide-line">
+              {items.map((a) => (
+                <li key={a.resource} className="flex items-start gap-3 py-2 text-[13px]">
+                  <span className="w-28 shrink-0 text-[12px] text-slate">{FIELD[a.type] ?? a.type}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{a.text}</p>
+                    {a.detail && <p className="text-[12px] text-slate">{a.detail}</p>}
+                    {a.url && <p className="truncate text-[11.5px] text-slate-soft">{a.url}</p>}
+                  </div>
+                  {a.type !== "CALL" && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => confirm(`"${a.text}" kaldırılsın mı?`) && act({ action: "uzanti-kaldir", resource: a.resource }, `"${a.text}" kaldırıldı.`, list.reload)}
+                      className={`${btn} hover:text-red-600`}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
+    </div>
   );
 }
