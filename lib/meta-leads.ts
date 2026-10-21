@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { Resend } from "resend";
 import { adminClient } from "./data";
 import { META_PAGE_ID, metaAccount } from "./social";
 
@@ -45,7 +46,7 @@ const CITY = ["city", "şehir", "il"];
 const STANDARD = [...NAME, ...FIRST, ...LAST, ...PHONE, ...EMAIL, ...CITY];
 
 /** Sayfadaki bütün formların son 90 günlük başvurularını çeker; yenileri tabloya ekler. */
-export async function syncMetaLeads(): Promise<{ forms: number; fetched: number }> {
+export async function syncMetaLeads(): Promise<{ forms: number; fetched: number; fresh: number }> {
   const { pageToken } = await metaAccount();
   const forms = await graph<{ data: { id: string; name: string }[] }>(`${META_PAGE_ID}/leadgen_forms`, {
     fields: "id,name",
@@ -90,12 +91,52 @@ export async function syncMetaLeads(): Promise<{ forms: number; fetched: number 
       next = body.paging?.next ?? null;
     }
   }
+  let fresh: typeof rows = [];
+  if (rows.length) {
+    const { data: known } = await adminClient().from("meta_leads").select("id").in("id", rows.map((r) => r.id));
+    const knownIds = new Set((known ?? []).map((r) => r.id as string));
+    // Yalnızca son 2 günün yeni başvuruları bildirilir (ilk senkronda eski kayıtlar için e-posta yağmaz).
+    fresh = rows.filter((r) => !knownIds.has(r.id) && Date.now() - new Date(r.created_time).getTime() < 2 * 86400000);
+  }
   if (rows.length) {
     // Yalnızca Meta'dan gelen alanlar yazılır; personelin durumu, notu ve Meta gönderim kaydı korunur.
     const { error } = await adminClient().from("meta_leads").upsert(rows, { onConflict: "id" });
     if (error) throw new Error(error.message);
   }
-  return { forms: forms.data.length, fetched: rows.length };
+  if (fresh.length) await notifyNewLeads(fresh).catch((e) => console.error("[MetaLeads] Bildirim e-postası başarısız:", e));
+  return { forms: forms.data.length, fetched: rows.length, fresh: fresh.length };
+}
+
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+/** Yeni Meta form başvurularını (site formundaki gibi) Resend ile e-postayla bildirir. */
+async function notifyNewLeads(leads: { full_name: string | null; phone: string | null; city: string | null; form_name: string; campaign_name: string | null; answers: { name: string; value: string }[] }[]) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+  const to = process.env.LEAD_NOTIFY_EMAIL || "info@akturkenerji.com.tr";
+  const blocks = leads
+    .map((l) => {
+      const rows: [string, string][] = [
+        ["Ad Soyad", l.full_name || "—"],
+        ["Telefon", l.phone || "—"],
+        ["Şehir", l.city || "—"],
+        ["Form", l.form_name],
+        ["Kampanya", l.campaign_name || "—"],
+        ...l.answers.map((a): [string, string] => [a.name.replaceAll("_", " "), a.value.replaceAll("_", " ")]),
+      ];
+      return `<table style="border-collapse:collapse;margin-bottom:16px">${rows
+        .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#6b7280;white-space:nowrap">${esc(k)}</td><td style="padding:4px 0;font-weight:600">${esc(v)}</td></tr>`)
+        .join("")}</table>`;
+    })
+    .join("<hr />");
+  const html = `<meta charset="utf-8" /><div style="font-family:sans-serif;font-size:14px;line-height:1.6;color:#1c2430"><h2 style="margin:0 0 12px">Meta formundan ${leads.length} yeni başvuru</h2>${blocks}<p><a href="https://akturkenerji.com/admin/meta-formlari">Admin → Meta Formları</a></p></div>`;
+  const { error } = await new Resend(apiKey).emails.send({
+    from: "Aktürk Enerji Web <onboarding@resend.dev>",
+    to,
+    subject: leads.length === 1 ? `Yeni Meta form başvurusu — ${leads[0].full_name ?? "isimsiz"}` : `Meta formundan ${leads.length} yeni başvuru`,
+    html,
+  });
+  if (error) throw error;
 }
 
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");

@@ -151,3 +151,23 @@ export async function gaGoogleAds(days: number) {
 }
 
 export type GoogleAdsReport = Awaited<ReturnType<typeof gaGoogleAds>>;
+
+/** Seçili etkinliklerin günlük sayıları (son N gün, dün dahil): { "2026-10-20": { whatsapp_click: 3, … } }. */
+export async function gaEventsDaily(days: number, events: string[]) {
+  const token = await googleAccessToken(SCOPE);
+  const r = await call(token, "runReport", {
+    dateRanges: [{ startDate: `${days}daysAgo`, endDate: "yesterday" }],
+    dimensions: [{ name: "date" }, { name: "eventName" }],
+    metrics: [{ name: "eventCount" }],
+    dimensionFilter: { filter: { fieldName: "eventName", inListFilter: { values: events } } },
+    limit: 5000,
+  });
+  const out: Record<string, Record<string, number>> = {};
+  for (const row of r.rows ?? []) {
+    const d = row.dimensionValues?.[0]?.value ?? "";
+    const day = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+    const ev = row.dimensionValues?.[1]?.value ?? "";
+    (out[day] ??= {})[ev] = Number(row.metricValues?.[0]?.value ?? 0);
+  }
+  return out;
+}

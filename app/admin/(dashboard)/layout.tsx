@@ -17,6 +17,7 @@ const navItems: { href: string; label: string; icon: typeof Inbox; sub?: boolean
   { href: "/admin/magaza", label: "Mağaza", icon: Store },
   { href: "/admin/analytics", label: "Google Analytics", icon: BarChart3 },
   { href: "/admin/reklamlar", label: "Reklamlar", icon: Megaphone },
+  { href: "/admin/reklam-ozeti", label: "Reklam Özeti", icon: BarChart3, sub: true },
   { href: "/admin/google-ads", label: "Google Ads", icon: Search, sub: true },
   { href: "/admin/seo", label: "SEO · Anahtar Kelimeler", icon: TrendingUp },
   { href: "/admin/sosyal-medya", label: "Sosyal Medya", icon: Share2 },

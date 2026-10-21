@@ -4,7 +4,7 @@
 const GRAPH = "https://graph.facebook.com/v23.0";
 export const AD_ACCOUNT = "act_188346112";
 
-export type AdsPeriod = "last_7d" | "last_14d" | "last_28d" | "last_90d" | "this_month" | "last_month" | "maximum";
+export type AdsPeriod = "last_7d" | "last_14d" | "last_28d" | "last_30d" | "last_90d" | "this_month" | "last_month" | "maximum";
 
 type Action = { action_type: string; value: string };
 type InsightRow = {
