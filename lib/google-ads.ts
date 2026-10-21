@@ -127,7 +127,8 @@ export type GoogleAdsApiReport = Awaited<ReturnType<typeof googleAdsReport>>;
 
 // ───────────────────────── Yönetim ─────────────────────────
 
-async function mutate(path: string, operations: unknown[]) {
+/** Toplu değişiklik (campaigns, adGroupCriteria, campaignCriteria, adGroupAds…). */
+export async function adsMutate(path: string, operations: unknown[]) {
   const res = await fetch(`${API()}/customers/${ADS_CUSTOMER}/${path}:mutate`, {
     method: "POST",
     headers: await headers(),
@@ -140,14 +141,14 @@ async function mutate(path: string, operations: unknown[]) {
 /** Kampanyayı durdurur / yeniden açar. */
 export function setCampaignStatus(campaignId: string, status: "ENABLED" | "PAUSED") {
   if (!/^\d+$/.test(campaignId)) throw new Error("Geçersiz kampanya.");
-  return mutate("campaigns", [{ update: { resourceName: `customers/${ADS_CUSTOMER}/campaigns/${campaignId}`, status }, updateMask: "status" }]);
+  return adsMutate("campaigns", [{ update: { resourceName: `customers/${ADS_CUSTOMER}/campaigns/${campaignId}`, status }, updateMask: "status" }]);
 }
 
 /** Kampanya bütçesini (günlük, TL) değiştirir. */
 export function setDailyBudget(budgetResource: string, amountTl: number) {
   if (!budgetResource.startsWith(`customers/${ADS_CUSTOMER}/campaignBudgets/`)) throw new Error("Geçersiz bütçe.");
   if (!(amountTl >= 10 && amountTl <= 5000)) throw new Error("Günlük bütçe 10–5.000 TL arasında olmalı.");
-  return mutate("campaignBudgets", [
+  return adsMutate("campaignBudgets", [
     { update: { resourceName: budgetResource, amountMicros: String(Math.round(amountTl * 100) * 10000) }, updateMask: "amount_micros" },
   ]);
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList, Search } from "lucide-react";
 
 const navItems: { href: string; label: string; icon: typeof Inbox; sub?: boolean }[] = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
@@ -17,6 +17,7 @@ const navItems: { href: string; label: string; icon: typeof Inbox; sub?: boolean
   { href: "/admin/magaza", label: "Mağaza", icon: Store },
   { href: "/admin/analytics", label: "Google Analytics", icon: BarChart3 },
   { href: "/admin/reklamlar", label: "Reklamlar", icon: Megaphone },
+  { href: "/admin/google-ads", label: "Google Ads", icon: Search, sub: true },
   { href: "/admin/seo", label: "SEO · Anahtar Kelimeler", icon: TrendingUp },
   { href: "/admin/sosyal-medya", label: "Sosyal Medya", icon: Share2 },
   { href: "/admin/yorumlar", label: "Ürün Yorumları", icon: Star },
