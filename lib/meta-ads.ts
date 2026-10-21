@@ -81,52 +81,67 @@ async function insights(params: Record<string, string>): Promise<InsightRow[]> {
   return out.data;
 }
 
-/** Dönemin günleri (TR saati) → [{since, until}] (Meta en fazla 90 gün aralık kabul ediyor). */
-function dayRanges(period: AdsPeriod) {
-  const today = new Date(Date.now() + 3 * 3600000);
-  const ymd = (d: Date) => d.toISOString().slice(0, 10);
-  const day = (offset: number) => new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - offset));
-  let start: Date;
-  let end = day(1);
-  if (period === "this_month") {
-    start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
-    end = day(0);
-  } else if (period === "last_month") {
-    start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1));
-    end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 0));
-  } else {
-    start = day(Number(period.match(/\d+/)![0]));
-  }
-  const out = [];
-  for (let d = start; d <= end; d = new Date(d.getTime() + 86400000)) out.push({ since: ymd(d), until: ymd(d) });
-  return out;
-}
+/** Hesapta iki markanın reklamları var; reklamın yayınlandığı Facebook sayfasına göre ayrılır. */
+export const BRANDS = {
+  akturk: { label: "Aktürk Enerji", pages: ["151082711971643", "1606675006013805"] },
+  gunesdukkan: { label: "GüneşDükkan", pages: ["111167849589213"] },
+} as const;
+export type Brand = keyof typeof BRANDS | "tumu";
 
 type Campaign = { id: string; name: string; effective_status: string; objective: string; daily_budget?: string; lifetime_budget?: string; start_time?: string };
-type Ad = { id: string; name: string; effective_status: string; creative?: { thumbnail_url?: string; title?: string; body?: string } };
+type Ad = {
+  id: string;
+  name: string;
+  effective_status: string;
+  campaign_id: string;
+  creative?: { thumbnail_url?: string; title?: string; body?: string; actor_id?: string; effective_object_story_id?: string };
+};
 
-export async function adsReport(period: AdsPeriod) {
-  const p = { date_preset: period };
-  const [total, daily, byCampaign, byAd, demo, regions, placements, campaigns, ads] = await Promise.all([
+const brandOf = (a: Ad): Brand => {
+  const page = a.creative?.actor_id ?? a.creative?.effective_object_story_id?.split("_")[0] ?? "";
+  for (const [key, b] of Object.entries(BRANDS)) if ((b.pages as readonly string[]).includes(page)) return key as Brand;
+  return "tumu";
+};
+
+export async function adsReport(period: AdsPeriod, brand: Brand = "akturk") {
+  const [campaigns, ads] = await Promise.all([
+    graph<{ data: Campaign[] }>(`${AD_ACCOUNT}/campaigns`, { fields: "name,effective_status,objective,daily_budget,lifetime_budget,start_time", limit: "500" }),
+    graph<{ data: Ad[] }>(`${AD_ACCOUNT}/ads`, {
+      fields: "name,effective_status,campaign_id,creative{thumbnail_url,title,body,actor_id,effective_object_story_id}",
+      limit: "500",
+    }),
+  ]);
+  const brandAds = brand === "tumu" ? ads.data : ads.data.filter((a) => brandOf(a) === brand);
+  const campaignIds = [...new Set(brandAds.map((a) => a.campaign_id))];
+  const p: Record<string, string> = { date_preset: period };
+  if (brand !== "tumu") p.filtering = JSON.stringify([{ field: "campaign.id", operator: "IN", value: campaignIds.length ? campaignIds : ["0"] }]);
+
+  const [total, dailySpend, dailyActions, byCampaign, byAd, demo, regions, placements] = await Promise.all([
     insights({ ...p, fields: BASE }),
-    // time_increment=1 günlük harcamayı 0 döndürüyor; her gün ayrı aralık (time_ranges) olarak istenir.
-    insights({ fields: "spend,impressions,inline_link_clicks,actions", time_ranges: JSON.stringify(dayRanges(period)) }),
+    // Günlük kırılımda "actions" da istenirse Meta harcamayı 0 döndürüyor: harcama ve sonuçlar ayrı çekilip birleştirilir.
+    insights({ ...p, fields: "spend,impressions", time_increment: "1" }),
+    insights({ ...p, fields: "inline_link_clicks,actions", time_increment: "1" }),
     insights({ ...p, fields: `campaign_id,campaign_name,${BASE}`, level: "campaign" }),
     insights({ ...p, fields: `ad_id,ad_name,adset_name,campaign_name,${BASE}`, level: "ad" }),
     insights({ ...p, fields: BASE, breakdowns: "age,gender" }),
     insights({ ...p, fields: BASE, breakdowns: "region" }),
     insights({ ...p, fields: BASE, breakdowns: "publisher_platform,platform_position" }),
-    graph<{ data: Campaign[] }>(`${AD_ACCOUNT}/campaigns`, { fields: "name,effective_status,objective,daily_budget,lifetime_budget,start_time", limit: "100" }),
-    graph<{ data: Ad[] }>(`${AD_ACCOUNT}/ads`, { fields: "name,effective_status,creative{thumbnail_url,title,body}", limit: "200" }),
   ]);
   const campaignInfo = new Map(campaigns.data.map((c) => [c.id, c]));
   const adInfo = new Map(ads.data.map((a) => [a.id, a]));
+  const actionsByDay = new Map(dailyActions.map((r) => [r.date_start, r]));
   const GENDER: Record<string, string> = { male: "Erkek", female: "Kadın", unknown: "Belirsiz" };
 
   return {
     period,
+    brand,
     total: total[0] ? metrics(total[0]) : metrics({}),
-    daily: daily.map((r) => ({ date: r.date_start ?? "", ...metrics(r) })).sort((a, b) => a.date.localeCompare(b.date)),
+    daily: dailySpend
+      .map((r) => {
+        const a = actionsByDay.get(r.date_start);
+        return { date: r.date_start ?? "", ...metrics({ ...r, inline_link_clicks: a?.inline_link_clicks, actions: a?.actions }) };
+      })
+      .sort((a, b) => a.date.localeCompare(b.date)),
     campaigns: byCampaign
       .map((r) => {
         const c = campaignInfo.get(r.campaign_id ?? "");
@@ -164,16 +179,3 @@ export async function adsReport(period: AdsPeriod) {
 }
 
 export type AdsReport = Awaited<ReturnType<typeof adsReport>>;
-
-/** Geçici teşhis (admin): günlük harcama ve reklamların sayfaları. */
-export async function adsDebug() {
-  const q = (params: Record<string, string>) => graph<{ data: unknown[] }>(`${AD_ACCOUNT}/insights`, params).then((r) => r.data).catch((e) => String(e));
-  return {
-    account: await graph(AD_ACCOUNT, { fields: "name,timezone_name,currency,account_status" }).catch((e) => String(e)),
-    preset: await q({ fields: "spend,impressions", date_preset: "last_7d" }),
-    range: await q({ fields: "spend,impressions", time_range: JSON.stringify({ since: "2026-10-14", until: "2026-10-20" }) }),
-    inc: await q({ fields: "spend,impressions", date_preset: "last_7d", time_increment: "1" }),
-    incCampaign: await q({ fields: "campaign_name,spend,impressions", date_preset: "last_7d", time_increment: "1", level: "campaign" }),
-    ads: await graph(`${AD_ACCOUNT}/ads`, { fields: "name,campaign{name},creative{effective_object_story_id,actor_id,object_story_spec}", limit: "100" }).catch((e) => String(e)),
-  };
-}
