@@ -186,3 +186,23 @@ export async function tokenScopes(): Promise<{ scopes: string[]; expires: number
   const d = await graph<{ data: { scopes?: string[]; expires_at?: number } }>("debug_token", { input_token: token });
   return { scopes: d.data.scopes ?? [], expires: d.data.expires_at || null };
 }
+
+/**
+ * Kampanya oluşturma yetkisi testi: Meta isteği doğrular ama hiçbir şey oluşturmaz
+ * (execution_options=validate_only), harcama olmaz.
+ */
+export async function validateCampaignCreate(): Promise<{ ok: boolean; detail: unknown }> {
+  const token = process.env.META_ACCESS_TOKEN;
+  if (!token) throw new Error("META_ACCESS_TOKEN ortam değişkeni tanımlı değil.");
+  const body = new URLSearchParams({
+    name: "Yetki testi (oluşturulmaz)",
+    objective: "OUTCOME_LEADS",
+    status: "PAUSED",
+    special_ad_categories: "[]",
+    execution_options: '["validate_only"]',
+    access_token: token,
+  });
+  const res = await fetch(`${GRAPH}/${AD_ACCOUNT}/campaigns`, { method: "POST", body, cache: "no-store" });
+  const data = await res.json();
+  return { ok: res.ok && !data.error, detail: data.error ?? data };
+}
