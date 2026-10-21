@@ -117,7 +117,7 @@ export async function listAds() {
 
 export async function listAssets() {
   const F =
-    "asset.id, asset.type, asset.final_urls, asset.sitelink_asset.link_text, asset.sitelink_asset.description1, asset.sitelink_asset.description2, asset.callout_asset.callout_text, asset.structured_snippet_asset.header, asset.structured_snippet_asset.values, asset.call_asset.phone_number";
+    "asset.id, asset.name, asset.type, asset.final_urls, asset.image_asset.full_size.url, asset.text_asset.text, asset.sitelink_asset.link_text, asset.sitelink_asset.description1, asset.sitelink_asset.description2, asset.callout_asset.callout_text, asset.structured_snippet_asset.header, asset.structured_snippet_asset.values, asset.call_asset.phone_number";
   const [camp, cust] = await Promise.all([
     adsQuery<any>(
       `SELECT campaign.id, campaign.name, campaign.status, campaign_asset.resource_name, campaign_asset.field_type, campaign_asset.status, ${F} FROM campaign_asset WHERE campaign_asset.status != 'REMOVED' AND campaign.status != 'REMOVED'`,
@@ -129,6 +129,8 @@ export async function listAssets() {
     a.calloutAsset?.calloutText ??
     (a.structuredSnippetAsset ? `${a.structuredSnippetAsset.header}: ${(a.structuredSnippetAsset.values ?? []).join(", ")}` : null) ??
     a.callAsset?.phoneNumber ??
+    a.textAsset?.text ??
+    a.name ??
     a.type;
   const row = (link: any, a: any, level: string, campaign = "", campaignId = "") => ({
     resource: link.resourceName as string,
@@ -139,6 +141,7 @@ export async function listAssets() {
     text: text(a) as string,
     detail: [a.sitelinkAsset?.description1, a.sitelinkAsset?.description2].filter(Boolean).join(" · "),
     url: ((a.finalUrls ?? []) as string[])[0] ?? "",
+    image: (a.imageAsset?.fullSize?.url as string | undefined) ?? "",
     status: link.status as string,
   });
   return [...cust.map((r) => row(r.customerAsset, r.asset, "Hesap")), ...camp.map((r) => row(r.campaignAsset, r.asset, "Kampanya", r.campaign.name, r.campaign.id))];

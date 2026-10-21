@@ -12,7 +12,7 @@ type Keyword = Perf & { id: string; campaignId: string; campaign: string; campai
 type Term = Perf & { term: string; status: string; campaignId: string; campaign: string; adGroupId: string; adGroup: string };
 type Negative = { id: string; campaignId: string; campaign: string; text: string; match: string };
 type Ad = { id: string; adId: string; adGroupId: string; campaignId: string; campaign: string; campaignStatus: string; adGroup: string; status: string; strength: string; approval: string; type: string; headlines: string[]; descriptions: string[]; url: string; path1: string; path2: string };
-type Asset = { resource: string; level: string; campaign: string; campaignId: string; type: string; text: string; detail: string; url: string; status: string };
+type Asset = { resource: string; level: string; campaign: string; campaignId: string; type: string; text: string; detail: string; url: string; image: string; status: string };
 type Campaign = { id: string; name: string; status: string };
 
 const TABS = [
@@ -27,7 +27,17 @@ type Tab = (typeof TABS)[number]["key"];
 
 const MATCH: Record<string, string> = { EXACT: "Tam", PHRASE: "Öbek", BROAD: "Geniş" };
 const STRENGTH: Record<string, string> = { EXCELLENT: "Mükemmel", GOOD: "İyi", AVERAGE: "Orta", POOR: "Zayıf", PENDING: "Hesaplanıyor" };
-const FIELD: Record<string, string> = { SITELINK: "Site bağlantısı", CALLOUT: "Açıklama metni", STRUCTURED_SNIPPET: "Snippet", CALL: "Arama", IMAGE: "Görsel", BUSINESS_NAME: "İşletme adı", LOGO: "Logo" };
+const FIELD: Record<string, string> = {
+  SITELINK: "Site bağlantısı",
+  CALLOUT: "Açıklama metni",
+  STRUCTURED_SNIPPET: "Snippet",
+  CALL: "Arama",
+  IMAGE: "Görsel",
+  AD_IMAGE: "Görsel",
+  BUSINESS_NAME: "İşletme adı",
+  BUSINESS_LOGO: "Logo",
+  LOGO: "Logo",
+};
 /** Önerilen negatif kelimeler (google-ads-anahtar-kelimeler.xlsx ile aynı liste). */
 const SUGGESTED_NEGATIVES = [
   "su ısıtıcı", "su ısıtma", "sıcak su", "basınçlı", "petek", "termosifon", "kollektör",
@@ -733,6 +743,10 @@ function Assets({ list, campaigns, busy, act }: { list: List<Asset>; campaigns: 
               {items.map((a) => (
                 <li key={a.resource} className="flex items-start gap-3 py-2 text-[13px]">
                   <span className="w-28 shrink-0 text-[12px] text-slate">{FIELD[a.type] ?? a.type}</span>
+                  {a.image && (
+                    // eslint-disable-next-line @next/next/no-img-element -- Google Ads görsel önizlemesi
+                    <img src={a.image} alt="" className="h-12 w-auto max-w-[96px] shrink-0 rounded object-cover" />
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{a.text}</p>
                     {a.detail && <p className="text-[12px] text-slate">{a.detail}</p>}

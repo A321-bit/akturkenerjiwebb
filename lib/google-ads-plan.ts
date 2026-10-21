@@ -137,15 +137,18 @@ export const SEARCH_PLAN: CampaignPlan = {
     "cw enerji", "tünelsan", "eraslan", "entegre solar", "kalyon", "pekintaş", "anker", "ecoflow", "arçelik", "lexron",
     "lisanssız elektrik üretimi", "jel akü",
   ],
+  // 2026-10-21: kullanıcı isteğiyle mağaza kategorileri (kampanyada da bu set var).
   sitelinks: [
     { text: "Ücretsiz Keşif İsteyin", d1: "Uzman ekip yerinde inceler", d2: "Size özel proje ve teklif", url: "https://akturkenerji.com/teklif-al" },
-    { text: "Villa Çatı GES", d1: "Villanız için anahtar teslim", d2: "Lityum batarya ve araç şarjı", url: "https://akturkenerji.com/hizmetlerimiz/villa-cati-ges" },
+    { text: "On Grid Paketler", d1: "Faturanızı mahsuplaşmayla düşürün", d2: "5 kW'tan 500 kW'a paketler", url: "https://akturkenerji.com/magaza/on-grid-paketler" },
+    { text: "Off Grid Paketler", d1: "Şebekesiz bağ evi ve arazi için", d2: "Bataryalı hazır güneş paketleri", url: "https://akturkenerji.com/magaza/off-grid-paketler" },
     { text: "Hibrit Lityum Paketler", d1: "Kesintide bile elektrik", d2: "Güncel paket fiyatları", url: "https://akturkenerji.com/magaza/hibrit-paketler" },
-    { text: "On Grid Paket Fiyatları", d1: "Faturanızı mahsuplaşmayla düşürün", d2: "5–20 kW hazır paketler", url: "https://akturkenerji.com/magaza/on-grid-paketler" },
+    { text: "İnverter + Batarya", d1: "Panelsiz inverter ve batarya", d2: "Mevcut sisteme depolama ekleyin", url: "https://akturkenerji.com/magaza/inverter-batarya-paketleri" },
+    { text: "Tarımsal Sulama Paketleri", d1: "Tarlanız için güneş enerjisi", d2: "Sulamaya hazır solar paketler", url: "https://akturkenerji.com/magaza/tarimsal-sulama-paketleri" },
+    { text: "Öztüketim Paketleri", d1: "İşletmeler için çatı GES", d2: "Elektrik giderini düşürün", url: "https://akturkenerji.com/magaza/oztuketim-paketleri" },
+    { text: "Rüzgar + Güneş Hibrit", d1: "Rüzgar türbini ve güneş paneli", d2: "Kırsal alanlar için hibrit", url: "https://akturkenerji.com/magaza/ruzgar-gunes-hibrit-sistemleri" },
+    { text: "Araç Şarj İstasyonları", d1: "Ev ve işyeri şarj üniteleri", d2: "Aracınızı güneşle şarj edin", url: "https://akturkenerji.com/magaza/elektrikli-arac-sarj-istasyonu" },
     { text: "Referans Projelerimiz", d1: "Ankara'da tamamlanan kurulumlar", d2: "Gerçek proje fotoğrafları", url: "https://akturkenerji.com/referanslarimiz" },
-    { text: "Elektrikli Araç Şarjı", d1: "Aracınızı güneşle şarj edin", d2: "Ev tipi şarj ünitesi kurulumu", url: "https://akturkenerji.com/hizmetlerimiz/elektrikli-arac-sarj-istasyonu" },
-    { text: "Lityum Batarya Depolama", d1: "Ürettiğinizi depolayın", d2: "Gece ve kesintide kullanın", url: "https://akturkenerji.com/hizmetlerimiz/lityum-batarya-depolama" },
-    { text: "Proje ve Başvuru", d1: "Çağrı mektubu ve proje bizden", d2: "Mühendislik dahil süreç", url: "https://akturkenerji.com/hizmetlerimiz/projelendirme-muhendislik-basvuru" },
   ],
   callouts: [
     "Ücretsiz Keşif", "Anahtar Teslim Kurulum", "Peşin Fiyatına 4 Taksit", "Proje ve Başvuru Bizden",
