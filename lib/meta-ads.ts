@@ -4,7 +4,7 @@
 const GRAPH = "https://graph.facebook.com/v23.0";
 export const AD_ACCOUNT = "act_188346112";
 
-export type AdsPeriod = "last_7d" | "last_14d" | "last_28d" | "last_90d" | "this_month" | "last_month";
+export type AdsPeriod = "last_7d" | "last_14d" | "last_28d" | "last_90d" | "this_month" | "last_month" | "maximum";
 
 type Action = { action_type: string; value: string };
 type InsightRow = {
@@ -119,8 +119,8 @@ export async function adsReport(period: AdsPeriod, brand: Brand = "akturk") {
   const [total, dailySpend, dailyActions, byCampaign, byAd, demo, regions, placements] = await Promise.all([
     insights({ ...p, fields: BASE }),
     // Günlük kırılımda "actions" da istenirse Meta harcamayı 0 döndürüyor: harcama ve sonuçlar ayrı çekilip birleştirilir.
-    insights({ ...p, fields: "spend,impressions", time_increment: "1" }),
-    insights({ ...p, fields: "inline_link_clicks,actions", time_increment: "1" }),
+    insights({ ...p, fields: "spend,impressions", time_increment: period === "maximum" ? "monthly" : "1" }),
+    insights({ ...p, fields: "inline_link_clicks,actions", time_increment: period === "maximum" ? "monthly" : "1" }),
     insights({ ...p, fields: `campaign_id,campaign_name,${BASE}`, level: "campaign" }),
     insights({ ...p, fields: `ad_id,ad_name,adset_name,campaign_name,${BASE}`, level: "ad" }),
     insights({ ...p, fields: BASE, breakdowns: "age,gender" }),
@@ -179,3 +179,10 @@ export async function adsReport(period: AdsPeriod, brand: Brand = "akturk") {
 }
 
 export type AdsReport = Awaited<ReturnType<typeof adsReport>>;
+
+/** Erişim anahtarının izinleri (reklam oluşturmak için ads_management gerekir). Anahtarın kendisi döndürülmez. */
+export async function tokenScopes(): Promise<{ scopes: string[]; expires: number | null }> {
+  const token = process.env.META_ACCESS_TOKEN ?? "";
+  const d = await graph<{ data: { scopes?: string[]; expires_at?: number } }>("debug_token", { input_token: token });
+  return { scopes: d.data.scopes ?? [], expires: d.data.expires_at || null };
+}

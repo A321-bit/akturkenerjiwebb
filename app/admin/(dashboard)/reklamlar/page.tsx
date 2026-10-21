@@ -10,6 +10,7 @@ const PERIODS: { key: AdsPeriod; label: string }[] = [
   { key: "last_90d", label: "Son 90 gün" },
   { key: "this_month", label: "Bu ay" },
   { key: "last_month", label: "Geçen ay" },
+  { key: "maximum", label: "Tüm zamanlar" },
 ];
 const BRAND_TABS: { key: Brand; label: string }[] = [
   { key: "akturk", label: "Aktürk Enerji" },
