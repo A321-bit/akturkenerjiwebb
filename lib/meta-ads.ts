@@ -88,7 +88,8 @@ export async function adsReport(period: AdsPeriod) {
   const p = { date_preset: period };
   const [total, daily, byCampaign, byAd, demo, regions, placements, campaigns, ads] = await Promise.all([
     insights({ ...p, fields: BASE }),
-    insights({ ...p, fields: "spend,impressions,inline_link_clicks,actions", time_increment: "1" }),
+    // Hesap düzeyinde günlük kırılım harcamayı 0 döndürüyor; kampanya düzeyinde çekip günlere toplanır.
+    insights({ ...p, fields: "spend,impressions,inline_link_clicks,actions", time_increment: "1", level: "campaign", limit: "1000" }),
     insights({ ...p, fields: `campaign_id,campaign_name,${BASE}`, level: "campaign" }),
     insights({ ...p, fields: `ad_id,ad_name,adset_name,campaign_name,${BASE}`, level: "ad" }),
     insights({ ...p, fields: BASE, breakdowns: "age,gender" }),
@@ -104,8 +105,13 @@ export async function adsReport(period: AdsPeriod) {
   return {
     period,
     total: total[0] ? metrics(total[0]) : metrics({}),
-    daily: daily.map((r) => ({ date: r.date_start ?? "", ...metrics(r) })),
-    rawDaily: daily.slice(-2),
+    daily: [...Map.groupBy(daily, (r) => r.date_start ?? "")]
+      .map(([date, rows]) => {
+        const sum = metrics({});
+        for (const m of rows.map(metrics)) for (const k of Object.keys(sum) as (keyof Metrics)[]) sum[k] += m[k];
+        return { date, ...sum };
+      })
+      .sort((a, b) => a.date.localeCompare(b.date)),
     campaigns: byCampaign
       .map((r) => {
         const c = campaignInfo.get(r.campaign_id ?? "");
