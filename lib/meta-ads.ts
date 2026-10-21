@@ -81,6 +81,27 @@ async function insights(params: Record<string, string>): Promise<InsightRow[]> {
   return out.data;
 }
 
+/** Dönemin günleri (TR saati) → [{since, until}] (Meta en fazla 90 gün aralık kabul ediyor). */
+function dayRanges(period: AdsPeriod) {
+  const today = new Date(Date.now() + 3 * 3600000);
+  const ymd = (d: Date) => d.toISOString().slice(0, 10);
+  const day = (offset: number) => new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - offset));
+  let start: Date;
+  let end = day(1);
+  if (period === "this_month") {
+    start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+    end = day(0);
+  } else if (period === "last_month") {
+    start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1));
+    end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 0));
+  } else {
+    start = day(Number(period.match(/\d+/)![0]));
+  }
+  const out = [];
+  for (let d = start; d <= end; d = new Date(d.getTime() + 86400000)) out.push({ since: ymd(d), until: ymd(d) });
+  return out;
+}
+
 type Campaign = { id: string; name: string; effective_status: string; objective: string; daily_budget?: string; lifetime_budget?: string; start_time?: string };
 type Ad = { id: string; name: string; effective_status: string; creative?: { thumbnail_url?: string; title?: string; body?: string } };
 
@@ -88,8 +109,8 @@ export async function adsReport(period: AdsPeriod) {
   const p = { date_preset: period };
   const [total, daily, byCampaign, byAd, demo, regions, placements, campaigns, ads] = await Promise.all([
     insights({ ...p, fields: BASE }),
-    // Hesap düzeyinde günlük kırılım harcamayı 0 döndürüyor; kampanya düzeyinde çekip günlere toplanır.
-    insights({ ...p, fields: "spend,impressions,inline_link_clicks,actions", time_increment: "1", level: "campaign", limit: "1000" }),
+    // time_increment=1 günlük harcamayı 0 döndürüyor; her gün ayrı aralık (time_ranges) olarak istenir.
+    insights({ fields: "spend,impressions,inline_link_clicks,actions", time_ranges: JSON.stringify(dayRanges(period)) }),
     insights({ ...p, fields: `campaign_id,campaign_name,${BASE}`, level: "campaign" }),
     insights({ ...p, fields: `ad_id,ad_name,adset_name,campaign_name,${BASE}`, level: "ad" }),
     insights({ ...p, fields: BASE, breakdowns: "age,gender" }),
@@ -105,13 +126,7 @@ export async function adsReport(period: AdsPeriod) {
   return {
     period,
     total: total[0] ? metrics(total[0]) : metrics({}),
-    daily: [...Map.groupBy(daily, (r) => r.date_start ?? "")]
-      .map(([date, rows]) => {
-        const sum = metrics({});
-        for (const m of rows.map(metrics)) for (const k of Object.keys(sum) as (keyof Metrics)[]) sum[k] += m[k];
-        return { date, ...sum };
-      })
-      .sort((a, b) => a.date.localeCompare(b.date)),
+    daily: daily.map((r) => ({ date: r.date_start ?? "", ...metrics(r) })).sort((a, b) => a.date.localeCompare(b.date)),
     campaigns: byCampaign
       .map((r) => {
         const c = campaignInfo.get(r.campaign_id ?? "");
