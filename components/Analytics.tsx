@@ -31,6 +31,17 @@ export default function Analytics() {
 
   useEffect(() => {
     captureAttribution();
+    // Meta reklamlarının "mesaj atan / arayan kişi"ye göre optimize olabilmesi için
+    // sitedeki her WhatsApp ve telefon linki Piksel'e standart "Contact" olayı gönderir.
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as Element | null)?.closest?.("a");
+      if (!a || location.pathname.startsWith("/admin")) return;
+      const href = a.getAttribute("href") ?? "";
+      if (/wa\.me|api\.whatsapp\.com|whatsapp:/.test(href)) window.fbq?.("track", "Contact", { content_name: "whatsapp" });
+      else if (href.startsWith("tel:")) window.fbq?.("track", "Contact", { content_name: "telefon" });
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
   }, []);
 
   return null;
