@@ -14,7 +14,20 @@ import type { SocialType } from "./seo";
 export type { SocialType };
 export type SocialFormat = "og" | "sq";
 
-type Card = { title: string; eyebrow: string; image?: string; price?: string; plain?: boolean };
+type Card = { title: string; eyebrow: string; images: string[]; price?: string; plain?: boolean };
+
+/** Markdown içindeki görsel adresleri (blog / hizmet rehberi). */
+const mdImages = (md?: string) => [...(md ?? "").matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)].map((m) => m[1]);
+/** Boş ve tekrar eden görselleri ayıklar (aynı fotoğrafın -opt / -opt-800 boyutları tek sayılır). */
+const list = (...xs: (string | undefined | null | string[])[]) => {
+  const seen = new Set<string>();
+  return xs.flat().filter((x): x is string => {
+    const key = x?.replace(/-opt(-\d+)?\.webp$/, "");
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
 
 // Space Grotesk (sitenin başlık yazı tipi); Türkçe harfler latin-ext dosyasında.
 const FONT_DIR = join(process.cwd(), "node_modules/@fontsource/space-grotesk/files");
@@ -43,33 +56,34 @@ async function cardData(type: SocialType, slug: string, withPrice: boolean): Pro
     const p = (await getStoreProducts()).find((x) => x.slug === slug);
     if (!p) return null;
     const cat = (await getStoreCategories()).find((c) => c.slug === p.category);
-    return { title: p.name, eyebrow: cat?.name ?? "Mağaza", image: p.image, price: withPrice && p.price != null ? priceLabel(p) : undefined };
+    return { title: p.name, eyebrow: cat?.name ?? "Mağaza", images: list(p.image, p.gallery), price: withPrice && p.price != null ? priceLabel(p) : undefined };
   }
   if (type === "kategori") {
     const c = (await getStoreCategories()).find((x) => x.slug === slug);
     if (!c) return null;
-    const prices = (await getStoreProducts()).filter((p) => p.category === c.slug && p.price != null).map((p) => p.price!);
+    const inCat = (await getStoreProducts()).filter((p) => p.category === c.slug);
+    const prices = inCat.filter((p) => p.price != null).map((p) => p.price!);
     return {
       title: c.name,
       eyebrow: "Aktürk Enerji Mağaza",
-      image: c.image,
+      images: list(c.image, inCat.map((p) => p.image ?? "")),
       price: withPrice && prices.length ? `${formatTL(Math.min(...prices))}'den başlayan` : undefined,
     };
   }
   if (type === "referans") {
     const r = await getReferenceBySlug(slug);
     if (!r) return null;
-    return { title: r.title, eyebrow: [r.location, r.capacity].filter(Boolean).join(" · ") || "Referans", image: r.image };
+    return { title: r.title, eyebrow: [r.location, r.capacity].filter(Boolean).join(" · ") || "Referans", images: list(r.image, r.gallery) };
   }
   if (type === "blog") {
     const b = await getBlogPostBySlug(slug);
     if (!b) return null;
     // Blog kapakları kendi başlığını taşıyan tasarımlar: üstüne yazı eklenmez (görsel yoksa kart üretilir).
-    return { title: b.title, eyebrow: b.category || "Blog", image: b.image, plain: Boolean(b.image) };
+    return { title: b.title, eyebrow: b.category || "Blog", images: list(b.image, mdImages(b.content)), plain: Boolean(b.image) };
   }
   const s = await getServiceBySlug(slug);
   if (!s) return null;
-  return { title: s.title, eyebrow: s.eyebrow || "Hizmetlerimiz", image: s.image };
+  return { title: s.title, eyebrow: s.eyebrow || "Hizmetlerimiz", images: list(s.image, mdImages(s.guideContent)) };
 }
 
 /** Kaynak görsel (çoğu WebP) → kart boyutuna kırpılmış JPEG data URL (Satori WebP okuyamaz). */
@@ -85,12 +99,16 @@ async function photo(url: string | undefined, width: number, height: number): Pr
   }
 }
 
-export async function renderSocialCard(type: SocialType, slug: string, format: SocialFormat, withPrice: boolean): Promise<Buffer | null> {
+/** variant: 0 = ilk görsel; sonrakiler görseller arasında döner, hepsi bitince yazı yerleşimi değişir. */
+export async function renderSocialCard(type: SocialType, slug: string, format: SocialFormat, withPrice: boolean, variant = 0): Promise<Buffer | null> {
   const card = await cardData(type, slug, withPrice);
   if (!card) return null;
   const { width, height } = SIZES[format];
-  const img = await photo(card.image, width, height);
-  if (img && card.plain) {
+  const n = Math.max(card.images.length, 1);
+  const top = Math.floor(variant / n) % 2 === 1; // ikinci turda başlık üstte
+  const img = await photo(card.images[variant % n], width, height);
+  // Blog kapağı kendi başlığını taşır; yalnızca kapak (variant 0) düz basılır.
+  if (img && card.plain && variant === 0) {
     return sharp(Buffer.from(img.split(",")[1], "base64")).jpeg({ quality: 88, mozjpeg: true }).toBuffer();
   }
   const titleSize = format === "sq" ? (card.title.length > 48 ? 54 : 64) : card.title.length > 48 ? 46 : 56;
@@ -109,7 +127,9 @@ export async function renderSocialCard(type: SocialType, slug: string, format: S
             height,
             display: "flex",
             background: img
-              ? "linear-gradient(180deg, rgba(14,22,38,0) 0%, rgba(14,22,38,0.15) 35%, rgba(14,22,38,0.88) 72%, rgba(14,22,38,0.96) 100%)"
+              ? top
+                ? "linear-gradient(0deg, rgba(14,22,38,0) 0%, rgba(14,22,38,0.15) 35%, rgba(14,22,38,0.88) 72%, rgba(14,22,38,0.96) 100%)"
+                : "linear-gradient(180deg, rgba(14,22,38,0) 0%, rgba(14,22,38,0.15) 35%, rgba(14,22,38,0.88) 72%, rgba(14,22,38,0.96) 100%)"
               : "linear-gradient(135deg, #0e1626 0%, #16223c 60%, #0e1626 100%)",
           }}
         />
@@ -118,7 +138,7 @@ export async function renderSocialCard(type: SocialType, slug: string, format: S
             position: "absolute",
             left: 56,
             right: 56,
-            bottom: 52,
+            ...(top ? { top: 52 } : { bottom: 52 }),
             display: "flex",
             flexDirection: "column",
             color: "#f5f6f8",

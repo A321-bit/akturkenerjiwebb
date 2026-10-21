@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Play, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, ImageIcon, Play, RefreshCw, Send, Trash2, Type, XCircle } from "lucide-react";
 import type { SocialPost } from "@/lib/social";
 
 const TYPES = [
@@ -25,6 +25,8 @@ const DEFAULT_SLOTS: Slot[] = [
 const typeLabel = (t: string) => TYPES.find((x) => x.key === t)?.label ?? t;
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleString("tr-TR", { weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const img = (p: SocialPost, price = false) =>
+  `/social/${p.source_type}/${encodeURIComponent(p.source_slug)}?f=sq${price ? "&fiyat=1" : ""}${p.image_variant ? `&v=${p.image_variant}` : ""}`;
 const tomorrow = () => new Date(Date.now() + 86400000 + 3 * 3600000).toISOString().slice(0, 10);
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -46,6 +48,7 @@ export default function SocialPlanner({ posts }: { posts: SocialPost[] }) {
   const [msg, setMsg] = useState("");
   const [open, setOpen] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
+  const [regen, setRegen] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/social/status")
@@ -85,6 +88,26 @@ export default function SocialPlanner({ posts }: { posts: SocialPost[] }) {
     if (replace && !confirm("Henüz Meta'ya gitmemiş gelecek gönderiler silinip plan yeniden oluşturulacak. Devam edilsin mi?")) return;
     const d = await call("/api/admin/social/plan", { method: "POST", body: JSON.stringify({ start, months, slots, platforms, replace }) });
     if (d) setMsg(`${d.created} gönderilik taslak plan oluşturuldu. Kontrol edip "Tümünü onayla" deyin.`);
+  }
+
+  async function regenerate(p: SocialPost, what: ("metin" | "foto")[]) {
+    setRegen(null);
+    let caption = p.caption;
+    for (const action of what) {
+      const d = await call(`/api/admin/social/posts/${p.id}`, { method: "POST", body: JSON.stringify({ action }) });
+      if (!d) return;
+      caption = d.caption;
+    }
+    setOpen(p.id);
+    setDraft(caption);
+    setMsg(`"${p.title}" yeniden üretildi${p.fb_status === "zamanlandi" ? "; Facebook'taki eski zamanlama kaldırıldı, yeni hâli bir sonraki çalıştırmada yüklenecek" : ""}.`);
+  }
+
+  async function publish(p: SocialPost) {
+    const where = p.platforms.map((x) => (x === "facebook" ? "Facebook" : "Instagram")).join(" ve ");
+    if (!confirm(`"${p.title}" şimdi ${where} hesabında paylaşılsın mı?`)) return;
+    const d = await call(`/api/admin/social/posts/${p.id}`, { method: "POST", body: JSON.stringify({ action: "paylas" }) });
+    if (d) setMsg(`Paylaşıldı: ${[d.facebook && "Facebook", d.instagram && "Instagram"].filter(Boolean).join(" + ") || "—"}${d.errors?.length ? ` · Hatalar: ${d.errors.join(" | ")}` : ""}`);
   }
 
   const card = "rounded-2xl border border-line bg-paper-raised p-5";
@@ -244,7 +267,7 @@ export default function SocialPlanner({ posts }: { posts: SocialPost[] }) {
                 <li key={p.id} className="p-3">
                   <div className="flex flex-wrap items-center gap-3 text-[13.5px]">
                     <img
-                      src={`/social/${p.source_type}/${encodeURIComponent(p.source_slug)}?f=sq`}
+                      src={img(p)}
                       alt=""
                       width={48}
                       height={48}
@@ -282,6 +305,26 @@ export default function SocialPlanner({ posts }: { posts: SocialPost[] }) {
                       )}
                     </span>
                     {!p.approved && <span className="rounded-full bg-sun/20 px-2 py-0.5 text-[12px]">taslak</span>}
+                    {(["bekliyor", "zamanlandi"].includes(p.fb_status) || p.ig_status === "bekliyor") && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busy || !status?.ok}
+                          onClick={() => publish(p)}
+                          className="flex items-center gap-1 rounded-full bg-volt px-3 py-1 text-[12.5px] font-semibold text-ink disabled:opacity-40"
+                        >
+                          <Send size={13} /> Paylaş
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setRegen(regen === p.id ? null : p.id)}
+                          className="flex items-center gap-1 rounded-full border border-line px-3 py-1 text-[12.5px] font-semibold hover:border-ink disabled:opacity-40"
+                        >
+                          <RefreshCw size={13} /> Yeniden üret
+                        </button>
+                      </>
+                    )}
                     <button
                       type="button"
                       onClick={() => confirm("Gönderi silinsin mi?") && call(`/api/admin/social/posts/${p.id}`, { method: "DELETE" })}
@@ -291,10 +334,31 @@ export default function SocialPlanner({ posts }: { posts: SocialPost[] }) {
                       <Trash2 size={15} />
                     </button>
                   </div>
+                  {regen === p.id && (
+                    <div className="mt-2 flex flex-wrap gap-2 sm:pl-[60px]">
+                      {(
+                        [
+                          { what: ["foto"], label: "Fotoğrafı değiştir", Icon: ImageIcon },
+                          { what: ["metin"], label: "Metni değiştir", Icon: Type },
+                          { what: ["foto", "metin"], label: "İkisini de değiştir", Icon: RefreshCw },
+                        ] as const
+                      ).map(({ what, label, Icon }) => (
+                        <button
+                          key={label}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => regenerate(p, [...what])}
+                          className="flex items-center gap-1.5 rounded-lg border border-line bg-paper px-3 py-1.5 text-[12.5px] font-medium hover:border-ink disabled:opacity-40"
+                        >
+                          <Icon size={14} /> {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {p.error && <p className="mt-1.5 text-[12.5px] text-red-600">{p.error}</p>}
                   {open === p.id && (
                     <div className="mt-3 grid gap-3 sm:grid-cols-[200px_1fr]">
-                      <img src={`/social/${p.source_type}/${encodeURIComponent(p.source_slug)}?f=sq&fiyat=1`} alt="" className="w-full rounded-lg" />
+                      <img src={img(p, true)} alt="" className="w-full rounded-lg" />
                       <div className="flex flex-col gap-2">
                         <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={12} className="admin-input font-mono text-[12.5px]" />
                         {p.fb_status === "zamanlandi" && (

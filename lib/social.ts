@@ -36,13 +36,15 @@ export type SocialPost = {
   ig_media_id: string | null;
   ig_permalink: string | null;
   error: string | null;
+  /** Görsel varyantı (/social/...?v=N); 0 = varsayılan kart. */
+  image_variant: number;
 };
 
 // ───────────────────────── Meta Graph API ─────────────────────────
 
-async function graph<T>(path: string, params: Record<string, string>, method: "GET" | "POST" = "GET"): Promise<T> {
+async function graph<T>(path: string, params: Record<string, string>, method: "GET" | "POST" | "DELETE" = "GET"): Promise<T> {
   const body = new URLSearchParams(params);
-  const url = method === "GET" ? `${GRAPH}/${path}?${body}` : `${GRAPH}/${path}`;
+  const url = method !== "POST" ? `${GRAPH}/${path}?${body}` : `${GRAPH}/${path}`;
   const res = await fetch(url, { method, body: method === "POST" ? body : undefined, cache: "no-store" });
   const data = await res.json();
   if (!res.ok || data.error) throw new Error(`Meta: ${data.error?.message ?? res.status}`);
@@ -94,7 +96,10 @@ export async function resolveCaption(post: Pick<SocialPost, "caption" | "source_
   return post.caption.replaceAll("{{fiyat}}", price);
 }
 
-type Source = { type: SocialType; slug: string; title: string; link: string; caption: string };
+/** captions[0] varsayılan metin; diğerleri admin "Metni değiştir" ile sırayla gelen alternatifler. */
+type Source = { type: SocialType; slug: string; title: string; link: string; captions: string[] };
+
+const join = (...parts: (string | number | undefined | null | false)[]) => parts.filter(Boolean).join("\n\n");
 
 /** Paylaşılabilir bütün içerikler ve hazır gönderi metinleri. */
 export async function socialSources(): Promise<Record<SocialType, Source[]>> {
@@ -118,36 +123,53 @@ export async function socialSources(): Promise<Record<SocialType, Source[]>> {
   return {
     urun: products.map((p) => {
       const link = `${SITE_URL}${productHref(p)}`;
-      const lines = p.contents.slice(0, 6).map((c) => `• ${c}`);
+      const tags = `${HASHTAGS[p.category] ?? ""} ${BASE_TAGS}`.trim();
+      const lines = p.contents.slice(0, 6);
       return {
         type: "urun" as const,
         slug: p.slug,
         title: p.name,
         link,
-        caption: [
-          `☀️ ${p.name}`,
-          lines.length ? `📦 Paket içeriği:\n${lines.join("\n")}` : "",
-          "💰 {{fiyat}}",
-          `🛒 Detaylar ve sipariş: ${link}`,
-          contact,
-          `${HASHTAGS[p.category] ?? ""} ${BASE_TAGS}`.trim(),
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
+        captions: [
+          join(`☀️ ${p.name}`, lines.length && `📦 Paket içeriği:\n${lines.map((c) => `• ${c}`).join("\n")}`, "💰 {{fiyat}}", `🛒 Detaylar ve sipariş: ${link}`, contact, tags),
+          join(
+            "⚡ Kendi elektriğinizi üretmeye hazır mısınız?",
+            `${p.name} tek pakette:`,
+            lines.length && lines.slice(0, 4).map((c) => `✅ ${c}`).join("\n"),
+            "💰 {{fiyat}}",
+            `👉 ${link}`,
+            contact,
+            tags,
+          ),
+          join(`☀️ ${p.name}`, "💰 {{fiyat}}", `👉 İncele ve sipariş ver: ${link}`, contact, tags),
+          join(
+            `📦 ${p.name}`,
+            lines.length && `Pakette neler var?\n${lines.map((c) => `🔹 ${c}`).join("\n")}`,
+            "💰 {{fiyat}}",
+            "Stok ve teslimat bilgisi için WhatsApp'tan yazmanız yeterli.",
+            `🛒 ${link}`,
+            contact,
+            tags,
+          ),
+        ],
       };
     }),
     kategori: categories
       .filter((c) => live.has(c.slug))
       .map((c) => {
         const link = `${SITE_URL}/magaza/${c.slug}`;
+        const tags = `${HASHTAGS[c.slug] ?? ""} ${BASE_TAGS}`.trim();
+        const names = products.filter((p) => p.category === c.slug).slice(0, 5).map((p) => `• ${p.name}`);
         return {
           type: "kategori" as const,
           slug: c.slug,
           title: c.name,
           link,
-          caption: [`☀️ ${c.name}`, c.intro, "💰 {{fiyat}}", `🛒 Tüm paketler: ${link}`, contact, `${HASHTAGS[c.slug] ?? ""} ${BASE_TAGS}`.trim()]
-            .filter(Boolean)
-            .join("\n\n"),
+          captions: [
+            join(`☀️ ${c.name}`, c.intro, "💰 {{fiyat}}", `🛒 Tüm paketler: ${link}`, contact, tags),
+            join(`🔎 ${c.name} mı arıyorsunuz?`, names.length && `Öne çıkan paketler:\n${names.join("\n")}`, "💰 {{fiyat}}", `👉 ${link}`, contact, tags),
+            join(`☀️ ${c.name}`, "💰 {{fiyat}}", `Size uygun paketi birlikte seçelim 👉 ${link}`, contact, tags),
+          ],
         };
       }),
     referans: references.map((r) => {
@@ -158,9 +180,11 @@ export async function socialSources(): Promise<Record<SocialType, Source[]>> {
         slug: r.slug,
         title: r.title,
         link,
-        caption: [`📍 ${r.title}`, facts, r.summary, `Projenin detayları ve fotoğrafları: ${link}`, "Ücretsiz keşif için bize ulaşın.", contact, BASE_TAGS]
-          .filter(Boolean)
-          .join("\n\n"),
+        captions: [
+          join(`📍 ${r.title}`, facts, r.summary, `Projenin detayları ve fotoğrafları: ${link}`, "Ücretsiz keşif için bize ulaşın.", contact, BASE_TAGS),
+          join(`🏡 Bir projemizi daha tamamladık: ${r.title}`, r.summary, facts && `📌 ${facts}`, "Sıradaki proje sizinki olsun, ücretsiz keşif için yazın.", `Fotoğraflar: ${link}`, contact, BASE_TAGS),
+          join(`📍 ${r.title}`, facts, "Benzer bir sistem mi düşünüyorsunuz? Ücretsiz keşif için WhatsApp'tan yazın.", `👉 ${link}`, contact, BASE_TAGS),
+        ],
       };
     }),
     blog: posts.map((b) => {
@@ -170,29 +194,37 @@ export async function socialSources(): Promise<Record<SocialType, Source[]>> {
         slug: b.slug,
         title: b.title,
         link,
-        caption: [`📖 ${b.title}`, b.description, `Yazının tamamı: ${link}`, BASE_TAGS].filter(Boolean).join("\n\n"),
+        captions: [
+          join(`📖 ${b.title}`, b.description, `Yazının tamamı: ${link}`, BASE_TAGS),
+          join("📌 Kaydedin, lazım olacak!", b.title, b.description, `👉 ${link}`, BASE_TAGS),
+          join(`💡 ${b.title}`, `Merak edilenleri adım adım anlattık 👉 ${link}`, "Sorularınız için bize yazın.", contact, BASE_TAGS),
+        ],
       };
     }),
     hizmet: services.map((s) => {
       const link = `${SITE_URL}/hizmetlerimiz/${s.slug}`;
+      const bullets = s.bullets?.slice(0, 4) ?? [];
       return {
         type: "hizmet" as const,
         slug: s.slug,
         title: s.title,
         link,
-        caption: [
-          `🔧 ${s.title}`,
-          s.summary,
-          s.bullets?.length ? s.bullets.slice(0, 4).map((b) => `✔️ ${b}`).join("\n") : "",
-          `Detaylar ve ücretsiz keşif: ${link}`,
-          contact,
-          BASE_TAGS,
-        ]
-          .filter(Boolean)
-          .join("\n\n"),
+        captions: [
+          join(`🔧 ${s.title}`, s.summary, bullets.length && bullets.map((b) => `✔️ ${b}`).join("\n"), `Detaylar ve ücretsiz keşif: ${link}`, contact, BASE_TAGS),
+          join(`🤝 ${s.title}: keşiften kuruluma yanınızdayız.`, bullets.length && bullets.map((b) => `✅ ${b}`).join("\n"), `👉 ${link}`, contact, BASE_TAGS),
+          join(`🔧 ${s.title}`, s.summary, `Ücretsiz keşif için WhatsApp'tan yazın 👉 ${link}`, contact, BASE_TAGS),
+        ],
       };
     }),
   };
+}
+
+/** Sıradaki alternatif metin (metin elle düzenlenmiş ya da içerik değişmişse ilk alternatif). */
+export async function nextCaption(post: Pick<SocialPost, "caption" | "source_type" | "source_slug">): Promise<string | null> {
+  const src = (await socialSources())[post.source_type]?.find((x) => x.slug === post.source_slug);
+  if (!src) return null;
+  const i = src.captions.indexOf(post.caption);
+  return src.captions[(i < 0 ? 1 : i + 1) % src.captions.length];
 }
 
 // ───────────────────────── Plan ─────────────────────────
@@ -229,7 +261,7 @@ export async function buildPlan(opts: { start: string; months: number; slots: Pl
         source_type: src.type,
         source_slug: src.slug,
         title: src.title,
-        caption: src.caption,
+        caption: src.captions[0],
         link: src.link,
         platforms: opts.platforms,
         approved: false,
@@ -243,8 +275,97 @@ export async function buildPlan(opts: { start: string; months: number; slots: Pl
 
 // ───────────────────────── Gönderim ─────────────────────────
 
-const igImage = (p: Pick<SocialPost, "source_type" | "source_slug">) =>
-  `${SITE_URL}/social/${p.source_type}/${encodeURIComponent(p.source_slug)}?f=sq&fiyat=1`;
+/** Paylaşım görseli (1080×1080, fiyatlı); image_variant admin'de "Fotoğrafı değiştir" ile seçilir. */
+export const postImage = (p: Pick<SocialPost, "source_type" | "source_slug" | "image_variant">) =>
+  `${SITE_URL}/social/${p.source_type}/${encodeURIComponent(p.source_slug)}?f=sq&fiyat=1${p.image_variant ? `&v=${p.image_variant}` : ""}`;
+
+const stamp = () => new Date().toISOString();
+
+/**
+ * Facebook'a gönderir: varsayılan görselde link paylaşımı (önizleme sayfanın og
+ * etiketlerinden), başka görsel seçildiyse fotoğraf paylaşımı (metinde link var).
+ * 15 dakikadan ileri zamanlar Meta'da zamanlanır; immediate ise hemen yayınlanır.
+ */
+async function sendFacebook(p: SocialPost, meta: MetaAccount, immediate = false) {
+  const db = adminClient();
+  const when = new Date(p.scheduled_at).getTime();
+  const message = await resolveCaption(p);
+  const params: Record<string, string> = { access_token: meta.pageToken };
+  if (!immediate && when > Date.now() + 15 * 60000) {
+    params.published = "false";
+    params.scheduled_publish_time = String(Math.floor(when / 1000));
+  }
+  let res: { id: string; post_id?: string };
+  if (p.image_variant) {
+    res = await graph(`${META_PAGE_ID}/photos`, { ...params, url: postImage(p), caption: message }, "POST");
+  } else {
+    // Facebook önizlemeyi yeniden okusun (og:image / açıklama güncel olsun).
+    await graph("", { id: p.link, scrape: "true", access_token: meta.pageToken }, "POST").catch(() => null);
+    res = await graph(`${META_PAGE_ID}/feed`, { ...params, message, link: p.link }, "POST");
+  }
+  await db
+    .from("social_posts")
+    .update({ fb_status: params.published === "false" ? "zamanlandi" : "paylasildi", fb_post_id: res.post_id ?? res.id, error: null, updated_at: stamp() })
+    .eq("id", p.id);
+}
+
+async function sendInstagram(p: SocialPost, meta: MetaAccount) {
+  if (!meta.igId) throw new Error("Instagram hesabı bağlı değil.");
+  const caption = await resolveCaption(p);
+  const container = await graph<{ id: string }>(`${meta.igId}/media`, { image_url: postImage(p), caption, access_token: meta.pageToken }, "POST");
+  // Görsel Meta tarafında işlenene kadar kısa bekleme.
+  for (let i = 0; i < 10; i++) {
+    const st = await graph<{ status_code: string }>(container.id, { fields: "status_code", access_token: meta.pageToken });
+    if (st.status_code === "FINISHED") break;
+    if (st.status_code === "ERROR") throw new Error("Instagram görseli işleyemedi.");
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  const media = await graph<{ id: string }>(`${meta.igId}/media_publish`, { creation_id: container.id, access_token: meta.pageToken }, "POST");
+  const info = await graph<{ permalink?: string }>(media.id, { fields: "permalink", access_token: meta.pageToken }).catch(() => ({ permalink: undefined }));
+  await adminClient()
+    .from("social_posts")
+    .update({ ig_status: "paylasildi", ig_media_id: media.id, ig_permalink: info.permalink ?? null, error: null, updated_at: stamp() })
+    .eq("id", p.id);
+}
+
+/** Meta'da zamanlanmış (henüz yayınlanmamış) Facebook kopyasını siler; gönderi yeniden yüklenmeyi bekler. */
+export async function unscheduleFacebook(p: SocialPost, meta?: MetaAccount) {
+  if (p.fb_status !== "zamanlandi" || !p.fb_post_id) return;
+  const m = meta ?? (await metaAccount());
+  await graph(p.fb_post_id, { access_token: m.pageToken }, "DELETE");
+  await adminClient().from("social_posts").update({ fb_status: "bekliyor", fb_post_id: null, updated_at: stamp() }).eq("id", p.id);
+}
+
+/** Admin "Paylaş": gönderiyi onaylar ve seçili platformlarda hemen yayınlar. */
+export async function publishNow(id: number): Promise<{ facebook: boolean; instagram: boolean; errors: string[] }> {
+  const db = adminClient();
+  const { data } = await db.from("social_posts").select("*").eq("id", id).single();
+  if (!data) throw new Error("Gönderi bulunamadı.");
+  let p = data as SocialPost;
+  const meta = await metaAccount();
+  await db.from("social_posts").update({ approved: true, scheduled_at: stamp(), updated_at: stamp() }).eq("id", id);
+  p = { ...p, approved: true, scheduled_at: stamp() };
+  const out = { facebook: false, instagram: false, errors: [] as string[] };
+  if (p.platforms.includes("facebook") && ["bekliyor", "zamanlandi"].includes(p.fb_status)) {
+    try {
+      await unscheduleFacebook(p, meta);
+      await sendFacebook({ ...p, fb_status: "bekliyor" }, meta, true);
+      out.facebook = true;
+    } catch (e) {
+      out.errors.push(`Facebook: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+  if (p.platforms.includes("instagram") && p.ig_status === "bekliyor") {
+    try {
+      await sendInstagram(p, meta);
+      out.instagram = true;
+    } catch (e) {
+      out.errors.push(`Instagram: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+  if (out.errors.length) await db.from("social_posts").update({ error: out.errors.join(" | "), updated_at: stamp() }).eq("id", id);
+  return out;
+}
 
 /** Zamanı gelen ve 29 gün içindeki onaylı gönderileri Meta'ya iletir. */
 export async function runSocial(): Promise<{ facebook: number; instagram: number; errors: string[] }> {
@@ -264,25 +385,12 @@ export async function runSocial(): Promise<{ facebook: number; instagram: number
     .limit(60);
   for (const p of (fbQueue ?? []) as SocialPost[]) {
     try {
-      const when = new Date(p.scheduled_at).getTime();
-      const message = await resolveCaption(p);
-      // Facebook önizlemeyi yeniden okusun (og:image / açıklama güncel olsun).
-      await graph("", { id: p.link, scrape: "true", access_token: meta.pageToken }, "POST").catch(() => null);
-      const params: Record<string, string> = { message, link: p.link, access_token: meta.pageToken };
-      if (when > now + 15 * 60000) {
-        params.published = "false";
-        params.scheduled_publish_time = String(Math.floor(when / 1000));
-      }
-      const res = await graph<{ id: string }>(`${META_PAGE_ID}/feed`, params, "POST");
-      await db
-        .from("social_posts")
-        .update({ fb_status: params.published === "false" ? "zamanlandi" : "paylasildi", fb_post_id: res.id, error: null, updated_at: new Date().toISOString() })
-        .eq("id", p.id);
+      await sendFacebook(p, meta);
       result.facebook++;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       result.errors.push(`FB #${p.id}: ${msg}`);
-      await db.from("social_posts").update({ error: `Facebook: ${msg}`, updated_at: new Date().toISOString() }).eq("id", p.id);
+      await db.from("social_posts").update({ error: `Facebook: ${msg}`, updated_at: stamp() }).eq("id", p.id);
     }
   }
 
@@ -297,26 +405,12 @@ export async function runSocial(): Promise<{ facebook: number; instagram: number
       .limit(3);
     for (const p of (igQueue ?? []) as SocialPost[]) {
       try {
-        const caption = await resolveCaption(p);
-        const container = await graph<{ id: string }>(`${meta.igId}/media`, { image_url: igImage(p), caption, access_token: meta.pageToken }, "POST");
-        // Görsel Meta tarafında işlenene kadar kısa bekleme.
-        for (let i = 0; i < 10; i++) {
-          const st = await graph<{ status_code: string }>(container.id, { fields: "status_code", access_token: meta.pageToken });
-          if (st.status_code === "FINISHED") break;
-          if (st.status_code === "ERROR") throw new Error("Instagram görseli işleyemedi.");
-          await new Promise((r) => setTimeout(r, 2000));
-        }
-        const media = await graph<{ id: string }>(`${meta.igId}/media_publish`, { creation_id: container.id, access_token: meta.pageToken }, "POST");
-        const info = await graph<{ permalink?: string }>(media.id, { fields: "permalink", access_token: meta.pageToken }).catch(() => ({ permalink: undefined }));
-        await db
-          .from("social_posts")
-          .update({ ig_status: "paylasildi", ig_media_id: media.id, ig_permalink: info.permalink ?? null, error: null, updated_at: new Date().toISOString() })
-          .eq("id", p.id);
+        await sendInstagram(p, meta);
         result.instagram++;
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         result.errors.push(`IG #${p.id}: ${msg}`);
-        await db.from("social_posts").update({ error: `Instagram: ${msg}`, updated_at: new Date().toISOString() }).eq("id", p.id);
+        await db.from("social_posts").update({ error: `Instagram: ${msg}`, updated_at: stamp() }).eq("id", p.id);
       }
     }
   }
