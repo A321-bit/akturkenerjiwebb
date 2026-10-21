@@ -164,3 +164,16 @@ export async function adsReport(period: AdsPeriod) {
 }
 
 export type AdsReport = Awaited<ReturnType<typeof adsReport>>;
+
+/** Geçici teşhis (admin): günlük harcama ve reklamların sayfaları. */
+export async function adsDebug() {
+  const q = (params: Record<string, string>) => graph<{ data: unknown[] }>(`${AD_ACCOUNT}/insights`, params).then((r) => r.data).catch((e) => String(e));
+  return {
+    account: await graph(AD_ACCOUNT, { fields: "name,timezone_name,currency,account_status" }).catch((e) => String(e)),
+    preset: await q({ fields: "spend,impressions", date_preset: "last_7d" }),
+    range: await q({ fields: "spend,impressions", time_range: JSON.stringify({ since: "2026-10-14", until: "2026-10-20" }) }),
+    inc: await q({ fields: "spend,impressions", date_preset: "last_7d", time_increment: "1" }),
+    incCampaign: await q({ fields: "campaign_name,spend,impressions", date_preset: "last_7d", time_increment: "1", level: "campaign" }),
+    ads: await graph(`${AD_ACCOUNT}/ads`, { fields: "name,campaign{name},creative{effective_object_story_id,actor_id,object_story_spec}", limit: "100" }).catch((e) => String(e)),
+  };
+}
