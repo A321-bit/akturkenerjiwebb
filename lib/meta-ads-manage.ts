@@ -108,14 +108,20 @@ async function imageHash(url: string): Promise<string> {
 /** Anlık form kampanyası: kampanya + reklam seti + kreatifler + reklamlar, hepsi DURDURULMUŞ. */
 export async function createLeadCampaign(spec: LeadCampaignSpec) {
   const { igId } = await metaAccount();
-  const campaign = await call<{ id: string }>("POST", `${AD_ACCOUNT}/campaigns`, {
+  // Yarıda kalan bir kurulum (ör. kreatif reddedildi) tekrar çalıştırılınca kopya açılmasın:
+  // aynı adlı kampanya / reklam seti varsa o kullanılır.
+  const named = async (path: string, name: string) =>
+    (await call<{ data: { id: string; name: string; effective_status?: string }[] }>("GET", path, { fields: "id,name,effective_status", limit: "500" })).data.find(
+      (x) => x.name === name && x.effective_status !== "DELETED" && x.effective_status !== "ARCHIVED",
+    );
+  const campaign = (await named(`${AD_ACCOUNT}/campaigns`, spec.name)) ?? await call<{ id: string }>("POST", `${AD_ACCOUNT}/campaigns`, {
     name: spec.name,
     objective: "OUTCOME_LEADS",
     status: "PAUSED",
     special_ad_categories: [],
     is_adset_budget_sharing_enabled: false,
   });
-  const adset = await call<{ id: string }>("POST", `${AD_ACCOUNT}/adsets`, {
+  const adset = (await named(`${campaign.id}/adsets`, spec.adSetName)) ?? await call<{ id: string }>("POST", `${AD_ACCOUNT}/adsets`, {
     name: spec.adSetName,
     campaign_id: campaign.id,
     status: "PAUSED",
@@ -129,6 +135,11 @@ export async function createLeadCampaign(spec: LeadCampaignSpec) {
   });
   const ads = [];
   for (const a of spec.ads) {
+    const existing = await named(`${adset.id}/ads`, a.name);
+    if (existing) {
+      ads.push(existing.id);
+      continue;
+    }
     const hash = await imageHash(a.image);
     const creative = await call<{ id: string }>("POST", `${AD_ACCOUNT}/adcreatives`, {
       name: `${spec.name} · ${a.name}`,
