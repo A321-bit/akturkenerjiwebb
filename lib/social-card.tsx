@@ -2,12 +2,12 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
-import { getBlogPostBySlug, getReferenceBySlug, getServiceBySlug } from "./data";
+import { getBlogPostBySlug, getReferenceBySlug, getReferences, getServiceBySlug } from "./data";
 import { formatTL, priceLabel } from "./store";
 import { getStoreCategories, getStoreProducts } from "./store-data";
 
 // Paylaşım görseli: Facebook/WhatsApp önizlemesi (og, 1200×630) ve Instagram
-// gönderisi (sq, 1080×1080). İçeriğin kendi fotoğrafı + başlık + marka şeridi;
+// gönderisi (sq, 1080×1080). Fotoğraf (ürün/kategoride çatı kurulumu) + başlık + marka şeridi;
 // üründe isteğe bağlı fiyat. Çıktı JPEG (Instagram yalnızca JPEG kabul eder).
 
 import type { SocialType } from "./seo";
@@ -51,12 +51,27 @@ const SIZES: Record<SocialFormat, { width: number; height: number }> = {
   sq: { width: 1080, height: 1080 },
 };
 
+// Ürün ve kategori kartlarında inverter/batarya fotoğrafı yerine kendi kurulumlarımızın
+// çatı fotoğrafları kullanılır (referans kapakları; elle seçildi: panel net görünenler).
+const ROOFTOP_REFS = [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 31, 33, 34, 35, 36, 37, 39, 40, 42, 46, 49, 50, 52, 53];
+const OFFGRID_REFS = [28, 43, 44, 16, 24];
+const OFFGRID_CATEGORIES = ["off-grid-paketler", "tarimsal-sulama-paketleri", "ruzgar-gunes-hibrit-sistemleri"];
+
+/** Kategoriye uygun kurulum fotoğrafları; başlangıç noktası slug'a göre sabit (her ürün farklı fotoğrafla açılır). */
+async function installPhotos(slug: string, category: string): Promise<string[]> {
+  const ids = OFFGRID_CATEGORIES.includes(category) ? OFFGRID_REFS : ROOFTOP_REFS;
+  const byId = new Map((await getReferences()).map((r) => [r.id, r.image]));
+  const photos = ids.map((id) => byId.get(id)).filter((x): x is string => Boolean(x));
+  const start = [...slug].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % Math.max(photos.length, 1);
+  return [...photos.slice(start), ...photos.slice(0, start)];
+}
+
 async function cardData(type: SocialType, slug: string, withPrice: boolean): Promise<Card | null> {
   if (type === "urun") {
     const p = (await getStoreProducts()).find((x) => x.slug === slug);
     if (!p) return null;
     const cat = (await getStoreCategories()).find((c) => c.slug === p.category);
-    return { title: p.name, eyebrow: cat?.name ?? "Mağaza", images: list(p.image, p.gallery), price: withPrice && p.price != null ? priceLabel(p) : undefined };
+    return { title: p.name, eyebrow: cat?.name ?? "Mağaza", images: list(await installPhotos(p.slug, p.category)), price: withPrice && p.price != null ? priceLabel(p) : undefined };
   }
   if (type === "kategori") {
     const c = (await getStoreCategories()).find((x) => x.slug === slug);
@@ -66,7 +81,7 @@ async function cardData(type: SocialType, slug: string, withPrice: boolean): Pro
     return {
       title: c.name,
       eyebrow: "Aktürk Enerji Mağaza",
-      images: list(c.image, inCat.map((p) => p.image ?? "")),
+      images: list(await installPhotos(c.slug, c.slug)),
       price: withPrice && prices.length ? `${formatTL(Math.min(...prices))}'den başlayan` : undefined,
     };
   }
