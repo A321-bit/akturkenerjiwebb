@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList } from "lucide-react";
 
-const navItems = [
+const navItems: { href: string; label: string; icon: typeof Inbox; sub?: boolean }[] = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
   { href: "/admin/talepler", label: "Talepler", icon: Inbox },
+  { href: "/admin/meta-formlari", label: "Meta Formları", icon: ClipboardList, sub: true },
   { href: "/admin/potansiyel-musteriler", label: "Potansiyel Müşteriler", icon: Target },
   { href: "/admin/is-basvurulari", label: "İş Başvuruları", icon: Users },
   { href: "/admin/hizmetler", label: "Hizmetler", icon: Wrench },
@@ -70,7 +71,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors ${
+                className={`flex items-center gap-2.5 rounded-lg py-2.5 font-medium transition-colors ${item.sub ? "pl-9 pr-3 text-[13px]" : "px-3 text-[14px]"} ${
                   active ? "bg-ink text-paper" : "text-slate hover:bg-ink/5"
                 }`}
               >
