@@ -44,7 +44,7 @@ export const AUDIENCES = {
   instagram: "AKT · Instagram etkileşim 365 gün",
   page: "AKT · Facebook sayfa etkileşim 365 gün",
   formOpened: "AKT · Formu açanlar 90 gün",
-  formSubmitted: "AKT · Formu gönderenler 180 gün",
+  formSubmitted: "AKT · Formu gönderenler 90 gün",
 } as const;
 
 /** Yeniden pazarlama kitlelerini (yoksa) oluşturur; ad → kimlik döner. Para harcamaz. */
@@ -62,7 +62,7 @@ export async function ensureAudiences(): Promise<Record<keyof typeof AUDIENCES, 
     instagram: igId ? { rule: engagement("ig_business", igId, "ig_business_profile_all", 365) } : null,
     page: { rule: engagement("page", META_PAGE_ID, "page_engaged", 365) },
     formOpened: { rule: engagement("lead", META_PAGE_ID, "lead_generation_opened", 90) },
-    formSubmitted: { rule: engagement("lead", META_PAGE_ID, "lead_generation_submitted", 180) },
+    formSubmitted: { rule: engagement("lead", META_PAGE_ID, "lead_generation_submitted", 90) },
   };
   const out = {} as Record<keyof typeof AUDIENCES, string>;
   for (const key of Object.keys(AUDIENCES) as (keyof typeof AUDIENCES)[]) {
