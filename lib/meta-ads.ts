@@ -199,6 +199,7 @@ export async function validateCampaignCreate(): Promise<{ ok: boolean; detail: u
     objective: "OUTCOME_LEADS",
     status: "PAUSED",
     special_ad_categories: "[]",
+    is_adset_budget_sharing_enabled: "false",
     execution_options: '["validate_only"]',
     access_token: token,
   });
