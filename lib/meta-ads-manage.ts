@@ -57,13 +57,12 @@ export async function ensureAudiences(): Promise<Record<keyof typeof AUDIENCES, 
   });
   const specs: Record<keyof typeof AUDIENCES, Record<string, unknown> | null> = {
     site: {
-      subtype: "WEBSITE",
       rule: { inclusions: { operator: "or", rules: [{ event_sources: [{ type: "pixel", id: META_DATASET_ID }], retention_seconds: 180 * DAY, filter: { operator: "and", filters: [{ field: "url", operator: "i_contains", value: "akturkenerji.com" }] } }] } },
     },
-    instagram: igId ? { subtype: "ENGAGEMENT", rule: engagement("ig_business", igId, "ig_business_profile_all", 365) } : null,
-    page: { subtype: "ENGAGEMENT", rule: engagement("page", META_PAGE_ID, "page_engaged", 365) },
-    formOpened: { subtype: "ENGAGEMENT", rule: engagement("lead", META_PAGE_ID, "lead_generation_opened", 90) },
-    formSubmitted: { subtype: "ENGAGEMENT", rule: engagement("lead", META_PAGE_ID, "lead_generation_submitted", 180) },
+    instagram: igId ? { rule: engagement("ig_business", igId, "ig_business_profile_all", 365) } : null,
+    page: { rule: engagement("page", META_PAGE_ID, "page_engaged", 365) },
+    formOpened: { rule: engagement("lead", META_PAGE_ID, "lead_generation_opened", 90) },
+    formSubmitted: { rule: engagement("lead", META_PAGE_ID, "lead_generation_submitted", 180) },
   };
   const out = {} as Record<keyof typeof AUDIENCES, string>;
   for (const key of Object.keys(AUDIENCES) as (keyof typeof AUDIENCES)[]) {
@@ -71,6 +70,7 @@ export async function ensureAudiences(): Promise<Record<keyof typeof AUDIENCES, 
     const spec = specs[key];
     if (byName.has(name)) out[key] = byName.get(name)!;
     else if (spec) out[key] = (await call<{ id: string }>("POST", `${AD_ACCOUNT}/customaudiences`, { name, ...spec, prefill: true })).id;
+    // (Meta v23: kitle türü "subtype" parametresi kaldırıldı; tür kuraldaki olay kaynağından anlaşılıyor.)
   }
   return out;
 }
