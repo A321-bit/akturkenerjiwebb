@@ -14,7 +14,7 @@ export const META_DATASET_ID = "956247070771662";
 export { LEAD_STATUSES, type LeadStatus, type MetaLead } from "./meta-lead-status";
 import type { MetaLead } from "./meta-lead-status";
 
-type Field = { name: string; values: string[] };
+type Field = { name: string; values?: string[] };
 type ApiLead = {
   id: string;
   created_time: string;
@@ -77,7 +77,7 @@ export async function syncMetaLeads(): Promise<{ forms: number; fetched: number 
           phone: pick(f, "phone_number"),
           email: pick(f, "email"),
           city: pick(f, "city"),
-          answers: f.filter((x) => !STANDARD.includes(x.name)).map((x) => ({ name: x.name, value: x.values.join(", ") })),
+          answers: f.filter((x) => !STANDARD.includes(x.name)).map((x) => ({ name: x.name, value: (x.values ?? []).join(", ") })),
         });
       }
       next = body.paging?.next ?? null;
