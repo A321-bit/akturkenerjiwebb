@@ -25,13 +25,15 @@ const CLARITY_PROJECT_ID = "xsw2u5pknm";
 // yüklemeden sadece ek bir 'config' çağrısı yapıyoruz.
 const GOOGLE_ADS_ID = "AW-18330659140";
 
-// Sayfalar önbellekten (CDN) sunulur ve en geç saatte bir yenilenir; admin
+// Sayfalar önbellekten (CDN) sunulur ve en geç günde bir yenilenir; admin
 // panelinden yapılan her kayıt lib/admin-crud.ts içinde tüm siteyi anında
 // yeniden doğrular (revalidatePath). Eskiden force-dynamic vardı: her istek
 // sunucuda yeniden render ediliyor, TTFB 0,6–1 sn oluyordu. Build sırasındaki
 // ara sıra "fetch failed" hataları lib/supabase.ts'deki tekrar deneme ile
 // karşılanıyor; [slug] sayfaları build'de değil ilk ziyarette üretiliyor.
-export const revalidate = 3600;
+// Saatlik yenileme Vercel ücretsiz planın ISR yazma kotasını (200.000/ay) dolduruyordu:
+// her sayfa saatte bir yeniden yazılıyordu. İçerik ve kur değişiklikleri zaten anında yansıyor.
+export const revalidate = 86400;
 
 // Üçü de globalde (html class'ında) tanımlı olduğu için Next.js varsayılan
 // olarak tüm ağırlıkları <link rel="preload"> ile render-blocking şekilde

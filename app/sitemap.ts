@@ -3,7 +3,7 @@ import { SITE_URL, getServices, getReferences, getBlogPosts } from "@/lib/data";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
 import { productHref } from "@/lib/store-details";
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [services, references, posts, storeCategories, storeProducts] = await Promise.all([
