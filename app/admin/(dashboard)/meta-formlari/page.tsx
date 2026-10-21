@@ -23,6 +23,8 @@ const question = (s: string) => {
   const t = s.replaceAll("_", " ").trim();
   return t.charAt(0).toLocaleUpperCase("tr-TR") + t.slice(1);
 };
+/** Meta cevap değerleri alt çizgili gelir ("5.000-10.000_tl" → "5.000-10.000 tl"). */
+const answer = (s: string) => s.replaceAll("_", " ").trim();
 const fmtDate = (iso: string) => new Date(iso).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 const intl = (p: string) => {
   const d = p.replace(/\D/g, "");
@@ -164,7 +166,7 @@ export default function MetaLeadsPage() {
                   {l.answers.map((a) => (
                     <div key={a.name} className="flex gap-1.5">
                       <dt className="text-slate">{question(a.name)}:</dt>
-                      <dd className="font-medium">{a.value}</dd>
+                      <dd className="font-medium">{answer(a.value)}</dd>
                     </div>
                   ))}
                 </dl>

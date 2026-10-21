@@ -35,7 +35,14 @@ async function graph<T>(path: string, params: Record<string, string>): Promise<T
 }
 
 const pick = (fields: Field[], ...names: string[]) => fields.find((f) => names.includes(f.name))?.values?.[0] ?? null;
-const STANDARD = ["full_name", "first_name", "last_name", "phone_number", "email", "city"];
+// Standart alanlar; bazı formlarda (ör. ajansın kurduğu) aynı alan farklı adla gelir.
+const NAME = ["full_name", "full name", "ad_soyad", "ad soyad", "isim"];
+const FIRST = ["first_name", "first name"];
+const LAST = ["last_name", "last name"];
+const PHONE = ["phone_number", "phone", "telefon", "telefon_numarası"];
+const EMAIL = ["email", "e-posta"];
+const CITY = ["city", "şehir", "il"];
+const STANDARD = [...NAME, ...FIRST, ...LAST, ...PHONE, ...EMAIL, ...CITY];
 
 /** Sayfadaki bütün formların son 90 günlük başvurularını çeker; yenileri tabloya ekler. */
 export async function syncMetaLeads(): Promise<{ forms: number; fetched: number }> {
@@ -60,8 +67,8 @@ export async function syncMetaLeads(): Promise<{ forms: number; fetched: number 
       if (!res.ok || body.error) throw new Error(`Meta (${form.name}): ${body.error?.message ?? res.status}`);
       for (const l of body.data ?? []) {
         const f = l.field_data ?? [];
-        const first = pick(f, "first_name");
-        const last = pick(f, "last_name");
+        const first = pick(f, ...FIRST);
+        const last = pick(f, ...LAST);
         rows.push({
           id: l.id,
           created_time: l.created_time,
@@ -73,10 +80,10 @@ export async function syncMetaLeads(): Promise<{ forms: number; fetched: number 
           adset_name: l.adset_name ?? null,
           campaign_name: l.campaign_name ?? null,
           platform: l.platform ?? null,
-          full_name: pick(f, "full_name") ?? ([first, last].filter(Boolean).join(" ") || null),
-          phone: pick(f, "phone_number"),
-          email: pick(f, "email"),
-          city: pick(f, "city"),
+          full_name: pick(f, ...NAME) ?? ([first, last].filter(Boolean).join(" ") || null),
+          phone: pick(f, ...PHONE),
+          email: pick(f, ...EMAIL),
+          city: pick(f, ...CITY),
           answers: f.filter((x) => !STANDARD.includes(x.name)).map((x) => ({ name: x.name, value: (x.values ?? []).join(", ") })),
         });
       }
@@ -84,8 +91,8 @@ export async function syncMetaLeads(): Promise<{ forms: number; fetched: number 
     }
   }
   if (rows.length) {
-    // Var olan satırlara dokunulmaz (personelin durumu/notu korunur).
-    const { error } = await adminClient().from("meta_leads").upsert(rows, { onConflict: "id", ignoreDuplicates: true });
+    // Yalnızca Meta'dan gelen alanlar yazılır; personelin durumu, notu ve Meta gönderim kaydı korunur.
+    const { error } = await adminClient().from("meta_leads").upsert(rows, { onConflict: "id" });
     if (error) throw new Error(error.message);
   }
   return { forms: forms.data.length, fetched: rows.length };
