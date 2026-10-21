@@ -91,3 +91,60 @@ export async function gaOverview() {
     events: pairs(events),
   };
 }
+
+/**
+ * Google Ads (Analytics'e bağlı hesaplar): kampanya bazında maliyet, tıklama, gösterim,
+ * reklamdan gelen oturum ve önemli etkinlik (dönüşüm); günlük maliyet.
+ */
+export async function gaGoogleAds(days: number) {
+  const token = await googleAccessToken(SCOPE);
+  const dateRanges = [{ startDate: `${days}daysAgo`, endDate: "yesterday" }];
+  const metrics = ["advertiserAdCost", "advertiserAdClicks", "advertiserAdImpressions", "sessions", "keyEvents"].map((name) => ({ name }));
+  const filter = { notExpression: { filter: { fieldName: "sessionGoogleAdsCampaignName", stringFilter: { value: "(not set)" } } } };
+  const [byCampaign, daily, events] = await Promise.all([
+    call(token, "runReport", {
+      dateRanges,
+      dimensions: [{ name: "sessionGoogleAdsCampaignName" }],
+      metrics,
+      dimensionFilter: filter,
+      orderBys: [{ metric: { metricName: "advertiserAdCost" }, desc: true }],
+      limit: 50,
+    }),
+    call(token, "runReport", {
+      dateRanges,
+      dimensions: [{ name: "date" }],
+      metrics: [{ name: "advertiserAdCost" }, { name: "keyEvents" }],
+      dimensionFilter: filter,
+      orderBys: [{ dimension: { dimensionName: "date" } }],
+    }),
+    // Reklamdan gelen ziyaretlerde hangi önemli etkinlikler oldu (form, WhatsApp, arama…)
+    call(token, "runReport", {
+      dateRanges,
+      dimensions: [{ name: "eventName" }],
+      metrics: [{ name: "keyEvents" }],
+      dimensionFilter: {
+        andGroup: { expressions: [filter, { filter: { fieldName: "isKeyEvent", stringFilter: { value: "true" } } }] },
+      },
+      orderBys: [{ metric: { metricName: "keyEvents" }, desc: true }],
+    }),
+  ]);
+  const m = (row: Row, i: number) => Number(row.metricValues?.[i]?.value ?? 0);
+  const campaigns = (byCampaign.rows ?? []).map((row) => ({
+    name: row.dimensionValues?.[0]?.value ?? "",
+    cost: m(row, 0),
+    clicks: m(row, 1),
+    impressions: m(row, 2),
+    sessions: m(row, 3),
+    keyEvents: m(row, 4),
+  }));
+  const sum = (k: keyof (typeof campaigns)[number]) => campaigns.reduce((s, c) => s + (c[k] as number), 0);
+  return {
+    days,
+    total: { cost: sum("cost"), clicks: sum("clicks"), impressions: sum("impressions"), sessions: sum("sessions"), keyEvents: sum("keyEvents") },
+    campaigns,
+    daily: (daily.rows ?? []).map((row) => ({ date: row.dimensionValues?.[0]?.value ?? "", cost: m(row, 0), keyEvents: m(row, 1) })),
+    events: pairs(events),
+  };
+}
+
+export type GoogleAdsReport = Awaited<ReturnType<typeof gaGoogleAds>>;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import GoogleAdsReport from "@/components/admin/GoogleAdsReport";
 import type { AdsPeriod, AdsReport, Brand, Metrics } from "@/lib/meta-ads";
 
 const PERIODS: { key: AdsPeriod; label: string }[] = [
@@ -115,6 +116,7 @@ function Breakdown({
 export default function AdsPage() {
   const [period, setPeriod] = useState<AdsPeriod>("last_7d");
   const [brand, setBrand] = useState<Brand>("akturk");
+  const [platform, setPlatform] = useState<"meta" | "google">("meta");
   const [data, setData] = useState<AdsReport | null>(null);
   const [error, setError] = useState("");
 
@@ -145,18 +147,31 @@ export default function AdsPage() {
     <div className="flex max-w-6xl flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="font-mono-data text-[11px] uppercase tracking-[0.16em] text-brand">
-            Meta Reklamları
-          </p>
+          <div className="flex gap-1">
+            {(["meta", "google"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setPlatform(k)}
+                className={`rounded-full px-3 py-1 font-mono-data text-[11px] uppercase tracking-[0.14em] ${platform === k ? "bg-brand text-paper" : "text-brand hover:bg-brand/10"}`}
+              >
+                {k === "meta" ? "Meta Reklamları" : "Google Ads"}
+              </button>
+            ))}
+          </div>
           <h1 className="mt-1 font-display text-2xl font-semibold">
             Reklam Performansı
           </h1>
-          <p className="mt-1 text-[13.5px] text-slate">
-            Facebook + Instagram reklam hesabı (188346112), canlı veri.
-            Reklamlar yayınlandıkları sayfaya göre markaya ayrılır.
-          </p>
+          {platform === "meta" && (
+            <p className="mt-1 text-[13.5px] text-slate">
+              Facebook + Instagram reklam hesabı (188346112), canlı veri.
+              Reklamlar yayınlandıkları sayfaya göre markaya ayrılır.
+            </p>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div
+          className={`flex flex-wrap gap-2 ${platform === "meta" ? "" : "hidden"}`}
+        >
           <div className="flex rounded-full border border-line p-0.5">
             {BRAND_TABS.map((b) => (
               <button
@@ -183,177 +198,191 @@ export default function AdsPage() {
         </div>
       </div>
 
-      {error && (
-        <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-[13.5px] text-red-700">
-          {error}
-          {/permission|ads_read|ads_management|#200|#10\b/i.test(error) &&
-            " → Erişim anahtarında reklam izni yok: sistem kullanıcısı için ads_read ve ads_management izinli yeni anahtar üretilip Vercel'e yapıştırılmalı."}
-        </p>
-      )}
-      {!data && !error && (
-        <p className="text-[13.5px] text-slate">Veriler yükleniyor…</p>
-      )}
-
-      {t && data && (
+      {platform === "google" ? (
+        <GoogleAdsReport />
+      ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Card
-              label="Harcama"
-              value={tl(t.spend)}
-              sub={`${fmt(t.impressions)} gösterim · ${fmt(t.reach)} kişi`}
-            />
-            <Card
-              label="Sonuç"
-              value={fmt(results(t))}
-              sub={`${fmt(t.leads)} form · ${fmt(t.messages)} mesaj · ${fmt(t.contacts)} WhatsApp/tel`}
-            />
-            <Card
-              label="Sonuç başı maliyet"
-              value={cpr(t)}
-              sub={t.leads ? `form başı ${tl(t.spend / t.leads)}` : undefined}
-            />
-            <Card
-              label="Link tıklaması"
-              value={fmt(t.linkClicks)}
-              sub={`TO ${ctr(t)} · sıklık ${t.frequency.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`}
-            />
-          </div>
-
-          {data.daily.length > 1 && (
-            <div className="rounded-2xl border border-line bg-paper-raised p-5">
-              <p className="text-[14px] font-semibold">
-                Günlük harcama ve sonuç
-              </p>
-              <div className="mt-4 flex h-36 items-end gap-[3px]">
-                {data.daily.map((d) => (
-                  <div
-                    key={d.date}
-                    className="group relative flex h-full flex-1 items-end"
-                  >
-                    <div
-                      className="w-full rounded-t bg-brand/70 group-hover:bg-brand"
-                      style={{ height: `${(d.spend / maxDay) * 100}%` }}
-                    />
-                    {results(d) > 0 && (
-                      <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-bold text-volt">
-                        {results(d)}
-                      </span>
-                    )}
-                    <span className="pointer-events-none absolute -top-9 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 text-[11px] text-paper group-hover:block">
-                      {d.date.slice(8, 10)}.{d.date.slice(5, 7)} · {tl(d.spend)}{" "}
-                      · {results(d)} sonuç
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {error && (
+            <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-[13.5px] text-red-700">
+              {error}
+              {/permission|ads_read|ads_management|#200|#10\b/i.test(error) &&
+                " → Erişim anahtarında reklam izni yok: sistem kullanıcısı için ads_read ve ads_management izinli yeni anahtar üretilip Vercel'e yapıştırılmalı."}
+            </p>
+          )}
+          {!data && !error && (
+            <p className="text-[13.5px] text-slate">Veriler yükleniyor…</p>
           )}
 
-          <section className="rounded-2xl border border-line bg-paper-raised p-5">
-            <p className="text-[14px] font-semibold">Kampanyalar</p>
-            <div className="mt-3 overflow-x-auto">
-              <table className={table}>
-                <thead className="text-[12px] text-slate">
-                  <tr>
-                    <th className="py-2 pr-3">Kampanya</th>
-                    <th className="pr-3">Durum</th>
-                    <th className="pr-3 text-right">Günlük bütçe</th>
-                    <th className="pr-3 text-right">Harcama</th>
-                    <th className="pr-3 text-right">Sonuç</th>
-                    <th className="pr-3 text-right">Sonuç başı</th>
-                    <th className="pr-3 text-right">TO</th>
-                    <th className="text-right">Sıklık</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-line">
-                  {data.campaigns.map((c) => (
-                    <tr key={c.id}>
-                      <td
-                        className="max-w-[260px] truncate py-2 pr-3 font-medium"
-                        title={c.name}
+          {t && data && (
+            <>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <Card
+                  label="Harcama"
+                  value={tl(t.spend)}
+                  sub={`${fmt(t.impressions)} gösterim · ${fmt(t.reach)} kişi`}
+                />
+                <Card
+                  label="Sonuç"
+                  value={fmt(results(t))}
+                  sub={`${fmt(t.leads)} form · ${fmt(t.messages)} mesaj · ${fmt(t.contacts)} WhatsApp/tel`}
+                />
+                <Card
+                  label="Sonuç başı maliyet"
+                  value={cpr(t)}
+                  sub={
+                    t.leads ? `form başı ${tl(t.spend / t.leads)}` : undefined
+                  }
+                />
+                <Card
+                  label="Link tıklaması"
+                  value={fmt(t.linkClicks)}
+                  sub={`TO ${ctr(t)} · sıklık ${t.frequency.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`}
+                />
+              </div>
+
+              {data.daily.length > 1 && (
+                <div className="rounded-2xl border border-line bg-paper-raised p-5">
+                  <p className="text-[14px] font-semibold">
+                    Günlük harcama ve sonuç
+                  </p>
+                  <div className="mt-4 flex h-36 items-end gap-[3px]">
+                    {data.daily.map((d) => (
+                      <div
+                        key={d.date}
+                        className="group relative flex h-full flex-1 items-end"
                       >
-                        {c.name}
-                      </td>
-                      <td className="pr-3">
-                        <Badge s={c.status} />
-                      </td>
-                      <td className="pr-3 text-right tabular-nums">
-                        {c.dailyBudget ? tl(c.dailyBudget) : "–"}
-                      </td>
-                      <td className="pr-3 text-right tabular-nums">
-                        {tl(c.spend)}
-                      </td>
-                      <td className="pr-3 text-right font-semibold tabular-nums">
-                        {fmt(results(c))}
-                      </td>
-                      <td className="pr-3 text-right tabular-nums">{cpr(c)}</td>
-                      <td className="pr-3 text-right tabular-nums">{ctr(c)}</td>
-                      <td className="text-right tabular-nums">
-                        {c.frequency.toLocaleString("tr-TR", {
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {data.campaigns.length === 0 && (
-                <p className="mt-2 text-[13px] text-slate-soft">
-                  Bu dönemde harcama yok.
-                </p>
+                        <div
+                          className="w-full rounded-t bg-brand/70 group-hover:bg-brand"
+                          style={{ height: `${(d.spend / maxDay) * 100}%` }}
+                        />
+                        {results(d) > 0 && (
+                          <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-bold text-volt">
+                            {results(d)}
+                          </span>
+                        )}
+                        <span className="pointer-events-none absolute -top-9 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 text-[11px] text-paper group-hover:block">
+                          {d.date.slice(8, 10)}.{d.date.slice(5, 7)} ·{" "}
+                          {tl(d.spend)} · {results(d)} sonuç
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
-          </section>
 
-          <section className="rounded-2xl border border-line bg-paper-raised p-5">
-            <p className="text-[14px] font-semibold">Reklamlar (kreatifler)</p>
-            <ul className="mt-3 divide-y divide-line">
-              {data.ads.map((a) => (
-                <li key={a.id} className="flex gap-3 py-3">
-                  {a.thumbnail ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- Meta'nın geçici küçük resim adresi
-                    <img
-                      src={a.thumbnail}
-                      alt=""
-                      width={64}
-                      height={64}
-                      className="h-16 w-16 shrink-0 rounded-md object-cover"
-                    />
-                  ) : (
-                    <div className="h-16 w-16 shrink-0 rounded-md bg-paper" />
-                  )}
-                  <div className="min-w-0 flex-1 text-[13px]">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{a.name}</span>
-                      <Badge s={a.status} />
-                    </div>
-                    <p className="truncate text-[12px] text-slate-soft">
-                      {a.campaign} › {a.adset}
+              <section className="rounded-2xl border border-line bg-paper-raised p-5">
+                <p className="text-[14px] font-semibold">Kampanyalar</p>
+                <div className="mt-3 overflow-x-auto">
+                  <table className={table}>
+                    <thead className="text-[12px] text-slate">
+                      <tr>
+                        <th className="py-2 pr-3">Kampanya</th>
+                        <th className="pr-3">Durum</th>
+                        <th className="pr-3 text-right">Günlük bütçe</th>
+                        <th className="pr-3 text-right">Harcama</th>
+                        <th className="pr-3 text-right">Sonuç</th>
+                        <th className="pr-3 text-right">Sonuç başı</th>
+                        <th className="pr-3 text-right">TO</th>
+                        <th className="text-right">Sıklık</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-line">
+                      {data.campaigns.map((c) => (
+                        <tr key={c.id}>
+                          <td
+                            className="max-w-[260px] truncate py-2 pr-3 font-medium"
+                            title={c.name}
+                          >
+                            {c.name}
+                          </td>
+                          <td className="pr-3">
+                            <Badge s={c.status} />
+                          </td>
+                          <td className="pr-3 text-right tabular-nums">
+                            {c.dailyBudget ? tl(c.dailyBudget) : "–"}
+                          </td>
+                          <td className="pr-3 text-right tabular-nums">
+                            {tl(c.spend)}
+                          </td>
+                          <td className="pr-3 text-right font-semibold tabular-nums">
+                            {fmt(results(c))}
+                          </td>
+                          <td className="pr-3 text-right tabular-nums">
+                            {cpr(c)}
+                          </td>
+                          <td className="pr-3 text-right tabular-nums">
+                            {ctr(c)}
+                          </td>
+                          <td className="text-right tabular-nums">
+                            {c.frequency.toLocaleString("tr-TR", {
+                              maximumFractionDigits: 2,
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {data.campaigns.length === 0 && (
+                    <p className="mt-2 text-[13px] text-slate-soft">
+                      Bu dönemde harcama yok.
                     </p>
-                    {a.body && (
-                      <p className="mt-0.5 line-clamp-2 text-[12.5px] text-slate">
-                        {a.body}
-                      </p>
-                    )}
-                  </div>
-                  <div className="shrink-0 text-right text-[12.5px] tabular-nums">
-                    <p>{tl(a.spend)}</p>
-                    <p className="font-semibold">{fmt(results(a))} sonuç</p>
-                    <p className="text-slate">{cpr(a)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
+                  )}
+                </div>
+              </section>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Breakdown title="Yaş ve cinsiyet" rows={data.demographics} />
-            <Breakdown title="Bölge" rows={data.regions} />
-            <Breakdown
-              title="Yerleşim (nerede gösterildi)"
-              rows={data.placements}
-            />
-          </div>
+              <section className="rounded-2xl border border-line bg-paper-raised p-5">
+                <p className="text-[14px] font-semibold">
+                  Reklamlar (kreatifler)
+                </p>
+                <ul className="mt-3 divide-y divide-line">
+                  {data.ads.map((a) => (
+                    <li key={a.id} className="flex gap-3 py-3">
+                      {a.thumbnail ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- Meta'nın geçici küçük resim adresi
+                        <img
+                          src={a.thumbnail}
+                          alt=""
+                          width={64}
+                          height={64}
+                          className="h-16 w-16 shrink-0 rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="h-16 w-16 shrink-0 rounded-md bg-paper" />
+                      )}
+                      <div className="min-w-0 flex-1 text-[13px]">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">{a.name}</span>
+                          <Badge s={a.status} />
+                        </div>
+                        <p className="truncate text-[12px] text-slate-soft">
+                          {a.campaign} › {a.adset}
+                        </p>
+                        {a.body && (
+                          <p className="mt-0.5 line-clamp-2 text-[12.5px] text-slate">
+                            {a.body}
+                          </p>
+                        )}
+                      </div>
+                      <div className="shrink-0 text-right text-[12.5px] tabular-nums">
+                        <p>{tl(a.spend)}</p>
+                        <p className="font-semibold">{fmt(results(a))} sonuç</p>
+                        <p className="text-slate">{cpr(a)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Breakdown title="Yaş ve cinsiyet" rows={data.demographics} />
+                <Breakdown title="Bölge" rows={data.regions} />
+                <Breakdown
+                  title="Yerleşim (nerede gösterildi)"
+                  rows={data.placements}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
