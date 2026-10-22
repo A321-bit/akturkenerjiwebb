@@ -54,6 +54,9 @@ export default function StoreFooter({
             © {new Date().getFullYear()} {settings.name}. Tüm hakları saklıdır.
           </p>
           <div className="flex items-center gap-4">
+            <Link href="/magaza/teslimat-ve-iade" className="hover:text-paper">
+              Teslimat ve İade
+            </Link>
             <Link href="/kvkk-aydinlatma-metni" target="_blank" className="hover:text-paper">
               KVKK Aydınlatma Metni
             </Link>

@@ -56,6 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/magaza",
     "/magaza/hakkimizda",
     "/magaza/iletisim",
+    "/magaza/teslimat-ve-iade",
     "/magaza/off-grid-hesaplama",
     ...storeCategories.filter((c) => storeProducts.some((p) => p.category === c.slug)).map((c) => `/magaza/${c.slug}`),
     ...storeProducts.map(productHref),
