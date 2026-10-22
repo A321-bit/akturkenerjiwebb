@@ -38,6 +38,15 @@ export default function ReklamOzetiPage() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<ReklamOzeti | null>(null);
   const [error, setError] = useState("");
+  const [reportMsg, setReportMsg] = useState("");
+
+  async function sendReport() {
+    if (!confirm("Günlük rapor şimdi e-postayla gönderilsin mi?")) return;
+    setReportMsg("Gönderiliyor…");
+    const res = await fetch("/api/admin/daily-report", { method: "POST" });
+    const body = await res.json().catch(() => ({}));
+    setReportMsg(res.ok ? "Rapor e-postayla gönderildi." : `Gönderilemedi: ${body.error ?? res.status}`);
+  }
 
   useEffect(() => {
     fetch(`/api/admin/reklam-ozeti?gun=${days}`, { cache: "no-store" })
@@ -68,7 +77,14 @@ export default function ReklamOzetiPage() {
             Google + Meta harcaması ve gelen talepler tek ekranda{data ? ` · ${data.from} – ${data.to}` : ""}.
           </p>
         </div>
-        <select value={days} onChange={(e) => {
+        <div className="flex flex-wrap items-center gap-2">
+          <a href="/api/admin/daily-report" target="_blank" className="rounded-xl border border-line px-3 py-2 text-[13px] hover:bg-paper">
+            Günlük raporu önizle
+          </a>
+          <button onClick={sendReport} className="rounded-xl border border-line px-3 py-2 text-[13px] hover:bg-paper">
+            Raporu şimdi gönder
+          </button>
+          <select value={days} onChange={(e) => {
             setData(null);
             setDays(Number(e.target.value));
           }} className="admin-input w-44">
@@ -77,8 +93,10 @@ export default function ReklamOzetiPage() {
               Son {d} gün
             </option>
           ))}
-        </select>
+          </select>
+        </div>
       </div>
+      {reportMsg && <p className="text-[13px] text-slate">{reportMsg} Her akşam 22:30&apos;da otomatik gönderilir.</p>}
 
       {error && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-[13.5px] text-red-700">{error}</p>}
       {!data && !error && <p className="text-[13.5px] text-slate">Veriler yükleniyor (Google, Meta, Analytics)…</p>}

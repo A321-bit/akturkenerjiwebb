@@ -171,3 +171,33 @@ export async function gaEventsDaily(days: number, events: string[]) {
   }
   return out;
 }
+
+/** Tek gün (bugün): toplamlar, sayfalar, kaynaklar, şehirler, cihazlar, etkinlikler — günlük rapor e-postası için. */
+export async function gaDay(date: "today" | "yesterday" = "today") {
+  const token = await googleAccessToken(SCOPE);
+  const range = [{ startDate: date, endDate: date }];
+  const top = (dimension: string, metric: string, limit = 10) =>
+    call(token, "runReport", {
+      dateRanges: range,
+      dimensions: [{ name: dimension }],
+      metrics: [{ name: metric }],
+      orderBys: [{ metric: { metricName: metric }, desc: true }],
+      limit,
+    });
+  const [totals, pages, sources, cities, devices, events] = await Promise.all([
+    call(token, "runReport", { dateRanges: range, metrics: METRICS.map((name) => ({ name })) }),
+    top("pagePath", "screenPageViews", 10),
+    top("sessionSourceMedium", "sessions", 8),
+    top("city", "activeUsers", 8),
+    top("deviceCategory", "activeUsers", 4),
+    top("eventName", "eventCount", 12),
+  ]);
+  return {
+    totals: Object.fromEntries(METRICS.map((m, i) => [m, num(totals, i)])) as Record<string, number>,
+    pages: pairs(pages),
+    sources: pairs(sources),
+    cities: pairs(cities),
+    devices: pairs(devices),
+    events: pairs(events),
+  };
+}
