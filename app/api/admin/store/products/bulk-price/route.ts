@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminClient } from "@/lib/data";
-import { revalidateSite } from "@/lib/admin-crud";
+import { revalidateStore } from "@/lib/admin-crud";
 import { getPricingSettings, usdToTl } from "@/lib/store-pricing";
 
 // Toplu fiyat güncelleme: seçili ürünlerin fiyatını yüzde olarak artırır/azaltır.
@@ -60,6 +60,6 @@ export async function POST(req: Request) {
     if (r.error) return NextResponse.json({ error: r.error.message, updated }, { status: 500 });
     updated++;
   }
-  revalidateSite();
+  revalidateStore();
   return NextResponse.json({ ok: true, updated, skipped });
 }

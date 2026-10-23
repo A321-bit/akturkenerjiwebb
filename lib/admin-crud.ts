@@ -2,11 +2,40 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { adminClient } from "@/lib/data";
 
-// Herkese açık sayfalar önbellekten sunuluyor; içerik değişince tüm sitenin
-// önbelleği temizlenir ki değişiklik hemen yansısın.
+// Herkese açık sayfalar önbellekten sunuluyor; içerik değişince ilgili sayfaların
+// önbelleği temizlenir ki değişiklik hemen yansısın. Tüm siteyi temizlemek her
+// sayfanın yeniden üretilmesine (Vercel ISR yazma kotası) yol açtığından yalnızca
+// genel ayarlar (telefon, adres vb.) değişince kullanılır; diğer içerikte bölüm bazlı.
 export function revalidateSite() {
   revalidatePath("/", "layout");
 }
+
+/** Bir bölümün tüm sayfaları (ör. "/blog" → /blog ve /blog/*) + ana sayfa. */
+export function revalidateSection(base: string) {
+  revalidatePath(base, "layout");
+  revalidatePath("/");
+}
+
+/** Mağaza: tek ürün değişince ürün, kategori, mağaza ana sayfası ve ana sayfa; yoksa tüm mağaza. */
+export function revalidateStore(product?: { category?: string | null; slug?: string | null }) {
+  if (product?.category && product.slug) {
+    revalidatePath(`/magaza/${product.category}/${product.slug}`);
+    revalidatePath(`/magaza/${product.category}`);
+    revalidatePath("/magaza");
+    revalidatePath("/");
+  } else {
+    revalidateSection("/magaza");
+  }
+}
+
+const SECTION_OF: Record<string, string> = {
+  blog_posts: "/blog",
+  project_references: "/referanslarimiz",
+  services: "/hizmetlerimiz",
+  store_products: "/magaza",
+  store_categories: "/magaza",
+};
+const revalidateTable = (table: string) => (SECTION_OF[table] ? revalidateSection(SECTION_OF[table]) : revalidateSite());
 
 const TABLES_WITH_UPDATED_AT = new Set(["services", "project_references", "blog_posts", "store_products", "store_categories"]);
 
@@ -22,7 +51,7 @@ export function makeListCreateHandlers(table: string, orderBy = "sort_order") {
     delete body.id;
     const { data, error } = await adminClient().from(table).insert(body).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    revalidateSite();
+    revalidateTable(table);
     return NextResponse.json(data);
   }
 
@@ -42,7 +71,7 @@ export function makeItemHandlers(table: string) {
       .select()
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    revalidateSite();
+    revalidateTable(table);
     return NextResponse.json(data);
   }
 
@@ -50,7 +79,7 @@ export function makeItemHandlers(table: string) {
     const { id } = await ctx.params;
     const { error } = await adminClient().from(table).delete().eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    revalidateSite();
+    revalidateTable(table);
     return NextResponse.json({ ok: true });
   }
 

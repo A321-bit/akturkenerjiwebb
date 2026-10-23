@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminClient } from "@/lib/data";
-import { revalidateSite } from "@/lib/admin-crud";
+import { revalidateStore } from "@/lib/admin-crud";
 import { recomputePrices } from "@/lib/store-pricing";
 
 // Seçili ürünlere toplu kâr marjı / üstü çizili fiyat marjı verir. Gönderilmeyen
@@ -24,6 +24,6 @@ export async function POST(req: Request) {
   const { error } = await db.from("store_products").update(patch).in("id", ids);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const repriced = await recomputePrices(db, { ids });
-  revalidateSite();
+  revalidateStore();
   return NextResponse.json({ ok: true, updated: ids.length, repriced });
 }

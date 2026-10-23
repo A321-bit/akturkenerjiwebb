@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { revalidateSite } from "@/lib/admin-crud";
+import { revalidateStore } from "@/lib/admin-crud";
 import { recomputeAllPrices } from "@/lib/store-pricing";
 
 export async function GET() {
@@ -37,6 +37,6 @@ export async function PUT(req: Request) {
   if (["usd_rate", "price_round", "vat_pct", "default_margin_pct", "default_list_margin_pct"].some(changed)) {
     repriced = await recomputeAllPrices(db);
   }
-  revalidateSite();
+  revalidateStore();
   return NextResponse.json({ ...data, repriced });
 }

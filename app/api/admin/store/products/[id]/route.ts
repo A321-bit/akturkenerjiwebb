@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { makeItemHandlers, revalidateSite } from "@/lib/admin-crud";
+import { makeItemHandlers, revalidateStore } from "@/lib/admin-crud";
 import { applyUsd, getPricingSettings, recomputePrices } from "@/lib/store-pricing";
 import { sanitizeCostFields } from "@/lib/store-cost";
 
@@ -19,6 +19,6 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await recomputePrices(db, { ids: [Number(id)] });
   const { data } = await db.from("store_products").select("*").eq("id", id).single();
-  revalidateSite();
+  revalidateStore(data ?? undefined);
   return NextResponse.json(data);
 }
