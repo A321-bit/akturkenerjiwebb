@@ -16,7 +16,7 @@ const STORE_KEY = "akturk-chat";
 
 // Mesajdaki bağlantıları tıklanabilir yapar.
 function Linked({ text }: { text: string }) {
-  const parts = text.split(/(https?:\/\/[^\s)]+)/g);
+  const parts = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "$1: $2").split(/(https?:\/\/[^\s)]+)/g);
   return (
     <>
       {parts.map((p, i) =>
