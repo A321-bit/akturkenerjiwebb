@@ -159,24 +159,22 @@ export default async function Home() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-5 py-8 text-center sm:flex-row sm:px-8 sm:text-left">
           <div>
             <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">
-              E-Ticaret
+              Mağaza
             </p>
             <h2 className="mt-1.5 font-display text-[19px] font-semibold tracking-tight sm:text-[21px]">
-              Ürünlerimizi gunesdukkan.com üzerinden de satın alabilirsiniz
+              Hazır güneş enerjisi paketlerini online inceleyin
             </h2>
             <p className="mt-1.5 max-w-xl text-[13.5px] leading-relaxed text-slate">
-              Panel, invertör ve batarya gibi ürünlerimizi tek tek incelemek isterseniz kendi e-ticaret mağazamız Güneş Dükkan&apos;ı ziyaret edin.
+              On grid, hibrit, off grid ve öztüketim paketleri; panel, invertör ve batarya. Güncel fiyatlar, kredi kartına 4 taksit ve Türkiye geneli gönderim.
             </p>
           </div>
-          <a
-            href="https://gunesdukkan.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/magaza"
             className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-ink px-6 py-3.5 text-[14.5px] font-semibold text-paper transition-colors hover:bg-sun hover:text-ink"
           >
-            gunesdukkan.com&apos;u Ziyaret Edin
+            Mağazayı Ziyaret Edin
             <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </a>
+          </Link>
         </div>
       </section>
 

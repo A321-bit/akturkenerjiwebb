@@ -45,7 +45,8 @@ export async function POST(req: Request) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: await getChatContext() }] },
       contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] })),
-      generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+      // Yeni Gemini modelleri cevaptan önce "düşünme" jetonu harcıyor; düşük sınır cevabı yarıda kesiyordu.
+      generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
     }),
   }).catch(() => null);
 
