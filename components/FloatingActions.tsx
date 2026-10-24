@@ -5,6 +5,7 @@ import { whatsappLink, SITE_URL, type SiteSettings } from "@/lib/data";
 import { MessageCircle, Phone } from "lucide-react";
 import { trackEvent } from "@/lib/track";
 import { trackGa4WhatsappClick, trackGa4CallClick } from "@/lib/ga4";
+import LiveChat from "./LiveChat";
 
 export default function FloatingActions({ settings }: { settings: SiteSettings }) {
   const pathname = usePagePath();
@@ -12,6 +13,7 @@ export default function FloatingActions({ settings }: { settings: SiteSettings }
 
   return (
     <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 sm:bottom-7 sm:right-7">
+      <LiveChat whatsappNumber={settings.contact.whatsappNumber} pathname={pathname} />
       <a
         href={settings.contact.phoneHref}
         aria-label="Hemen ara"
