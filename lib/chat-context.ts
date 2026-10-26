@@ -17,9 +17,11 @@ async function build(): Promise<string> {
   const svc = services.map((s) => `- ${s.title}: ${s.summary} (${SITE_URL}/hizmetlerimiz/${s.slug})`).join("\n");
   const cats = categories
     .map((c) => {
-      const list = products
-        .filter((p) => p.category === c.slug)
-        .map((p) => `  • ${p.name}${p.price ? ` — ${formatTL(p.price)}` : " — fiyat için iletişime geçin"} (${SITE_URL}${productHref(p)})`)
+      const items = products.filter((p) => p.category === c.slug);
+      // Kalabalık kategorilerde ürün linki yazılmaz (bağlam küçük kalsın, cevap hızlı olsun); kategori linki verilir.
+      const withLink = items.length <= 25;
+      const list = items
+        .map((p) => `  • ${p.name}${p.price ? ` — ${formatTL(p.price)}` : " — fiyat için iletişime geçin"}${withLink ? ` (${SITE_URL}${productHref(p)})` : ""}`)
         .join("\n");
       return `## ${c.name} (${SITE_URL}/magaza/${c.slug})\n${list}`;
     })
@@ -29,6 +31,7 @@ async function build(): Promise<string> {
   return `Sen Aktürk Enerji'nin web sitesindeki canlı destek asistanısın. Aktürk Enerji, 2016'dan beri Ankara merkezli güneş enerjisi firmasıdır: villa/ev çatı GES, on grid, hibrit (lityum bataryalı), off grid, rüzgar + güneş hibrit, tarımsal sulama, fabrika/öztüketim GES, ısı pompası, elektrikli araç şarj istasyonu. Ankara'da 650+ villa referansı var. Türkiye'nin her yerine gönderim ve kurulum yapılır.
 
 KURALLAR
+- Müşteriye adıyla hitap etme; "siz" diye hitap et (ad ve hitap ayrı formla alınıyor, sana iletilmiyor).
 - Türkçe, samimi ama profesyonel, kısa cevap ver (en fazla 4-5 cümle; liste gerekiyorsa kısa madde).
 - Yalnızca aşağıdaki bilgilere dayan. Bilmediğin teknik detay, stok, kampanya, kesin kurulum fiyatı veya süre UYDURMA; "uzmanımız sizi arayıp netleştirsin" de.
 - Fiyatları aşağıdaki listeden ver; KDV dahildir, kurulum dahil değildir, kura göre değişebilir. Ürün linkini paylaş.

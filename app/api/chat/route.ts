@@ -6,10 +6,12 @@ import { chatDb, transcript, verifyChat } from "@/lib/chat-session";
 // Kişisel bilgi (ad/telefon) Gemini'ye gitmez; /api/chat/start ile açılan
 // kayda burada yalnızca sohbet dökümü yazılır.
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 type Msg = { role: "user" | "assistant"; text: string };
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-flash-latest";
+// Model yoğun/kotası dolu olduğunda sıradakine geçilir; her deneme süre sınırlı.
+const MODELS = [...new Set([process.env.GEMINI_MODEL || "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-2.5-flash"])];
 const hits = new Map<string, number[]>();
 
 function limited(ip: string) {
@@ -43,22 +45,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: await getChatContext() }] },
-      contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] })),
-      // Yeni Gemini modelleri cevaptan önce "düşünme" jetonu harcıyor; düşük sınır cevabı yarıda kesiyordu.
-      generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
-    }),
-  }).catch(() => null);
-
-  if (!res?.ok) {
-    console.error("[canlı destek] Gemini hatası", res?.status, res && (await res.text()).slice(0, 300));
-    return NextResponse.json({ error: "Şu an cevap veremiyorum. WhatsApp'tan yazarsanız hemen dönüş yapalım." }, { status: 502 });
+  const system = await getChatContext();
+  const contents = messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] }));
+  let data: { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null = null;
+  let lastStatus = 0;
+  for (const [i, model] of MODELS.entries()) {
+    // Önce düşünme sınırlı denenir; model bu ayarı kabul etmezse (400) ayarsız tekrar denenir.
+    for (const thinking of [true, false]) {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents,
+          generationConfig: { temperature: 0.4, maxOutputTokens: 2048, ...(thinking ? { thinkingConfig: { thinkingBudget: 512 } } : {}) },
+        }),
+        signal: AbortSignal.timeout(i === 0 ? 22000 : 15000),
+      }).catch(() => null);
+      lastStatus = res?.status ?? 0;
+      if (res?.ok) {
+        data = await res.json();
+        break;
+      }
+      console.error("[canlı destek] Gemini hatası", model, lastStatus, res && (await res.text()).slice(0, 300));
+      if (lastStatus !== 400 || !thinking) break;
+    }
+    if (data) break;
   }
-  const data = await res.json();
+
+  if (!data) {
+    return NextResponse.json({ error: "Şu an cevap veremiyorum. WhatsApp'tan yazarsanız hemen dönüş yapalım.", code: lastStatus }, { status: 502 });
+  }
   const text: string =
     data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("").trim() ||
     "Bunu uzmanımızın netleştirmesi daha doğru olur; uzmanımız size en kısa sürede dönüş yapacak.";

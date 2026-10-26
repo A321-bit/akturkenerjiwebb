@@ -42,6 +42,7 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
+  const [title, setTitle] = useState<"" | "Bey" | "Hanım">("");
   const [phone, setPhone] = useState("");
   const [formErr, setFormErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -66,6 +67,7 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history(next), session: s }),
+        signal: AbortSignal.timeout(45000),
       });
       const j = await r.json();
       setMsgs([...next, { role: "assistant", text: j.text || j.error || "Bir sorun oluştu, lütfen tekrar deneyin." }]);
@@ -88,8 +90,8 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
 
   async function submitContact(e: React.FormEvent) {
     e.preventDefault();
-    if (name.trim().length < 2 || phone.replace(/\D/g, "").length < 10) {
-      setFormErr("Lütfen adınızı ve telefon numaranızı girin.");
+    if (name.trim().length < 2 || phone.replace(/\D/g, "").length < 10 || !title) {
+      setFormErr(title ? "Lütfen adınızı ve telefon numaranızı girin." : "Lütfen size nasıl hitap edelim seçin (Bey / Hanım).");
       return;
     }
     setFormErr("");
@@ -97,7 +99,7 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
     const r = await fetch("/api/chat/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), phone: phone.trim(), page: pathname, messages: history(msgs) }),
+      body: JSON.stringify({ name: `${name.trim()} (${title})`, phone: phone.trim(), page: pathname, messages: history(msgs) }),
     }).catch(() => null);
     setSaving(false);
     const j = r?.ok ? await r.json() : null;
@@ -108,7 +110,7 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
     trackGa4Lead("canli_destek");
     trackGoogleAdsLead();
     setSession({ id: j.id, sig: j.sig });
-    setMsgs((m) => [...m, { role: "assistant", text: `Teşekkürler ${name.trim().split(" ")[0]}! Sorularınızı yazmaya devam edebilirsiniz; uzmanımız da en kısa sürede sizi arayacak. 📞` }]);
+    setMsgs((m) => [...m, { role: "assistant", text: `Teşekkürler ${name.trim().split(" ")[0]} ${title}! Sorularınızı yazmaya devam edebilirsiniz; uzmanımız da en kısa sürede sizi arayacak. 📞` }]);
   }
 
   if (!open) {
@@ -162,6 +164,13 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
         {needContact && !busy && (
           <form onSubmit={submitContact} className="space-y-2 rounded-xl border border-sun/50 bg-white p-3">
             <p className="text-[13px] font-semibold">Size daha iyi yardımcı olabilmemiz için adınızı ve telefonunuzu yazın</p>
+            <div className="flex gap-2">
+              {(["Bey", "Hanım"] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setTitle(t)} aria-pressed={title === t} className={`flex-1 rounded-lg border py-2 text-[14px] font-semibold ${title === t ? "border-ink bg-ink text-paper" : "border-ink/15 text-ink/70 hover:border-ink/40"}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız Soyadınız" autoComplete="name" className="w-full rounded-lg border border-ink/15 px-3 py-2 text-[14px] outline-none focus:border-ink/40" />
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon (05xx xxx xx xx)" inputMode="tel" autoComplete="tel" className="w-full rounded-lg border border-ink/15 px-3 py-2 text-[14px] outline-none focus:border-ink/40" />
             {formErr && <p className="text-[12.5px] text-red-600">{formErr}</p>}
