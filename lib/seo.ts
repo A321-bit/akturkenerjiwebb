@@ -3,12 +3,23 @@ import { SITE_URL, SITE_NAME } from "./data";
 
 export const TITLE_BRAND = "Aktürk Enerji";
 
-// Tüm sayfa başlıkları tek biçimde biter: "Sayfa Başlığı | Aktürk Enerji".
-// Başlık zaten markayla bitiyorsa (ör. admin'den "... | Aktürk Enerji" girilmiş
-// bir blog yazısı) marka ikinci kez eklenmez.
+// Sayfa başlıkları "Sayfa Başlığı | Aktürk Enerji" biçimindedir. Başlık zaten markayla
+// bitiyorsa (ör. admin'den "... | Aktürk Enerji" girilmiş bir blog yazısı) marka ikinci kez
+// eklenmez; ek, Google'ın gösterdiği ~65 karakteri aşacaksa hiç eklenmez (başlık kesilmesin).
 export function brandTitle(title: string): string {
   const base = title.replace(/\s*[|\-–—]\s*Aktürk Enerji( Teknolojileri)?\s*$/i, "").trim();
-  return `${base} | ${TITLE_BRAND}`;
+  const full = `${base} | ${TITLE_BRAND}`;
+  return full.length <= 65 ? full : base;
+}
+
+/** Meta açıklama en fazla 160 karakter; uzunsa cümle ya da kelime sınırından kısaltılır. */
+export function metaDescription(text: string, max = 160): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const sentence = cut.lastIndexOf(". ");
+  if (sentence > max * 0.6) return cut.slice(0, sentence + 1);
+  return cut.slice(0, cut.lastIndexOf(" ")).replace(/[,;:–-]$/, "") + "…";
 }
 
 export function buildMetadata({
@@ -29,6 +40,7 @@ export function buildMetadata({
 }): Metadata {
   const url = `${SITE_URL}${path}`;
   const pageTitle = brandTitle(title);
+  description = metaDescription(description);
   const images = [{ url: image ?? "/opengraph-image", width: 1200, height: 630, alt: image ? pageTitle : SITE_NAME }];
   return {
     title: { absolute: pageTitle },
