@@ -49,6 +49,7 @@ export async function POST(req: Request) {
   const contents = messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] }));
   let data: { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null = null;
   let lastStatus = 0;
+  const tried: string[] = [];
   for (const [i, model] of MODELS.entries()) {
     // Önce düşünme sınırlı denenir; model bu ayarı kabul etmezse (400) ayarsız tekrar denenir.
     for (const thinking of [true, false]) {
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
         signal: AbortSignal.timeout(i === 0 ? 22000 : 15000),
       }).catch(() => null);
       lastStatus = res?.status ?? 0;
+      tried.push(`${model}${thinking ? "" : "/nt"}:${lastStatus}`);
       if (res?.ok) {
         data = await res.json();
         break;
@@ -74,7 +76,7 @@ export async function POST(req: Request) {
   }
 
   if (!data) {
-    return NextResponse.json({ error: "Şu an cevap veremiyorum. WhatsApp'tan yazarsanız hemen dönüş yapalım.", code: lastStatus }, { status: 502 });
+    return NextResponse.json({ error: "Şu an cevap veremiyorum. WhatsApp'tan yazarsanız hemen dönüş yapalım.", code: tried.join(" ") }, { status: 502 });
   }
   const text: string =
     data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("").trim() ||
