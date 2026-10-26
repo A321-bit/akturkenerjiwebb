@@ -60,6 +60,8 @@ function reviewRequestHref(item: LeadRow) {
 export default function AdminLeadsPage() {
   const [items, setItems] = useState<LeadRow[] | null>(null);
   const [activeStatus, setActiveStatus] = useState<string>("Tümü");
+  // Canlı destek sohbetleri (source = live_chat) ayrı sekmede listelenir.
+  const [section, setSection] = useState<"form" | "chat">("form");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [savingId, setSavingId] = useState<number | null>(null);
@@ -124,20 +126,26 @@ export default function AdminLeadsPage() {
     setExpandedId(null);
   }
 
+  const chatCount = useMemo(() => items?.filter((it) => it.source === "live_chat").length ?? 0, [items]);
+  const base = useMemo(
+    () => items?.filter((it) => (section === "chat" ? it.source === "live_chat" : it.source !== "live_chat")) ?? null,
+    [items, section]
+  );
+
   const counts = useMemo(() => {
-    const c: Record<string, number> = { Tümü: items?.length ?? 0 };
-    for (const s of STATUSES) c[s] = items?.filter((it) => it.status === s).length ?? 0;
+    const c: Record<string, number> = { Tümü: base?.length ?? 0 };
+    for (const s of STATUSES) c[s] = base?.filter((it) => it.status === s).length ?? 0;
     return c;
-  }, [items]);
+  }, [base]);
 
   const filtered = useMemo(() => {
-    if (!items) return null;
-    return activeStatus === "Tümü" ? items : items.filter((it) => it.status === activeStatus);
-  }, [items, activeStatus]);
+    if (!base) return null;
+    return activeStatus === "Tümü" ? base : base.filter((it) => it.status === activeStatus);
+  }, [base, activeStatus]);
 
   const olumluBeklemede = useMemo(
-    () => items?.filter((it) => it.status === "Olumlu" && !it.review_requested_at).length ?? 0,
-    [items]
+    () => base?.filter((it) => it.status === "Olumlu" && !it.review_requested_at).length ?? 0,
+    [base]
   );
 
   return (
@@ -146,8 +154,26 @@ export default function AdminLeadsPage() {
         <div>
           <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Talepler</p>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">
-            Gelen Teklif Talepleri {items ? `(${items.length})` : ""}
+            {section === "chat" ? "Canlı Destek Sohbetleri" : "Gelen Teklif Talepleri"} {base ? `(${base.length})` : ""}
           </h1>
+          <div className="mt-3 flex gap-2">
+            {(
+              [
+                ["form", "Talepler", (items?.length ?? 0) - chatCount],
+                ["chat", "Canlı Destek", chatCount],
+              ] as const
+            ).map(([key, label, n]) => (
+              <button
+                key={key}
+                onClick={() => setSection(key)}
+                className={`rounded-lg border px-3.5 py-1.5 text-[13px] font-semibold ${
+                  section === key ? "border-brand bg-brand text-paper" : "border-line text-slate hover:border-brand"
+                }`}
+              >
+                {label} {items && <span className="opacity-75">({n})</span>}
+              </button>
+            ))}
+          </div>
         </div>
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- file download, not a page navigation */}
         <a

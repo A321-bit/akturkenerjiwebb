@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bot, Phone, Send, X } from "lucide-react";
+import { Bot, Send, X } from "lucide-react";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { trackEvent } from "@/lib/track";
 import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
 
 type Msg = { role: "user" | "assistant"; text: string };
+type Session = { id: number; sig: string };
 
 const WELCOME: Msg = {
   role: "assistant",
@@ -32,38 +33,39 @@ function Linked({ text }: { text: string }) {
   );
 }
 
+// Müşteri ilk mesajını yazınca ad + telefon istenir; bilgiler girilince sohbet
+// admin → Talepler → Canlı Destek'e kaydedilir ve her mesajda döküm güncellenir.
 export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber: string; pathname: string }) {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([WELCOME]);
+  const [session, setSession] = useState<Session | null>(null);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState<"closed" | "open" | "sent">("closed");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [formErr, setFormErr] = useState("");
+  const [saving, setSaving] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+
+  const userCount = msgs.filter((m) => m.role === "user").length;
+  const needContact = !session && userCount > 0;
+  const history = (list: Msg[]) => list.filter((m) => m.text !== WELCOME.text);
 
   useEffect(() => {
     if (!open) return;
     try {
-      sessionStorage.setItem(STORE_KEY, JSON.stringify(msgs.slice(-30)));
+      sessionStorage.setItem(STORE_KEY, JSON.stringify({ msgs: msgs.slice(-30), session }));
     } catch {}
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [msgs, form, open]);
+  }, [msgs, session, open, busy]);
 
-  async function send() {
-    const text = input.trim();
-    if (!text || busy) return;
-    const next = [...msgs, { role: "user" as const, text }];
-    setMsgs(next);
-    setInput("");
+  async function ask(next: Msg[], s: Session | null) {
     setBusy(true);
-    if (next.filter((m) => m.role === "user").length === 1) trackEvent("click", pathname, "live_chat_message");
     try {
       const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next.filter((m) => m.text !== WELCOME.text) }),
+        body: JSON.stringify({ messages: history(next), session: s }),
       });
       const j = await r.json();
       setMsgs([...next, { role: "assistant", text: j.text || j.error || "Bir sorun oluştu, lütfen tekrar deneyin." }]);
@@ -74,38 +76,39 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
     }
   }
 
-  async function submitLead(e: React.FormEvent) {
+  function send() {
+    const text = input.trim();
+    if (!text || busy || needContact) return;
+    const next = [...msgs, { role: "user" as const, text }];
+    setMsgs(next);
+    setInput("");
+    if (userCount === 0) trackEvent("click", pathname, "live_chat_message");
+    ask(next, session);
+  }
+
+  async function submitContact(e: React.FormEvent) {
     e.preventDefault();
     if (name.trim().length < 2 || phone.replace(/\D/g, "").length < 10) {
       setFormErr("Lütfen adınızı ve telefon numaranızı girin.");
       return;
     }
     setFormErr("");
-    const transcript = msgs
-      .filter((m) => m.text !== WELCOME.text)
-      .slice(-12)
-      .map((m) => `${m.role === "user" ? "Müşteri" : "Asistan"}: ${m.text}`)
-      .join("\n");
-    const r = await fetch("/api/lead", {
+    setSaving(true);
+    const r = await fetch("/api/chat/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        needType: "Canlı destek",
-        fullname: name.trim(),
-        phone: phone.trim(),
-        source: "live_chat",
-        formPage: pathname,
-        notes: transcript ? `Canlı destek sohbeti:\n${transcript}` : "Canlı destekten arama talebi",
-      }),
+      body: JSON.stringify({ name: name.trim(), phone: phone.trim(), page: pathname, messages: history(msgs) }),
     }).catch(() => null);
-    if (!r?.ok) {
-      setFormErr("Gönderilemedi, lütfen tekrar deneyin ya da WhatsApp'tan yazın.");
+    setSaving(false);
+    const j = r?.ok ? await r.json() : null;
+    if (!j?.id) {
+      setFormErr("Kaydedilemedi, lütfen tekrar deneyin ya da WhatsApp'tan yazın.");
       return;
     }
     trackGa4Lead("canli_destek");
     trackGoogleAdsLead();
-    setForm("sent");
-    setMsgs((m) => [...m, { role: "assistant", text: `Teşekkürler ${name.trim().split(" ")[0]}! Talebiniz bize ulaştı, uzmanımız en kısa sürede sizi arayacak. 📞` }]);
+    setSession({ id: j.id, sig: j.sig });
+    setMsgs((m) => [...m, { role: "assistant", text: `Teşekkürler ${name.trim().split(" ")[0]}! Sorularınızı yazmaya devam edebilirsiniz; uzmanımız da en kısa sürede sizi arayacak. 📞` }]);
   }
 
   if (!open) {
@@ -115,8 +118,9 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
         onClick={() => {
           // Sayfa değişse de sohbet aynı sekmede kaldığı yerden devam eder.
           try {
-            const saved = sessionStorage.getItem(STORE_KEY);
-            if (saved) setMsgs(JSON.parse(saved));
+            const saved = JSON.parse(sessionStorage.getItem(STORE_KEY) || "null");
+            if (saved?.msgs) setMsgs(saved.msgs);
+            if (saved?.session) setSession(saved.session);
           } catch {}
           setOpen(true);
           trackEvent("click", pathname, "live_chat_open");
@@ -155,31 +159,28 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
         ))}
         {busy && <p className="w-fit rounded-2xl rounded-bl-sm bg-ink/[0.06] px-3.5 py-2.5 text-ink/60">Yazıyor…</p>}
 
-        {form === "open" && (
-          <form onSubmit={submitLead} className="space-y-2 rounded-xl border border-ink/10 bg-white p-3">
-            <p className="text-[13px] font-semibold">Uzmanımız sizi arasın</p>
+        {needContact && !busy && (
+          <form onSubmit={submitContact} className="space-y-2 rounded-xl border border-sun/50 bg-white p-3">
+            <p className="text-[13px] font-semibold">Size daha iyi yardımcı olabilmemiz için adınızı ve telefonunuzu yazın</p>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız Soyadınız" autoComplete="name" className="w-full rounded-lg border border-ink/15 px-3 py-2 text-[14px] outline-none focus:border-ink/40" />
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon (05xx xxx xx xx)" inputMode="tel" autoComplete="tel" className="w-full rounded-lg border border-ink/15 px-3 py-2 text-[14px] outline-none focus:border-ink/40" />
             {formErr && <p className="text-[12.5px] text-red-600">{formErr}</p>}
             <p className="text-[11.5px] text-ink/55">Bilgileriniz yalnızca size dönüş yapmak için kullanılır.</p>
-            <button type="submit" className="w-full rounded-lg bg-sun py-2.5 text-[14px] font-bold text-ink hover:bg-sun-soft">Gönder</button>
+            <button type="submit" disabled={saving} className="w-full rounded-lg bg-sun py-2.5 text-[14px] font-bold text-ink hover:bg-sun-soft disabled:opacity-60">
+              {saving ? "Kaydediliyor…" : "Sohbete devam et"}
+            </button>
           </form>
         )}
       </div>
 
       <div className="flex gap-2 border-t border-ink/10 px-3 pt-2.5">
-        {form !== "sent" && (
-          <button type="button" onClick={() => setForm(form === "open" ? "closed" : "open")} className="flex items-center gap-1.5 rounded-full bg-ink/[0.06] px-3 py-1.5 text-[12.5px] font-semibold hover:bg-ink/10">
-            <Phone size={14} /> Sizi arayalım
-          </button>
-        )}
         <a
           href={whatsappLink(whatsappNumber, `Merhaba, canlı destekten yazıyorum.\n\nSayfa: ${SITE_URL}${pathname}`)}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-full bg-[#25D366]/15 px-3 py-1.5 text-[12.5px] font-semibold text-[#128C4A] hover:bg-[#25D366]/25"
         >
-          WhatsApp
+          WhatsApp&apos;tan yazın
         </a>
       </div>
 
@@ -193,11 +194,12 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Sorunuzu yazın…"
+          placeholder={needContact ? "Önce adınızı ve telefonunuzu yazın" : "Sorunuzu yazın…"}
+          disabled={needContact}
           maxLength={1500}
-          className="flex-1 rounded-full border border-ink/15 bg-white px-4 py-2.5 text-[14px] outline-none focus:border-ink/40"
+          className="flex-1 rounded-full border border-ink/15 bg-white px-4 py-2.5 text-[14px] outline-none focus:border-ink/40 disabled:bg-ink/[0.04]"
         />
-        <button type="submit" disabled={busy || !input.trim()} aria-label="Gönder" className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-paper disabled:opacity-40">
+        <button type="submit" disabled={busy || needContact || !input.trim()} aria-label="Gönder" className="flex h-10 w-10 items-center justify-center rounded-full bg-ink text-paper disabled:opacity-40">
           <Send size={17} />
         </button>
       </form>
