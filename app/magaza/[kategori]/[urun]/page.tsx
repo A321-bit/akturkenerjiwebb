@@ -5,6 +5,8 @@ import { Download, FileText, MessageCircle } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata, ogImagePath } from "@/lib/seo";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
+import { getGoogleReviews } from "@/lib/google-reviews";
+import GoogleReviews from "@/components/GoogleReviews";
 import { cardProduct, discountPercent, priceLabel } from "@/lib/store";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
 import { kwOf, productBrand, productGallery, productHref } from "@/lib/store-details";
@@ -60,11 +62,12 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
   const found = await find(params);
   if (!found) notFound();
   const { product, category, products } = found;
-  const [site, reviews, others, completeData] = await Promise.all([
+  const [site, reviews, others, completeData, google] = await Promise.all([
     getSiteSettings(),
     getApprovedReviews(product.slug),
     withRatings(products.filter((p) => p.slug !== product.slug)),
     PACKAGE_COMPLETE_CATEGORIES.has(product.category) ? packageCompleteData(product) : Promise.resolve(null),
+    getGoogleReviews(),
   ]);
 
   const rating = reviews.length
@@ -308,6 +311,9 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
           </div>,
         ]}
       />
+
+      {/* Firma yorumları (Google İşletme Profili); ürün puanı olarak işaretlenmez. */}
+      {google && <GoogleReviews data={google} />}
 
       <ProductRail
         title="Benzer Ürünler"

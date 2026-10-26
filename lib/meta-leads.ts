@@ -110,7 +110,7 @@ export async function syncMetaLeads(): Promise<{ forms: number; fetched: number;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 /** Yeni Meta form başvurularını (site formundaki gibi) Resend ile e-postayla bildirir. */
-async function notifyNewLeads(leads: { full_name: string | null; phone: string | null; city: string | null; form_name: string; campaign_name: string | null; answers: { name: string; value: string }[] }[]) {
+async function notifyNewLeads(leads: { full_name: string | null; phone: string | null; email: string | null; city: string | null; form_name: string; campaign_name: string | null; answers: { name: string; value: string }[] }[]) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
   const to = process.env.LEAD_NOTIFY_EMAIL || "info@akturkenerji.com.tr";
@@ -118,7 +118,8 @@ async function notifyNewLeads(leads: { full_name: string | null; phone: string |
     .map((l) => {
       const rows: [string, string][] = [
         ["Ad Soyad", l.full_name || "—"],
-        ["Telefon", l.phone || "—"],
+        ["Telefon", l.phone || "— (Meta telefon iletmedi, e-postadan ulaşın)"],
+        ["E-posta", l.email || "—"],
         ["Şehir", l.city || "—"],
         ["Form", l.form_name],
         ["Kampanya", l.campaign_name || "—"],

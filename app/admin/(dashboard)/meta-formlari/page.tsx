@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, MessageCircle, PhoneCall, RefreshCw, XCircle } from "lucide-react";
+import { CheckCircle2, Mail, MessageCircle, PhoneCall, RefreshCw, XCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/data";
 import { LEAD_STATUSES, type LeadStatus, type MetaLead } from "@/lib/meta-lead-status";
 
@@ -158,6 +158,16 @@ export default function MetaLeadsPage() {
                       <MessageCircle size={14} /> WhatsApp
                     </a>
                   </div>
+                )}
+                {/* Meta bazen başvuruyu telefonsuz (yalnız e-postayla) iletiyor; o zaman e-postadan ulaşılır. */}
+                {!l.phone && l.email && (
+                  <a
+                    href={`mailto:${l.email}?subject=${encodeURIComponent("Aktürk Enerji · Güneş enerjisi başvurunuz")}`}
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-sun/60 bg-sun/10 px-3.5 py-2 text-[13px] font-semibold"
+                    title="Telefon gelmedi, e-postayla ulaşın"
+                  >
+                    <Mail size={14} /> {l.email}
+                  </a>
                 )}
               </div>
 
