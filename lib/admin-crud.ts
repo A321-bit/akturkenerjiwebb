@@ -26,6 +26,8 @@ export function revalidateStore(product?: { category?: string | null; slug?: str
   } else {
     revalidateSection("/magaza");
   }
+  // Merchant Center feed'i de yeni/değişen ürünleri hemen görsün.
+  revalidatePath("/google-merchant-feed.xml");
 }
 
 const SECTION_OF: Record<string, string> = {
