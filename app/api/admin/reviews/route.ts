@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin: tüm ürün yorumları (önce onay bekleyenler).
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { data, error } = await adminClient()
     .from("product_reviews")
     .select("*")

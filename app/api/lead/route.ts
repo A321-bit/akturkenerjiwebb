@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Bu route iki entegrasyonu da destekler; ikisi de opsiyoneldir ve ilgili
 // ortam değişkenleri (Vercel Project Settings > Environment Variables) tanımlı
@@ -35,6 +36,8 @@ type LeadInput = {
 };
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "lead", 10, 10 * 60e3);
+  if (limited) return limited;
   let body: LeadInput;
 
   try {

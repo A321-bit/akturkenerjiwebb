@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminClient } from "@/lib/data";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Müşteri ürün yorumu. Yorum onaysız kaydedilir; admin panelden onaylanınca
 // sitede görünür. "website" alanı botlar için tuzak (gerçek kullanıcı görmez).
@@ -14,6 +15,8 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "review", 5, 10 * 60e3);
+  if (limited) return limited;
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

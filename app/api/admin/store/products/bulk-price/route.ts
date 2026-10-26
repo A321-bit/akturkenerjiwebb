@@ -3,6 +3,7 @@ import { z } from "zod";
 import { adminClient } from "@/lib/data";
 import { revalidateStore } from "@/lib/admin-crud";
 import { getPricingSettings, usdToTl } from "@/lib/store-pricing";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Toplu fiyat güncelleme: seçili ürünlerin fiyatını yüzde olarak artırır/azaltır.
 // USD fiyatı olan üründe USD fiyat değişir ve TL kurla yeniden hesaplanır;
@@ -17,6 +18,8 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   const { percent, ids, roundTo, includeList } = parsed.data;

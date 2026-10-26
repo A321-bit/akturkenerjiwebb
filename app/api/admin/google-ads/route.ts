@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { googleAdsReport, setCampaignStatus, setDailyBudget } from "@/lib/google-ads";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin "Reklamlar" → Google Ads: rapor (GET ?gun=N) ve kampanya yönetimi (POST:
 // durdur/aç, günlük bütçe). /api/admin altı proxy ile korunur.
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const days = Math.min(365, Math.max(1, Number(new URL(req.url).searchParams.get("gun")) || 30));
   try {
     return NextResponse.json(await googleAdsReport(days));
@@ -21,6 +24,8 @@ const schema = z.discriminatedUnion("action", [
 ]);
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   try {

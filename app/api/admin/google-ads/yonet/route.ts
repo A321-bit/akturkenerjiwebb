@@ -18,11 +18,14 @@ import {
   setAdStatus,
   setKeywordStatus,
 } from "@/lib/google-ads-manage";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin "Google Ads": listeler (GET ?liste=…&gun=N) ve işlemler (POST). /api/admin altı proxy ile korunur.
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const q = new URL(req.url).searchParams;
   const days = Math.min(365, Math.max(1, Number(q.get("gun")) || 30));
   try {
@@ -69,6 +72,8 @@ const schema = z.discriminatedUnion("action", [
 ]);
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   const d = parsed.data;

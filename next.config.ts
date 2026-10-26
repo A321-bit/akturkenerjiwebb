@@ -86,7 +86,17 @@ const ADMIN_HEADERS = [
   { key: "X-Robots-Tag", value: "noindex, nofollow" },
 ];
 
+// Tüm sayfalar: başka sitelere gömülemez (tıklama hırsızlığı), MIME koklama kapalı, gereksiz tarayıcı izinleri kapalı.
+const SITE_HEADERS = [
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   // Paylaşım görseli (app/social) yazı tipini dosyadan okur; sunucu paketine dahil edilsin.
   outputFileTracingIncludes: {
     "/social/**": ["./node_modules/@fontsource/space-grotesk/files/space-grotesk-latin*-{500,700}-normal.woff"],
@@ -94,6 +104,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      { source: "/:path*", headers: SITE_HEADERS },
       { source: "/admin/:path*", headers: ADMIN_HEADERS },
       { source: "/admin", headers: ADMIN_HEADERS },
       { source: "/api/admin/:path*", headers: ADMIN_HEADERS },

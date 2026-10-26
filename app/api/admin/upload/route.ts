@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Dosya, bu route'a değil doğrudan tarayıcıdan Supabase Storage'a yüklenir
 // (imzalı URL ile). Vercel'in serverless fonksiyonlarında ~4.5MB request body
@@ -7,6 +8,8 @@ import { adminClient } from "@/lib/data";
 // hatasına yol açıyordu. Bu route artık sadece küçük bir JSON isteğiyle imzalı
 // yükleme URL'i üretiyor, büyük dosya asla bu fonksiyondan geçmiyor.
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const body = await req.json().catch(() => null);
   const filename = typeof body?.filename === "string" ? body.filename : "";
   const ext = filename.includes(".") ? filename.split(".").pop() : "jpg";

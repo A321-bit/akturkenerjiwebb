@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminClient } from "@/lib/data";
 import { buildPlan } from "@/lib/social";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Plan oluştur: haftalık yuvalara göre başlangıçtan itibaren N aylık taslak gönderiler.
 // replace: henüz Meta'ya gitmemiş gelecek gönderiler silinip plan yeniden kurulur.
@@ -16,6 +17,8 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   const db = adminClient();

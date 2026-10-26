@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createLeadCampaign, ensureAudiences, searchTargeting, setMetaAdSetBudget, setMetaCampaignStatus } from "@/lib/meta-ads-manage";
 import { VILLA_PLAN, retargetPlan } from "@/lib/meta-ads-plan";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin "Reklamlar" (Meta) yönetimi: hedefleme araması (GET ?ara=konum|ilgi&q=…),
 // kitle kurulumu, kampanya durum ve bütçe (POST). /api/admin altı proxy ile korunur.
@@ -9,6 +10,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const q = new URL(req.url).searchParams;
   const kind = q.get("ara");
   if ((kind !== "konum" && kind !== "ilgi") || !q.get("q")) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
@@ -27,6 +30,8 @@ const schema = z.discriminatedUnion("action", [
 ]);
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   const d = parsed.data;

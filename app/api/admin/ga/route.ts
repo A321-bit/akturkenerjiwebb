@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { gaGoogleAds, gaOverview, gaRealtime } from "@/lib/ga";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin "Google Analytics" sayfası: ?tip=anlik (son 30 dk) ya da özet; ?tip=googleads&gun=N (Reklamlar sayfası). /api/admin altı proxy ile korunur.
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const q = new URL(req.url).searchParams;
   const tip = q.get("tip");
   try {

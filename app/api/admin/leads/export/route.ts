@@ -1,4 +1,5 @@
 import { adminClient } from "@/lib/data";
+import { requireAdmin } from "@/lib/admin-guard";
 
 type LeadRow = {
   id: number;
@@ -20,6 +21,8 @@ function csvCell(value: string | null | undefined) {
 }
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { data, error } = await adminClient()
     .from("leads")
     .select("*")

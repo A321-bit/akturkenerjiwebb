@@ -17,6 +17,7 @@ import {
   verifyPassword,
   verifySecondFactor,
 } from "@/lib/admin-security";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin → Güvenlik: iki adımlı doğrulama, şifre, oturumlar ve giriş geçmişi.
 // Hassas işlemler (doğrulamayı kapatma, şifre değiştirme) mevcut şifre ve kod ister.
@@ -26,6 +27,8 @@ async function currentSessionId() {
 }
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const db = adminClient();
   const [sec, sessions, attempts, current] = await Promise.all([
     getSecurity(),
@@ -52,6 +55,8 @@ const schema = z.discriminatedUnion("action", [
 ]);
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   const b = parsed.data;

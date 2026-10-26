@@ -3,12 +3,15 @@ import { adminClient } from "@/lib/data";
 import { makeItemHandlers, revalidateStore } from "@/lib/admin-crud";
 import { applyUsd, getPricingSettings, recomputePrices } from "@/lib/store-pricing";
 import { sanitizeCostFields } from "@/lib/store-cost";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const { DELETE } = makeItemHandlers("store_products");
 
 // Ürün güncelleme: USD fiyat değiştiyse TL fiyat kurla hesaplanır; maliyet ve
 // kâr marjı varsa satış fiyatı maliyetten yeniden üretilir.
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await ctx.params;
   const db = adminClient();
   const body = sanitizeCostFields(await req.json());

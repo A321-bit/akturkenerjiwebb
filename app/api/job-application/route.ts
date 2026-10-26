@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "job", 5, 10 * 60e3);
+  if (limited) return limited;
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
 

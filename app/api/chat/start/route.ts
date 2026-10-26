@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { chatDb, signChat, transcript, type ChatMsg } from "@/lib/chat-session";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Canlı destek: müşteri ad + telefonu girince kayıt açılır (admin → Talepler → Canlı Destek).
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "chat-start", 5, 10 * 60e3);
+  if (limited) return limited;
   let body: { name?: string; phone?: string; page?: string; messages?: ChatMsg[] };
   try {
     body = await req.json();

@@ -3,11 +3,14 @@ import { adminClient } from "@/lib/data";
 import { makeItemHandlers, revalidateStore } from "@/lib/admin-crud";
 import { recomputePrices } from "@/lib/store-pricing";
 import { sanitizeCostFields } from "@/lib/store-cost";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const { DELETE } = makeItemHandlers("store_categories");
 
 // Kategori güncelleme: kategori kâr marjı değişirse o kategorideki maliyetli ürünlerin fiyatı yeniden hesaplanır.
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await ctx.params;
   const db = adminClient();
   const raw = await req.json();

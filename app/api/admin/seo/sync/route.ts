@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { daysAgo, syncGsc } from "@/lib/gsc";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin "Şimdi güncelle" (son günler) ve "Geçmişi yükle" (parça parça eski aylar).
 export const maxDuration = 60;
@@ -11,6 +12,8 @@ const schema = z.union([
 ]);
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   const range = "days" in parsed.data ? { start: daysAgo(parsed.data.days), end: daysAgo(0) } : parsed.data;

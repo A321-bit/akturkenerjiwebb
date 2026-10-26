@@ -3,6 +3,7 @@ import { adminClient } from "@/lib/data";
 import { googleAdsReport } from "@/lib/google-ads";
 import { adsReport, type AdsPeriod } from "@/lib/meta-ads";
 import { gaEventsDaily } from "@/lib/ga";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Admin "Reklam Özeti": Google + Meta harcaması, site talepleri, Meta form başvuruları
 // ve WhatsApp/telefon tıklamaları tek ekranda (GET ?gun=7|14|30|90). Kaynaklardan biri
@@ -27,6 +28,8 @@ const siteSource = (r: SiteLead) =>
   : "Organik / Doğrudan";
 
 export async function GET(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const asked = Number(new URL(req.url).searchParams.get("gun")) || 30;
   const days = PERIOD[asked] ? asked : 30;
   // Reklam raporları dünü son gün sayar; tablolar da aynı aralıkla (TR saati) okunur.

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { adminClient } from "@/lib/data";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Herkese açık sayfalar önbellekten sunuluyor; içerik değişince ilgili sayfaların
 // önbelleği temizlenir ki değişiklik hemen yansısın. Tüm siteyi temizlemek her
@@ -43,12 +44,16 @@ const TABLES_WITH_UPDATED_AT = new Set(["services", "project_references", "blog_
 
 export function makeListCreateHandlers(table: string, orderBy = "sort_order") {
   async function GET() {
+    const denied = await requireAdmin();
+    if (denied) return denied;
     const { data, error } = await adminClient().from(table).select("*").order(orderBy);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
   }
 
   async function POST(req: Request) {
+    const denied = await requireAdmin();
+    if (denied) return denied;
     const body = await req.json();
     delete body.id;
     const { data, error } = await adminClient().from(table).insert(body).select().single();
@@ -62,6 +67,8 @@ export function makeListCreateHandlers(table: string, orderBy = "sort_order") {
 
 export function makeItemHandlers(table: string) {
   async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
+    const denied = await requireAdmin();
+    if (denied) return denied;
     const { id } = await ctx.params;
     const body = await req.json();
     delete body.id;
@@ -78,6 +85,8 @@ export function makeItemHandlers(table: string) {
   }
 
   async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+    const denied = await requireAdmin();
+    if (denied) return denied;
     const { id } = await ctx.params;
     const { error } = await adminClient().from(table).delete().eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { adminClient } from "@/lib/data";
 import { revalidateStore } from "@/lib/admin-crud";
 import { recomputePrices } from "@/lib/store-pricing";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Seçili ürünlere toplu kâr marjı / üstü çizili fiyat marjı verir. Gönderilmeyen
 // alan değişmez; null = ürün marjını kaldır (kategori/genel marj geçerli olur).
@@ -14,6 +15,8 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   const { ids, margin_pct, list_margin_pct } = parsed.data;

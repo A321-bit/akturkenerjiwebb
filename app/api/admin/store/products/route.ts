@@ -3,11 +3,14 @@ import { adminClient } from "@/lib/data";
 import { makeListCreateHandlers, revalidateStore } from "@/lib/admin-crud";
 import { applyUsd, getPricingSettings, recomputePrices } from "@/lib/store-pricing";
 import { sanitizeCostFields } from "@/lib/store-cost";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export const { GET } = makeListCreateHandlers("store_products");
 
 // Yeni ürün: USD fiyat girildiyse TL fiyat kurla, maliyet + marj varsa satış fiyatı maliyetten hesaplanır.
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const db = adminClient();
   const body = sanitizeCostFields(await req.json());
   delete body.id;

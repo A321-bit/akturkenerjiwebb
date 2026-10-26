@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
 import { daysAgo } from "@/lib/gsc";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Tek anahtar kelimenin günlük seyri (sıra, gösterim, tıklama).
 export async function GET(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const url = new URL(req.url);
   const q = url.searchParams.get("q");
   const days = Math.min(480, Math.max(7, Number(url.searchParams.get("days")) || 90));

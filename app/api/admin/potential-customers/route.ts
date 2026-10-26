@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { data, error } = await adminClient()
     .from("potential_customers")
     .select("*")
@@ -11,6 +14,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const body = await req.json().catch(() => null);
   if (!body?.company_name) {
     return NextResponse.json({ error: "Firma adı zorunlu." }, { status: 400 });

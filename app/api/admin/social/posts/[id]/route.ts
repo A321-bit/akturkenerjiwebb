@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminClient } from "@/lib/data";
 import { nextCaption, publishNow, unscheduleFacebook, type SocialPost } from "@/lib/social";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Tek gönderi: metin, zaman, platform ve onay düzenleme; yeniden üretme ve hemen paylaşma; silme.
 // Facebook'a zamanlanmış gönderi değişirse Meta'daki kopyası değişmez (admin uyarır).
@@ -13,6 +14,8 @@ const schema = z.object({
 });
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await ctx.params;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
@@ -37,6 +40,8 @@ const action = z.object({ action: z.enum(["metin", "foto", "paylas"]) });
  * onaylıysa bir sonraki çalıştırmada yeni hâliyle tekrar zamanlanır.
  */
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await ctx.params;
   const parsed = action.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
@@ -64,6 +69,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 }
 
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await ctx.params;
   const { error } = await adminClient().from("social_posts").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

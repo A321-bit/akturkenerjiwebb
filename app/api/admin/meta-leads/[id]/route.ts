@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminClient } from "@/lib/data";
 import { LEAD_STATUSES, sendLeadStage, type MetaLead } from "@/lib/meta-leads";
+import { requireAdmin } from "@/lib/admin-guard";
 
 // Tek Meta form başvurusu: durum ve not. Durum değişince Meta'ya CRM aşaması
 // olarak gönderilir; sonuç capi_log'a yazılır.
@@ -11,6 +12,8 @@ const schema = z.object({
 });
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { id } = await ctx.params;
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });

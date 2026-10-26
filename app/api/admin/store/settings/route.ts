@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
 import { revalidateStore } from "@/lib/admin-crud";
 import { recomputeAllPrices } from "@/lib/store-pricing";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const { data, error } = await adminClient().from("store_settings").select("*").eq("id", 1).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
 
 export async function PUT(req: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
   const db = adminClient();
   const body = await req.json();
   delete body.id;
