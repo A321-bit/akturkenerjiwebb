@@ -67,7 +67,7 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: history(next), session: s }),
-        signal: AbortSignal.timeout(45000),
+        signal: AbortSignal.timeout(65000),
       });
       const j = await r.json();
       setMsgs([...next, { role: "assistant", text: j.text || j.error || "Bir sorun oluştu, lütfen tekrar deneyin." }]);

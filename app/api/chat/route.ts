@@ -10,8 +10,44 @@ export const maxDuration = 60;
 
 type Msg = { role: "user" | "assistant"; text: string };
 
-// Model yoğun/kotası dolu olduğunda sıradakine geçilir; her deneme süre sınırlı.
-const MODELS = [...new Set([process.env.GEMINI_MODEL || "gemini-flash-latest", "gemini-flash-lite-latest", "gemini-2.5-flash"])];
+// İlk iki model aynı anda denenir (ayrı kotalar; hangisi önce cevaplarsa o). İkisi de
+// yoğunsa (503) ya da yanıt vermezse anahtarın erişebildiği diğer flash modellere geçilir.
+const PRIMARY = [...new Set([process.env.GEMINI_MODEL || "gemini-flash-latest", "gemini-flash-lite-latest"])];
+const API = "https://generativelanguage.googleapis.com/v1beta/models";
+type Reply = { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+let extra: { at: number; list: string[] } | null = null;
+
+async function extraModels(key: string): Promise<string[]> {
+  if (extra && Date.now() - extra.at < 3600e3) return extra.list;
+  const r = await fetch(`${API}?pageSize=200`, { headers: { "x-goog-api-key": key }, signal: AbortSignal.timeout(5000) }).catch(() => null);
+  const j = r?.ok ? await r.json() : { models: [] };
+  const list = ((j.models || []) as { name: string; supportedGenerationMethods?: string[] }[])
+    .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
+    .map((m) => m.name.replace(/^models\//, ""))
+    .filter((n) => n.includes("flash") && !/image|tts|audio|live|embed|robotics|computer|exp/.test(n) && !PRIMARY.includes(n))
+    .slice(0, 3);
+  extra = { at: Date.now(), list };
+  return list;
+}
+
+async function generate(key: string, model: string, body: object, ms: number, tried: string[]): Promise<Reply> {
+  // Önce düşünme sınırlı denenir; model bu ayarı kabul etmezse (400) ayarsız tekrar denenir.
+  for (const thinking of [true, false]) {
+    const cfg = { temperature: 0.4, maxOutputTokens: 2048, ...(thinking ? { thinkingConfig: { thinkingBudget: 512 } } : {}) };
+    const res = await fetch(`${API}/${model}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({ ...body, generationConfig: cfg }),
+      signal: AbortSignal.timeout(ms),
+    }).catch(() => null);
+    tried.push(`${model}${thinking ? "" : "/nt"}:${res?.status ?? 0}`);
+    if (res?.ok) return res.json();
+    console.error("[canlı destek] Gemini hatası", model, res?.status ?? "zaman aşımı", res && (await res.text()).slice(0, 300));
+    if (res?.status !== 400) break;
+  }
+  throw new Error(model);
+}
+
 const hits = new Map<string, number[]>();
 
 function limited(ip: string) {
@@ -47,31 +83,14 @@ export async function POST(req: Request) {
 
   const system = await getChatContext();
   const contents = messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] }));
-  let data: { candidates?: { content?: { parts?: { text?: string }[] } }[] } | null = null;
-  let lastStatus = 0;
+  const body = { systemInstruction: { parts: [{ text: system }] }, contents };
   const tried: string[] = [];
-  for (const [i, model] of MODELS.entries()) {
-    // Önce düşünme sınırlı denenir; model bu ayarı kabul etmezse (400) ayarsız tekrar denenir.
-    for (const thinking of [true, false]) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents,
-          generationConfig: { temperature: 0.4, maxOutputTokens: 2048, ...(thinking ? { thinkingConfig: { thinkingBudget: 512 } } : {}) },
-        }),
-        signal: AbortSignal.timeout(i === 0 ? 22000 : 15000),
-      }).catch(() => null);
-      lastStatus = res?.status ?? 0;
-      tried.push(`${model}${thinking ? "" : "/nt"}:${lastStatus}`);
-      if (res?.ok) {
-        data = await res.json();
-        break;
-      }
-      console.error("[canlı destek] Gemini hatası", model, lastStatus, res && (await res.text()).slice(0, 300));
-      if (lastStatus !== 400 || !thinking) break;
-    }
+  const started = Date.now();
+  let data: Reply | null = await Promise.any(PRIMARY.map((m) => generate(key, m, body, 25000, tried))).catch(() => null);
+  for (const model of data ? [] : await extraModels(key)) {
+    const left = 55000 - (Date.now() - started);
+    if (left < 6000) break;
+    data = await generate(key, model, body, Math.min(15000, left), tried).catch(() => null);
     if (data) break;
   }
 
