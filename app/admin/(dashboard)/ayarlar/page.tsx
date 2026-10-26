@@ -148,7 +148,7 @@ export default function AdminSettingsPage() {
           </Field>
           <Field label={`Ana sayfa başlığı (mavi başlık) — ${(settings.seo_title ?? "").length}/60 karakter önerilir`}>
             <input
-              placeholder={`${settings.name} | Ankara Güneş Enerjisi Sistemleri (GES)`}
+              placeholder={`${settings.name} | Güneş Enerjisi Sistemleri ve GES Kurulumu`}
               value={settings.seo_title ?? ""}
               onChange={(e) => set("seo_title", e.target.value || null)}
               className="admin-input"

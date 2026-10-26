@@ -9,11 +9,11 @@ import LeadForm from "@/components/LeadForm";
 import TrackedContactLink from "@/components/TrackedContactLink";
 
 export const metadata: Metadata = buildMetadata({
-  title: "İletişim ve Ücretsiz Keşif, Keçiören Ankara",
+  title: "İletişim ve Ücretsiz Keşif",
   description:
-    "Ankara'da güneş enerjisi sistemi için ücretsiz keşif talep edin: formu doldurun, arayın ya da WhatsApp'tan yazın. Aktürk Enerji Teknolojileri, Keçiören/Ankara.",
+    "Güneş enerjisi sistemi için ücretsiz keşif talep edin: formu doldurun, arayın ya da WhatsApp'tan yazın. Aktürk Enerji Teknolojileri, Keçiören/Ankara.",
   path: "/iletisim",
-  keywords: ["Aktürk Enerji iletişim", "Ankara güneş enerjisi teklif", "Ankara"],
+  keywords: ["Aktürk Enerji iletişim", "güneş enerjisi teklif", "ücretsiz keşif"],
 });
 
 const jsonLd = {

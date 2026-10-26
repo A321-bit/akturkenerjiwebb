@@ -41,7 +41,7 @@ export default async function Image() {
             display: "flex",
           }}
         >
-          Ankara Güneş Enerjisi Sistemleri (GES)
+          Güneş Enerjisi Sistemleri ve GES Kurulumu
         </div>
         <div
           style={{

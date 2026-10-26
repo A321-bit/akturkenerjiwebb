@@ -110,8 +110,8 @@ const OFFGRID_STEPS: ServiceContent["steps"] = [
 export const serviceContent: Record<string, ServiceContent> = {
   "villa-cati-ges": {
     seo: {
-      heading: "Ankara'da Müstakil Ev ve Villa Çatısına Güneş Enerjisi Sistemi",
-      title: "Ankara Müstakil Ev ve Villa Güneş Paneli Sistemi",
+      heading: "Müstakil Ev ve Villa Çatısına Güneş Enerjisi Sistemi",
+      title: "Müstakil Ev ve Villa Güneş Paneli Sistemi",
       description:
         "Müstakil eviniz için kaç kW güneş paneli gerekir, maliyeti ne kadar, kaç yılda kendini öder? 2016'dan beri Ankara'da ev çatılarına GES kuran ekibimizden fiyat aralıkları ve gerçek tecrübeler.",
     },
@@ -390,8 +390,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "isi-pompasi-entegrasyonu": {
     seo: {
-      heading: "Ankara Isı Pompası ve Güneş Enerjisi Entegrasyonu",
-      title: "Ankara Isı Pompası ve GES Entegrasyonu",
+      heading: "Isı Pompası ve Güneş Enerjisi Entegrasyonu",
+      title: "Isı Pompası ve GES Entegrasyonu",
     },
     hero: {
       headline: "Isınma, soğutma ve havuz suyu — tek sistemle, güneşten besleyerek çözün.",
@@ -524,8 +524,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "muteahhit-ges": {
     seo: {
-      heading: "Ankara Müteahhit, Site ve Toplu Konut GES Kurulumu",
-      title: "Ankara Müteahhit ve Toplu Konut GES Kurulumu",
+      heading: "Müteahhit, Site ve Toplu Konut GES Kurulumu",
+      title: "Müteahhit ve Toplu Konut GES Kurulumu",
     },
     hero: {
       headline: "Projenize güneş enerjisi ekleyin — teslim tarihinizi riske atmadan.",
@@ -660,8 +660,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "tarimsal-sulama": {
     seo: {
-      heading: "Ankara Tarımsal Sulama Güneş Enerjisi Sistemleri",
-      title: "Ankara Tarımsal Sulama GES Sistemleri",
+      heading: "Tarımsal Sulama Güneş Enerjisi Sistemleri",
+      title: "Tarımsal Sulama GES Sistemleri",
     },
     hero: {
       headline: "Mazot parası bitmez — güneş her gün doğar.",
@@ -778,7 +778,7 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "ruzgar-hibrit": {
     seo: {
-      heading: "Ankara Rüzgar Türbini ve Güneş Hibrit Enerji Sistemleri",
+      heading: "Rüzgar Türbini ve Güneş Hibrit Enerji Sistemleri",
       title: "Rüzgar Türbini ve Güneş Hibrit Sistemleri",
     },
     hero: {
@@ -892,8 +892,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "lityum-batarya-depolama": {
     seo: {
-      heading: "Ankara Hibrit ve Lityum Bataryalı GES Sistemleri",
-      title: "Ankara Hibrit ve Bataryalı GES Sistemleri",
+      heading: "Hibrit ve Lityum Bataryalı GES Sistemleri",
+      title: "Hibrit ve Bataryalı GES Sistemleri",
     },
     hero: {
       headline: "Elektrik kesildiğinde eviniz karanlıkta kalmasın.",
@@ -1010,8 +1010,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "off-grid-sebekeden-bagimsiz": {
     seo: {
-      heading: "Ankara Off-Grid (Şebekeden Bağımsız) Güneş Enerjisi Sistemleri",
-      title: "Ankara Off-Grid Güneş Enerjisi Sistemleri",
+      heading: "Off-Grid (Şebekeden Bağımsız) Güneş Enerjisi Sistemleri",
+      title: "Off-Grid Güneş Enerjisi Sistemleri",
     },
     hero: {
       headline: "Şebeke yoksa sorun yok — güneş her yerde var.",
@@ -1126,8 +1126,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "elektrikli-arac-sarj-istasyonu": {
     seo: {
-      heading: "Ankara Elektrikli Araç Şarj İstasyonu Kurulumu",
-      title: "Ankara Elektrikli Araç Şarj İstasyonu Kurulumu",
+      heading: "Elektrikli Araç Şarj İstasyonu Kurulumu",
+      title: "Elektrikli Araç Şarj İstasyonu Kurulumu",
     },
     hero: {
       headline: "Aracınızı evde, güneşten şarj edin.",
@@ -1593,8 +1593,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "fabrika-cati-ges": {
     seo: {
-      heading: "Ankara Fabrika ve İşyeri Çatı GES Kurulumu",
-      title: "Ankara Fabrika Çatı GES Kurulumu",
+      heading: "Fabrika ve İşyeri Çatı GES Kurulumu",
+      title: "Fabrika Çatı GES Kurulumu",
     },
     hero: {
       headline: "Fabrikanızın çatısı, en büyük enerji kaynağınız olsun.",
@@ -1711,8 +1711,8 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "taahhut-isletme-bakim": {
     seo: {
-      heading: "Ankara GES Bakım, Temizlik ve İşletme Hizmetleri",
-      title: "Ankara GES Bakım ve İşletme Hizmetleri",
+      heading: "GES Bakım, Temizlik ve İşletme Hizmetleri",
+      title: "GES Bakım ve İşletme Hizmetleri",
     },
     hero: {
       headline: "Kurulum bitince iş bitmiyor — biz orada da yanınızdayız.",

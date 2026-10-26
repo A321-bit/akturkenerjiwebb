@@ -4,11 +4,11 @@ import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Ankara Güneş Enerjisi ve GES Kurulum Hizmetleri",
+  title: "Güneş Enerjisi ve GES Kurulum Hizmetleri",
   description:
-    "Ankara'da villa ve fabrika çatı GES, hibrit ve bataryalı sistemler, off-grid, tarımsal sulama, EDAŞ başvurusu ve bakım: anahtar teslim güneş enerjisi hizmetleri.",
+    "Villa ve fabrika çatı GES, hibrit ve bataryalı sistemler, off-grid, tarımsal sulama, EDAŞ başvurusu ve bakım: Türkiye geneli anahtar teslim güneş enerjisi hizmetleri.",
   path: "/hizmetlerimiz",
-  keywords: ["güneş enerjisi hizmetleri", "GES kurulumu", "villa çatı GES", "tarımsal sulama GES", "Ankara"],
+  keywords: ["güneş enerjisi hizmetleri", "GES kurulumu", "villa çatı GES", "tarımsal sulama GES", "güneş enerjisi firması"],
 });
 
 const jsonLd = {
