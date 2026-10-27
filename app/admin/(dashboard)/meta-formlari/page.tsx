@@ -84,7 +84,14 @@ export default function MetaLeadsPage() {
     for (const l of leads ?? []) c[l.status] = (c[l.status] ?? 0) + 1;
     return c;
   }, [leads]);
-  const shown = (leads ?? []).filter((l) => filter === "Tümü" || l.status === filter);
+  // Personel takibi: "Yeni" kalan (aranmamış) başvurular ve kaç gündür beklediği.
+  const ageDays = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  const waiting = (leads ?? []).filter((l) => l.status === "Yeni");
+  const overdue = waiting.filter((l) => Date.now() - new Date(l.created_time).getTime() > 86400000);
+  const shown =
+    filter === "Bekleyen"
+      ? [...overdue].sort((a, b) => a.created_time.localeCompare(b.created_time))
+      : (leads ?? []).filter((l) => filter === "Tümü" || l.status === filter);
 
   return (
     <div className="flex max-w-5xl flex-col gap-5">
@@ -112,15 +119,38 @@ export default function MetaLeadsPage() {
 
       {msg && <p className="rounded-xl bg-paper-raised px-4 py-3 text-[13.5px] text-volt">{msg}</p>}
 
+      {waiting.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e8562a]/40 bg-[#e8562a]/5 px-4 py-3">
+          <p className="text-[13.5px]">
+            <b>{waiting.length}</b> başvuru aranmayı bekliyor
+            {overdue.length > 0 && (
+              <>
+                {" "}· <b className="text-[#c2410c]">{overdue.length}</b> tanesi 24 saati geçti
+              </>
+            )}
+            . Aradıktan sonra sonucu işaretleyin.
+          </p>
+          {overdue.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setFilter("Bekleyen")}
+              className="rounded-full bg-[#e8562a] px-3.5 py-1.5 text-[12.5px] font-semibold text-white"
+            >
+              Gecikenleri göster (eskiden yeniye)
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
-        {["Tümü", ...LEAD_STATUSES.map((s) => s.key)].map((s) => (
+        {["Tümü", "Bekleyen", ...LEAD_STATUSES.map((s) => s.key)].map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setFilter(s)}
             className={`rounded-full border px-3 py-1.5 text-[12.5px] font-semibold ${filter === s ? "border-ink bg-ink text-paper" : "border-line text-slate hover:text-ink"}`}
           >
-            {s} <span className="opacity-60">{counts[s] ?? 0}</span>
+            {s === "Bekleyen" ? "24 sa+ bekleyen" : s} <span className="opacity-60">{s === "Bekleyen" ? overdue.length : (counts[s] ?? 0)}</span>
           </button>
         ))}
       </div>
@@ -136,6 +166,13 @@ export default function MetaLeadsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-display text-[16px] font-semibold">{l.full_name || "(isimsiz)"}</p>
+                  {l.status === "Yeni" && ageDays(l.created_time) >= 1 && (
+                    <span
+                      className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-[11.5px] font-bold text-white ${ageDays(l.created_time) >= 3 ? "bg-[#b91c1c]" : "bg-[#e8562a]"}`}
+                    >
+                      {ageDays(l.created_time)} gündür aranmadı
+                    </span>
+                  )}
                   <p className="text-[12.5px] text-slate">
                     {fmtDate(l.created_time)} · {l.platform === "ig" ? "Instagram" : "Facebook"}
                     {l.city ? ` · ${l.city}` : ""}
