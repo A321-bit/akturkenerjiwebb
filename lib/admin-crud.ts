@@ -17,6 +17,14 @@ export function revalidateSection(base: string) {
   revalidatePath("/");
 }
 
+/** Mağaza kategorisi değişince yalnız o kategorinin sayfaları (+ mağaza ve ana sayfa); tüm mağaza yeniden üretilmez. */
+export function revalidateStoreCategory(slug: string) {
+  revalidatePath(`/magaza/${slug}`, "layout");
+  revalidatePath("/magaza");
+  revalidatePath("/");
+  revalidatePath("/google-merchant-feed.xml");
+}
+
 /** Mağaza: tek ürün değişince ürün, kategori, mağaza ana sayfası ve ana sayfa; yoksa tüm mağaza. */
 export function revalidateStore(product?: { category?: string | null; slug?: string | null }) {
   if (product?.category && product.slug) {

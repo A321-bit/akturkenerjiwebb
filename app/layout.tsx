@@ -32,8 +32,9 @@ const GOOGLE_ADS_ID = "AW-18330659140";
 // ara sıra "fetch failed" hataları lib/supabase.ts'deki tekrar deneme ile
 // karşılanıyor; [slug] sayfaları build'de değil ilk ziyarette üretiliyor.
 // Saatlik yenileme Vercel ücretsiz planın ISR yazma kotasını (200.000/ay) dolduruyordu:
-// her sayfa saatte bir yeniden yazılıyordu. İçerik ve kur değişiklikleri zaten anında yansıyor.
-export const revalidate = 86400;
+// her sayfa saatte bir yeniden yazılıyordu; günlük yenileme de 450+ sayfayla kotayı aştı (Ekim 2026).
+// İçerik ve kur değişiklikleri admin kayıtlarıyla zaten anında yansıdığı için haftalık yeterli.
+export const revalidate = 604800;
 
 // Üçü de globalde (html class'ında) tanımlı olduğu için Next.js varsayılan
 // olarak tüm ağırlıkları <link rel="preload"> ile render-blocking şekilde

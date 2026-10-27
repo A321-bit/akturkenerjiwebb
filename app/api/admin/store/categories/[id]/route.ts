@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { makeItemHandlers, revalidateStore } from "@/lib/admin-crud";
+import { makeItemHandlers, revalidateStoreCategory } from "@/lib/admin-crud";
 import { recomputePrices } from "@/lib/store-pricing";
 import { sanitizeCostFields } from "@/lib/store-cost";
 import { requireAdmin } from "@/lib/admin-guard";
@@ -22,6 +22,6 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
   const { data, error } = await db.from("store_categories").update(body).eq("id", id).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const repriced = marginChanged ? await recomputePrices(db, { category: data.slug }) : 0;
-  revalidateStore();
+  revalidateStoreCategory(data.slug);
   return NextResponse.json({ ...data, repriced });
 }
