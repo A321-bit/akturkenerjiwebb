@@ -8,6 +8,7 @@ export default function TrackedContactLink({
   method,
   label,
   children,
+  onClick,
   ...anchorProps
 }: {
   method: "whatsapp" | "call";
@@ -18,7 +19,8 @@ export default function TrackedContactLink({
   return (
     <a
       {...anchorProps}
-      onClick={() => {
+      onClick={(e) => {
+        onClick?.(e);
         trackEvent("click", pathname, label ?? (method === "whatsapp" ? "whatsapp_button" : "call_button"));
         if (method === "whatsapp") trackGa4WhatsappClick();
         else trackGa4CallClick();

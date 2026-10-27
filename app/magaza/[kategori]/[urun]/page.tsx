@@ -204,6 +204,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
             </a>
 
             <ProductBuyBox
+              productId={product.id}
               name={product.name}
               url={url}
               price={product.price}

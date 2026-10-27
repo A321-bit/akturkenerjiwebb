@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircle, Phone } from "lucide-react";
 import { whatsappLink } from "@/lib/data";
 import { formatTL, type StoreProductOption } from "@/lib/store";
 import TrackedContactLink from "@/components/TrackedContactLink";
+import { trackMetaProduct } from "@/lib/meta-pixel";
 
 // Ürün sayfasındaki fiyat ve sipariş kutusu. Seçenekli üründe (ör. kablo
 // uzunluğu, montaj setinde panel sayısı) seçilen seçeneğin fiyatı gösterilir ve
 // WhatsApp sipariş mesajına seçenek ile fiyatı yazılır.
 export default function ProductBuyBox({
+  productId,
   name,
   url,
   price,
@@ -19,6 +21,7 @@ export default function ProductBuyBox({
   phoneHref,
   phoneDisplay,
 }: {
+  productId: number;
   name: string;
   url: string;
   price?: number;
@@ -38,6 +41,11 @@ export default function ProductBuyBox({
   const shownList = option ? option.listPrice : listPrice;
   const discount =
     shownPrice && shownList && shownList > shownPrice ? Math.round(((shownList - shownPrice) / shownList) * 100) : null;
+
+  // Meta katalog reklamları: ürüne bakanlar ve WhatsApp'tan sipariş vermeye başlayanlar.
+  useEffect(() => {
+    trackMetaProduct("ViewContent", { id: productId, name, price });
+  }, [productId, name, price]);
 
   const message = `Merhaba, *${name}*${option ? ` (${option.label})` : ""} için sipariş vermek istiyorum.${
     shownPrice != null ? ` (Fiyat: ${formatTL(shownPrice)})` : ""
@@ -81,6 +89,7 @@ export default function ProductBuyBox({
       <TrackedContactLink
         method="whatsapp"
         label="store_whatsapp_product"
+        onClick={() => trackMetaProduct("AddToCart", { id: productId, name, price: shownPrice })}
         href={whatsappLink(whatsappNumber, message)}
         target="_blank"
         rel="noopener noreferrer"
