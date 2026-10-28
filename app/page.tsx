@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck, CreditCard, Award } from "lucide-react";
-import { getServices, getReferences, getTestimonials, getSiteSettings, getBlogPostSummaries, whatsappLink, SITE_URL } from "@/lib/data";
+import { getServices, getReferences, getTestimonials, getSiteSettings, getBlogPostSummaries, serviceCardData, whatsappLink, SITE_URL } from "@/lib/data";
 import SavingsCalculator from "@/components/SavingsCalculator";
 import ServiceCard from "@/components/ServiceCard";
 import Reveal from "@/components/Reveal";
@@ -203,7 +203,7 @@ export default async function Home() {
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((s, i) => (
             <Reveal key={s.slug} delay={(i % 6) * 60}>
-              <ServiceCard service={s} />
+              <ServiceCard service={serviceCardData(s)} />
             </Reveal>
           ))}
         </div>

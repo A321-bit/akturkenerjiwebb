@@ -4,8 +4,6 @@ import { BadgeCheck, ShieldCheck, Wrench } from "lucide-react";
 import { getSiteSettings, getReferences } from "@/lib/data";
 import InstantLeadForm from "@/components/InstantLeadForm";
 
-export const dynamic = "force-dynamic";
-
 // Bu sayfa yalnızca Meta (Instagram/Facebook) reklamlarından gelen trafik
 // için var — organik aramada görünmesi istenmiyor, bu yüzden noindex.
 export const metadata: Metadata = {

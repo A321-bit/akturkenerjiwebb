@@ -61,6 +61,10 @@ export type Service = {
   guideContent?: string;
   faqs?: { q: string; a: string }[];
 };
+/** Hizmet kartında (istemci bileşeni) gereken alanlar: uzun rehber metni ve SSS tarayıcıya gitmez. */
+export type ServiceCardData = Pick<Service, "slug" | "title" | "eyebrow" | "summary" | "image">;
+export const serviceCardData = ({ slug, title, eyebrow, summary, image }: Service): ServiceCardData => ({ slug, title, eyebrow, summary, image });
+
 
 export type Reference = {
   id?: number;

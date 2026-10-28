@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import type { Service } from "@/lib/data";
+import type { ServiceCardData } from "@/lib/data";
 import CoverMedia from "@/components/CoverMedia";
 
-export default function ServiceCard({ service }: { service: Service }) {
+export default function ServiceCard({ service }: { service: ServiceCardData }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 

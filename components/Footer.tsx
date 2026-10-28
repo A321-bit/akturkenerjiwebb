@@ -31,7 +31,7 @@ export default function Footer({
   services,
 }: {
   settings: SiteSettings;
-  services: Service[];
+  services: Pick<Service, "slug" | "title">[];
 }) {
   const pathname = usePagePath();
   // Mağazanın kendi üst menüsü ve sayfa altı var (app/magaza/layout.tsx).

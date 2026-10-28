@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getServices } from "@/lib/data";
+import { getServices, serviceCardData } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 
@@ -95,7 +95,7 @@ export default async function ServicesPage() {
           {g.text && <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-slate">{g.text}</p>}
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {g.items.map((s) => (
-              <ServiceCard key={s.slug} service={s} />
+              <ServiceCard key={s.slug} service={serviceCardData(s)} />
             ))}
           </div>
         </section>

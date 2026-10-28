@@ -257,7 +257,8 @@ export default async function RootLayout({
         </noscript>
         <Header settings={settings} />
         <main className="flex-1">{children}</main>
-        <Footer settings={settings} services={services} />
+        {/* Footer istemci bileşeni: yalnızca listelenen 6 hizmetin adı ve adresi gider (rehber metinleri değil). */}
+        <Footer settings={settings} services={services.slice(0, 6).map(({ slug, title }) => ({ slug, title }))} />
         <FloatingActions settings={settings} />
       </body>
     </html>

@@ -9,6 +9,7 @@ import {
   getReferences,
   getSiteSettings,
   getBlogPostSummaries,
+  serviceCardData,
   whatsappLink,
   SITE_URL,
   SITE_NAME,
@@ -16,7 +17,7 @@ import {
 import { getServiceContent } from "@/lib/service-content";
 import { renderStoreTokens } from "@/lib/store-content";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
-import type { StoreCategory, StoreProduct } from "@/lib/store";
+import { cardProduct, type StoreCategory, type StoreProduct } from "@/lib/store";
 import ProductCard from "@/components/store/ProductCard";
 import { buildMetadata, breadcrumbJsonLd, stripMarkdown, AREA_SERVED, ogImagePath } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
@@ -367,7 +368,7 @@ export default async function ServiceDetailPage({
           </Reveal>
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {relatedProducts.map((p) => (
-              <ProductCard key={p.slug} product={p} whatsappNumber={site.contact.whatsappNumber} />
+              <ProductCard key={p.slug} product={cardProduct(p)} whatsappNumber={site.contact.whatsappNumber} />
             ))}
           </div>
         </section>
@@ -624,7 +625,7 @@ export default async function ServiceDetailPage({
         </h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-3">
           {others.map((s) => (
-            <ServiceCard key={s.slug} service={s} />
+            <ServiceCard key={s.slug} service={serviceCardData(s)} />
           ))}
         </div>
       </section>

@@ -40,7 +40,11 @@ export default async function ReferencesPage() {
         bulabilirsiniz — proje fotoğrafları ve daha fazla referans için bizimle
         iletişime geçin.
       </p>
-      <ReferenceGrid references={references} whatsappNumber={site.contact.whatsappNumber} />
+      <ReferenceGrid
+        // İstemciye yalnızca kartta görünen alanlar gider (uzun açıklama ve galeri değil).
+        references={references.map(({ slug, title, category, location, capacity, year, summary, image }) => ({ slug, title, category, location, capacity, year, summary, image }))}
+        whatsappNumber={site.contact.whatsappNumber}
+      />
     </div>
   );
 }
