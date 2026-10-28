@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
-import { getSiteSettings, SITE_URL } from "@/lib/data";
+import { getSiteSettings } from "@/lib/data";
 import { getStoreProducts } from "@/lib/store-data";
 import { kwOf, productHref } from "@/lib/store-details";
 import { TARIFE_TARIHI } from "@/lib/elektrik-tarife";
@@ -40,14 +40,7 @@ export default async function OnGridCalculatorPage() {
       <div className="px-5 py-10 sm:px-8 sm:py-14">
         <OnGridCalculator
           packages={packages}
-          contact={{
-            name: site.name,
-            phone: site.contact.phoneDisplay,
-            whatsapp: site.contact.whatsappNumber,
-            email: site.contact.email,
-            address: site.contact.addressLine,
-            url: SITE_URL,
-          }}
+          contact={{ phone: site.contact.phoneDisplay, whatsapp: site.contact.whatsappNumber }}
         />
       </div>
     </main>

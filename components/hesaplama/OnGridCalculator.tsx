@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, ContactRound, Factory, Home, Leaf, Lock, MapPin, Sprout, Sun, Wallet, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, Lock, MapPin, MessageCircle, Phone, Sprout, Sun, Wallet, Zap } from "lucide-react";
 import { calculateOnGrid, leadScore, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import LocationPicker, { type PickedLocation } from "./LocationPicker";
@@ -33,8 +33,8 @@ const CATILAR: { key: RoofType; ad: string; not: string }[] = [
 
 type Mode = "fatura" | "aylik" | "gunluk";
 
-/** Rapor sonrası "numaramızı kaydedin" kartı için firma iletişim bilgisi. */
-export type CompanyContact = { name: string; phone: string; whatsapp: string; email: string; address: string; url: string };
+/** Rapor sonrası gösterilen firma iletişim bilgisi. */
+export type CompanyContact = { phone: string; whatsapp: string };
 
 export default function OnGridCalculator({ packages, contact }: { packages: PackageOption[]; contact: CompanyContact }) {
   const [step, setStep] = useState(1);
@@ -434,14 +434,20 @@ function LeadBox({
             </p>
           </div>
         </div>
+        {/* Dosya indirilmez: numara gösterilir, arama ve WhatsApp telefonun kendi uygulamasında açılır. */}
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-volt/20 pt-4">
-          <button
-            onClick={() => saveContact(contact)}
-            className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-paper hover:bg-brand"
+          <p className="w-full text-[13px] text-slate">Aradığımızda tanımanız için numaramızı rehberinize ekleyebilirsiniz:</p>
+          <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-paper hover:bg-brand">
+            <Phone size={16} /> {contact.phone}
+          </a>
+          <a
+            href={`https://wa.me/${contact.whatsapp}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-[14px] font-semibold text-ink hover:border-volt"
           >
-            <ContactRound size={17} /> Numaramızı rehbere kaydet
-          </button>
-          <span className="text-[12.5px] text-slate">Aradığımızda tanımanız için tek dokunuşla kaydedin.</span>
+            <MessageCircle size={16} /> WhatsApp hattımız
+          </a>
         </div>
       </div>
     );
@@ -599,30 +605,4 @@ function LockedOverlay() {
       <p className="text-[13px] text-slate">Aşağıdan bilgilerinizi bırakınca açılır.</p>
     </div>
   );
-}
-
-// Firma kartını (vCard) indirir: telefonda tek dokunuşla rehbere kaydedilir.
-function saveContact(c: CompanyContact) {
-  const esc = (v: string) => v.replace(/([,;\\])/g, "\\$1");
-  const vcf = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    `N:;${esc(c.name)};;;`,
-    `FN:${esc(c.name)}`,
-    `ORG:${esc(c.name)}`,
-    `TEL;TYPE=WORK,VOICE:${c.phone}`,
-    `TEL;TYPE=CELL:+${c.whatsapp}`,
-    `EMAIL;TYPE=WORK:${c.email}`,
-    `ADR;TYPE=WORK:;;${esc(c.address)};;;;Türkiye`,
-    `URL:${c.url}`,
-    "NOTE:Güneş enerjisi sistemleri · keşif ve teklif",
-    "END:VCARD",
-  ].join("\r\n");
-  const url = URL.createObjectURL(new Blob([vcf], { type: "text/vcard;charset=utf-8" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "Akturk-Enerji.vcf";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-  trackEvent("click", PAGE, "ongrid_save_contact");
 }
