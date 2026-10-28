@@ -14,6 +14,8 @@ import {
   SITE_NAME,
 } from "@/lib/data";
 import { getServiceContent } from "@/lib/service-content";
+import { renderStoreTokens } from "@/lib/store-content";
+import { getStoreProducts } from "@/lib/store-data";
 import { buildMetadata, breadcrumbJsonLd, stripMarkdown, AREA_SERVED, ogImagePath } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
@@ -77,6 +79,10 @@ export default async function ServiceDetailPage({
   if (!service) notFound();
 
   const content = getServiceContent(service);
+  // Rehber yazısındaki {{fiyat:slug}} gibi işaretler mağazanın güncel fiyatıyla doldurulur.
+  if (content.guide?.markdown.includes("{{")) {
+    content.guide = { ...content.guide, markdown: renderStoreTokens(content.guide.markdown, await getStoreProducts()) };
+  }
   const [site, allServices, allReferences, allPosts] = await Promise.all([
     getSiteSettings(),
     getServices(),

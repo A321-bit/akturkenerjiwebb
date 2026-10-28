@@ -383,12 +383,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "isi-pompasi-entegrasyonu": {
     seo: {
-      heading: "Isı Pompası ve Güneş Enerjisi Entegrasyonu",
-      title: "Isı Pompası ve GES Entegrasyonu",
+      heading: "Güneş Enerjili Isı Pompası Sistemleri",
+      title: "Güneş Enerjili Isı Pompası Sistemleri ve Fiyatları",
+      description:
+        "Güneş paneli ile çalışan ısı pompası: kaç kW ısı pompası gerekir, ısı pompası için kaç kW güneş paneli, ev ısıtma maliyeti, havuz ısıtma ve fiyatlar.",
     },
     hero: {
       headline: "Isınma, soğutma ve havuz suyu — tek sistemle, güneşten besleyerek çözün.",
-      sub: "Villanızdan işletmenize, özel havuzunuzdan fabrika tesisinize kadar her ölçekte hava kaynaklı ısı pompası kuruyoruz — mevcut ya da yeni güneş enerjisi sisteminize entegre ederek işletme maliyetini düşürüyoruz.",
+      sub: "Evinizi ısı pompasıyla ısıtın, yazın soğutun; ısı pompasının elektriğini de çatınızdaki güneş panellerinden karşılayın. Isı pompası ve güneş enerjisi sistemini birlikte hesaplıyor, tek elden kuruyoruz.",
     },
     benefits: [
       {
@@ -517,12 +519,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "muteahhit-ges": {
     seo: {
-      heading: "Müteahhit, Site ve Toplu Konut GES Kurulumu",
-      title: "Müteahhit ve Toplu Konut GES Kurulumu",
+      heading: "Müteahhitler İçin İskan GES ve Apartman Güneş Paneli Kurulumu",
+      title: "Müteahhitler İçin İskan GES ve Apartman Güneş Paneli",
+      description:
+        "Yeni binalarda güneş enerjisi zorunluluğu, iskan için güneş paneli, apartman ve site çatısına GES kurulumu, blok bazlı planlama ve başvuru süreci.",
     },
     hero: {
       headline: "Projenize güneş enerjisi ekleyin — teslim tarihinizi riske atmadan.",
-      sub: "2000 m² üzeri inşaat projelerinde yenilenebilir enerji kaynağı kullanımı artık yasal bir zorunluluk — bu şart karşılanmadan iskân alınamıyor. Ön mühendislikten blok bazlı kurulum takvimine kadar tek muhatapla çalışın, iskân sürecinizi riske atmayın.",
+      sub: "Yeni binalarda güneş enerjisi şartını iskân takviminizi aksatmadan karşılıyoruz. Blok bazlı planlama, toplu malzeme tedariki, kurulum ve başvuru süreçlerini müteahhit firmalarla birlikte, şantiye düzenine göre yürütüyoruz.",
     },
     benefits: [
       {
@@ -653,12 +657,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "tarimsal-sulama": {
     seo: {
-      heading: "Tarımsal Sulama Güneş Enerjisi Sistemleri",
-      title: "Tarımsal Sulama GES Sistemleri",
+      heading: "Güneş Enerjili Tarımsal Sulama Sistemleri",
+      title: "Güneş Enerjili Sulama Sistemi Kurulumu ve Fiyatları",
+      description:
+        "Güneş enerjili tarımsal sulama sistemi: dalgıç pompa ve panel seçimi, kuyu derinliğine göre hesap, paket fiyatları, mazota göre tasarruf ve kurulum.",
     },
     hero: {
       headline: "Mazot parası bitmez — güneş her gün doğar.",
-      sub: "Elektrik hattı olmayan arazinizde kuyunuzu güneşe bağlayın: dizel jeneratör masrafı sıfırlansın; sulama sezonu boyunca yakıt derdi, hat çekme yatırımı ve fatura olmadan üretin.",
+      sub: "Kuyunuzdaki suyu mazot ya da şebeke elektriği olmadan, güneşle çıkarın. Kuyu derinliğinize ve su ihtiyacınıza göre güneş enerjili dalgıç pompa sistemini hesaplıyor, panelden pompaya kadar kuruyor ve çalışır halde teslim ediyoruz.",
     },
     benefits: [
       {
@@ -764,12 +770,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "ruzgar-hibrit": {
     seo: {
-      heading: "Rüzgar Türbini ve Güneş Hibrit Enerji Sistemleri",
-      title: "Rüzgar Türbini ve Güneş Hibrit Sistemleri",
+      heading: "Ev Tipi Rüzgar Türbini ve Güneş Hibrit Sistemleri",
+      title: "Ev Tipi Rüzgar Türbini ve Rüzgar Güneş Hibrit Sistemleri",
+      description:
+        "Ev tipi rüzgar türbini ne kadar elektrik üretir, hangi bölgede mantıklı, rüzgar güneş hibrit sistem nasıl kurulur? Türbin ve hibrit paket fiyatları.",
     },
     hero: {
       headline: "Güneş battığında üretiminiz durmasın.",
-      sub: "Rüzgar türbini ile güneş panelini tek sistemde birleştirin: gündüz güneşten, gece ve bulutlu havada rüzgardan üretin. Şebekeden tamamen bağımsız tesisler için en güvenilir kombinasyon.",
+      sub: "Güneşin yetmediği gece saatlerinde ve kış aylarında rüzgârdan da elektrik üretin. Bölgenizin rüzgârını değerlendiriyor, ev tipi rüzgar türbinini güneş paneli ve lityum bataryayla tek sistemde birleştiriyoruz. Rüzgâr yetersizse bunu açıkça söylüyor, gereksiz türbin yatırımı yaptırmıyoruz.",
     },
     benefits: [
       {
@@ -878,12 +886,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "lityum-batarya-depolama": {
     seo: {
-      heading: "Hibrit ve Lityum Bataryalı GES Sistemleri",
-      title: "Hibrit ve Bataryalı GES Sistemleri",
+      heading: "Hibrit Güneş Enerjisi ve Lityum Batarya Depolama Sistemleri",
+      title: "Hibrit Güneş Enerjisi Sistemi ve Lityum Batarya Depolama",
+      description:
+        "Hibrit güneş enerjisi sistemi: kesintide elektrik, güneşi gece kullanma, kaç kWh batarya gerekir, mevcut sisteme batarya ekleme ve paket fiyatları.",
     },
     hero: {
       headline: "Elektrik kesildiğinde eviniz karanlıkta kalmasın.",
-      sub: "LiFePO4 batarya sistemiyle gündüz ürettiğinizi gece kullanın; kesinti anında sistem otomatik devreye girsin — buzdolabı, kombi ve internet hiç durmasın.",
+      sub: "Gündüz ürettiğiniz güneş enerjisini lityum bataryada saklayın, akşam kullanın; elektrik kesildiğinde eviniz ve işyeriniz çalışmaya devam etsin. Hibrit güneş enerjisi sistemini tüketiminize göre boyutlandırıyor, kuruyor ve uzaktan izliyoruz.",
     },
     benefits: [
       {
@@ -996,12 +1006,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "off-grid-sebekeden-bagimsiz": {
     seo: {
-      heading: "Off-Grid (Şebekeden Bağımsız) Güneş Enerjisi Sistemleri",
-      title: "Off-Grid Güneş Enerjisi Sistemleri",
+      heading: "Off Grid Güneş Enerjisi Sistemi Kurulumu",
+      title: "Off Grid Güneş Enerjisi Sistemi Kurulumu ve Fiyatları",
+      description:
+        "Şebekeden bağımsız off grid güneş enerjisi sistemi: bağ evi, hobi bahçesi ve uzak tesisler için akülü sistem, akü hesabı, paket fiyatları ve kurulum.",
     },
     hero: {
       headline: "Şebeke yoksa sorun yok — güneş her yerde var.",
-      sub: "Hobi bahçenizden karavanınıza, şebekenin ulaşmadığı her noktaya kompakt ve taşınabilir güneş enerjisi sistemleri kuruyoruz — EDAŞ başvurusu ya da hat çekme derdi olmadan.",
+      sub: "Şebekenin ulaşmadığı bağ evine, hobi bahçesine, yayla evine ve uzak tesislere şebekeden bağımsız güneş enerjisi sistemi kuruyoruz. Neleri çalıştıracağınızı birlikte hesaplıyor, panel, lityum batarya ve invertörü buna göre seçiyor, çoğu sistemi birkaç gün içinde çalışır halde teslim ediyoruz.",
     },
     benefits: [
       {
@@ -1112,12 +1124,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "elektrikli-arac-sarj-istasyonu": {
     seo: {
-      heading: "Elektrikli Araç Şarj İstasyonu Kurulumu",
-      title: "Elektrikli Araç Şarj İstasyonu Kurulumu",
+      heading: "Ev Tipi Elektrikli Araç Şarj İstasyonu Kurulumu",
+      title: "Ev Tipi Elektrikli Araç Şarj İstasyonu Kurulumu",
+      description:
+        "Eve ve işyerine elektrikli araç şarj istasyonu kurulumu: kaç kW seçilmeli, monofaze mi trifaze mi, kurulum maliyeti ve güneş paneliyle şarj.",
     },
     hero: {
       headline: "Aracınızı evde, güneşten şarj edin.",
-      sub: "Villanıza, işletmenize ya da mevcut güneş enerjisi sisteminize entegre AC Tip 2 duvar tipi şarj istasyonu kuruyoruz — akıllı uygulamadan takip ve programlama dahil.",
+      sub: "Evinize, sitenize ya da işyerinize elektrikli araç şarj istasyonu kuruyoruz. Pano ve kablo kontrolünden kuruluma ve devreye almaya kadar her şeyi biz yapıyoruz; güneş paneliniz varsa aracınızı güneşten şarj edecek şekilde birleştiriyoruz.",
     },
     benefits: [
       {
@@ -1230,12 +1244,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "malzeme-tedarik-toptan-perakende": {
     seo: {
-      heading: "Güneş Paneli, İnverter ve Batarya Tedariği: Toptan ve Perakende",
-      title: "Güneş Paneli, İnverter ve Batarya Satışı",
+      heading: "Toptan ve Perakende Güneş Paneli Satışı",
+      title: "Toptan ve Perakende Güneş Paneli, İnverter ve Batarya Satışı",
+      description:
+        "Toptan ve perakende güneş paneli satışı: panel, inverter, lityum batarya ve montaj ekipmanı. Bayi, müteahhit ve kurulum firmalarına proje bazlı fiyat.",
     },
     hero: {
       headline: "Doğru malzeme, garantili ürün, rekabetçi fiyat.",
-      sub: "Panel, invertör, batarya ve montaj ekipmanında orijinal ve garanti belgeli ürünleri tek noktadan tedarik edin — ister tek proje için perakende, ister bayilik ölçeğinde toptan.",
+      sub: "Güneş paneli, inverter, lityum batarya, kablo ve montaj ekipmanını orijinal ve garantili olarak tek panelden tır yüküne kadar temin ediyoruz. Kurulum firmalarına, bayilere ve müteahhitlere proje bazlı toptan fiyat, bireysel alıcılara perakende satış yapıyoruz.",
     },
     benefits: [
       {
@@ -1349,12 +1365,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "distributorluk-bayilik": {
     seo: {
-      heading: "Güneş Enerjisi Bayilik ve Distribütörlük",
-      title: "Güneş Enerjisi Bayilik ve Distribütörlük",
+      heading: "Güneş Paneli Bayilik ve Distribütörlük",
+      title: "Güneş Paneli Bayilik ve Distribütörlük",
+      description:
+        "Güneş paneli bayiliği ve distribütörlük: bayilik şartları, ilk yatırım, eğitim ve saha desteği, bölge koruması ve öncelikli tedarik fiyatı.",
     },
     hero: {
       headline: "Büyüyen solar pazarında bölgenizin markası olun.",
-      sub: "Türkiye'de güneş enerjisi pazarı her yıl büyüyor. Aktürk Enerji bayilik modeliyle bu büyümeden payınızı alın: eğitim, tedarik avantajı ve saha desteği bizden — bölgenizdeki iş sizden.",
+      sub: "Bölgenizde güneş enerjisi işine başlamak ya da işinizi büyütmek istiyorsanız Aktürk Enerji bayisi olun. Öncelikli tedarik fiyatı, teknik eğitim, ilk kurulumlarda saha desteği ve ortak pazarlama ile yanınızdayız.",
     },
     benefits: [
       {
@@ -1464,12 +1482,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "projelendirme-muhendislik-basvuru": {
     seo: {
-      heading: "GES Projelendirme, Mühendislik ve EDAŞ Başvuru İşlemleri",
-      title: "GES Projelendirme ve EDAŞ Başvuru İşlemleri",
+      heading: "GES Projesi ve Lisanssız GES Başvuru İşlemleri",
+      title: "GES Projesi ve Lisanssız GES Başvuru İşlemleri",
+      description:
+        "GES projesi ve lisanssız GES başvurusu: statik proje, elektrik projesi, gerekli evraklar, çağrı mektubu ve EDAŞ süreci. Başka firmanın kurduğu sistemlere de.",
     },
     hero: {
       headline: "GES bürokrasisini biz üstlenelim, siz işinize bakın.",
-      sub: "Statik rapor, elektrik projesi, tek hat şeması, EDAŞ bağlantı anlaşması… Kâğıt işi kurulum kadar kritiktir. Mühendislik ekibimiz tüm süreci sizin adınıza yürütür — ister bizim kurulumumuz olsun, ister başka firmanın.",
+      sub: "Güneş enerjisi sisteminin kâğıt üzerindeki bütün işini biz yapıyoruz: statik proje, elektrik projesi, dağıtım şirketi başvurusu, çağrı mektubu, proje onayı ve bağlantı anlaşması. Sistemi başka bir firma kurmuş olsa bile süreci devralıp tamamlıyoruz.",
     },
     benefits: [
       {
@@ -1579,12 +1599,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "fabrika-cati-ges": {
     seo: {
-      heading: "Fabrika ve İşyeri Çatı GES Kurulumu",
-      title: "Fabrika Çatı GES Kurulumu",
+      heading: "Fabrika ve İşyeri Çatısına Güneş Paneli Kurulumu",
+      title: "Fabrika Çatısına Güneş Paneli Kurulumu ve Fiyatları",
+      description:
+        "Fabrika ve işyeri çatısına güneş paneli kurulumu: öztüketim ve mahsuplaşmalı sistemler, maliyet, amortisman ve trapez, sandviç çatı montajı.",
     },
     hero: {
       headline: "Fabrikanızın çatısı, en büyük enerji kaynağınız olsun.",
-      sub: "Üretim tesisinizin geniş çatı alanını, gündüz yoğun elektrik tüketiminizi karşılayan büyük ölçekli bir güneş enerjisi santraline dönüştürün — üretim durmadan, vardiya planınıza uygun kurulumla.",
+      sub: "Fabrikanızın ve işyerinizin çatısını, gündüz tükettiğiniz elektriği kendi üreten bir santrale dönüştürüyoruz. Tüketiminize göre öztüketim ya da mahsuplaşmalı sistem tasarlıyor, statik hesaptan başvuruya ve kuruluma kadar tüm süreci üretiminizi durdurmadan yürütüyoruz.",
     },
     benefits: [
       {
@@ -1690,12 +1712,14 @@ export const serviceContent: Record<string, ServiceContent> = {
 
   "taahhut-isletme-bakim": {
     seo: {
-      heading: "GES Bakım, Temizlik ve İşletme Hizmetleri",
-      title: "GES Bakım ve İşletme Hizmetleri",
+      heading: "Güneş Paneli Temizliği ve GES Bakım Hizmetleri",
+      title: "Güneş Paneli Temizliği ve GES Bakım Hizmetleri",
+      description:
+        "Güneş paneli temizliği ve GES bakım onarım: ne sıklıkla yapılmalı, üretimi ne kadar etkiler, bakımda neler kontrol edilir, bakım sözleşmesi ve arıza takibi.",
     },
     hero: {
       headline: "Kurulum bitince iş bitmiyor — biz orada da yanınızdayız.",
-      sub: "Kurumsal ve kamu projelerinde taahhüt yüklenimi, devreye alınmış sistemlerde ise düzenli işletme ve bakım. Sisteminizi başka bir firma kurmuş olsa bile bakımını devralabiliriz.",
+      sub: "Kurulumdan sonra da sisteminizin yanındayız. Güneş paneli temizliği, invertör ve bağlantı kontrolleri, uzaktan üretim takibi ve arıza onarımıyla güneş enerjisi sisteminizin yıllarca tam verimle çalışmasını sağlıyoruz. Sistemi başka bir firma kurmuş olsa bile bakımını üstleniyoruz.",
     },
     benefits: [
       {
