@@ -30,12 +30,23 @@ export function trackGoogleAdsLead() {
 // form doldurmadan doğrudan iletişime geçen kullanıcıları da Ads'in
 // teklif algoritmasına dahil edebilmek için ayrı event adlarıyla gönderiyoruz.
 // (Meta Pikseli'nin "Contact" olayı components/Analytics.tsx'te bütün WhatsApp/telefon linklerinden gider.)
-export function trackGa4WhatsappClick() {
+// Ads'teki GA4 dönüşümlerinin sayımı "her tıklamada birden çok" ve API'den
+// değiştirilemiyor; aynı ziyaretçinin tekrar tekrar dokunması dönüşümü
+// şişirmesin diye her event oturum başına bir kez gönderilir.
+function sendOncePerSession(name: string) {
   if (typeof window === "undefined") return;
-  window.gtag?.("event", "whatsapp_click");
+  try {
+    const key = `ga4_sent_${name}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch {}
+  window.gtag?.("event", name);
+}
+
+export function trackGa4WhatsappClick() {
+  sendOncePerSession("whatsapp_click");
 }
 
 export function trackGa4CallClick() {
-  if (typeof window === "undefined") return;
-  window.gtag?.("event", "phone_call_click");
+  sendOncePerSession("phone_call_click");
 }
