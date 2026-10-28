@@ -111,7 +111,7 @@ const OFFGRID_STEPS: ServiceContent["steps"] = [
 
 // Hizmet sayfasında gösterilen mağaza ürünleri (hizmet ↔ mağaza iç linklemesi).
 export const SERVICE_STORE_PRODUCTS: Record<string, NonNullable<ServiceContent["storeProducts"]>> = {
-  "villa-cati-ges": { category: "on-grid-paketler", slugs: ["5-kw-on-grid-gunes-paneli-paketi", "10-kw-on-grid-gunes-paneli-paketi", "15-kw-on-grid-gunes-paneli-paketi", "10-kw-hibrit-10-kwh-lityum-paket"] },
+  "villa-cati-ges": { category: "on-grid-paketler", slugs: ["10-kw-on-grid-gunes-paneli-paketi", "15-kw-on-grid-gunes-paneli-paketi", "25-kw-on-grid-gunes-paneli-paketi", "15-kw-hibrit-15-kwh-lityum-paket"] },
   "fabrika-cati-ges": { category: "oztuketim-paketleri", slugs: ["25-kw-oztuketim-paketi", "50-kw-oztuketim-paketi", "100-kw-oztuketim-paketi", "200-kw-oztuketim-paketi"] },
   "elektrikli-arac-sarj-istasyonu": { category: "elektrikli-arac-sarj-istasyonu", slugs: ["tommatech-likya-22-kw-ac-arac-sarj-istasyonu-soketli", "tommatech-likya-22-kw-ac-arac-sarj-istasyonu-5m-kablolu", "tommatech-22-kw-type-2-arac-sarj-kablosu-5m", "tommatech-dc-30-kw-hizli-arac-sarj-istasyonu"] },
   "off-grid-sebekeden-bagimsiz": { category: "off-grid-paketler", slugs: ["1-2-kw-off-grid-gunes-paneli-paketi", "3-kw-off-grid-gunes-paneli-paketi", "5-kw-off-grid-gunes-paneli-paketi", "10-2-kw-off-grid-gunes-paneli-paketi"] },
