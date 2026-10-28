@@ -3,36 +3,64 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList, Search } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList, Search, Globe, ChevronDown } from "lucide-react";
 
-const navItems: { href: string; label: string; icon: typeof Inbox; sub?: boolean }[] = [
+type NavItem = { href: string; label: string; icon: typeof Inbox };
+type NavEntry = NavItem | { group: string; icon: typeof Inbox; items: NavItem[] };
+
+// Menü: tek başına bağlantılar + açılır gruplar (Talepler, Site Yönetimi, Reklam Yönetimi).
+const nav: NavEntry[] = [
   { href: "/admin", label: "Genel Bakış", icon: LayoutDashboard },
-  { href: "/admin/talepler", label: "Talepler", icon: Inbox },
-  { href: "/admin/meta-formlari", label: "Meta Formları", icon: ClipboardList, sub: true },
-  { href: "/admin/potansiyel-musteriler", label: "Potansiyel Müşteriler", icon: Target },
-  { href: "/admin/is-basvurulari", label: "İş Başvuruları", icon: Users },
-  { href: "/admin/hizmetler", label: "Hizmetler", icon: Wrench },
-  { href: "/admin/referanslar", label: "Referanslar", icon: MapPin },
-  { href: "/admin/blog", label: "Blog", icon: Newspaper },
-  { href: "/admin/magaza", label: "Mağaza", icon: Store },
-  { href: "/admin/analytics", label: "Google Analytics", icon: BarChart3 },
-  { href: "/admin/reklamlar", label: "Reklamlar", icon: Megaphone },
-  { href: "/admin/reklam-ozeti", label: "Reklam Özeti", icon: BarChart3, sub: true },
-  { href: "/admin/google-ads", label: "Google Ads", icon: Search, sub: true },
-  { href: "/admin/seo", label: "SEO · Anahtar Kelimeler", icon: TrendingUp },
-  { href: "/admin/sosyal-medya", label: "Sosyal Medya", icon: Share2 },
-  { href: "/admin/yorumlar", label: "Ürün Yorumları", icon: Star },
-  { href: "/admin/videolar", label: "Videolar", icon: Video },
-  { href: "/admin/ayarlar", label: "Site Ayarları", icon: Settings },
+  {
+    group: "Talepler",
+    icon: Inbox,
+    items: [
+      { href: "/admin/talepler", label: "Tüm Talepler", icon: Inbox },
+      { href: "/admin/web-formlari", label: "Web Sitesi Formları", icon: Globe },
+      { href: "/admin/meta-formlari", label: "Meta Formları", icon: ClipboardList },
+      { href: "/admin/potansiyel-musteriler", label: "Potansiyel Müşteriler", icon: Target },
+      { href: "/admin/is-basvurulari", label: "İş Başvuruları", icon: Users },
+    ],
+  },
+  {
+    group: "Site Yönetimi",
+    icon: Settings,
+    items: [
+      { href: "/admin/hizmetler", label: "Hizmetler", icon: Wrench },
+      { href: "/admin/referanslar", label: "Referanslar", icon: MapPin },
+      { href: "/admin/blog", label: "Blog", icon: Newspaper },
+      { href: "/admin/magaza", label: "Mağaza", icon: Store },
+      { href: "/admin/yorumlar", label: "Ürün Yorumları", icon: Star },
+      { href: "/admin/videolar", label: "Videolar", icon: Video },
+      { href: "/admin/ayarlar", label: "Site Ayarları", icon: Settings },
+    ],
+  },
+  {
+    group: "Reklam Yönetimi",
+    icon: Megaphone,
+    items: [
+      { href: "/admin/reklam-ozeti", label: "Reklam Özeti", icon: BarChart3 },
+      { href: "/admin/reklamlar", label: "Meta Reklamları", icon: Megaphone },
+      { href: "/admin/google-ads", label: "Google Ads", icon: Search },
+      { href: "/admin/analytics", label: "Google Analytics", icon: BarChart3 },
+      { href: "/admin/seo", label: "SEO · Anahtar Kelimeler", icon: TrendingUp },
+      { href: "/admin/sosyal-medya", label: "Sosyal Medya", icon: Share2 },
+    ],
+  },
   { href: "/admin/guvenlik", label: "Güvenlik", icon: ShieldCheck },
 ];
+const navItems: NavItem[] = nav.flatMap((e) => ("group" in e ? e.items : [e]));
+const isActive = (href: string, pathname: string | null) => pathname === href || (href !== "/admin" && Boolean(pathname?.startsWith(href)));
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   // Telefonda menü üst çubuktaki butonla açılan çekmece; bir sayfaya geçilince kapanır.
   const [open, setOpen] = useState(false);
-  const current = navItems.find((i) => pathname === i.href || (i.href !== "/admin" && pathname?.startsWith(i.href)));
+  const current = navItems.find((i) => isActive(i.href, pathname));
+  // Gruplar kapalı başlar; başlığa tıklayınca alt sekmeler açılır, aynı anda tek grup açık kalır.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const toggleGroup = (g: string) => setOpenGroup((prev) => (prev === g ? null : g));
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -65,21 +93,30 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         <p className="px-2 mt-0.5 font-display text-[15px] font-semibold">Yönetim Paneli</p>
 
         <nav className="mt-6 flex flex-col gap-1 lg:mt-8">
-          {navItems.map((item) => {
-            const active = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
-            const Icon = item.icon;
+          {nav.map((entry) => {
+            if (!("group" in entry)) return <NavLink key={entry.href} item={entry} active={isActive(entry.href, pathname)} onClick={() => setOpen(false)} />;
+            const expanded = openGroup === entry.group;
+            const hasActive = entry.items.some((i) => isActive(i.href, pathname));
+            const Icon = entry.icon;
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-2.5 rounded-lg py-2.5 font-medium transition-colors ${item.sub ? "pl-9 pr-3 text-[13px]" : "px-3 text-[14px]"} ${
-                  active ? "bg-ink text-paper" : "text-slate hover:bg-ink/5"
-                }`}
-              >
-                <Icon size={17} />
-                {item.label}
-              </Link>
+              <div key={entry.group}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(entry.group)}
+                  className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-semibold transition-colors ${hasActive ? "text-ink" : "text-slate"} hover:bg-ink/5`}
+                >
+                  <Icon size={17} />
+                  <span className="flex-1 text-left">{entry.group}</span>
+                  <ChevronDown size={16} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+                </button>
+                {expanded && (
+                  <div className="mt-0.5 flex flex-col gap-0.5">
+                    {entry.items.map((item) => (
+                      <NavLink key={item.href} item={item} sub active={isActive(item.href, pathname)} onClick={() => setOpen(false)} />
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
@@ -95,5 +132,21 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
 
       <main className="min-w-0 flex-1 px-4 pb-10 pt-20 sm:px-6 lg:px-10 lg:py-8">{children}</main>
     </div>
+  );
+}
+
+function NavLink({ item, active, sub, onClick }: { item: NavItem; active: boolean; sub?: boolean; onClick: () => void }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      onClick={onClick}
+      className={`flex items-center gap-2.5 rounded-lg py-2.5 font-medium transition-colors ${sub ? "pl-9 pr-3 text-[13px]" : "px-3 text-[14px]"} ${
+        active ? "bg-ink text-paper" : "text-slate hover:bg-ink/5"
+      }`}
+    >
+      <Icon size={17} />
+      {item.label}
+    </Link>
   );
 }

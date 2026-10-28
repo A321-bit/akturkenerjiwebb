@@ -31,6 +31,9 @@ type LeadInput = {
   utmContent?: string;
   utmTerm?: string;
   adClickId?: string;
+  /** Siteye gelmeden önceki dış sayfa ve sitede açılan ilk sayfa (lib/attribution). */
+  referrer?: string;
+  landingPage?: string;
   /** Ek bilgi (ör. off grid hesaplama sonucu); admin panelde talebin notunda görünür. */
   notes?: string;
 };
@@ -61,6 +64,8 @@ export async function POST(req: Request) {
     utmContent,
     utmTerm,
     adClickId,
+    referrer,
+    landingPage,
     notes,
   } = body;
 
@@ -83,6 +88,8 @@ export async function POST(req: Request) {
     utmContent: utmContent || null,
     utmTerm: utmTerm || null,
     adClickId: adClickId || null,
+    referrer: typeof referrer === "string" ? referrer.slice(0, 500) : null,
+    landingPage: typeof landingPage === "string" ? landingPage.slice(0, 300) : null,
     notes: typeof notes === "string" ? notes.slice(0, 2000) : null,
     receivedAt: new Date().toISOString(),
   };
@@ -133,6 +140,8 @@ type LeadForStorage = {
   utmContent?: string | null;
   utmTerm?: string | null;
   adClickId?: string | null;
+  referrer?: string | null;
+  landingPage?: string | null;
   notes?: string | null;
   receivedAt: string;
 };
@@ -161,9 +170,19 @@ async function sendToSupabase(lead: LeadForStorage) {
   if (lead.utmContent) record.utm_content = lead.utmContent;
   if (lead.utmTerm) record.utm_term = lead.utmTerm;
   if (lead.adClickId) record.ad_click_id = lead.adClickId;
+  if (lead.referrer) record.referrer = lead.referrer;
+  if (lead.landingPage) record.landing_page = lead.landingPage;
   if (lead.notes) record.notes = lead.notes;
 
   let { error } = await supabase.from("leads").insert(record);
+
+  // referrer/landing_page kolonları veritabanına henüz eklenmediyse önce yalnızca
+  // onlar çıkarılıp denenir; kaynak (utm) bilgisi kaybolmasın.
+  if (error && ("referrer" in record || "landing_page" in record)) {
+    delete record.referrer;
+    delete record.landing_page;
+    ({ error } = await supabase.from("leads").insert(record));
+  }
 
   // "province"/"form_page"/"utm_*" kolonları henüz canlıya uygulanmamış
   // migration'a bağlıysa talep tamamen kaybolmasın diye, tanınmayan
@@ -178,6 +197,8 @@ async function sendToSupabase(lead: LeadForStorage) {
       "utm_content",
       "utm_term",
       "ad_click_id",
+      "referrer",
+      "landing_page",
     ];
     for (const k of optionalKeys) delete record[k];
     if (record.bill_range === null) record.bill_range = "Belirtilmedi";
