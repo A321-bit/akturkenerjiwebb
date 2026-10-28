@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, Lock, MapPin, MessageCircle, Phone, Sprout, Sun, Wallet, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, MapPin, MessageCircle, Phone, Sprout, Sun, Wallet, Zap } from "lucide-react";
 import { calculateOnGrid, leadScore, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import LocationPicker, { type PickedLocation } from "./LocationPicker";
@@ -47,7 +47,6 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
   const [il, setIl] = useState("");
   const [loc, setLoc] = useState<PickedLocation | null>(null);
   const [showMap, setShowMap] = useState(false);
-  const [unlocked, setUnlocked] = useState(false);
   const [cati, setCati] = useState<RoofType>("egimli");
   const [yon, setYon] = useState("guney");
   const [alan, setAlan] = useState("");
@@ -67,8 +66,9 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
   const tilt = cati === "duz" ? 30 : cati === "trapez" ? 10 : yonu.tilt;
 
   // Konuma özel üretim: 3. adım tamamlanınca PVGIS'ten alınır (sunucuda 30 gün önbellekli).
+  const ready = step >= 4;
   useEffect(() => {
-    if (step !== 4) return;
+    if (!ready) return;
     let cancel = false;
     fetch(`/api/hesaplama/pvgis?lat=${konum.lat}&lon=${konum.lon}&angle=${tilt}&aspect=${azimuth}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -77,7 +77,7 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
     return () => {
       cancel = true;
     };
-  }, [step, konum.lat, konum.lon, tilt, azimuth]);
+  }, [ready, konum.lat, konum.lon, tilt, azimuth]);
 
   const profile: UsageProfile = abone !== "mesken" ? "gunduz_isyeri" : isitma ? "kis_isitma" : klima ? "yaz_klima" : "dengeli";
   const amount = Number(value.replace(",", "."));
@@ -250,23 +250,15 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
             </div>
             <span className="mt-1 block text-[12px] text-slate">Bilmiyorsanız boş bırakın; keşifte ölçüyoruz.</span>
           </label>
-          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Sonucu gör" disabled={!il} />
+          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Raporu hazırla" disabled={!il} />
         </Panel>
       )}
 
       {step === 4 && result && (
-        <Result
-          result={result}
-          abone={abone}
-          il={konum}
-          yieldSource={yieldSource}
-          input={input}
-          unlocked={unlocked}
-          onUnlock={() => setUnlocked(true)}
-          contact={contact}
-          onBack={() => go(3)}
-        />
+        <ContactStep result={result} abone={abone} il={konum} input={input} onDone={() => go(5)} onBack={() => go(3)} />
       )}
+
+      {step === 5 && result && <Result result={result} abone={abone} il={konum} yieldSource={yieldSource} contact={contact} onBack={() => go(3)} />}
     </div>
   );
 }
@@ -276,9 +268,6 @@ function Result({
   abone,
   il,
   yieldSource,
-  input,
-  unlocked,
-  onUnlock,
   contact,
   onBack,
 }: {
@@ -286,9 +275,6 @@ function Result({
   abone: AboneGrubu;
   il: { ad: string; lat: number; lon: number };
   yieldSource: "pvgis" | "ortalama" | null;
-  input: OnGridInput;
-  unlocked: boolean;
-  onUnlock: () => void;
   contact: CompanyContact;
   onBack: () => void;
 }) {
@@ -299,8 +285,9 @@ function Result({
       <div className="overflow-hidden rounded-3xl bg-ink text-paper">
         <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.2fr_1fr]">
           <div>
-            <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-sun">Önerilen sistem · {il.ad}</p>
-            <p className="mt-2 font-display text-[44px] font-semibold leading-none">
+            <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-sun">Ön fizibilite raporu · {il.ad}</p>
+            <p className="mt-3 text-[13px] text-paper/70">Önerilen sistem gücü</p>
+            <p className="mt-1 font-display text-[44px] font-semibold leading-none">
               {num(r.systemKw, 1)} <span className="text-[24px] text-paper/70">kW</span>
             </p>
             <p className="mt-2 text-[14.5px] text-paper/80">
@@ -309,9 +296,9 @@ function Result({
             {limitText && <p className="mt-3 rounded-lg bg-paper/10 px-3 py-2 text-[13px] text-sun-soft">{limitText}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Kpi icon={<Wallet size={16} />} label="Yıllık tasarruf" value={tl(r.annualSavingTl)} locked={!unlocked} />
+            <Kpi icon={<Wallet size={16} />} label="Yıllık tasarruf" value={tl(r.annualSavingTl)} />
             <Kpi icon={<Zap size={16} />} label="Tüketimi karşılama" value={`%${r.coveragePct}`} />
-            <Kpi icon={<Sun size={16} />} label="Geri ödeme" value={r.paybackYears != null ? `${num(r.paybackYears, 1)} yıl` : "Teklifle netleşir"} locked={!unlocked} />
+            <Kpi icon={<Sun size={16} />} label="Geri ödeme" value={r.paybackYears != null ? `${num(r.paybackYears, 1)} yıl` : "Teklifle netleşir"} />
             <Kpi icon={<Leaf size={16} />} label="Yıllık CO₂ azaltımı" value={`${num(r.co2TonsPerYear, 1)} ton`} />
           </div>
         </div>
@@ -319,16 +306,15 @@ function Result({
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <section className="rounded-2xl border border-line bg-paper-raised p-5">
-          <h3 className="font-semibold text-ink">Aylık üretim ve tüketim</h3>
+          <h3 className="font-semibold text-ink">Aylık üretim ve tüketim dengesi</h3>
           <p className="text-[12.5px] text-slate">
-            {yieldSource === "pvgis" ? `${il.ad} için Avrupa Komisyonu PVGIS güneş verisiyle` : "Bölge ortalamasıyla"} hesaplandı (kWh)
+            {yieldSource === "pvgis" ? `${il.ad} için Avrupa Komisyonu PVGIS güneş verisiyle` : "Bölge ortalamasıyla"} hesaplanmıştır. Değerler kWh cinsindendir.
           </p>
           <MonthlyBars production={r.monthlyProduction} consumption={r.monthlyKwh} />
         </section>
 
         <section className="relative flex flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised p-5">
-          {!unlocked && <LockedOverlay />}
-          <h3 className="font-semibold text-ink">Size uygun paket</h3>
+          <h3 className="font-semibold text-ink">Önerilen paket</h3>
           {r.package ? (
             <>
               <p className="mt-2 font-display text-[18px] font-semibold text-ink">{r.package.name}</p>
@@ -350,11 +336,11 @@ function Result({
         </section>
       </div>
 
-      <LeadBox result={r} abone={abone} il={il} input={input} done={unlocked} onDone={onUnlock} contact={contact} />
+      <CallUs contact={contact} />
 
       <p className="mt-4 text-[12px] leading-relaxed text-slate">
-        Hesap; EPDK {TARIFE_TARIHI} tarifesi ({ABONE_ADLARI[abone].replace(/[()]/g, "").replace(" ", " / ")}), aylık mahsuplaşma ve bugünkü elektrik fiyatlarıyla yapılmış ön tahmindir. Fazla üretimin satış geliri dahil
-        edilmemiştir. Kesin sistem, çatınızın yerinde incelenmesiyle netleşir.
+        Bu rapor; EPDK {TARIFE_TARIHI} tarifesi ({ABONE_ADLARI[abone].replace(/[()]/g, "").replace(" ", " / ")}), aylık mahsuplaşma ve güncel elektrik fiyatlarıyla hazırlanmış bir ön fizibilitedir. Şebekeye verilen fazla
+        üretimin geliri hesaba katılmamıştır. Kesin sistem tasarımı ve fiyat, çatınızın yerinde incelenmesinin ardından netleşir.
       </p>
       <button onClick={onBack} className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-slate hover:text-ink">
         <ArrowLeft size={15} /> Bilgileri değiştir
@@ -363,22 +349,20 @@ function Result({
   );
 }
 
-function LeadBox({
+function ContactStep({
   result: r,
   abone,
   il,
   input,
-  done,
   onDone,
-  contact,
+  onBack,
 }: {
   result: ReturnType<typeof calculateOnGrid>;
   abone: AboneGrubu;
   il: { ad: string; lat: number; lon: number };
   input: OnGridInput;
-  done: boolean;
   onDone: () => void;
-  contact: CompanyContact;
+  onBack: () => void;
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -428,62 +412,74 @@ function LeadBox({
     }
   }
 
-  if (done)
-    return (
-      <div className="mt-6 rounded-2xl border border-volt/30 bg-volt/5 p-5 sm:p-6">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 shrink-0 text-volt" />
-          <div>
-            <p className="font-semibold text-ink">Raporunuz açıldı. Elektrik mühendislerimiz sizi arayacak.</p>
-            <p className="mt-1 text-[14px] text-slate">
-              Hesaplamanızı inceleyip en kısa sürede {contact.phone} numaramızdan size ulaşacağız; çatınızı ücretsiz ölçüp kesin teklifinizi hazırlayacağız.
-            </p>
-          </div>
-        </div>
-        {/* Dosya indirilmez: numara gösterilir, arama ve WhatsApp telefonun kendi uygulamasında açılır. */}
-        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-volt/20 pt-4">
-          <p className="w-full text-[13px] text-slate">Aradığımızda tanımanız için numaramızı rehberinize ekleyebilirsiniz:</p>
-          <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-paper hover:bg-brand">
-            <Phone size={16} /> {contact.phone}
-          </a>
-          <a
-            href={`https://wa.me/${contact.whatsapp}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-[14px] font-semibold text-ink hover:border-volt"
-          >
-            <MessageCircle size={16} /> WhatsApp hattımız
-          </a>
-        </div>
-      </div>
-    );
-
   return (
-    <section className="mt-6 rounded-2xl border border-brand/30 bg-brand/5 p-5 sm:p-6">
-      <h3 className="flex items-center gap-2 font-display text-[18px] font-semibold text-ink">
-        <Lock size={18} className="text-brand" /> Detaylı raporunuzu açın
-      </h3>
-      <p className="mt-1 text-[14px] text-slate">Size uygun paket ve fiyatı, yıllık tasarruf, geri ödeme süresi ve 25 yıllık kazancı görmek için bilgilerinizi bırakın. Mühendisimiz hesaplamanızı ücretsiz olarak da değerlendirir.</p>
-      <p className="mt-2 text-[13px] font-semibold text-brand">Bilgilerinizi bıraktığınızda elektrik mühendislerimiz sizi arayacak.</p>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ad soyad" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
-        <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Telefon (05xx xxx xx xx)" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
+    <Panel title="Ücretsiz fizibilite raporunuz hazır" hint="Raporu görüntülemek için iletişim bilgilerinizi girin. Elektrik mühendislerimiz raporunuzu inceleyip sizinle iletişime geçecek.">
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
+        <ul className="space-y-2.5 rounded-2xl border border-line bg-paper p-5 text-[14px] text-ink">
+          <li className="font-semibold">Raporunuzda yer alanlar</li>
+          {[
+            "Çatınıza uygun sistem gücü ve panel sayısı",
+            `${il.ad} güneş verisiyle aylık üretim tahmini`,
+            "Aylık tüketim ve üretim dengesi",
+            "Yıllık tasarruf ve geri ödeme süresi",
+            "Önerilen paket ve güncel fiyatı",
+          ].map((t) => (
+            <li key={t} className="flex items-start gap-2 text-slate">
+              <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-volt" /> {t}
+            </li>
+          ))}
+        </ul>
+        <div>
+          <div className="grid gap-3">
+            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Ad soyad" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" inputMode="tel" placeholder="Telefon (05xx xxx xx xx)" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
+          </div>
+          <label className="mt-3 flex items-start gap-2 text-[12.5px] text-slate">
+            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
+            <span>
+              Kişisel verilerimin fizibilite raporu ve teklif hazırlanması amacıyla işlenmesine ilişkin{" "}
+              <Link href="/kvkk-aydinlatma-metni" target="_blank" className="text-brand underline">
+                aydınlatma metnini
+              </Link>{" "}
+              okudum, onaylıyorum.
+            </span>
+          </label>
+          {state === "error" && <p className="mt-2 text-[13px] text-red-600">Gönderilemedi, lütfen tekrar deneyin ya da WhatsApp&apos;tan yazın.</p>}
+        </div>
       </div>
-      <label className="mt-3 flex items-start gap-2 text-[12.5px] text-slate">
-        <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
-        <span>
-          Kişisel verilerimin teklif ve keşif amacıyla işlenmesine ilişkin{" "}
-          <Link href="/kvkk-aydinlatma-metni" target="_blank" className="text-brand underline">
-            aydınlatma metnini
-          </Link>{" "}
-          okudum, onaylıyorum.
-        </span>
-      </label>
-      <button onClick={submit} disabled={!valid || state === "sending"} className="mt-4 rounded-full bg-sun px-6 py-3 font-semibold text-ink transition hover:bg-sun-soft disabled:opacity-50">
-        {state === "sending" ? "Gönderiliyor…" : "Raporumu göster"}
-      </button>
-      {state === "error" && <p className="mt-2 text-[13px] text-red-600">Gönderilemedi, lütfen tekrar deneyin ya da WhatsApp&apos;tan yazın.</p>}
-    </section>
+      <Nav onBack={onBack} onNext={submit} disabled={!valid || state === "sending"} nextLabel={state === "sending" ? "Hazırlanıyor…" : "Raporumu görüntüle"} />
+    </Panel>
+  );
+}
+
+// Rapor altı: ekibin arayacağı bilgisi; dosya indirilmez, arama ve WhatsApp telefonun kendi uygulamasında açılır.
+function CallUs({ contact }: { contact: CompanyContact }) {
+  return (
+    <div className="mt-6 rounded-2xl border border-volt/30 bg-volt/5 p-5 sm:p-6">
+      <div className="flex items-start gap-3">
+        <CheckCircle2 className="mt-0.5 shrink-0 text-volt" />
+        <div>
+          <p className="font-semibold text-ink">Talebiniz alındı. Elektrik mühendislerimiz sizi arayacak.</p>
+          <p className="mt-1 text-[14px] text-slate">
+            Raporunuzu inceleyip en kısa sürede {contact.phone} numaramızdan size ulaşacağız. Çatınızı ücretsiz ölçüp kesin teklifinizi hazırlayacağız.
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-volt/20 pt-4">
+        <p className="w-full text-[13px] text-slate">Aradığımızda tanımanız için numaramızı rehberinize ekleyebilirsiniz:</p>
+        <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-paper hover:bg-brand">
+          <Phone size={16} /> {contact.phone}
+        </a>
+        <a
+          href={`https://wa.me/${contact.whatsapp}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-[14px] font-semibold text-ink hover:border-volt"
+        >
+          <MessageCircle size={16} /> WhatsApp hattımız
+        </a>
+      </div>
+    </div>
   );
 }
 
@@ -496,11 +492,13 @@ function MonthlyBars({ production, consumption }: { production: number[]; consum
         <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm" style={{ background: BLUE }} /> Güneş üretimi</span>
         <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm" style={{ background: GOLD }} /> Tüketiminiz</span>
       </div>
-      <div className="relative flex h-44 items-end gap-1.5" onMouseLeave={() => setHover(null)}>
+      <div className="relative mt-5 flex h-44 items-end gap-1.5" onMouseLeave={() => setHover(null)}>
         {production.map((p, i) => (
           <div key={i} className="flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(i)}>
             <div className="flex h-full items-end justify-center gap-[2px]">
-              <div className="w-1/2 rounded-t-[4px]" style={{ height: `${(p / max) * 100}%`, background: BLUE, opacity: hover == null || hover === i ? 1 : 0.45 }} />
+              <div className="relative w-1/2 rounded-t-[4px]" style={{ height: `${(p / max) * 100}%`, background: BLUE, opacity: hover == null || hover === i ? 1 : 0.45 }}>
+                <span className="absolute bottom-full left-1/2 mb-0.5 -translate-x-1/2 whitespace-nowrap font-mono-data text-[8.5px] font-semibold text-slate sm:text-[10px]">{num(p)}</span>
+              </div>
               <div className="w-1/2 rounded-t-[4px]" style={{ height: `${(consumption[i] / max) * 100}%`, background: GOLD, opacity: hover == null || hover === i ? 1 : 0.45 }} />
             </div>
             <span className="mt-1 text-center text-[10.5px] text-slate">{AYLAR[i]}</span>
@@ -512,12 +510,20 @@ function MonthlyBars({ production, consumption }: { production: number[]; consum
           </div>
         )}
       </div>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-line pt-3 text-[12.5px] text-slate">
+        <span>
+          Yıllık üretim <b className="font-mono-data text-ink">{num(production.reduce((a, b) => a + b, 0))} kWh</b>
+        </span>
+        <span>
+          Yıllık tüketim <b className="font-mono-data text-ink">{num(consumption.reduce((a, b) => a + b, 0))} kWh</b>
+        </span>
+      </div>
     </div>
   );
 }
 
 function Stepper({ step }: { step: number }) {
-  const labels = ["Abonelik", "Tüketim", "Konum ve çatı", "Sonuç"];
+  const labels = ["Abonelik", "Tüketim", "Konum ve çatı", "İletişim", "Rapor"];
   return (
     <ol className="mb-6 flex items-center gap-2">
       {labels.map((l, i) => {
@@ -573,22 +579,13 @@ function Toggle({ on, set, label }: { on: boolean; set: (v: boolean) => void; la
   );
 }
 
-function Kpi({ icon, label, value, locked }: { icon: React.ReactNode; label: string; value: string; locked?: boolean }) {
+function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-paper/10 p-4">
       <p className="flex items-center gap-1.5 text-[12px] text-paper/70">
         {icon} {label}
       </p>
-      {locked ? (
-        <p className="mt-1 flex items-center gap-1.5 font-mono-data text-[19px] font-semibold">
-          <span className="select-none blur-[6px]" aria-hidden>
-            88.888
-          </span>
-          <Lock size={15} className="text-sun" />
-        </p>
-      ) : (
-        <p className="mt-1 font-mono-data text-[19px] font-semibold">{value}</p>
-      )}
+      <p className="mt-1 font-mono-data text-[19px] font-semibold">{value}</p>
     </div>
   );
 }
@@ -598,17 +595,6 @@ function Row({ k, v }: { k: string; v: string }) {
     <div className="flex justify-between gap-3">
       <dt className="text-slate">{k}</dt>
       <dd className="font-mono-data font-semibold text-ink">{v}</dd>
-    </div>
-  );
-}
-
-// Kilitli kart: içerik bulanık; bilgileri bırakınca açılır.
-function LockedOverlay() {
-  return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-paper-raised/80 p-6 text-center backdrop-blur-md">
-      <Lock className="text-brand" />
-      <p className="font-semibold text-ink">Paket ve fiyat bilgisi</p>
-      <p className="text-[13px] text-slate">Aşağıdan bilgilerinizi bırakınca açılır.</p>
     </div>
   );
 }
