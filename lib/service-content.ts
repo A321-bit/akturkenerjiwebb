@@ -79,6 +79,8 @@ export type ServiceContent = {
   blogCategory?: string;
   /** "İlginizi çekebilir" bölümünde rastgele değil, kürasyonlu hizmetler göstermek için slug listesi. */
   relatedServiceSlugs?: string[];
+  /** "Mağazadan ilgili ürünler" bölümü: gösterilecek ürün slug'ları (sırayla) ve "tümünü gör" kategorisi. */
+  storeProducts?: { slugs: string[]; category: string };
   /** Admin panelden girilen rehber yazısı (markdown). Varsa article yerine gösterilir. */
   guide?: { title: string; markdown: string };
   /** Sayfa içi uzun-format SEO makalesi (Süreç ile SSS arasında gösterilir).
@@ -106,6 +108,21 @@ const OFFGRID_STEPS: ServiceContent["steps"] = [
   { title: "Teslim & Eğitim", text: "Kullanımı yerinde gösteriyor, mobil takibi telefonunuza kuruyoruz." },
   { title: "Uzaktan Destek", text: "Sonrasında bir sorunuz olursa uzaktan destekle yanınızdayız." },
 ];
+
+// Hizmet sayfasında gösterilen mağaza ürünleri (hizmet ↔ mağaza iç linklemesi).
+export const SERVICE_STORE_PRODUCTS: Record<string, NonNullable<ServiceContent["storeProducts"]>> = {
+  "villa-cati-ges": { category: "on-grid-paketler", slugs: ["5-kw-on-grid-gunes-paneli-paketi", "10-kw-on-grid-gunes-paneli-paketi", "15-kw-on-grid-gunes-paneli-paketi", "10-kw-hibrit-10-kwh-lityum-paket"] },
+  "fabrika-cati-ges": { category: "oztuketim-paketleri", slugs: ["25-kw-oztuketim-paketi", "50-kw-oztuketim-paketi", "100-kw-oztuketim-paketi", "200-kw-oztuketim-paketi"] },
+  "elektrikli-arac-sarj-istasyonu": { category: "elektrikli-arac-sarj-istasyonu", slugs: ["tommatech-likya-22-kw-ac-arac-sarj-istasyonu-soketli", "tommatech-likya-22-kw-ac-arac-sarj-istasyonu-5m-kablolu", "tommatech-22-kw-type-2-arac-sarj-kablosu-5m", "tommatech-dc-30-kw-hizli-arac-sarj-istasyonu"] },
+  "off-grid-sebekeden-bagimsiz": { category: "off-grid-paketler", slugs: ["1-2-kw-off-grid-gunes-paneli-paketi", "3-kw-off-grid-gunes-paneli-paketi", "5-kw-off-grid-gunes-paneli-paketi", "10-2-kw-off-grid-gunes-paneli-paketi"] },
+  "lityum-batarya-depolama": { category: "hibrit-paketler", slugs: ["5-kw-hibrit-5-kwh-lityum-paket", "10-kw-hibrit-10-kwh-lityum-paket", "deye-12-kw-monofaze-hibrit-inverter-15-36-kwh-lityum-batarya", "tommatech-6-kw-monofaze-hibrit-inverter-5-12-kwh-lityum-batarya"] },
+  "tarimsal-sulama": { category: "tarimsal-sulama-paketleri", slugs: ["2-hp-1-5-kw-tarimsal-sulama-paketi", "5-5-hp-4-kw-tarimsal-sulama-paketi", "10-hp-7-5-kw-tarimsal-sulama-paketi", "20-hp-15-kw-tarimsal-sulama-paketi"] },
+  "ruzgar-hibrit": { category: "ruzgar-gunes-hibrit-sistemleri", slugs: ["ista-breeze-i-1000-ruzgar-turbini-seti-turbin-sarj-kontrol-direk", "ista-breeze-i-2000-ruzgar-turbini-seti-turbin-sarj-kontrol-direk", "5-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali", "10-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali"] },
+  "isi-pompasi-entegrasyonu": { category: "isi-pompasi-urunleri", slugs: ["tommatech-titan-9-kw-monofaze-isi-pompasi", "tommatech-titan-13-kw-monofaze-isi-pompasi", "tommatech-titan-16-kw-monofaze-isi-pompasi", "tommatech-aquavera-24-kw-havuz-isi-pompasi"] },
+  "muteahhit-ges": { category: "on-grid-paketler", slugs: ["15-kw-on-grid-gunes-paneli-paketi", "20-kw-on-grid-gunes-paneli-paketi", "25-kw-on-grid-gunes-paneli-paketi", "30-kw-on-grid-gunes-paneli-paketi"] },
+  "projelendirme-muhendislik-basvuru": { category: "ges-panosu", slugs: ["10-kw-ges-panosu-tedas-sartnamesine-uygun", "15-kw-ges-panosu-tedas-sartnamesine-uygun", "20-kw-ges-panosu-tedas-sartnamesine-uygun", "25-kw-ges-panosu-tedas-sartnamesine-uygun"] },
+  "malzeme-tedarik-toptan-perakende": { category: "gunes-panelleri", slugs: [] },
+};
 
 export const serviceContent: Record<string, ServiceContent> = {
   "villa-cati-ges": {
@@ -1863,6 +1880,7 @@ export function getServiceContent(service: Service): ServiceContent {
       description: service.seoDescription ?? base.seo.description,
     },
     faqs: service.faqs && service.faqs.length > 0 ? service.faqs : base.faqs,
+    storeProducts: base.storeProducts ?? SERVICE_STORE_PRODUCTS[service.slug],
     guide: service.guideContent
       ? { title: service.guideTitle ?? base.article?.title ?? "Rehber", markdown: service.guideContent }
       : undefined,

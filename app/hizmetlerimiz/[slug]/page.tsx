@@ -15,7 +15,9 @@ import {
 } from "@/lib/data";
 import { getServiceContent } from "@/lib/service-content";
 import { renderStoreTokens } from "@/lib/store-content";
-import { getStoreProducts } from "@/lib/store-data";
+import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
+import type { StoreCategory, StoreProduct } from "@/lib/store";
+import ProductCard from "@/components/store/ProductCard";
 import { buildMetadata, breadcrumbJsonLd, stripMarkdown, AREA_SERVED, ogImagePath } from "@/lib/seo";
 import ServiceCard from "@/components/ServiceCard";
 import CoverMedia from "@/components/CoverMedia";
@@ -80,8 +82,21 @@ export default async function ServiceDetailPage({
 
   const content = getServiceContent(service);
   // Rehber yazısındaki {{fiyat:slug}} gibi işaretler mağazanın güncel fiyatıyla doldurulur.
+  const storeProducts = content.guide?.markdown.includes("{{") || content.storeProducts ? await getStoreProducts() : [];
   if (content.guide?.markdown.includes("{{")) {
-    content.guide = { ...content.guide, markdown: renderStoreTokens(content.guide.markdown, await getStoreProducts()) };
+    content.guide = { ...content.guide, markdown: renderStoreTokens(content.guide.markdown, storeProducts) };
+  }
+  // Mağazadan ilgili ürünler: seçilen ürünler sırayla, eksik kalırsa kategorinin ilk ürünleriyle 4'e tamamlanır.
+  let relatedProducts: StoreProduct[] = [];
+  let productsCategory: StoreCategory | undefined;
+  if (content.storeProducts) {
+    const { slugs, category } = content.storeProducts;
+    relatedProducts = slugs.map((s) => storeProducts.find((p) => p.slug === s)).filter((p): p is StoreProduct => Boolean(p));
+    for (const p of storeProducts) {
+      if (relatedProducts.length >= 4) break;
+      if (p.category === category && !relatedProducts.includes(p)) relatedProducts.push(p);
+    }
+    productsCategory = (await getStoreCategories()).find((c) => c.slug === category);
   }
   const [site, allServices, allReferences, allPosts] = await Promise.all([
     getSiteSettings(),
@@ -328,6 +343,35 @@ export default async function ServiceDetailPage({
           </div>
         </div>
       </section>
+
+      {/* MAĞAZADAN İLGİLİ ÜRÜNLER */}
+      {relatedProducts.length > 0 && (
+        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8">
+          <Reveal>
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Mağaza</p>
+                <h2 className="mt-2 max-w-xl font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                  İlgili Ürünler ve Paketler
+                </h2>
+              </div>
+              {productsCategory && (
+                <Link
+                  href={`/magaza/${productsCategory.slug}`}
+                  className="inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-brand hover:underline"
+                >
+                  Tüm {productsCategory.name} <ArrowUpRight size={16} />
+                </Link>
+              )}
+            </div>
+          </Reveal>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {relatedProducts.map((p) => (
+              <ProductCard key={p.slug} product={p} whatsappNumber={site.contact.whatsappNumber} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* TABLO — geri ödeme / kapsam */}
       {content.table && (
