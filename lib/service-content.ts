@@ -111,13 +111,13 @@ export const serviceContent: Record<string, ServiceContent> = {
   "villa-cati-ges": {
     seo: {
       heading: "Müstakil Ev İçin Güneş Paneli Sistemi",
-      title: "Müstakil Ev ve Villa Güneş Paneli Sistemi",
+      title: "Müstakil Ev İçin Güneş Paneli Sistemi ve Fiyatları 2026",
       description:
-        "Müstakil eviniz için kaç kW güneş paneli gerekir, maliyeti ne kadar, kaç yılda kendini öder? 2016'dan beri Ankara'da ev çatılarına GES kuran ekibimizden fiyat aralıkları ve gerçek tecrübeler.",
+        "Müstakil ev ve villa için güneş paneli sistemi: kaç kW gerekir, 2026 fiyatları, çatıya kurulum ve geri ödeme. 650'yi aşkın ev kurulumundan gerçek bilgiler.",
     },
     hero: {
       headline: "Elektrik faturası derdine son.",
-      sub: "Villanızın çatısına özel projelendirilmiş güneş enerjisi sistemiyle faturanızı sıfıra yaklaştırın: elektrikli aracınızı güneşten şarj edin, ısı pompanızla tasarrufu katlayın, depolamalı sistemle elektrik kesintisini unutun.",
+      sub: "Müstakil eviniz ya da villanız için çatınıza özel güneş paneli sistemi tasarlıyor, projelendiriyor ve kendi ekibimizle kuruyoruz. Faturanızı sıfıra yaklaştırın, elektrikli aracınızı güneşten şarj edin, bataryalı sistemle kesintide bile elektriksiz kalmayın.",
     },
     benefits: [
       {
