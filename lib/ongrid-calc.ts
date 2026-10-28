@@ -1,19 +1,20 @@
 // On grid (şebeke bağlantılı) güneş enerjisi hesaplama motoru.
 // Saf fonksiyonlardan oluşur: sitedeki hesaplayıcı, sunucudaki kayıt ve admin paneli
-// aynı hesabı kullanır. Üretim verisi konuma özel olarak PVGIS'ten (Avrupa Komisyonu
+// aynı hesabı kullanır. Fatura ve tasarruf EPDK tarifesiyle (lib/elektrik-tarife) hesaplanır;
+// üretim verisi konuma özel olarak PVGIS'ten (Avrupa Komisyonu
 // JRC, /api/hesaplama/pvgis) gelir; gelmezse İç Anadolu ortalaması kullanılır.
 
-export type Tariff = "mesken" | "ticarethane" | "sanayi" | "tarimsal";
+import { faturaTutari, faturadanTuketim, type AboneGrubu } from "./elektrik-tarife";
+
+export type Tariff = AboneGrubu;
 export type RoofType = "egimli" | "duz" | "trapez";
 export type UsageProfile = "dengeli" | "yaz_klima" | "kis_isitma" | "gunduz_isyeri";
 
 export type OnGridInput = {
   tariff: Tariff;
-  /** Aylık ortalama fatura (TL, vergiler dahil) — ya da doğrudan aylık tüketim. */
+  /** Aylık ortalama fatura (TL, vergiler dahil) ya da aylık tüketim (kWh); günlük tüketim girilirse ×30 verilir. */
   monthlyBillTl?: number;
   monthlyKwh?: number;
-  /** kWh birim fiyatı (TL, vergiler dahil). Girilmezse tarife varsayılanı kullanılır. */
-  unitPriceTl?: number;
   /** Faturadaki sözleşme gücü (kW). Bilinmiyorsa sınır kontrolü yalnızca tarifeye göre yapılır. */
   contractKw?: number;
   /** Kullanılabilir çatı alanı (m²): haritada çizilen ya da elle girilen. */
@@ -46,9 +47,6 @@ const YEARS = 25;
 /** İç Anadolu ortalaması (Ankara, güneye 30°): PVGIS gelmezse kullanılır. */
 export const FALLBACK_YIELD = [73, 88, 117, 134, 144, 148, 171, 167, 147, 121, 98, 73];
 
-/** Tarife varsayılan birim fiyatları (TL/kWh, vergiler dahil). Admin ayarından güncellenecek. */
-export const DEFAULT_UNIT_PRICE: Record<Tariff, number> = { mesken: 4, ticarethane: 5, sanayi: 4.5, tarimsal: 4 };
-
 /** Tüketimin aylara dağılımı (toplam 12): klima yazı, elektrikli ısıtma kışı yükseltir. */
 const PROFILES: Record<UsageProfile, number[]> = {
   dengeli: [1.05, 1, 0.95, 0.9, 0.9, 1, 1.1, 1.1, 0.95, 0.9, 1, 1.15],
@@ -60,6 +58,8 @@ const PROFILES: Record<UsageProfile, number[]> = {
 const round = (n: number, d = 0) => Math.round(n * 10 ** d) / 10 ** d;
 
 export type OnGridResult = {
+  /** Bugünkü aylık ortalama fatura (TL) ve ortalama kWh fiyatı. */
+  monthlyBillTl: number;
   unitPrice: number;
   annualKwh: number;
   monthlyKwh: number[];
@@ -89,8 +89,9 @@ export type OnGridResult = {
 };
 
 export function calculateOnGrid(input: OnGridInput, packages: PackageOption[]): OnGridResult {
-  const unitPrice = input.unitPriceTl && input.unitPriceTl > 0 ? input.unitPriceTl : DEFAULT_UNIT_PRICE[input.tariff];
-  const monthlyAvg = input.monthlyKwh && input.monthlyKwh > 0 ? input.monthlyKwh : (input.monthlyBillTl ?? 0) / unitPrice;
+  const monthlyAvg = input.monthlyKwh && input.monthlyKwh > 0 ? input.monthlyKwh : faturadanTuketim(input.tariff, input.monthlyBillTl ?? 0);
+  const monthlyBillTl = faturaTutari(input.tariff, monthlyAvg);
+  const unitPrice = monthlyAvg > 0 ? monthlyBillTl / monthlyAvg : 0;
   const annualKwh = monthlyAvg * 12;
   const shape = PROFILES[input.profile];
   const monthlyKwh = shape.map((f) => monthlyAvg * f);
@@ -130,10 +131,14 @@ export function calculateOnGrid(input: OnGridInput, packages: PackageOption[]): 
   const monthlyProduction = yieldPerKwp.map((y) => y * dcKwp);
   const annualProduction = monthlyProduction.reduce((a, b) => a + b, 0);
 
-  // Aylık mahsuplaşma: her ay tüketime kadar olan üretim birim fiyatla, fazlası değerlendirilmez (temkinli).
+  // Aylık mahsuplaşma: her ay faturadan düşen kısım = panelsiz fatura − panelli fatura (kademe farkı dahil).
+  // Tüketimi aşan üretim temkinli olarak değerlendirilmez.
   const offset = monthlyProduction.reduce((s, p, i) => s + Math.min(p, monthlyKwh[i]), 0);
   const coveragePct = annualKwh > 0 ? Math.min(100, (offset / annualKwh) * 100) : 0;
-  const annualSavingTl = offset * unitPrice;
+  const annualSavingTl = monthlyKwh.reduce(
+    (s, c, i) => s + faturaTutari(input.tariff, c) - faturaTutari(input.tariff, Math.max(0, c - monthlyProduction[i])),
+    0
+  );
 
   const growth = (input.priceIncreasePct ?? 0) / 100;
   let savings25 = 0;
@@ -151,7 +156,8 @@ export function calculateOnGrid(input: OnGridInput, packages: PackageOption[]): 
 
   const co2 = (annualProduction * CO2_KG_PER_KWH) / 1000;
   return {
-    unitPrice,
+    monthlyBillTl: round(monthlyBillTl),
+    unitPrice: round(unitPrice, 2),
     annualKwh: round(annualKwh),
     monthlyKwh: monthlyKwh.map((v) => round(v)),
     specificYield: round(specificYield),
