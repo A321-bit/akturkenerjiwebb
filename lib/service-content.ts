@@ -356,13 +356,6 @@ export const serviceContent: Record<string, ServiceContent> = {
           ],
         },
         {
-          heading: "Kredi ve Devlet Desteği Var mı?",
-          blocks: [
-            { p: "Ev tipi güneş enerjisi sistemleri için şu an doğrudan bir hibe ya da bedava kurulum desteği bulunmuyor. Bununla birlikte birçok banka konut çatısı GES yatırımları için özel kredi ürünleri sunuyor; bazı bankalarda vade, sistemin kendini ödeme süresine yakın tutulabiliyor. Böylece aylık kredi taksidiniz, düşen elektrik faturanıza yakın bir seviyede kalabiliyor." },
-            { p: "Ziraat Bankası başta olmak üzere bankaların güneş paneli kredisi koşullarını [ayrı bir yazımızda](/blog/gunes-paneli-kredisi-ziraat-bankasi-rehberi) anlattık. Ayrıca kredi kartına taksit ve kurulum sırasında ödeme planı seçeneklerimiz için bizimle iletişime geçebilirsiniz." },
-          ],
-        },
-        {
           heading: "Doğalgazlı Evde Güneş Enerjisi Mantıklı mı?",
           blocks: [
             { p: "Evet. Doğalgazla ısınan bir evde güneş enerjisi sistemi, ısınma dışındaki tüm elektrik tüketimini karşılar: klima, beyaz eşya, aydınlatma, havuz pompası. Yaz aylarında klimayla birlikte tüketim zaten en yüksek seviyesine çıkar, bu da güneşin en güçlü olduğu döneme denk gelir." },
@@ -685,8 +678,8 @@ export const serviceContent: Record<string, ServiceContent> = {
       },
       {
         icon: Sprout,
-        title: "Hibe ve destek danışmanlığı",
-        text: "Tarımsal destek ve hibe başvurularında evrak ve süreç danışmanlığını biz sağlıyoruz.",
+        title: "Anahtar teslim kurulum",
+        text: "Pompa, panel ve kontrol ünitesini tek elden kuruyor, sulama hattınıza bağlayıp çalışır halde teslim ediyoruz.",
       },
     ],
     table: {
@@ -733,7 +726,7 @@ export const serviceContent: Record<string, ServiceContent> = {
     blogCategory: "Tarımsal Sulama",
     relatedServiceSlugs: ["off-grid-sebekeden-bagimsiz", "ruzgar-hibrit", "malzeme-tedarik-toptan-perakende"],
     article: {
-      title: "Tarımsal Sulama GES Rehberi: Pompa Seçimi, Hibe İmkanları ve Dizelle Karşılaştırma",
+      title: "Tarımsal Sulama GES Rehberi: Pompa Seçimi ve Dizelle Karşılaştırma",
       intro:
         "Yukarıda pompa gücünüzü seçip anlık kWp hesabı yapabildiniz. Aşağıda çiftçilerimizin en sık sorduğu, hesap makinesinin cevaplamadığı soruları yanıtlıyoruz.",
       sections: [
@@ -749,13 +742,6 @@ export const serviceContent: Record<string, ServiceContent> = {
           paragraphs: [
             "Doğru boyutlandırma için kuyu derinliği, statik su seviyesi ve debi (litre/saniye) ölçülür. Sığ kuyu/küçük parselde 3-7 kWp yeterli olurken, derin kuyu ve yüksek debi ihtiyacında sistem 15-30 kWp'a kadar çıkabilir — pompa gücü ve panel sayısı bu ölçüme göre birlikte hesaplanır.",
             "Bulutlu günlerde üretim azaldığı için, ihtiyaca göre bir su deposu entegrasyonu öneriyoruz: güneşli saatlerde depoya su çekilir, istediğiniz an bu depodan sulama yapılır — böylece hava koşullarından bağımsız bir esneklik kazanılır.",
-          ],
-        },
-        {
-          heading: "Tarımsal GES için hibe ve destek imkanı var mı?",
-          paragraphs: [
-            "Kırsal kalkınma ve tarımsal destekleme programları zaman zaman güneş enerjili sulama sistemleri için hibe veya düşük faizli kredi imkanı sunuyor; bu programların kapsamı ve şartları dönemsel olarak değişiyor.",
-            "Güncel destek programlarını takip ediyor, uygun olduğunuz bir hibe/kredi fırsatı varsa başvuru evraklarınızda danışmanlık sağlıyoruz — bu süreç projenizin efektif maliyetini daha da aşağı çekebilir.",
           ],
         },
         {
@@ -1666,22 +1652,15 @@ export const serviceContent: Record<string, ServiceContent> = {
     blogCategory: "Fabrika GES",
     relatedServiceSlugs: ["taahhut-isletme-bakim", "projelendirme-muhendislik-basvuru", "muteahhit-ges"],
     article: {
-      title: "Fabrika Çatı GES Rehberi: Amortisman, KDV İstisnası ve Teşvikler",
+      title: "Fabrika Çatı GES Rehberi: Amortisman, Kurulum ve Montaj",
       intro:
-        "Üretim tesisi sahiplerinin fabrika çatı GES yatırımı öncesi en çok sorduğu maliyet, teşvik ve süreç sorularını yanıtlıyoruz.",
+        "Üretim tesisi sahiplerinin fabrika çatı GES yatırımı öncesi en çok sorduğu maliyet ve süreç sorularını yanıtlıyoruz.",
       sections: [
         {
           heading: "Fabrika çatı GES yatırımı kaç yılda amorti eder?",
           paragraphs: [
             "Endüstriyel tesislerde üretim genellikle gündüz saatlerinde en yoğun elektrik tüketimiyle çakıştığı için, üretilen enerjinin büyük bölümü anında tüketilir — bu da geri ödeme süresini konut projelerine göre kısaltır. Çatı üstü GES yatırımları sanayi ölçeğinde tipik olarak 3-5 yıl aralığında kendini amorti eder; arazi tipi santrallerde bu süre biraz daha uzundur.",
             "Kesin süre; tesisinizin gündüz tüketim yoğunluğu, çatı alanı ve mevcut elektrik birim fiyatınıza göre değişir. Panellerin 25+ yıllık ömrü boyunca amortisman sonrası üretim tamamen işletme kârına dönüşür.",
-          ],
-        },
-        {
-          heading: "KDV istisnası ve vergi avantajları nelerdir?",
-          paragraphs: [
-            "Panel, invertör, trafo ve montaj dahil GES ekipmanı alımlarında KDV istisnası uygulanabiliyor — bu, ilk yatırım maliyetini doğrudan aşağı çeken önemli bir kalem. 240 kW ve üzeri çatı GES yatırımı yapan ve kendi tüketimi için lisanssız üretim yapan işletmeler, bulundukları bölgeden bağımsız olarak en az 4. bölge teşvik seviyesinden yararlanabiliyor.",
-            "Bu kapsamda gümrük vergisi muafiyeti, kurumlar vergisinde bölgeye göre değişen oranlarda indirim (3-7 yıl arası uygulanan) ve 6-12 yıla varan SGK işveren primi muafiyeti gibi ek teşvikler de söz konusu olabiliyor. Güncel teşvik mevzuatı sık değiştiği için, sizin ölçeğinizdeki projede hangi teşviklerden yararlanabileceğinizi başvuru sürecinde netleştiriyoruz.",
           ],
         },
         {
