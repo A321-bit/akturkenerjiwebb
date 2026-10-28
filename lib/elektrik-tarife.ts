@@ -2,7 +2,9 @@
 // Kaynak: EPDK "4 Nisan 2026 Tarihinden İtibaren Geçerli" tarife tablosu (kr/kWh, vergiler hariç).
 // EPDK tarifeyi değiştirdiğinde yalnızca TARIFE_TABLOSU güncellenir.
 //
-// Fatura = (enerji bedeli × (1 + enerji fonu + belediye tüketim vergisi) + dağıtım bedeli) × (1 + KDV)
+// Fatura = (enerji bedeli × (1 + elektrik tüketim vergisi) + dağıtım bedeli) × (1 + KDV)
+// Doğrulama: Temmuz 2026 mesken faturası (Başkent EDAŞ bölgesi) — kademe fiyatları, %5 tüketim vergisi
+// (yalnız enerji bedeli üzerinden) ve %10 KDV birebir tuttu.
 // Kademeli gruplarda (mesken, ticarethane) günlük ortalama limiti aşan tüketime yüksek kademe uygulanır.
 
 export type AboneGrubu = "mesken" | "ticarethane" | "sanayi" | "tarimsal";
@@ -13,7 +15,7 @@ type GrupTarifesi = {
   /** Varsa: günlük ortalama `gunlukLimitKwh` üstündeki tüketime uygulanır. */
   yuksek?: Kademe;
   gunlukLimitKwh?: number;
-  /** Enerji fonu + belediye tüketim vergisi (enerji bedeli üzerinden). */
+  /** Elektrik ve havagazı tüketim vergisi (yalnız enerji bedeli üzerinden): sanayi %1, diğerleri %5. */
   enerjiVergisi: number;
   kdv: number;
 };
@@ -21,10 +23,10 @@ type GrupTarifesi = {
 export const TARIFE_TARIHI = "4 Nisan 2026";
 
 export const TARIFE_TABLOSU: Record<AboneGrubu, GrupTarifesi> = {
-  mesken: { dusuk: { enerji: 49.4065, dagitim: 242.49 }, yuksek: { enerji: 189.5808, dagitim: 242.49 }, gunlukLimitKwh: 8, enerjiVergisi: 0.06, kdv: 0.1 },
-  ticarethane: { dusuk: { enerji: 287.3087, dagitim: 247.9368 }, yuksek: { enerji: 345.4688, dagitim: 247.9368 }, gunlukLimitKwh: 30, enerjiVergisi: 0.06, kdv: 0.2 },
-  sanayi: { dusuk: { enerji: 298.5253, dagitim: 182.9503 }, enerjiVergisi: 0.02, kdv: 0.2 },
-  tarimsal: { dusuk: { enerji: 233.3838, dagitim: 203.7247 }, enerjiVergisi: 0.06, kdv: 0.1 },
+  mesken: { dusuk: { enerji: 49.4065, dagitim: 242.49 }, yuksek: { enerji: 189.5808, dagitim: 242.49 }, gunlukLimitKwh: 8, enerjiVergisi: 0.05, kdv: 0.1 },
+  ticarethane: { dusuk: { enerji: 287.3087, dagitim: 247.9368 }, yuksek: { enerji: 345.4688, dagitim: 247.9368 }, gunlukLimitKwh: 30, enerjiVergisi: 0.05, kdv: 0.2 },
+  sanayi: { dusuk: { enerji: 298.5253, dagitim: 182.9503 }, enerjiVergisi: 0.01, kdv: 0.2 },
+  tarimsal: { dusuk: { enerji: 233.3838, dagitim: 203.7247 }, enerjiVergisi: 0.05, kdv: 0.1 },
 };
 
 export const ABONE_ADLARI: Record<AboneGrubu, string> = {
