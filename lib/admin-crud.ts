@@ -11,10 +11,11 @@ export function revalidateSite() {
   revalidatePath("/", "layout");
 }
 
-/** Bir bölümün tüm sayfaları (ör. "/blog" → /blog ve /blog/*) + ana sayfa. */
+/** Bir bölümün tüm sayfaları (ör. "/blog" → /blog ve /blog/*) + ana sayfa ve sitemap (yeni sayfa hemen listelensin). */
 export function revalidateSection(base: string) {
   revalidatePath(base, "layout");
   revalidatePath("/");
+  revalidatePath("/sitemap.xml");
 }
 
 /** Mağaza kategorisi değişince yalnız o kategorinin sayfaları (+ mağaza ve ana sayfa); tüm mağaza yeniden üretilmez. */
