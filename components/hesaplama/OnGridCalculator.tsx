@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, MapPin, Sprout, Sun, Wallet, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, Lock, Sprout, Sun, Wallet, Zap } from "lucide-react";
 import { calculateOnGrid, leadScore, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
-import { ILLER } from "@/lib/il-konum";
+import LocationPicker, { type PickedLocation } from "./LocationPicker";
 import { buildLeadAttributionFields, getAttribution } from "@/lib/attribution";
 import { trackEvent } from "@/lib/track";
 import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
@@ -40,14 +40,15 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
   const [klima, setKlima] = useState(false);
   const [isitma, setIsitma] = useState(false);
   const [sozlesme, setSozlesme] = useState("");
-  const [il, setIl] = useState("Ankara");
+  const [loc, setLoc] = useState<PickedLocation | null>(null);
+  const [unlocked, setUnlocked] = useState(false);
   const [cati, setCati] = useState<RoofType>("egimli");
   const [yon, setYon] = useState("guney");
   const [alan, setAlan] = useState("");
   const [yieldPerKwp, setYieldPerKwp] = useState<number[] | null>(null);
   const [yieldSource, setYieldSource] = useState<"pvgis" | "ortalama" | null>(null);
 
-  const konum = ILLER.find((i) => i.ad === il) ?? ILLER[6];
+  const konum = { ad: loc?.il ?? "", lat: loc?.lat ?? 39.93, lon: loc?.lon ?? 32.86 };
   const yonu = YONLER.find((y) => y.key === yon) ?? YONLER[0];
   // Düz çatıda paneller güneye bakan sehpalara kurulur; yön seçimi uygulanmaz.
   const azimuth = cati === "duz" ? 0 : yonu.azimuth;
@@ -170,18 +171,11 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
       )}
 
       {step === 3 && (
-        <Panel title="Konum ve çatı" hint="Güneş üretimi bulunduğunuz ile ve çatınızın yönüne göre hesaplanır.">
-          <label className="block max-w-sm">
-            <span className="text-[13px] font-semibold text-ink">İl</span>
-            <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-line bg-paper-raised px-3 focus-within:border-brand">
-              <MapPin size={17} className="text-brand" />
-              <select value={il} onChange={(e) => setIl(e.target.value)} className="w-full bg-transparent py-3 text-[15px] outline-none">
-                {ILLER.map((i) => (
-                  <option key={i.ad}>{i.ad}</option>
-                ))}
-              </select>
-            </div>
-          </label>
+        <Panel title="Konum ve çatı" hint="Güneş üretimi tam konumunuzun uydu tabanlı güneş verisiyle ve çatınızın yönüne göre hesaplanır.">
+          <p className="text-[13px] font-semibold text-ink">Çatınızın konumu</p>
+          <div className="mt-2">
+            <LocationPicker value={loc} onChange={setLoc} />
+          </div>
 
           <p className="mt-6 text-[13px] font-semibold text-ink">Çatı tipi</p>
           <div className="mt-2 grid gap-3 sm:grid-cols-3">
@@ -214,7 +208,7 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
             </div>
             <span className="mt-1 block text-[12px] text-slate">Bilmiyorsanız boş bırakın; keşifte ölçüyoruz.</span>
           </label>
-          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Sonucu gör" />
+          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Sonucu gör" disabled={!loc} />
         </Panel>
       )}
 
@@ -225,6 +219,8 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
           il={konum}
           yieldSource={yieldSource}
           input={input}
+          unlocked={unlocked}
+          onUnlock={() => setUnlocked(true)}
           onBack={() => go(3)}
         />
       )}
@@ -238,6 +234,8 @@ function Result({
   il,
   yieldSource,
   input,
+  unlocked,
+  onUnlock,
   onBack,
 }: {
   result: ReturnType<typeof calculateOnGrid>;
@@ -245,6 +243,8 @@ function Result({
   il: { ad: string; lat: number; lon: number };
   yieldSource: "pvgis" | "ortalama" | null;
   input: OnGridInput;
+  unlocked: boolean;
+  onUnlock: () => void;
   onBack: () => void;
 }) {
   const limitText =
@@ -264,9 +264,9 @@ function Result({
             {limitText && <p className="mt-3 rounded-lg bg-paper/10 px-3 py-2 text-[13px] text-sun-soft">{limitText}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Kpi icon={<Wallet size={16} />} label="Yıllık tasarruf" value={tl(r.annualSavingTl)} />
+            <Kpi icon={<Wallet size={16} />} label="Yıllık tasarruf" value={tl(r.annualSavingTl)} locked={!unlocked} />
             <Kpi icon={<Zap size={16} />} label="Tüketimi karşılama" value={`%${r.coveragePct}`} />
-            <Kpi icon={<Sun size={16} />} label="Geri ödeme" value={r.paybackYears != null ? `${num(r.paybackYears, 1)} yıl` : "Teklifle netleşir"} />
+            <Kpi icon={<Sun size={16} />} label="Geri ödeme" value={r.paybackYears != null ? `${num(r.paybackYears, 1)} yıl` : "Teklifle netleşir"} locked={!unlocked} />
             <Kpi icon={<Leaf size={16} />} label="Yıllık CO₂ azaltımı" value={`${num(r.co2TonsPerYear, 1)} ton`} />
           </div>
         </div>
@@ -281,7 +281,8 @@ function Result({
           <MonthlyBars production={r.monthlyProduction} consumption={r.monthlyKwh} />
         </section>
 
-        <section className="flex flex-col rounded-2xl border border-line bg-paper-raised p-5">
+        <section className="relative flex flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised p-5">
+          {!unlocked && <LockedOverlay />}
           <h3 className="font-semibold text-ink">Size uygun paket</h3>
           {r.package ? (
             <>
@@ -304,7 +305,7 @@ function Result({
         </section>
       </div>
 
-      <LeadBox result={r} abone={abone} il={il} input={input} />
+      <LeadBox result={r} abone={abone} il={il} input={input} done={unlocked} onDone={onUnlock} />
 
       <p className="mt-4 text-[12px] leading-relaxed text-slate">
         Hesap; EPDK {TARIFE_TARIHI} tarifesi ({ABONE_ADLARI[abone].replace(/[()]/g, "").replace(" ", " / ")}), aylık mahsuplaşma ve bugünkü elektrik fiyatlarıyla yapılmış ön tahmindir. Fazla üretimin satış geliri dahil
@@ -317,11 +318,11 @@ function Result({
   );
 }
 
-function LeadBox({ result: r, abone, il, input }: { result: ReturnType<typeof calculateOnGrid>; abone: AboneGrubu; il: { ad: string; lat: number; lon: number }; input: OnGridInput }) {
+function LeadBox({ result: r, abone, il, input, done, onDone }: { result: ReturnType<typeof calculateOnGrid>; abone: AboneGrubu; il: { ad: string; lat: number; lon: number }; input: OnGridInput; done: boolean; onDone: () => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
-  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "error">("idle");
   const valid = name.trim().length > 2 && phone.replace(/\D/g, "").length >= 10 && consent;
 
   async function submit() {
@@ -360,27 +361,29 @@ function LeadBox({ result: r, abone, il, input }: { result: ReturnType<typeof ca
       trackEvent("click", PAGE, "ongrid_lead_submit");
       trackGa4Lead("ongrid_calculator");
       trackGoogleAdsLead();
-      setState("done");
+      onDone();
     } catch {
       setState("error");
     }
   }
 
-  if (state === "done")
+  if (done)
     return (
       <div className="mt-6 flex items-start gap-3 rounded-2xl border border-volt/30 bg-volt/5 p-5">
         <CheckCircle2 className="mt-0.5 shrink-0 text-volt" />
         <div>
-          <p className="font-semibold text-ink">Talebiniz alındı.</p>
-          <p className="mt-1 text-[14px] text-slate">Mühendisimiz hesaplamanızı inceleyip en kısa sürede sizi arayacak; ücretsiz keşif için gün planlayacağız.</p>
+          <p className="font-semibold text-ink">Detaylı raporunuz açıldı, talebiniz mühendisimize iletildi.</p>
+          <p className="mt-1 text-[14px] text-slate">Hesaplamanızı inceleyip en kısa sürede sizi arayacağız; çatınızı ücretsiz ölçüp kesin teklifinizi hazırlayacağız.</p>
         </div>
       </div>
     );
 
   return (
     <section className="mt-6 rounded-2xl border border-brand/30 bg-brand/5 p-5 sm:p-6">
-      <h3 className="font-display text-[18px] font-semibold text-ink">Ücretsiz keşif ve kesin teklif</h3>
-      <p className="mt-1 text-[14px] text-slate">Çatınızı yerinde ölçelim, bu hesaplamayı gerçek değerlerle kesinleştirip yazılı teklif hazırlayalım.</p>
+      <h3 className="flex items-center gap-2 font-display text-[18px] font-semibold text-ink">
+        <Lock size={18} className="text-brand" /> Detaylı raporunuzu açın
+      </h3>
+      <p className="mt-1 text-[14px] text-slate">Size uygun paket ve fiyatı, yıllık tasarruf, geri ödeme süresi ve 25 yıllık kazancı görmek için bilgilerinizi bırakın. Mühendisimiz hesaplamanızı ücretsiz olarak da değerlendirir.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ad soyad" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
         <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Telefon (05xx xxx xx xx)" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
@@ -396,7 +399,7 @@ function LeadBox({ result: r, abone, il, input }: { result: ReturnType<typeof ca
         </span>
       </label>
       <button onClick={submit} disabled={!valid || state === "sending"} className="mt-4 rounded-full bg-sun px-6 py-3 font-semibold text-ink transition hover:bg-sun-soft disabled:opacity-50">
-        {state === "sending" ? "Gönderiliyor…" : "Ücretsiz keşif istiyorum"}
+        {state === "sending" ? "Gönderiliyor…" : "Raporumu göster"}
       </button>
       {state === "error" && <p className="mt-2 text-[13px] text-red-600">Gönderilemedi, lütfen tekrar deneyin ya da WhatsApp&apos;tan yazın.</p>}
     </section>
@@ -489,13 +492,22 @@ function Toggle({ on, set, label }: { on: boolean; set: (v: boolean) => void; la
   );
 }
 
-function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Kpi({ icon, label, value, locked }: { icon: React.ReactNode; label: string; value: string; locked?: boolean }) {
   return (
     <div className="rounded-2xl bg-paper/10 p-4">
       <p className="flex items-center gap-1.5 text-[12px] text-paper/70">
         {icon} {label}
       </p>
-      <p className="mt-1 font-mono-data text-[19px] font-semibold">{value}</p>
+      {locked ? (
+        <p className="mt-1 flex items-center gap-1.5 font-mono-data text-[19px] font-semibold">
+          <span className="select-none blur-[6px]" aria-hidden>
+            88.888
+          </span>
+          <Lock size={15} className="text-sun" />
+        </p>
+      ) : (
+        <p className="mt-1 font-mono-data text-[19px] font-semibold">{value}</p>
+      )}
     </div>
   );
 }
@@ -505,6 +517,17 @@ function Row({ k, v }: { k: string; v: string }) {
     <div className="flex justify-between gap-3">
       <dt className="text-slate">{k}</dt>
       <dd className="font-mono-data font-semibold text-ink">{v}</dd>
+    </div>
+  );
+}
+
+// Kilitli kart: içerik bulanık; bilgileri bırakınca açılır.
+function LockedOverlay() {
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-paper-raised/80 p-6 text-center backdrop-blur-md">
+      <Lock className="text-brand" />
+      <p className="font-semibold text-ink">Paket ve fiyat bilgisi</p>
+      <p className="text-[13px] text-slate">Aşağıdan bilgilerinizi bırakınca açılır.</p>
     </div>
   );
 }
