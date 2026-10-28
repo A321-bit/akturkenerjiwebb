@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildMetadata } from "@/lib/seo";
+import { getSiteSettings, SITE_URL } from "@/lib/data";
 import { getStoreProducts } from "@/lib/store-data";
 import { kwOf, productHref } from "@/lib/store-details";
 import { TARIFE_TARIHI } from "@/lib/elektrik-tarife";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default async function OnGridCalculatorPage() {
-  const products = await getStoreProducts();
+  const [products, site] = await Promise.all([getStoreProducts(), getSiteSettings()]);
   const packages = products
     .filter((p) => p.category === "on-grid-paketler")
     .map((p) => ({ slug: p.slug, name: p.name, kw: kwOf(p), price: p.price, href: productHref(p) }))
@@ -37,7 +38,17 @@ export default async function OnGridCalculatorPage() {
         </div>
       </section>
       <div className="px-5 py-10 sm:px-8 sm:py-14">
-        <OnGridCalculator packages={packages} />
+        <OnGridCalculator
+          packages={packages}
+          contact={{
+            name: site.name,
+            phone: site.contact.phoneDisplay,
+            whatsapp: site.contact.whatsappNumber,
+            email: site.contact.email,
+            address: site.contact.addressLine,
+            url: SITE_URL,
+          }}
+        />
       </div>
     </main>
   );

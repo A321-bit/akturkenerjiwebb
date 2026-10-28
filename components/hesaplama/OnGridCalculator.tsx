@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, Lock, Sprout, Sun, Wallet, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, CheckCircle2, ContactRound, Factory, Home, Leaf, Lock, MapPin, Sprout, Sun, Wallet, Zap } from "lucide-react";
 import { calculateOnGrid, leadScore, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import LocationPicker, { type PickedLocation } from "./LocationPicker";
+import { ILLER } from "@/lib/il-konum";
 import { buildLeadAttributionFields, getAttribution } from "@/lib/attribution";
 import { trackEvent } from "@/lib/track";
 import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
@@ -32,7 +33,10 @@ const CATILAR: { key: RoofType; ad: string; not: string }[] = [
 
 type Mode = "fatura" | "aylik" | "gunluk";
 
-export default function OnGridCalculator({ packages }: { packages: PackageOption[] }) {
+/** Rapor sonrası "numaramızı kaydedin" kartı için firma iletişim bilgisi. */
+export type CompanyContact = { name: string; phone: string; whatsapp: string; email: string; address: string; url: string };
+
+export default function OnGridCalculator({ packages, contact }: { packages: PackageOption[]; contact: CompanyContact }) {
   const [step, setStep] = useState(1);
   const [abone, setAbone] = useState<AboneGrubu>("mesken");
   const [mode, setMode] = useState<Mode>("fatura");
@@ -40,7 +44,9 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
   const [klima, setKlima] = useState(false);
   const [isitma, setIsitma] = useState(false);
   const [sozlesme, setSozlesme] = useState("");
+  const [il, setIl] = useState("");
   const [loc, setLoc] = useState<PickedLocation | null>(null);
+  const [showMap, setShowMap] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [cati, setCati] = useState<RoofType>("egimli");
   const [yon, setYon] = useState("guney");
@@ -48,7 +54,13 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
   const [yieldPerKwp, setYieldPerKwp] = useState<number[] | null>(null);
   const [yieldSource, setYieldSource] = useState<"pvgis" | "ortalama" | null>(null);
 
-  const konum = { ad: loc?.il ?? "", lat: loc?.lat ?? 39.93, lon: loc?.lon ?? 32.86 };
+  // Haritada işaret varsa tam nokta, yoksa seçilen ilin merkezi kullanılır (konum paylaşmak zorunlu değil).
+  const ilMerkez = ILLER.find((i) => i.ad === il) ?? ILLER.find((i) => i.ad === "Ankara")!;
+  const konum = loc ? { ad: loc.il, lat: loc.lat, lon: loc.lon } : { ad: ilMerkez.ad, lat: ilMerkez.lat, lon: ilMerkez.lon };
+  const pickOnMap = (v: PickedLocation) => {
+    setLoc(v);
+    setIl(v.il);
+  };
   const yonu = YONLER.find((y) => y.key === yon) ?? YONLER[0];
   // Düz çatıda paneller güneye bakan sehpalara kurulur; yön seçimi uygulanmaz.
   const azimuth = cati === "duz" ? 0 : yonu.azimuth;
@@ -172,10 +184,34 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
 
       {step === 3 && (
         <Panel title="Konum ve çatı" hint="Güneş üretimi tam konumunuzun uydu tabanlı güneş verisiyle ve çatınızın yönüne göre hesaplanır.">
-          <p className="text-[13px] font-semibold text-ink">Çatınızın konumu</p>
-          <div className="mt-2">
-            <LocationPicker value={loc} onChange={setLoc} />
-          </div>
+          <label className="block max-w-sm">
+            <span className="text-[13px] font-semibold text-ink">İl</span>
+            <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-line bg-paper-raised px-3 focus-within:border-brand">
+              <MapPin size={17} className="text-brand" />
+              <select
+                value={il}
+                onChange={(e) => {
+                  setIl(e.target.value);
+                  setLoc(null);
+                }}
+                className="w-full bg-transparent py-3 text-[15px] outline-none"
+              >
+                <option value="">İl seçin</option>
+                {ILLER.map((i) => (
+                  <option key={i.ad}>{i.ad}</option>
+                ))}
+              </select>
+            </div>
+          </label>
+          {showMap ? (
+            <div className="mt-4">
+              <LocationPicker value={loc} onChange={pickOnMap} />
+            </div>
+          ) : (
+            <button onClick={() => setShowMap(true)} className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-brand hover:underline">
+              <MapPin size={15} /> Daha hassas sonuç için çatınızı haritada işaretleyin (isteğe bağlı)
+            </button>
+          )}
 
           <p className="mt-6 text-[13px] font-semibold text-ink">Çatı tipi</p>
           <div className="mt-2 grid gap-3 sm:grid-cols-3">
@@ -208,7 +244,7 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
             </div>
             <span className="mt-1 block text-[12px] text-slate">Bilmiyorsanız boş bırakın; keşifte ölçüyoruz.</span>
           </label>
-          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Sonucu gör" disabled={!loc} />
+          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Sonucu gör" disabled={!il} />
         </Panel>
       )}
 
@@ -221,6 +257,7 @@ export default function OnGridCalculator({ packages }: { packages: PackageOption
           input={input}
           unlocked={unlocked}
           onUnlock={() => setUnlocked(true)}
+          contact={contact}
           onBack={() => go(3)}
         />
       )}
@@ -236,6 +273,7 @@ function Result({
   input,
   unlocked,
   onUnlock,
+  contact,
   onBack,
 }: {
   result: ReturnType<typeof calculateOnGrid>;
@@ -245,6 +283,7 @@ function Result({
   input: OnGridInput;
   unlocked: boolean;
   onUnlock: () => void;
+  contact: CompanyContact;
   onBack: () => void;
 }) {
   const limitText =
@@ -305,7 +344,7 @@ function Result({
         </section>
       </div>
 
-      <LeadBox result={r} abone={abone} il={il} input={input} done={unlocked} onDone={onUnlock} />
+      <LeadBox result={r} abone={abone} il={il} input={input} done={unlocked} onDone={onUnlock} contact={contact} />
 
       <p className="mt-4 text-[12px] leading-relaxed text-slate">
         Hesap; EPDK {TARIFE_TARIHI} tarifesi ({ABONE_ADLARI[abone].replace(/[()]/g, "").replace(" ", " / ")}), aylık mahsuplaşma ve bugünkü elektrik fiyatlarıyla yapılmış ön tahmindir. Fazla üretimin satış geliri dahil
@@ -318,7 +357,23 @@ function Result({
   );
 }
 
-function LeadBox({ result: r, abone, il, input, done, onDone }: { result: ReturnType<typeof calculateOnGrid>; abone: AboneGrubu; il: { ad: string; lat: number; lon: number }; input: OnGridInput; done: boolean; onDone: () => void }) {
+function LeadBox({
+  result: r,
+  abone,
+  il,
+  input,
+  done,
+  onDone,
+  contact,
+}: {
+  result: ReturnType<typeof calculateOnGrid>;
+  abone: AboneGrubu;
+  il: { ad: string; lat: number; lon: number };
+  input: OnGridInput;
+  done: boolean;
+  onDone: () => void;
+  contact: CompanyContact;
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
@@ -369,11 +424,24 @@ function LeadBox({ result: r, abone, il, input, done, onDone }: { result: Return
 
   if (done)
     return (
-      <div className="mt-6 flex items-start gap-3 rounded-2xl border border-volt/30 bg-volt/5 p-5">
-        <CheckCircle2 className="mt-0.5 shrink-0 text-volt" />
-        <div>
-          <p className="font-semibold text-ink">Detaylı raporunuz açıldı, talebiniz mühendisimize iletildi.</p>
-          <p className="mt-1 text-[14px] text-slate">Hesaplamanızı inceleyip en kısa sürede sizi arayacağız; çatınızı ücretsiz ölçüp kesin teklifinizi hazırlayacağız.</p>
+      <div className="mt-6 rounded-2xl border border-volt/30 bg-volt/5 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 shrink-0 text-volt" />
+          <div>
+            <p className="font-semibold text-ink">Raporunuz açıldı. Elektrik mühendislerimiz sizi arayacak.</p>
+            <p className="mt-1 text-[14px] text-slate">
+              Hesaplamanızı inceleyip en kısa sürede {contact.phone} numaramızdan size ulaşacağız; çatınızı ücretsiz ölçüp kesin teklifinizi hazırlayacağız.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-volt/20 pt-4">
+          <button
+            onClick={() => saveContact(contact)}
+            className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-paper hover:bg-brand"
+          >
+            <ContactRound size={17} /> Numaramızı rehbere kaydet
+          </button>
+          <span className="text-[12.5px] text-slate">Aradığımızda tanımanız için tek dokunuşla kaydedin.</span>
         </div>
       </div>
     );
@@ -384,6 +452,7 @@ function LeadBox({ result: r, abone, il, input, done, onDone }: { result: Return
         <Lock size={18} className="text-brand" /> Detaylı raporunuzu açın
       </h3>
       <p className="mt-1 text-[14px] text-slate">Size uygun paket ve fiyatı, yıllık tasarruf, geri ödeme süresi ve 25 yıllık kazancı görmek için bilgilerinizi bırakın. Mühendisimiz hesaplamanızı ücretsiz olarak da değerlendirir.</p>
+      <p className="mt-2 text-[13px] font-semibold text-brand">Bilgilerinizi bıraktığınızda elektrik mühendislerimiz sizi arayacak.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ad soyad" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
         <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="Telefon (05xx xxx xx xx)" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
@@ -530,4 +599,30 @@ function LockedOverlay() {
       <p className="text-[13px] text-slate">Aşağıdan bilgilerinizi bırakınca açılır.</p>
     </div>
   );
+}
+
+// Firma kartını (vCard) indirir: telefonda tek dokunuşla rehbere kaydedilir.
+function saveContact(c: CompanyContact) {
+  const esc = (v: string) => v.replace(/([,;\\])/g, "\\$1");
+  const vcf = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `N:;${esc(c.name)};;;`,
+    `FN:${esc(c.name)}`,
+    `ORG:${esc(c.name)}`,
+    `TEL;TYPE=WORK,VOICE:${c.phone}`,
+    `TEL;TYPE=CELL:+${c.whatsapp}`,
+    `EMAIL;TYPE=WORK:${c.email}`,
+    `ADR;TYPE=WORK:;;${esc(c.address)};;;;Türkiye`,
+    `URL:${c.url}`,
+    "NOTE:Güneş enerjisi sistemleri · keşif ve teklif",
+    "END:VCARD",
+  ].join("\r\n");
+  const url = URL.createObjectURL(new Blob([vcf], { type: "text/vcard;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Akturk-Enerji.vcf";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  trackEvent("click", PAGE, "ongrid_save_contact");
 }
