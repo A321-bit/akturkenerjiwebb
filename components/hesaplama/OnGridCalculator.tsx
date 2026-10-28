@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, Lock, MapPin, MessageCircle, Phone, Sprout, Sun, Wallet, Zap } from "lucide-react";
 import { calculateOnGrid, leadScore, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
@@ -96,16 +96,22 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
   // Hesap hafif (12 aylık döngü); her çizimde yeniden yapılır.
   const result = amount > 0 ? calculateOnGrid(input, packages) : null;
 
+  const wizard = useRef<HTMLDivElement>(null);
+
   function go(next: number) {
     setStep(next);
     trackEvent("click", PAGE, `ongrid_step_${next}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Sayfanın en üstüne değil, hesaplayıcının adım çubuğuna kaydırılır (üst menü payı bırakılarak).
+    requestAnimationFrame(() => {
+      const top = (wizard.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 88;
+      window.scrollTo({ top, behavior: "smooth" });
+    });
   }
 
   const canNext2 = amount > 0;
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div ref={wizard} className="mx-auto max-w-4xl">
       <Stepper step={step} />
 
       {step === 1 && (
