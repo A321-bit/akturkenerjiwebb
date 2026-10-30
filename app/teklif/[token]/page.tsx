@@ -11,6 +11,8 @@ import LiveProposal from "@/components/teklif/LiveProposal";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Güneş Enerjisi Teklifiniz", robots: { index: false, follow: false } };
 
+const isExpired = (p: Proposal) => new Date(p.createdAt).getTime() + p.validDays * 864e5 < Date.now();
+
 export default async function LiveProposalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!SHARE_TOKEN.test(token)) notFound();
@@ -24,7 +26,7 @@ export default async function LiveProposalPage({ params }: { params: Promise<{ t
   return (
     <>
       <div className="print:hidden">
-        <LiveProposal p={forCustomer(p)} n={n} token={token} expired={new Date(p.createdAt).getTime() + p.validDays * 864e5 < Date.now()} phoneHref={site.contact.phoneHref} phoneDisplay={site.contact.phoneDisplay} whatsappNumber={site.contact.whatsappNumber} />
+        <LiveProposal p={forCustomer(p)} n={n} token={token} expired={isExpired(p)} phoneHref={site.contact.phoneHref} phoneDisplay={site.contact.phoneDisplay} whatsappNumber={site.contact.whatsappNumber} />
       </div>
       {/* PDF: yalnız yazdırmada görünür, sunucuda üretilir; maliyet bilgisi içermez. */}
       <div className="hidden print:block">
