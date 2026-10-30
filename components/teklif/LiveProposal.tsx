@@ -77,7 +77,7 @@ export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDis
       </header>
 
       <section className="mt-6">
-        <Roof3D center={p.site.center} frames={frames} cells={p.cells} layout={layout} lat={p.site.center[0]} />
+        <Roof3D center={p.site.center} frames={frames} cells={p.cells} layout={layout} lat={p.site.center[0]} obstacles={p.obstacles} />
         <p className="mt-2 text-[12.5px] text-slate">Parmağınızla döndürün, iki parmakla yakınlaştırın. Saati değiştirerek gölgeleri görebilirsiniz.</p>
       </section>
 

@@ -6,10 +6,12 @@ import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, Pen
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal, type QuoteOption } from "@/lib/teklif/proposal";
-import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, quoteChecks, salePrice, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
+import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, quoteChecks, salePrice, similarProduction, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
 import { suggestBattery } from "@/lib/teklif/simulate";
+import { shadeLosses } from "@/lib/teklif/shading";
 import PricingRules from "./PricingRules";
+import StringDesign from "./StringDesign";
 import ProposalDocument, { type Company } from "./ProposalDocument";
 import EnergyFlow from "./EnergyFlow";
 import LocateBar from "./LocateBar";
@@ -111,7 +113,10 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       return fr && cellFits(fr, c.i, c.j, layout);
     });
   }, [p.cells, frames, layout]);
-  const n = useMemo(() => computeNumbers({ ...p, cells }), [p, cells]);
+  const shadeLoss = useMemo(() => shadeLosses(frames, cells, layout, p.obstacles ?? [], p.site.center, p.site.center[0]), [frames, cells, layout, p.obstacles, p.site.center]);
+  const n = useMemo(() => computeNumbers({ ...p, cells, shadeLoss }), [p, cells, shadeLoss]);
+  const [drawKind, setDrawKind] = useState<"yuzey" | "engel">("yuzey");
+  const [videoPct, setVideoPct] = useState<number | null>(null);
   const sel = p.faces.find((f) => f.id === selected) ?? null;
 
   // Fiyat kuralları ve günün kuru (kayıtlı kur varsa korunur).
@@ -205,6 +210,12 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
 
   // --- Çatı yüzeyi işlemleri ---
   function addFace(points: LatLon[]) {
+    if (drawKind === "engel") {
+      setP((x) => ({ ...x, obstacles: [...(x.obstacles ?? []), { id: uid(), name: `Engel ${(x.obstacles?.length ?? 0) + 1}`, points, height: 8 }] }));
+      setDrawKind("yuzey");
+      setMode("sec");
+      return;
+    }
     const center = p.faces.length ? p.site.center : ([points.reduce((s, q) => s + q[0], 0) / points.length, points.reduce((s, q) => s + q[1], 0) / points.length] as LatLon);
     const face: RoofFace = {
       id: uid(),
@@ -370,7 +381,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
   }
   // Karşılaştırma: ekonomik (en uygun panel ve invertör), önerilen (ekrandaki hâl), bataryalı (hibrit set).
   function buildOptions(): QuoteOption[] {
-    const base: Proposal = { ...p, cells };
+    const base: Proposal = { ...p, cells, shadeLoss };
     const summary = (key: string, ad: string, x: Proposal): QuoteOption => {
       const m = computeNumbers(x);
       return { key, ad, panel: x.panel.name, inverter: x.inverter ? `${x.inverter.adet} × ${x.inverter.name}` : "", battery: x.battery?.name, batteryKwh: x.battery ? x.battery.kwh * x.battery.adet : undefined, kwp: m.dcKwp, total: m.total, annualKwh: m.annualProduction, savingTl: m.annualSavingTl, paybackYears: m.paybackYears };
@@ -398,7 +409,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     const images = captureImages();
     // Müşteri linki ilk oluşturmada üretilir, sonraki güncellemelerde aynı kalır.
     const shareToken = p.shareToken ?? crypto.randomUUID().replace(/-/g, "");
-    await save({ shareToken, images: images ?? p.images, options: p.optionMode === "uc" ? buildOptions() : undefined });
+    await save({ shareToken, images: images ?? p.images, options: p.optionMode === "uc" ? buildOptions() : undefined, realRef: similarProduction(settings.realProduction, n.dcKwp) });
     setTab(4);
   }
 
@@ -412,7 +423,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
   }
   async function save(extra?: Partial<Proposal>) {
     setMsg("Kaydediliyor…");
-    const r = await fetch("/api/admin/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proposal: { ...p, ...extra, cells }, dcKwp: n.dcKwp, total: n.total }) });
+    const r = await fetch("/api/admin/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proposal: { ...p, ...extra, cells, shadeLoss }, dcKwp: n.dcKwp, total: n.total }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
       update({ ...extra, id: d.id });
@@ -437,6 +448,25 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     setP(blank(defaultPanel));
     setSelected(null);
     setTab(0);
+  }
+  // Müşteri videosu tarayıcıda üretilir ve bilgisayara kaydedilir; personel WhatsApp'tan gönderir.
+  async function makeVideo() {
+    setVideoPct(0);
+    const res = await r3d.current?.record({
+      title: p.customer.name ? `Sayın ${p.customer.name}` : "Güneş enerjisi sisteminiz",
+      lines: [`${num(n.dcKwp, 2)} kWp · ${n.panelCount} panel`, n.annualProduction ? `Yılda yaklaşık ${num(n.annualProduction)} kWh` : ""].filter(Boolean),
+      footer: `${company.phone} · ${company.web}`,
+      onProgress: setVideoPct,
+    });
+    setVideoPct(null);
+    if (!res) return setMsg("Bu tarayıcı video üretmeyi desteklemiyor.");
+    const url = URL.createObjectURL(res.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${p.proposalNo}-tasarim.${res.ext}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    setMsg(res.ext === "webm" ? "Video kaydedildi (WebM). WhatsApp için MP4 üreten güncel Chrome önerilir." : "Video kaydedildi.");
   }
   function goTab(i: number) {
     if (i === 4) captureImages();
@@ -569,7 +599,8 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                 <>
                   <span className="mx-2 h-5 w-px bg-line" />
                   <Seg on={mode === "sec"} onClick={() => setMode("sec")} icon={<MousePointer2 size={15} />}>Seç</Seg>
-                  <Seg on={mode === "ciz"} onClick={() => setMode("ciz")} icon={<PenLine size={15} />}>Yüzey çiz</Seg>
+                  <Seg on={mode === "ciz" && drawKind === "yuzey"} onClick={() => { setDrawKind("yuzey"); setMode("ciz"); }} icon={<PenLine size={15} />}>Yüzey çiz</Seg>
+                  <Seg on={mode === "ciz" && drawKind === "engel"} onClick={() => { setDrawKind("engel"); setMode("ciz"); }} icon={<Box size={15} />}>Engel çiz</Seg>
                   <Seg on={mode === "panel"} onClick={() => setMode("panel")} icon={<Grid3x3 size={15} />}>Panel yerleştir</Seg>
                 </>
               )}
@@ -590,10 +621,11 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                 onPanelClick={togglePanel}
                 focus={focus}
                 parcelRing={p.parcelRing}
+                obstacles={p.obstacles}
               />
             )}
             <div className={view === "3d" ? "" : "pointer-events-none fixed -left-[3000px] top-0 h-[560px] w-[1000px]"}>
-              <Roof3D ref={r3d} center={p.site.center} frames={frames} cells={cells} layout={layout} lat={p.site.center[0]} />
+              <Roof3D ref={r3d} center={p.site.center} frames={frames} cells={cells} layout={layout} lat={p.site.center[0]} obstacles={p.obstacles} />
             </div>
             {view === "3d" && <p className="mt-2 text-[12.5px] text-slate">Fareyle döndürün, tekerlekle yakınlaştırın, sağ tuşla kaydırın. Çatı ve zemin gerçek uydu görüntüsüdür; yükseklikler girilen değerlerdir.</p>}
           </div>
@@ -636,6 +668,22 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                 ))}
               </div>
             </div>
+
+            {(p.obstacles?.length ?? 0) > 0 && (
+              <div className="rounded-2xl border border-line bg-paper-raised p-4">
+                <p className="font-semibold">Gölge yapan engeller</p>
+                <div className="mt-2 space-y-1.5">
+                  {p.obstacles!.map((o) => (
+                    <div key={o.id} className="grid grid-cols-[1fr_72px_22px] items-center gap-2 text-[13px]">
+                      <input value={o.name} onChange={(e) => update({ obstacles: p.obstacles!.map((q) => (q.id === o.id ? { ...q, name: e.target.value } : q)) })} className="min-w-0 rounded-lg border border-line bg-paper px-2 py-1" />
+                      <input type="number" value={o.height} onChange={(e) => update({ obstacles: p.obstacles!.map((q) => (q.id === o.id ? { ...q, height: Number(e.target.value) } : q)) })} aria-label="Yükseklik (m)" className="rounded-lg border border-line bg-paper px-2 py-1 text-right" />
+                      <button onClick={() => update({ obstacles: p.obstacles!.filter((q) => q.id !== o.id) })} className="text-slate hover:text-red-600" aria-label="Engeli sil"><Trash2 size={14} /></button>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-[12px] text-slate">Yükseklik zeminden metredir. Yıllık gölge kaybı: <b>%{num(n.shadePct, 1)}</b></p>
+              </div>
+            )}
 
             {sel && (
               <div className="rounded-2xl border border-sun/50 bg-paper-raised p-4">
@@ -691,6 +739,18 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
           <div className="lg:col-span-2 lg:order-last">
             <EnergyFlow p={{ ...p, cells }} n={n} onBattery={(v) => update({ batteryKwh: v })} />
+          </div>
+          <div className="lg:col-span-2">
+            <StringDesign
+              panelKey={p.panel.slug ?? p.panel.name}
+              panelName={p.panel.name}
+              inverterKey={p.inverter?.slug}
+              inverterName={p.inverter?.name}
+              adet={p.inverter?.adet ?? 1}
+              faces={n.byFace.map((f) => ({ name: f.name, panels: f.count }))}
+              settings={settings}
+              onSettings={setSettings}
+            />
           </div>
           <section className="rounded-2xl border border-line bg-paper-raised p-5">
             <div className="mb-3 inline-flex rounded-lg border border-line bg-paper p-1 text-[13px] font-semibold">
@@ -754,6 +814,11 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             <dl className="mt-3 space-y-1.5 text-[13.5px]">
               <Row k="Yıllık üretim" v={`${num(n.annualProduction)} kWh`} />
               <Row k="Özgül üretim" v={`${num(n.specificYield)} kWh/kWp`} />
+              {n.shadePct > 0.05 && <Row k="Gölge kaybı" v={`%${num(n.shadePct, 1)}`} />}
+              {(() => {
+                const ref = similarProduction(settings.realProduction, n.dcKwp);
+                return ref ? <Row k={`Benzer ${ref.count} kurulumun gerçek ortalaması`} v={`${num(ref.specific)} kWh/kWp`} /> : null;
+              })()}
               <Row k="Yıllık tüketim" v={n.annualKwh ? `${num(n.annualKwh)} kWh` : "Fatura girilmedi"} />
               <Row k="Tüketimi karşılama" v={n.annualKwh ? `%${num(n.coveragePct)}` : "—"} />
               <Row k="Yıllık tasarruf" v={n.annualKwh ? tl(n.annualSavingTl) : "—"} />
@@ -973,6 +1038,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <Btn icon={<Printer size={15} />} onClick={print} primary>PDF olarak kaydet / yazdır</Btn>
             <Btn icon={<Box size={15} />} onClick={captureImages}>3B görselleri yenile</Btn>
+            <Btn icon={<Box size={15} />} onClick={makeVideo}>{videoPct != null ? `Video hazırlanıyor %${videoPct}` : "Müşteri videosu oluştur"}</Btn>
             <p className="text-[12.5px] text-slate">Yazdırma penceresinde hedef olarak “PDF olarak kaydet”i, kâğıt boyutu A4 ve “Arka plan grafikleri” seçeneğini işaretleyin.</p>
           </div>
           <div className="overflow-x-auto rounded-2xl bg-ink/5 py-6">

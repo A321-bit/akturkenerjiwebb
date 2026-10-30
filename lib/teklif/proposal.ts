@@ -2,7 +2,7 @@
 
 import { faturaTutari, faturadanTuketim, type AboneGrubu } from "../elektrik-tarife";
 import { evMonthlyKwh } from "../ongrid-calc";
-import type { LatLon, PanelCell, PanelModel, RoofFace } from "./geometry";
+import type { LatLon, Obstacle, PanelCell, PanelModel, RoofFace } from "./geometry";
 
 /** birimFiyat, teklifin para biriminde (yeni tekliflerde USD) satış fiyatıdır. */
 export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number; maliyetUsd?: number; marjPct?: number; kind?: "panel" | "inverter" | "inverter2" | "battery" };
@@ -89,11 +89,17 @@ export type Proposal = {
   customPageText?: string;
   /** Şebekeye verilen fazla enerjinin satış bedeli (kuruş/kWh); boşsa değerlendirilmez. */
   saleKr?: number;
+  obstacles?: Obstacle[];
+  /** Yüzey başına aylık gölge kaybı (0-1), engellerden hesaplanır. */
+  shadeLoss?: Record<string, number[]>;
+  /** Benzer kurulumların gerçek üretim ortalaması. */
+  realRef?: { count: number; specific: number };
   /** Müşteri linki ve açılma takibi. */
   shareToken?: string;
   views?: number;
   lastViewAt?: string;
   notifiedAt?: string;
+  tracking?: import("./tracking").Tracking;
 };
 
 export const DEFAULT_TERMS = {
@@ -121,6 +127,8 @@ export type ProposalNumbers = {
   monthlyProduction: number[];
   annualProduction: number;
   specificYield: number;
+  /** Engellerden gelen yıllık gölge kaybı (%). */
+  shadePct: number;
   monthlyKwh: number[];
   annualKwh: number;
   /** Bugünkü tahmini aylık fatura. */
@@ -146,7 +154,9 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const byFace = p.faces.map((f) => {
     const count = p.cells.filter((c) => c.faceId === f.id).length;
     const kwp = (count * wp) / 1000;
-    const y = p.yields[f.id];
+    const raw = p.yields[f.id];
+    const loss = p.shadeLoss?.[f.id];
+    const y = raw && loss ? raw.map((v, i) => v * (1 - (loss[i] ?? 0))) : raw;
     return { faceId: f.id, name: f.name, count, kwp, annualKwh: y ? y.reduce((a, b) => a + b, 0) * kwp : 0, y };
   });
   const monthlyProduction = Array.from({ length: 12 }, (_, m) => byFace.reduce((s, f) => s + (f.y ? f.y[m] * f.kwp : 0), 0));
@@ -205,6 +215,10 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
     monthlyProduction,
     annualProduction,
     specificYield: dcKwp > 0 ? annualProduction / dcKwp : 0,
+    shadePct: (() => {
+      const free = byFace.reduce((a, f) => a + (p.yields[f.faceId] ? p.yields[f.faceId].reduce((x, v) => x + v, 0) * f.kwp : 0), 0);
+      return free > 0 ? (1 - annualProduction / free) * 100 : 0;
+    })(),
     monthlyKwh,
     annualKwh,
     monthlyBillTl: avg > 0 ? bill(avg) : 0,

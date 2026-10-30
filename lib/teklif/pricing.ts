@@ -2,6 +2,7 @@
 // tanımlanan kurallardan malzeme listesi üretir. Tutarlar USD ve KDV hariçtir.
 
 import type { PaymentStep, PriceLine, Proposal, ProposalNumbers } from "./proposal";
+import type { InverterSpec, PanelSpec, SiteTemps } from "./strings";
 
 export type RoofKind = "kiremit" | "trapez" | "sandvic" | "etermit" | "parapetli" | "parapetsiz" | "toprak";
 export const CATI_ADI: Record<RoofKind, string> = {
@@ -28,7 +29,21 @@ export type QuoteSettings = {
   /** Bu kâr oranının altındaki teklifler uyarı verir. */
   minMarginPct: number;
   paymentPlan: PaymentStep[];
+  /** Ürün veri sayfası değerleri (string tasarımı). */
+  specs?: { panels: Record<string, PanelSpec>; inverters: Record<string, InverterSpec> };
+  temps?: SiteTemps;
+  /** Kurulu sistemlerin gerçek yıllık üretimi. */
+  realProduction?: RealProduction[];
 };
+
+export type RealProduction = { id: string; ad: string; kwp: number; yillikKwh: number };
+
+/** Benzer güçteki (±%30) kurulumların ortalama kWh/kWp değeri. */
+export function similarProduction(rows: RealProduction[] | undefined, kwp: number) {
+  const list = (rows ?? []).filter((r) => r.kwp > 0 && r.yillikKwh > 0 && r.kwp >= kwp * 0.7 && r.kwp <= kwp * 1.3);
+  if (!list.length) return undefined;
+  return { count: list.length, specific: list.reduce((a, r) => a + r.yillikKwh / r.kwp, 0) / list.length };
+}
 
 const rule = (id: string, ad: string, birim: QuoteRule["birim"], cati: QuoteRule["cati"] = "hepsi"): QuoteRule => ({ id, ad, birim, kwFrom: 0, kwTo: 100000, cati, maliyetUsd: 0, marjPct: 45 });
 

@@ -233,7 +233,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
           </div>
         </div>
         <h2 className="mt-6 text-[13px] font-semibold">Aylık üretim{hasCons ? " ve tüketim" : ""}</h2>
-        <p className="text-[10px] text-[#5b6577]">Avrupa Komisyonu PVGIS uydu güneş verisiyle, her çatı yüzeyinin yönü ve eğimine göre hesaplanmıştır (%14 sistem kaybı dahil).</p>
+        <p className="text-[10px] text-[#5b6577]">Avrupa Komisyonu PVGIS uydu güneş verisiyle, her çatı yüzeyinin yönü ve eğimine göre hesaplanmıştır (%14 sistem kaybı dahil{n.shadePct > 0.05 ? `, %${num(n.shadePct, 1)} gölge kaybı dahil` : ""}).{p.realRef ? ` Benzer güçteki ${p.realRef.count} kurulumumuzun gerçek ortalaması ${num(p.realRef.specific)} kWh/kWp·yıldır.` : ""}</p>
         <div className="mt-2"><Chart prod={n.monthlyProduction} cons={hasCons ? n.monthlyKwh : n.monthlyProduction.map(() => 0)} /></div>
         {hasCons && (
           <div className="mt-3 grid grid-cols-4 gap-2.5">

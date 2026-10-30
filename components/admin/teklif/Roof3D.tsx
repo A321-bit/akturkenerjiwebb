@@ -5,7 +5,7 @@ import { Maximize2, Orbit } from "lucide-react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { cellPose, heightAt, toXY, type FaceFrame, type LatLon, type LayoutSettings, type PanelCell } from "@/lib/teklif/geometry";
+import { cellPose, heightAt, toXY, type FaceFrame, type LatLon, type LayoutSettings, type Obstacle, type PanelCell } from "@/lib/teklif/geometry";
 import { ESRI, getImagery, tileUrl } from "@/lib/teklif/imagery";
 
 // 3B görünüm: uydu görüntüsü zemin, çizilen çatı yüzeyleri (bina kütlesiyle) ve paneller.
@@ -13,9 +13,10 @@ import { ESRI, getImagery, tileUrl } from "@/lib/teklif/imagery";
 // güneş seçilen ay ve saatte gerçek konumundadır, gölgeler buna göre düşer.
 // Teklif PDF'i için perspektif ve üstten görüntü alınabilir.
 
-export type Roof3DHandle = { snapshot: (view: "perspective" | "top") => string | null };
+export type VideoOptions = { title: string; lines: string[]; footer: string; seconds?: number; onProgress?: (pct: number) => void };
+export type Roof3DHandle = { snapshot: (view: "perspective" | "top") => string | null; record: (o: VideoOptions) => Promise<{ blob: Blob; ext: string } | null> };
 
-type Props = { center: LatLon; frames: FaceFrame[]; cells: PanelCell[]; layout: LayoutSettings; lat: number };
+type Props = { center: LatLon; frames: FaceFrame[]; cells: PanelCell[]; layout: LayoutSettings; lat: number; obstacles?: Obstacle[] };
 
 const V = (x: number, y: number, n: number) => new THREE.Vector3(x, y, -n);
 
@@ -131,10 +132,11 @@ async function satelliteGround(center: LatLon, sizeM: number) {
   return { tex, nw, se };
 }
 
-const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames, cells, layout, lat }, ref) {
+const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames, cells, layout, lat, obstacles }, ref) {
   const box = useRef<HTMLDivElement>(null);
   const ctx = useRef<{ renderer: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.PerspectiveCamera; controls: OrbitControls; content: THREE.Group; ground: THREE.Group; sun: THREE.DirectionalLight } | null>(null);
   const panelTex = useRef<THREE.Texture | null>(null);
+  const recording = useRef(false);
   const wrap = useRef<HTMLDivElement>(null);
   const [imagery, setImagery] = useState<{ tex: THREE.Texture; nw: { x: number; n: number }; se: { x: number; n: number } } | null>(null);
   const [month, setMonth] = useState(5);
@@ -160,6 +162,100 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       controls.target.copy(saved.target);
       controls.update();
       return url;
+    },
+    // Müşteri videosu: dikey (720×1280), kamera binanın çevresinde döner, güneş gün boyu ilerler.
+    // Tamamen tarayıcıda üretilir; dışarıya bağlı değildir.
+    async record({ title, lines, footer, seconds = 12, onProgress }) {
+      const c = ctx.current;
+      if (!c || typeof MediaRecorder === "undefined") return null;
+      const W = 720;
+      const H = 1280;
+      const { renderer, scene, camera, controls, sun } = c;
+      const el = renderer.domElement;
+      const saved = { pos: camera.position.clone(), target: controls.target.clone(), aspect: camera.aspect, w: el.clientWidth, h: el.clientHeight, ratio: renderer.getPixelRatio(), auto: controls.autoRotate };
+      const box3 = new THREE.Box3().setFromObject(c.content);
+      const mid = box3.isEmpty() ? new THREE.Vector3() : box3.getCenter(new THREE.Vector3());
+      const size = box3.isEmpty() ? 25 : Math.max(14, box3.getSize(new THREE.Vector3()).length());
+      recording.current = true;
+      controls.enabled = false;
+      controls.autoRotate = false;
+      renderer.setPixelRatio(1);
+      renderer.setSize(W, H, false);
+      camera.aspect = W / H;
+      camera.updateProjectionMatrix();
+      sun.target.position.copy(mid);
+
+      const out = document.createElement("canvas");
+      out.width = W;
+      out.height = H;
+      const g = out.getContext("2d")!;
+      const types = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+      const mime = types.find((t) => MediaRecorder.isTypeSupported(t)) ?? "video/webm";
+      const rec = new MediaRecorder(out.captureStream(30), { mimeType: mime, videoBitsPerSecond: 5_000_000 });
+      const chunks: Blob[] = [];
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      const done = new Promise<Blob>((res) => (rec.onstop = () => res(new Blob(chunks, { type: mime.split(";")[0] }))));
+      rec.start();
+
+      const draw = (t: number) => {
+        const a = 0.7 + t * Math.PI * 1.6;
+        const r = size * 1.25;
+        camera.position.set(mid.x + Math.sin(a) * r, mid.y + size * (0.85 - 0.25 * t), mid.z + Math.cos(a) * r);
+        camera.lookAt(mid);
+        const { dir, el: elev } = sunDirection(lat, 5, 7.5 + t * 10.5);
+        sun.position.copy(mid).addScaledVector(dir, 70);
+        sun.intensity = 0.9 + 2 * Math.min(1, Math.sin(Math.max(0, elev)) * 1.6);
+        renderer.render(scene, camera);
+        g.drawImage(el, 0, 0, W, H);
+        // Üst başlık ve alt kartvizit.
+        const top = g.createLinearGradient(0, 0, 0, 300);
+        top.addColorStop(0, "rgba(8,21,41,.85)");
+        top.addColorStop(1, "rgba(8,21,41,0)");
+        g.fillStyle = top;
+        g.fillRect(0, 0, W, 300);
+        g.fillStyle = "#fff";
+        g.font = "700 44px Segoe UI, Arial, sans-serif";
+        g.fillText(title, 40, 88);
+        g.font = "500 30px Segoe UI, Arial, sans-serif";
+        lines.forEach((l, i) => g.fillText(l, 40, 138 + i * 42));
+        const bottom = g.createLinearGradient(0, H - 220, 0, H);
+        bottom.addColorStop(0, "rgba(8,21,41,0)");
+        bottom.addColorStop(1, "rgba(8,21,41,.92)");
+        g.fillStyle = bottom;
+        g.fillRect(0, H - 220, W, 220);
+        g.fillStyle = "#f5b301";
+        g.font = "700 34px Segoe UI, Arial, sans-serif";
+        g.fillText("AKTÜRK ENERJİ", 40, H - 82);
+        g.fillStyle = "#fff";
+        g.font = "500 26px Segoe UI, Arial, sans-serif";
+        g.fillText(footer, 40, H - 42);
+      };
+      await new Promise<void>((res) => {
+        const start = performance.now();
+        const timer = setInterval(() => {
+          const t = Math.min(1, (performance.now() - start) / (seconds * 1000));
+          draw(t);
+          onProgress?.(Math.round(t * 100));
+          if (t >= 1) {
+            clearInterval(timer);
+            res();
+          }
+        }, 1000 / 30);
+      });
+      rec.stop();
+      const blob = await done;
+
+      renderer.setPixelRatio(saved.ratio);
+      renderer.setSize(saved.w, saved.h, false);
+      camera.aspect = saved.aspect;
+      camera.updateProjectionMatrix();
+      camera.position.copy(saved.pos);
+      controls.target.copy(saved.target);
+      controls.enabled = true;
+      controls.autoRotate = saved.auto;
+      recording.current = false;
+      setHour((h) => h + 0.0001);
+      return { blob, ext: mime.startsWith("video/mp4") ? "mp4" : "webm" };
     },
   }));
 
@@ -215,8 +311,11 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
 
     let raf = 0;
     const loop = () => {
-      controls.update();
-      renderer.render(scene, camera);
+      // Video kaydında kamera ve çizim kayıt döngüsündedir.
+      if (!recording.current) {
+        controls.update();
+        renderer.render(scene, camera);
+      }
       raf = requestAnimationFrame(loop);
     };
     loop();
@@ -347,6 +446,28 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       c.content.add(edge);
     }
 
+    // Engeller: gri kütle.
+    const obstacleMat = new THREE.MeshStandardMaterial({ color: "#8a8f98", roughness: 0.9, side: THREE.DoubleSide });
+    for (const o of obstacles ?? []) {
+      const pts = o.points.map((p) => toXY(p, center));
+      if (pts.length < 3) continue;
+      const tris = THREE.ShapeUtils.triangulateShape(pts.map((p) => new THREE.Vector2(p.x, p.n)), []);
+      const pos: number[] = [];
+      for (const t of tris) for (const k of t) pos.push(pts[k].x, o.height, -pts[k].n);
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i];
+        const b = pts[(i + 1) % pts.length];
+        pos.push(a.x, 0, -a.n, b.x, 0, -b.n, b.x, o.height, -b.n, a.x, 0, -a.n, b.x, o.height, -b.n, a.x, o.height, -a.n);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      geo.computeVertexNormals();
+      const mesh = new THREE.Mesh(geo, obstacleMat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      c.content.add(mesh);
+    }
+
     // Paneller: çerçeveli ince kutu; üst yüzde hücre dokusu. Düz çatıda sehpa ayakları.
     const frameMat = new THREE.MeshStandardMaterial({ color: "#c9d0d9", metalness: 0.7, roughness: 0.35 });
     const topMat = new THREE.MeshPhysicalMaterial({ map: panelTex.current, metalness: 0.35, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 });
@@ -391,7 +512,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       c.camera.position.set(mid.x + size * 0.6, size * 0.7, mid.z + size * 0.9);
       c.sun.target.position.copy(mid);
     }
-  }, [frames, cells, layout, center, imagery]);
+  }, [frames, cells, layout, center, imagery, obstacles]);
 
   const hud = "rounded-lg bg-black/55 px-3 py-2 text-[12.5px] font-semibold text-white backdrop-blur";
   return (

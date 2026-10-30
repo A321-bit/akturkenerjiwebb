@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { cellFootprint, toLatLon, toXY, type FaceFrame, type LatLon, type LayoutSettings, type PanelCell, type XY } from "@/lib/teklif/geometry";
+import { cellFootprint, toLatLon, toXY, type FaceFrame, type LatLon, type LayoutSettings, type Obstacle, type PanelCell, type XY } from "@/lib/teklif/geometry";
 import { ESRI, getImagery } from "@/lib/teklif/imagery";
 
 // Uydu üzerinde çatı yüzeyi çizme ve panel yerleştirme.
@@ -28,6 +28,7 @@ type Props = {
   focus?: { center: LatLon; zoom: number; key: number } | null;
   /** Parsel sınırı (turuncu çizgi); tıklamaları engellemez. */
   parcelRing?: LatLon[] | null;
+  obstacles?: Obstacle[];
 };
 
 export default function SatelliteEditor(props: Props) {
@@ -119,6 +120,11 @@ export default function SatelliteEditor(props: Props) {
         props.onSelectFace(fr.face.id);
       });
       poly.bindTooltip(fr.face.name, { direction: "center", className: "!bg-ink/80 !text-paper !border-0 !text-[11px]" });
+      g.addLayer(poly);
+    }
+    for (const o of props.obstacles ?? []) {
+      const poly = lib.polygon(o.points, { color: "#e5484d", weight: 2, fillColor: "#e5484d", fillOpacity: 0.3, interactive: false });
+      poly.bindTooltip(`${o.name} · ${o.height} m`, { permanent: true, direction: "center", className: "!bg-red-700/80 !text-paper !border-0 !text-[10.5px]" });
       g.addLayer(poly);
     }
     const byId = new Map(frames.map((f) => [f.face.id, f]));

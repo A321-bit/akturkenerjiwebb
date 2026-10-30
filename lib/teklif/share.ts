@@ -25,5 +25,6 @@ export function forCustomer(p: Proposal): Proposal {
     views: undefined,
     lastViewAt: undefined,
     notifiedAt: undefined,
+    tracking: undefined,
   };
 }

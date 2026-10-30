@@ -59,6 +59,27 @@ export default function PricingRules({ settings, onChange }: { settings: QuoteSe
         </div>
       </div>
 
+      <div className="mt-5 rounded-xl border border-line bg-paper p-3">
+        <p className="text-[13px] font-semibold">Gerçek üretim verileri</p>
+        <p className="text-[12px] text-slate">Kurduğunuz sistemlerin yıllık üretimi. Benzer güçte kayıt varsa teklifte ortalaması gösterilir.</p>
+        <div className="mt-2 space-y-1.5">
+          {(settings.realProduction ?? []).map((r) => {
+            const list = settings.realProduction ?? [];
+            const set = (x: Partial<typeof r>) => onChange({ ...settings, realProduction: list.map((q) => (q.id === r.id ? { ...q, ...x } : q)) });
+            return (
+              <div key={r.id} className="grid grid-cols-[1fr_90px_110px_70px_24px] items-center gap-2">
+                <input value={r.ad} onChange={(e) => set({ ad: e.target.value })} placeholder="Sistem (ör. Ankara mesken)" className={input} />
+                <input type="number" value={r.kwp || ""} onChange={(e) => set({ kwp: Number(e.target.value) })} placeholder="kWp" className={input} />
+                <input type="number" value={r.yillikKwh || ""} onChange={(e) => set({ yillikKwh: Number(e.target.value) })} placeholder="kWh/yıl" className={input} />
+                <span className="text-right font-mono-data text-[12px] text-slate">{r.kwp > 0 ? Math.round(r.yillikKwh / r.kwp) : 0}</span>
+                <button onClick={() => onChange({ ...settings, realProduction: list.filter((q) => q.id !== r.id) })} className="text-slate hover:text-red-600" aria-label="Kaydı sil"><Trash2 size={14} /></button>
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={() => onChange({ ...settings, realProduction: [...(settings.realProduction ?? []), { id: uid(), ad: "", kwp: 0, yillikKwh: 0 }] })} className="mt-2 text-[12.5px] font-semibold text-brand hover:underline">+ Kayıt ekle</button>
+      </div>
+
       <div className="mt-4 overflow-x-auto">
         <div className="min-w-[900px] space-y-2">
           <div className="grid grid-cols-[1fr_110px_70px_70px_170px_90px_70px_80px_28px] gap-2 text-[11.5px] font-semibold text-slate">
