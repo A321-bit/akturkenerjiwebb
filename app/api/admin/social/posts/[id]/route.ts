@@ -72,7 +72,15 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
   const denied = await requireAdmin();
   if (denied) return denied;
   const { id } = await ctx.params;
-  const { error } = await adminClient().from("social_posts").delete().eq("id", id);
+  const db = adminClient();
+  const { data } = await db.from("social_posts").select("*").eq("id", id).single();
+  try {
+    // Zamanlanmış kopya silinmezse gönderi plandan çıksa da Facebook'ta yayınlanır.
+    if (data) await unscheduleFacebook(data as SocialPost);
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
+  const { error } = await db.from("social_posts").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
