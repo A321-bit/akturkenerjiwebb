@@ -162,6 +162,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
               customer: { ...base.customer, name: c.fullname ?? "", phone: c.phone ?? "", email: c.email ?? "", province: c.province ?? "" },
               abone: (c.inputs?.tariff as AboneGrubu) ?? "mesken",
               monthlyBillTl: Math.round(c.monthlyBillTl ?? 0),
+              evKm: c.inputs?.evMonthlyKwh ? Math.round((c.inputs.evMonthlyKwh * 12 * 100) / 18) : undefined,
               site: { center, zoom: c.lat ? 20 : 18 },
             });
           }
@@ -507,6 +508,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
           ) : (
             <NumInput label="Günlük tüketim (kWh)" value={p.dailyKwh ?? 0} onChange={(v) => update({ dailyKwh: Math.max(0, v) })} note={n.monthlyBillTl ? `Tahmini aylık fatura ${tl(n.monthlyBillTl)}` : undefined} />
           )}
+          <NumInput label="Elektrikli araç (yıllık km)" value={p.evKm ?? 0} step={1000} onChange={(v) => update({ evKm: Math.max(0, v) })} note="Şarjı faturada yoksa girin; tüketime eklenir. 18 kWh/100 km varsayılır." />
           <NumInput label="Elle birim fiyat (kuruş/kWh, KDV hariç)" value={p.unitKr ?? 0} onChange={(v) => update({ unitKr: Math.max(0, v) })} note="Boş bırakılırsa EPDK tarifesi kullanılır. Perakende + dağıtım toplamı." />
           <label className="block">
             <span className="text-[12.5px] font-semibold text-slate">Rapor tipi</span>

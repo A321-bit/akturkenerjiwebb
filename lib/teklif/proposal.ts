@@ -1,6 +1,7 @@
 // Teklif verisi ve finansal hesap (tasarım, üretim, fiyat kalemleri, tasarruf).
 
 import { faturaTutari, faturadanTuketim, type AboneGrubu } from "../elektrik-tarife";
+import { evMonthlyKwh } from "../ongrid-calc";
 import type { LatLon, PanelCell, PanelModel, RoofFace } from "./geometry";
 
 /** birimFiyat, teklifin para biriminde (yeni tekliflerde USD) satış fiyatıdır. */
@@ -59,6 +60,8 @@ export type Proposal = {
   /** Tüketim kaynağı: fatura tutarı ya da günlük kWh. */
   consumptionMode?: "fatura" | "gunluk";
   dailyKwh?: number;
+  /** Faturada olmayan elektrikli araç şarjı: yıllık km. */
+  evKm?: number;
   /** Elle birim fiyat (kuruş/kWh, KDV hariç); boşsa EPDK tarifesi. */
   unitKr?: number;
   /** Yüzey kimliğine göre PVGIS aylık üretimi (1 kWp, kWh). */
@@ -142,7 +145,8 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const bill = (kwh: number) => (kr > 0 ? (kwh * kr * vergi) / 100 : faturaTutari(p.abone, kwh));
   const fromBill = (tl: number) => (kr > 0 ? (tl * 100) / (kr * vergi) : faturadanTuketim(p.abone, tl));
   const avg = p.consumptionMode === "gunluk" ? (p.dailyKwh ?? 0) * 30.4 : p.monthlyBillTl > 0 ? fromBill(p.monthlyBillTl) : 0;
-  const monthlyKwh = PROFIL.map((f) => avg * f);
+  const ev = p.evKm ? evMonthlyKwh(p.evKm) : 0;
+  const monthlyKwh = PROFIL.map((f) => avg * f + ev);
   const annualKwh = monthlyKwh.reduce((a, b) => a + b, 0);
   const annualSavingTl = monthlyKwh.reduce((s, c, i) => s + bill(c) - bill(Math.max(0, c - monthlyProduction[i])), 0);
   const offset = monthlyKwh.reduce((s, c, i) => s + Math.min(c, monthlyProduction[i]), 0);

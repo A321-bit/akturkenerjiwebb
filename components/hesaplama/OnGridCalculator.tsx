@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowLeft, Building2, Factory, Home, Leaf, Sprout, Sun, Wallet, Zap } from "lucide-react";
-import { calculateOnGrid, leadScore, panelsForRoof, PANEL_WP, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
+import { calculateOnGrid, evMonthlyKwh, FUEL_L_PER_100KM, FUEL_TL_PER_L, EV_KWH_PER_100KM, fuelCostPerYear, leadScore, panelsForRoof, PANEL_WP, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import type { RoofDrawing } from "./LocationPicker";
 import { CallUs, Choice, ContactStep, Kpi, MonthlyPair, Nav, Panel, PlacePicker, ProductBox, Row, Stepper, Toggle, num, onlyNum, tl, usePlace, useWizard, type CompanyContact, type Place } from "./ui";
@@ -32,6 +32,8 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
   const [klima, setKlima] = useState(false);
   const [isitma, setIsitma] = useState(false);
   const [sozlesme, setSozlesme] = useState("");
+  const [ev, setEv] = useState(false);
+  const [evKm, setEvKm] = useState("15000");
   const loc = usePlace();
   const konum = loc.place;
   const [cati, setCati] = useState<RoofType>("egimli");
@@ -62,10 +64,12 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
 
   const profile: UsageProfile = abone !== "mesken" ? "gunduz_isyeri" : isitma ? "kis_isitma" : klima ? "yaz_klima" : "dengeli";
   const amount = Number(value.replace(",", "."));
+  const evYearlyKm = ev ? Number(evKm.replace(",", ".")) || 0 : 0;
   const input: OnGridInput = {
     tariff: abone,
     monthlyBillTl: mode === "fatura" ? amount : undefined,
     monthlyKwh: mode === "aylik" ? amount : mode === "gunluk" ? amount * 30 : undefined,
+    evMonthlyKwh: evYearlyKm > 0 ? evMonthlyKwh(evYearlyKm) : undefined,
     contractKw: Number(sozlesme.replace(",", ".")) || undefined,
     roofAreaM2: Number(alan.replace(",", ".")) || undefined,
     roofType: cati,
@@ -143,6 +147,22 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
             </div>
           )}
 
+          <div className="mt-5 rounded-xl border border-line bg-paper p-4">
+            <Toggle on={ev} set={setEv} label="Elektrikli aracım var ya da almayı düşünüyorum" />
+            {ev && (
+              <div className="mt-3">
+                <p className="text-[13px] text-slate">Şarj tüketimi faturanızda zaten varsa bu seçeneği kapatın; yoksa sisteme ekleriz.</p>
+                <label className="mt-2 block max-w-[220px]">
+                  <span className="text-[13px] font-semibold text-ink">Yılda yaklaşık kaç km?</span>
+                  <div className="mt-1 flex items-center rounded-xl border border-line bg-paper-raised focus-within:border-brand">
+                    <input inputMode="numeric" value={evKm} onChange={(e) => setEvKm(onlyNum(e.target.value))} className="w-full bg-transparent px-3 py-2 outline-none" />
+                    <span className="pr-3 font-semibold text-slate">km</span>
+                  </div>
+                </label>
+              </div>
+            )}
+          </div>
+
           <details className="mt-5 rounded-xl border border-line bg-paper p-4 text-[13.5px]">
             <summary className="cursor-pointer font-semibold text-ink">Sözleşme gücümü biliyorum (isteğe bağlı)</summary>
             <p className="mt-2 text-slate">Faturada “Sözleşme gücü” olarak yazar. Kurulabilecek en yüksek sistemi belirler.</p>
@@ -218,7 +238,7 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
             needType: "On grid hesaplama",
             source: "ongrid_calculator",
             calcType: "on_grid",
-            summary: `On grid · ${result.systemKw} kW (${result.panelCount} panel), ${ABONE_ADLARI[abone]}, ${konum.ad}; aylık fatura ~${Math.round(result.monthlyBillTl)} TL, yıllık tasarruf ~${Math.round(result.annualSavingTl)} TL${result.package ? `, paket: ${result.package.name}` : ""}.`,
+            summary: `On grid · ${result.systemKw} kW (${result.panelCount} panel), ${ABONE_ADLARI[abone]}, ${konum.ad}; aylık fatura ~${Math.round(result.monthlyBillTl)} TL, yıllık tasarruf ~${Math.round(result.annualSavingTl)} TL${evYearlyKm ? `, elektrikli araç ${evYearlyKm} km/yıl` : ""}${result.package ? `, paket: ${result.package.name}` : ""}.`,
             inputs: { ...input, roofPolygon: roof?.ring },
             results: result,
             recommendedProduct: result.package?.name,
@@ -230,7 +250,7 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
         />
       )}
 
-      {step === 5 && result && <Result result={result} abone={abone} il={konum} yieldSource={yieldSource} contact={contact} onBack={() => go(3)} />}
+      {step === 5 && result && <Result result={result} abone={abone} il={konum} yieldSource={yieldSource} contact={contact} onBack={() => go(3)} evKm={evYearlyKm} />}
     </div>
   );
 }
@@ -242,6 +262,7 @@ function Result({
   yieldSource,
   contact,
   onBack,
+  evKm,
 }: {
   result: ReturnType<typeof calculateOnGrid>;
   abone: AboneGrubu;
@@ -249,6 +270,7 @@ function Result({
   yieldSource: "pvgis" | "ortalama" | null;
   contact: CompanyContact;
   onBack: () => void;
+  evKm: number;
 }) {
   const limitText =
     r.constrainedBy === "cati" ? "Çatı alanınız sistemi sınırlıyor." : r.constrainedBy === "mevzuat" ? `${r.limitNote ?? "Mevzuat sınırı"} sistemi sınırlıyor.` : null;
@@ -295,6 +317,17 @@ function Result({
           </dl>
         </section>
       </div>
+
+      {evKm > 0 && (
+        <section className="mt-6 rounded-2xl border border-line bg-paper-raised p-5">
+          <h3 className="font-semibold text-ink">Elektrikli aracınız güneşle şarj olsun</h3>
+          <p className="mt-1 text-[13.5px] text-slate">
+            Yılda {num(evKm)} km için yaklaşık {num(evMonthlyKwh(evKm) * 12)} kWh şarj elektriği bu hesaba eklendi. Aynı yolu yakıtlı araçla gitmek yılda yaklaşık <b className="text-ink">{tl(fuelCostPerYear(evKm))}</b> yakıt demektir.
+          </p>
+          <p className="mt-1 text-[12px] text-slate">Varsayım: elektrikli araç {EV_KWH_PER_100KM} kWh/100 km, yakıtlı araç {FUEL_L_PER_100KM} L/100 km, yakıt {FUEL_TL_PER_L} TL/L. Araca göre değişir.</p>
+          <a href="/magaza/elektrikli-arac-sarj-istasyonu" className="mt-2 inline-block text-[13.5px] font-semibold text-brand hover:underline">Araç şarj istasyonlarını inceleyin</a>
+        </section>
+      )}
 
       <CallUs contact={contact} team="Elektrik mühendislerimiz" waText="Merhaba, sitenizde güneş enerjisi fizibilite raporumu oluşturdum. Ücretsiz keşif için görüşmek istiyorum." />
 

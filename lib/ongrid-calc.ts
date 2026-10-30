@@ -15,6 +15,8 @@ export type OnGridInput = {
   /** Aylık ortalama fatura (TL, vergiler dahil) ya da aylık tüketim (kWh); günlük tüketim girilirse ×30 verilir. */
   monthlyBillTl?: number;
   monthlyKwh?: number;
+  /** Faturada olmayan elektrikli araç şarjı (aylık kWh): sistem boyutuna ve tasarrufa eklenir. */
+  evMonthlyKwh?: number;
   /** Faturadaki sözleşme gücü (kW). Bilinmiyorsa sınır kontrolü yalnızca tarifeye göre yapılır. */
   contractKw?: number;
   /** Kullanılabilir çatı alanı (m²): haritada çizilen ya da elle girilen. */
@@ -54,6 +56,13 @@ const PROFILES: Record<UsageProfile, number[]> = {
   kis_isitma: [1.6, 1.45, 1.2, 0.85, 0.7, 0.65, 0.7, 0.7, 0.7, 0.85, 1.2, 1.4],
   gunduz_isyeri: [0.95, 0.95, 1, 1, 1, 1.05, 1.05, 1.05, 1, 1, 0.95, 1],
 };
+
+/** Elektrikli araç varsayımları: ortalama tüketim ve karşılaştırma için yakıtlı araç. */
+export const EV_KWH_PER_100KM = 18;
+export const FUEL_L_PER_100KM = 7;
+export const FUEL_TL_PER_L = 98;
+export const evMonthlyKwh = (yearlyKm: number) => (yearlyKm * EV_KWH_PER_100KM) / 100 / 12;
+export const fuelCostPerYear = (yearlyKm: number) => (yearlyKm * FUEL_L_PER_100KM * FUEL_TL_PER_L) / 100;
 
 const round = (n: number, d = 0) => Math.round(n * 10 ** d) / 10 ** d;
 
@@ -95,9 +104,10 @@ export function calculateOnGrid(input: OnGridInput, packages: PackageOption[]): 
   const monthlyAvg = input.monthlyKwh && input.monthlyKwh > 0 ? input.monthlyKwh : faturadanTuketim(input.tariff, input.monthlyBillTl ?? 0);
   const monthlyBillTl = faturaTutari(input.tariff, monthlyAvg);
   const unitPrice = monthlyAvg > 0 ? monthlyBillTl / monthlyAvg : 0;
-  const annualKwh = monthlyAvg * 12;
+  const ev = input.evMonthlyKwh ?? 0;
+  const annualKwh = (monthlyAvg + ev) * 12;
   const shape = PROFILES[input.profile];
-  const monthlyKwh = shape.map((f) => monthlyAvg * f);
+  const monthlyKwh = shape.map((f) => monthlyAvg * f + ev);
 
   const yieldPerKwp = input.monthlyYieldPerKwp?.length === 12 ? input.monthlyYieldPerKwp : FALLBACK_YIELD;
   const specificYield = yieldPerKwp.reduce((a, b) => a + b, 0);
