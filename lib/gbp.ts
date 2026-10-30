@@ -232,8 +232,18 @@ type RawPost = {
 };
 
 export async function listPosts(account: string, location: string): Promise<GbpPost[]> {
-  const { localPosts = [] } = await api<{ localPosts?: RawPost[] }>(`https://mybusiness.googleapis.com/v4/${account}/${location}/localPosts?pageSize=20`);
-  return localPosts.map((p) => ({ name: p.name, summary: p.summary, createTime: p.createTime, state: p.state, searchUrl: p.searchUrl, photo: p.media?.[0]?.googleUrl ?? p.media?.[0]?.sourceUrl, ctaUrl: p.callToAction?.url }));
+  // Sayfa başına en fazla 100 gönderi; tümü alınır (paylaşılanlarla çakışmayı görmek için).
+  const all: RawPost[] = [];
+  let pageToken: string | undefined;
+  for (let i = 0; i < 10; i++) {
+    const q = new URLSearchParams({ pageSize: "100" });
+    if (pageToken) q.set("pageToken", pageToken);
+    const d = await api<{ localPosts?: RawPost[]; nextPageToken?: string }>(`https://mybusiness.googleapis.com/v4/${account}/${location}/localPosts?${q}`);
+    all.push(...(d.localPosts ?? []));
+    pageToken = d.nextPageToken;
+    if (!pageToken) break;
+  }
+  return all.map((p) => ({ name: p.name, summary: p.summary, createTime: p.createTime, state: p.state, searchUrl: p.searchUrl, photo: p.media?.[0]?.googleUrl ?? p.media?.[0]?.sourceUrl, ctaUrl: p.callToAction?.url }));
 }
 
 export function createPost(account: string, location: string, p: { summary: string; url?: string; photoUrl?: string }) {
