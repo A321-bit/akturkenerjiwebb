@@ -185,11 +185,22 @@ type RawReview = {
 };
 
 export async function listReviews(account: string, location: string) {
-  const d = await api<{ reviews?: RawReview[]; averageRating?: number; totalReviewCount?: number }>(`https://mybusiness.googleapis.com/v4/${account}/${location}/reviews?pageSize=50&orderBy=updateTime%20desc`);
+  // Google sayfa başına en fazla 50 yorum verir; tüm sayfalar alınır (en fazla 500 yorum).
+  const all: RawReview[] = [];
+  let pageToken: string | undefined;
+  let d: { reviews?: RawReview[]; averageRating?: number; totalReviewCount?: number; nextPageToken?: string } = {};
+  for (let i = 0; i < 10; i++) {
+    const q = new URLSearchParams({ pageSize: "50", orderBy: "updateTime desc" });
+    if (pageToken) q.set("pageToken", pageToken);
+    d = await api(`https://mybusiness.googleapis.com/v4/${account}/${location}/reviews?${q}`);
+    all.push(...(d.reviews ?? []));
+    pageToken = d.nextPageToken;
+    if (!pageToken) break;
+  }
   return {
     average: d.averageRating ?? null,
     total: d.totalReviewCount ?? 0,
-    reviews: (d.reviews ?? []).map(
+    reviews: all.map(
       (r): GbpReview => ({
         name: r.name,
         author: r.reviewer?.displayName ?? "Google kullanıcısı",
