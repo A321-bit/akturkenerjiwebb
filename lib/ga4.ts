@@ -1,5 +1,7 @@
 "use client";
 
+import { getAttribution } from "./attribution";
+
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
@@ -33,8 +35,24 @@ export function trackGoogleAdsLead() {
 // Ads'teki GA4 dönüşümlerinin sayımı "her tıklamada birden çok" ve API'den
 // değiştirilemiyor; aynı ziyaretçinin tekrar tekrar dokunması dönüşümü
 // şişirmesin diye her event oturum başına bir kez gönderilir.
+// Reklam ağından (Display, oyun/uygulama siteleri, adı görünmeyen reklam çerçeveleri) gelen ziyaretçilerin
+// tıklamaları büyük ölçüde bot ya da kaza; dönüşüm sayılırsa PMax bu trafiğe daha çok para harcıyor.
+// Reklam tıklamasıyla gelip yönlendiren Google arama/YouTube değilse ya da sayfa daha yeni açıldıysa gönderilmez.
+const MIN_MS_ON_PAGE = 3000;
+
+function countsAsAdConversion() {
+  if (performance.now() < MIN_MS_ON_PAGE) return false;
+  const a = getAttribution();
+  if (!a?.adClickId?.startsWith("gclid:")) return true;
+  try {
+    return /(^|\.)(google\.[a-z.]+|youtube\.com)$/.test(new URL(a.referrer ?? "").hostname);
+  } catch {
+    return false; // yönlendiren yok: uygulama içi reklam
+  }
+}
+
 function sendOncePerSession(name: string) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !countsAsAdConversion()) return;
   try {
     const key = `ga4_sent_${name}`;
     if (sessionStorage.getItem(key)) return;
