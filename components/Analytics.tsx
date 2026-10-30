@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePagePath } from "@/lib/use-page-path";
 import { trackEvent } from "@/lib/track";
 import { captureAttribution } from "@/lib/attribution";
+import { tagWhatsappHref } from "@/lib/whatsapp-context";
 
 declare global {
   interface Window {
@@ -37,7 +38,15 @@ export default function Analytics() {
       const a = (e.target as Element | null)?.closest?.("a");
       if (!a || location.pathname.startsWith("/admin")) return;
       const href = a.getAttribute("href") ?? "";
-      if (/wa\.me|api\.whatsapp\.com|whatsapp:/.test(href)) window.fbq?.("track", "Contact", { content_name: "whatsapp" });
+      if (/wa\.me|api\.whatsapp\.com|whatsapp:/.test(href)) {
+        window.fbq?.("track", "Contact", { content_name: "whatsapp" });
+        // Mesaja kaynak ve hesap özeti eklenir; tıklama kanalıyla birlikte ayrıca kaydedilir.
+        const tagged = tagWhatsappHref(href);
+        if (tagged) {
+          a.setAttribute("href", tagged.href);
+          trackEvent("click", location.pathname, `wa_src:${tagged.channel}`);
+        }
+      }
       else if (href.startsWith("tel:")) window.fbq?.("track", "Contact", { content_name: "telefon" });
     };
     document.addEventListener("click", onClick, true);

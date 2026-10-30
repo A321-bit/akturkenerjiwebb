@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { BatteryCharging, CheckCircle2, Gauge, Loader2, MessageCircle, Minus, Plus, Sun, Trash2, UserRound, Zap } from "lucide-react";
 import { calculate, DEVICE_PRESETS, pickPackage, type CalcResult, type Device, type OffGridPackage, type Season } from "@/lib/offgrid-calc";
+import { openWhatsapp } from "@/lib/whatsapp-context";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { formatTL } from "@/lib/store";
 import { trackEvent } from "@/lib/track";
@@ -75,7 +76,7 @@ export default function OffGridCalculator({ packages, whatsappNumber }: { packag
     ].join("\n");
 
     // WhatsApp hemen açılır (açılır pencere engeline takılmasın); talep arka planda kaydedilir.
-    window.open(whatsappLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
+    openWhatsapp(whatsappLink(whatsappNumber, message));
     setSending(true);
     fetch("/api/lead", {
       method: "POST",

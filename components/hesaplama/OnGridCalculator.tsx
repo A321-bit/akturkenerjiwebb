@@ -10,6 +10,7 @@ import { ILLER } from "@/lib/il-konum";
 import { buildLeadAttributionFields, getAttribution } from "@/lib/attribution";
 import { trackEvent } from "@/lib/track";
 import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
+import { rememberCalculation } from "@/lib/whatsapp-context";
 
 const PAGE = "/hesaplama/on-grid";
 const BLUE = "#3f74c4";
@@ -403,6 +404,7 @@ function ContactStep({
         }),
       ]);
       if (!lead.ok && !calc.ok) throw new Error();
+      rememberCalculation(summary.replace(/^On grid hesaplama: /, "On grid · "));
       trackEvent("click", PAGE, "ongrid_lead_submit");
       trackGa4Lead("ongrid_calculator");
       trackGoogleAdsLead();
@@ -471,7 +473,7 @@ function CallUs({ contact }: { contact: CompanyContact }) {
           <Phone size={16} /> {contact.phone}
         </a>
         <a
-          href={`https://wa.me/${contact.whatsapp}`}
+          href={`https://wa.me/${contact.whatsapp}?text=${encodeURIComponent("Merhaba, sitenizde güneş enerjisi fizibilite raporumu oluşturdum. Ücretsiz keşif için görüşmek istiyorum.")}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-[14px] font-semibold text-ink hover:border-volt"

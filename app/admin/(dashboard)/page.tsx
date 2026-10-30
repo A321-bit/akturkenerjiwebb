@@ -1,6 +1,6 @@
 import { adminClient, getServices, getReferences, getBlogPostSummaries } from "@/lib/data";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
-import { CHANNELS, leadChannel } from "@/lib/lead-source";
+import { CHANNELS, leadChannel, type LeadChannel } from "@/lib/lead-source";
 import { BarList, DailyArea, GOLD, PageRace, type DayPoint, type RankRow } from "@/components/admin/OverviewCharts";
 
 // Genel Bakış: sitenin kendi ziyaret sayacı (analytics_events) ve talepler (leads, meta_leads).
@@ -111,7 +111,10 @@ export default async function AdminDashboardPage() {
   const pageName = (path: string | null) => (path ? names.get(path.replace(/\/$/, "") || "/") ?? path : null);
 
   const views = events.filter((e) => e.type === "pageview");
-  const clicks = events.filter((e) => e.type === "click");
+  // wa_src:<kanal> etiketleri WhatsApp tıklamasının kaynağını taşır; buton listesinde sayılmaz.
+  const allClicks = events.filter((e) => e.type === "click");
+  const clicks = allClicks.filter((e) => !e.label?.startsWith("wa_src:"));
+  const waSources = allClicks.filter((e) => e.label?.startsWith("wa_src:"));
   const t = (e: { created_at: string }) => new Date(e.created_at).getTime();
   const last7 = views.filter((e) => t(e) >= now - 7 * DAY);
   const prev7 = views.filter((e) => t(e) < now - 7 * DAY && t(e) >= now - 14 * DAY);
@@ -175,6 +178,9 @@ export default async function AdminDashboardPage() {
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card title="Talepler nereden geliyor" note="Son 30 gün">
             <BarList rows={channelRows} color={GOLD} empty="Son 30 günde talep yok." />
+          </Card>
+          <Card title="WhatsApp'a yazanlar nereden geliyor" note="WhatsApp butonuna tıklayanların siteye geldiği kanal">
+            <BarList rows={top(tally(waSources, (e) => chLabel.get(e.label!.slice(7) as LeadChannel) ?? "Bilinmiyor"))} empty="Henüz veri yok; yeni tıklamalarla dolacak." />
           </Card>
           <Card title="En çok talep gelen sayfalar" note="Formun doldurulduğu sayfa · tüm zamanlar">
             <BarList rows={top(tally(siteLeads, (l) => pageName(l.form_page)), 6)} color={GOLD} />

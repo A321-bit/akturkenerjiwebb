@@ -9,6 +9,7 @@ import { Zap, X, User, PhoneCall, MapPin, Wrench, Loader2, CheckCircle2 } from "
 import { trackEvent } from "@/lib/track";
 import KvkkNotice from "@/components/KvkkNotice";
 import { TURKISH_PROVINCES } from "@/lib/turkish-provinces";
+import { openWhatsapp } from "@/lib/whatsapp-context";
 import { whatsappLink, SITE_URL } from "@/lib/data";
 import { buildLeadAttributionFields } from "@/lib/attribution";
 import { trackMetaLead } from "@/lib/meta-pixel";
@@ -126,7 +127,7 @@ export default function QuoteModal({
 
       if (redirectTo === "whatsapp") {
         const message = `Merhaba, ben ${parsed.data.fullname}. ${parsed.data.purpose} hakkında bilgi almak istiyorum. Telefon: ${parsed.data.phone}\n\nSayfa: ${SITE_URL}${pathname}`;
-        window.open(whatsappLink(whatsappNumber, message), "_blank", "noopener,noreferrer");
+        openWhatsapp(whatsappLink(whatsappNumber, message));
       } else if (redirectTo === "iletisim") {
         setTimeout(() => {
           router.push("/iletisim");
