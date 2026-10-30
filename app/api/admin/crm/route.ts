@@ -57,7 +57,8 @@ export async function GET(req: Request) {
 
   // Personel.
   const perStaff = (staff.data ?? []).map((s) => {
-    const own = inPeriod.filter((p) => p.assigned_to === s.id);
+    // Teklifin sorumlusu, müşterinin sorumlusudur.
+    const own = inPeriod.filter((p) => (p.assigned_to ?? custById.get(p.customer_id as number)?.assigned_to) === s.id);
     const ownWon = own.filter((p) => WON_STAGES.includes(stageOf(p)));
     return { id: s.id, ad: s.full_name, musteri: (customers.data ?? []).filter((c) => c.assigned_to === s.id).length, teklif: own.length, satis: ownWon.length, ciro: ownWon.filter((p) => p.currency === "USD").reduce((a, p) => a + Number(p.total ?? 0), 0) };
   });
