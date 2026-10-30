@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { ArrowLeft, Building2, Factory, Home, Leaf, Sprout, Sun, Wallet, Zap } from "lucide-react";
-import { calculateOnGrid, leadScore, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
+import { calculateOnGrid, leadScore, panelsForRoof, PANEL_WP, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
+import type { RoofDrawing } from "./LocationPicker";
 import { CallUs, Choice, ContactStep, Kpi, MonthlyPair, Nav, Panel, PlacePicker, ProductBox, Row, Stepper, Toggle, num, onlyNum, tl, usePlace, useWizard, type CompanyContact, type Place } from "./ui";
 
 const PAGE = "/hesaplama/on-grid";
@@ -36,6 +37,7 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
   const [cati, setCati] = useState<RoofType>("egimli");
   const [yon, setYon] = useState("guney");
   const [alan, setAlan] = useState("");
+  const [roof, setRoof] = useState<RoofDrawing | null>(null);
   const [yieldPerKwp, setYieldPerKwp] = useState<number[] | null>(null);
   const [yieldSource, setYieldSource] = useState<"pvgis" | "ortalama" | null>(null);
 
@@ -155,7 +157,16 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
 
       {step === 3 && (
         <Panel title="Konum ve çatı" hint="Güneş üretimi bulunduğunuz yerin uydu tabanlı güneş verisiyle ve çatınızın yönüne göre hesaplanır.">
-          <PlacePicker {...loc} mapLabel="Daha hassas sonuç için çatınızı haritada işaretleyin (isteğe bağlı)" />
+          <PlacePicker
+            {...loc}
+            mapOpen
+            mapLabel="Çatınızı haritada bulun"
+            roof={roof}
+            onRoof={(r) => {
+              setRoof(r);
+              setAlan(r ? String(Math.round(r.areaM2)) : "");
+            }}
+          />
 
           <p className="mt-6 text-[13px] font-semibold text-ink">Çatı tipi</p>
           <div className="mt-2">
@@ -183,6 +194,11 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
             </div>
             <span className="mt-1 block text-[12px] text-slate">Bilmiyorsanız boş bırakın; keşifte ölçüyoruz.</span>
           </label>
+          {roof && panelsForRoof(roof.areaM2, cati) > 0 && (
+            <p className="mt-3 rounded-xl bg-brand/5 px-4 py-3 text-[14px] text-ink">
+              Çizdiğiniz çatıya yaklaşık <b>{panelsForRoof(roof.areaM2, cati)} panel</b> ({num((panelsForRoof(roof.areaM2, cati) * PANEL_WP) / 1000, 1)} kWp) sığıyor. Kesin yerleşimi mühendislerimiz netleştirir.
+            </p>
+          )}
           <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Raporu hazırla" disabled={!loc.il} />
         </Panel>
       )}
@@ -203,7 +219,7 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
             source: "ongrid_calculator",
             calcType: "on_grid",
             summary: `On grid · ${result.systemKw} kW (${result.panelCount} panel), ${ABONE_ADLARI[abone]}, ${konum.ad}; aylık fatura ~${Math.round(result.monthlyBillTl)} TL, yıllık tasarruf ~${Math.round(result.annualSavingTl)} TL${result.package ? `, paket: ${result.package.name}` : ""}.`,
-            inputs: input,
+            inputs: { ...input, roofPolygon: roof?.ring },
             results: result,
             recommendedProduct: result.package?.name,
             estimatedValue: result.package?.price,

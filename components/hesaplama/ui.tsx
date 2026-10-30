@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2, MapPin, MessageCircle, Phone } from "lucide-react";
-import LocationPicker, { type PickedLocation } from "./LocationPicker";
+import LocationPicker, { type PickedLocation, type RoofDrawing } from "./LocationPicker";
 import { ILLER } from "@/lib/il-konum";
 import { buildLeadAttributionFields, getAttribution } from "@/lib/attribution";
 import { trackEvent } from "@/lib/track";
@@ -120,39 +120,53 @@ export function usePlace() {
   return { il, setIl, loc, setLoc, place };
 }
 
-export function PlacePicker({ il, setIl, loc, setLoc, mapLabel }: ReturnType<typeof usePlace> & { mapLabel: string }) {
-  const [showMap, setShowMap] = useState(false);
+export function PlacePicker({ il, setIl, loc, setLoc, mapLabel, mapOpen, roof, onRoof }: ReturnType<typeof usePlace> & { mapLabel: string; mapOpen?: boolean; roof?: RoofDrawing | null; onRoof?: (r: RoofDrawing | null) => void }) {
+  const [showMap, setShowMap] = useState(Boolean(mapOpen));
+  const picker = (
+    <LocationPicker
+      value={loc}
+      onChange={(v) => {
+        setLoc(v);
+        setIl(v.il);
+      }}
+      roof={roof}
+      onRoof={onRoof}
+    />
+  );
+  // Harita açıkken il haritadan gelir; il listesi yalnız konum seçilmemişse gösterilir.
+  const ilSelect = !(showMap && loc) && (
+    <label className={`block max-w-sm ${mapOpen ? "mt-4" : ""}`}>
+      <span className="text-[13px] font-semibold text-ink">{mapOpen ? "Konum paylaşmak istemiyorsanız ilinizi seçin" : "İl"}</span>
+      <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-line bg-paper-raised px-3 focus-within:border-brand">
+        <MapPin size={17} className="text-brand" />
+        <select
+          value={il}
+          onChange={(e) => {
+            setIl(e.target.value);
+            setLoc(null);
+          }}
+          className="w-full bg-transparent py-3 text-[15px] outline-none"
+        >
+          <option value="">İl seçin</option>
+          {ILLER.map((i) => (
+            <option key={i.ad}>{i.ad}</option>
+          ))}
+        </select>
+      </div>
+    </label>
+  );
+  if (mapOpen)
+    return (
+      <>
+        {picker}
+        {ilSelect}
+      </>
+    );
   return (
     <>
-      <label className="block max-w-sm">
-        <span className="text-[13px] font-semibold text-ink">İl</span>
-        <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-line bg-paper-raised px-3 focus-within:border-brand">
-          <MapPin size={17} className="text-brand" />
-          <select
-            value={il}
-            onChange={(e) => {
-              setIl(e.target.value);
-              setLoc(null);
-            }}
-            className="w-full bg-transparent py-3 text-[15px] outline-none"
-          >
-            <option value="">İl seçin</option>
-            {ILLER.map((i) => (
-              <option key={i.ad}>{i.ad}</option>
-            ))}
-          </select>
-        </div>
-      </label>
+      {ilSelect}
       {showMap ? (
-        <div className="mt-4">
-          <LocationPicker
-            value={loc}
-            onChange={(v) => {
-              setLoc(v);
-              setIl(v.il);
-            }}
-          />
-        </div>
+        <div className="mt-4">{picker}</div>
       ) : (
         <button onClick={() => setShowMap(true)} className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-brand hover:underline">
           <MapPin size={15} /> {mapLabel}

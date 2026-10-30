@@ -101,13 +101,20 @@ export default function Studio({ panels, inverters, packages, company, initialCa
           const c = rows.find((x: { id: number }) => x.id === initialCalcId);
           if (c) {
             const base = blank(defaultPanel);
+            // Müşteri çatısını çizdiyse ilk yüzey olarak gelir.
+            const drawn = c.inputs?.roofPolygon as LatLon[] | undefined;
+            const center: LatLon = c.lat && c.lng ? [c.lat, c.lng] : ANKARA;
+            const faces: RoofFace[] = drawn?.length
+              ? [{ id: uid(), name: "Müşterinin çizdiği çatı", points: drawn, pitch: 25, azimuth: guessAzimuth(drawn, center), eaveHeight: 6, mountTilt: 20, orientation: "dikey", offsetU: 0, offsetV: 0 }]
+              : [];
             setP({
               ...base,
+              faces,
               calcId: c.id,
               customer: { ...base.customer, name: c.fullname ?? "", phone: c.phone ?? "", email: c.email ?? "", province: c.province ?? "" },
               abone: (c.inputs?.tariff as AboneGrubu) ?? "mesken",
               monthlyBillTl: Math.round(c.monthlyBillTl ?? 0),
-              site: { center: c.lat && c.lng ? [c.lat, c.lng] : ANKARA, zoom: c.lat ? 20 : 18 },
+              site: { center, zoom: c.lat ? 20 : 18 },
             });
           }
         } else {

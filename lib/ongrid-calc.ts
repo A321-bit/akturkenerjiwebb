@@ -88,6 +88,9 @@ export type OnGridResult = {
   constrainedBy: "tuketim" | "cati" | "mevzuat";
 };
 
+/** Verilen çatı alanına sığan yaklaşık panel sayısı (boşluk ve bakım yolu payıyla). */
+export const panelsForRoof = (areaM2: number, roofType: RoofType) => Math.floor(areaM2 / (PANEL_AREA_M2 * AREA_FACTOR[roofType]));
+
 export function calculateOnGrid(input: OnGridInput, packages: PackageOption[]): OnGridResult {
   const monthlyAvg = input.monthlyKwh && input.monthlyKwh > 0 ? input.monthlyKwh : faturadanTuketim(input.tariff, input.monthlyBillTl ?? 0);
   const monthlyBillTl = faturaTutari(input.tariff, monthlyAvg);

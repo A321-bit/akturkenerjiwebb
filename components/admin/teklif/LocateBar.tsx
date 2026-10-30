@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ExternalLink, Hash, LocateFixed, MapPin, Search } from "lucide-react";
+import AddressSearch from "@/components/hesaplama/AddressSearch";
 import { parseCoordinates, type Parcel } from "@/lib/teklif/locate";
 import type { LatLon } from "@/lib/teklif/geometry";
 
@@ -21,7 +22,6 @@ async function list(type: string, id?: number): Promise<Item[]> {
 
 export default function LocateBar({ onFocus, onParcel }: { onFocus: (c: LatLon, zoom: number) => void; onParcel: (p: Parcel | null) => void }) {
   const [mode, setMode] = useState<Mode>("adres");
-  const [text, setText] = useState("");
   const [coord, setCoord] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,24 +54,6 @@ export default function LocateBar({ onFocus, onParcel }: { onFocus: (c: LatLon, 
     setMahalle(0);
     setMahalleler([]);
     if (id) list("mahalle", id).then(setMahalleler).catch(() => setMsg({ ok: false, text: "Mahalleler alınamadı." }));
-  }
-
-  async function searchAddress() {
-    if (text.trim().length < 3) return;
-    setBusy(true);
-    setMsg(null);
-    try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=tr&accept-language=tr&q=${encodeURIComponent(text)}`);
-      const [hit] = await r.json();
-      if (!hit) setMsg({ ok: false, text: "Adres bulunamadı. Mahalle ve ilçeyle yazın ya da koordinat veya ada/parsel kullanın." });
-      else {
-        onFocus([Number(hit.lat), Number(hit.lon)], 19);
-        setMsg({ ok: true, text: `${hit.display_name}. Sonuç yaklaşıktır; çatıyı haritada doğrulayın.` });
-      }
-    } catch {
-      setMsg({ ok: false, text: "Adres araması şu an yapılamadı. Koordinat ya da ada/parsel kullanın." });
-    }
-    setBusy(false);
   }
 
   async function searchCoord() {
@@ -140,10 +122,14 @@ export default function LocateBar({ onFocus, onParcel }: { onFocus: (c: LatLon, 
 
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         {mode === "adres" && (
-          <>
-            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && searchAddress()} placeholder="Mahalle, sokak, ilçe, il" className={`${field} min-w-[240px] flex-1`} />
-            <button onClick={searchAddress} disabled={busy} className={go}>Bul</button>
-          </>
+          <AddressSearch
+            className="min-w-[240px] flex-1"
+            placeholder="Adres, sokak ya da site adı yazın"
+            onPick={(lat, lon, label) => {
+              onFocus([lat, lon], 19);
+              setMsg({ ok: true, text: `${label}. Sonuç yaklaşıktır; çatıyı haritada doğrulayın.` });
+            }}
+          />
         )}
         {mode === "koordinat" && (
           <>

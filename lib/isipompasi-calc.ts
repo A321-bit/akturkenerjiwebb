@@ -37,7 +37,7 @@ export type HeatPumpOption = { slug: string; name: string; kw: number; price?: n
 
 export const BINA_ADLARI: Record<BinaTipi, string> = { mustakil: "Müstakil ev / villa", apartman: "Apartman dairesi", isyeri: "İşyeri / ofis" };
 export const YALITIM_ADLARI: Record<Yalitim, string> = { yok: "Yalıtımsız", kismi: "Kısmi yalıtım", standart: "Mantolama var", iyi: "Yeni bina, iyi yalıtım" };
-export const TESISAT_ADLARI: Record<Tesisat, string> = { yerden: "Yerden ısıtma", fancoil: "Fancoil", radyator: "Panel radyatör" };
+export const TESISAT_ADLARI: Record<Tesisat, string> = { yerden: "Yerden ısıtma", fancoil: "Fancoil", radyator: "Petek" };
 
 /** Yakıt bilgileri. Fiyatlar müşterinin değiştirebileceği varsayılanlardır (Ekim 2026). */
 export const YAKITLAR: Record<Yakit, { ad: string; birim: string; kwh: number; verim: number; fiyat: number | null; co2: number; not: string }> = {
