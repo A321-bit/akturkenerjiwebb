@@ -138,14 +138,15 @@ function PaybackChart({ data }: { data: number[] }) {
 }
 
 export default function ProposalDocument({ p, n, company }: { p: Proposal; n: ProposalNumbers; company: Company }) {
-  const hasCons = n.annualKwh > 0;
+  const system = p.systemType ?? "ongrid";
+  const hasCons = n.annualKwh > 0 || (system !== "ongrid" && (p.currentEnergyCostTl ?? 0) > 0);
   // Fiyat gösterimi: USD teklifte seçime göre dolar ya da günün kuruyla TL; eski tekliflerde TL.
   const isUsd = p.priceCurrency === "USD";
   const money = (v: number) => (!isUsd ? tl(v) : p.showTl && p.usdTry ? tl(v * p.usdTry) : `${Math.round(v).toLocaleString("tr-TR")} USD`);
   const showPrices = !isUsd || Boolean(p.showLinePrices);
   const plan = p.paymentPlan ?? [];
   const hike = p.hikeTable ?? [];
-  const reportName = p.reportType === "maksimum" ? "Maksimum kurulacak güç raporu" : "Optimal kurulacak güç raporu";
+  const reportName = system === "offgrid" ? "Off grid sistem raporu" : system === "sulama" ? "Tarımsal sulama raporu" : p.reportType === "maksimum" ? "Maksimum kurulacak güç raporu" : "Optimal kurulacak güç raporu";
   const hasFlow = hasCons && n.annualProduction > 0 && !p.shortReport;
   const options = p.optionMode === "uc" ? (p.options ?? []) : [];
   let page = 0;
@@ -204,6 +205,9 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
               <tbody>
                 <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Güneş paneli</td><td className="py-1.5 text-right">{n.panelCount} × {p.panel.name} ({p.panel.wp} Wp)</td></tr>
                 {p.inverter && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">İnvertör</td><td className="py-1.5 text-right">{p.inverter.adet} × {p.inverter.name}</td></tr>}
+                {p.recipeName && system !== "ongrid" && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Paket</td><td className="py-1.5 text-right">{p.recipeName}</td></tr>}
+                {system === "sulama" && p.sulama?.tip && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Sulama</td><td className="py-1.5 text-right">{p.sulama.tip}{p.sulama.kuyuM ? `, kuyu ${p.sulama.kuyuM} m` : ""}{p.sulama.pompaDahil ? ", pompa dahil" : ", pompa hariç"}</td></tr>}
+                {(p.voltage === "og" || p.term === "cift") && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Bağlantı</td><td className="py-1.5 text-right">{p.voltage === "og" ? "Orta gerilim" : "Alçak gerilim"}, {p.term === "cift" ? "çift terim" : "tek terim"}</td></tr>}
                 {(p.extraInverters ?? []).map((i) => <tr key={i.id} className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">İnvertör</td><td className="py-1.5 text-right">{i.adet} × {i.name}</td></tr>)}
                 {battery > 0 && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Batarya</td><td className="py-1.5 text-right">{num(battery)} kWh lityum</td></tr>}
                 <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">DC güç / AC güç</td><td className="py-1.5 text-right">{num(n.dcKwp, 2)} kWp / {n.acKw ? `${num(n.acKw, 1)} kW` : "—"}</td></tr>

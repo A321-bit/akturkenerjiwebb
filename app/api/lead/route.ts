@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { rateLimit } from "@/lib/rate-limit";
+import { ensureCustomers } from "@/lib/crm-server";
 
 // Bu route iki entegrasyonu da destekler; ikisi de opsiyoneldir ve ilgili
 // ortam değişkenleri (Vercel Project Settings > Environment Variables) tanımlı
@@ -122,6 +123,7 @@ export async function POST(req: Request) {
     );
   }
 
+  await ensureCustomers([{ name: fullname, phone, email, province, source: [source ?? "web", utmSource].filter(Boolean).join(" ") }]);
   return NextResponse.json({ ok: true });
 }
 

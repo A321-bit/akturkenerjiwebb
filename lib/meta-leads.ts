@@ -1,3 +1,4 @@
+import { ensureCustomers } from "@/lib/crm-server";
 import { createHash } from "node:crypto";
 import { Resend } from "resend";
 import { adminClient } from "./data";
@@ -102,6 +103,7 @@ export async function syncMetaLeads(): Promise<{ forms: number; fetched: number;
     // Yalnızca Meta'dan gelen alanlar yazılır; personelin durumu, notu ve Meta gönderim kaydı korunur.
     const { error } = await adminClient().from("meta_leads").upsert(rows, { onConflict: "id" });
     if (error) throw new Error(error.message);
+    await ensureCustomers(rows.map((r) => ({ name: r.full_name, phone: r.phone, email: r.email, province: r.city, source: "meta", at: r.created_time })));
   }
   if (fresh.length) await notifyNewLeads(fresh).catch((e) => console.error("[MetaLeads] Bildirim e-postası başarısız:", e));
   return { forms: forms.data.length, fetched: rows.length, fresh: fresh.length };

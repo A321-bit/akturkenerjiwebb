@@ -1,3 +1,4 @@
+import { ensureCustomers } from "@/lib/crm-server";
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { adminClient } from "@/lib/data";
@@ -58,5 +59,6 @@ export async function POST(req: Request) {
     console.error("[hesaplama/kaydet]", error.message);
     return NextResponse.json({ error: "Kaydedilemedi, lütfen tekrar deneyin." }, { status: 500 });
   }
+  await ensureCustomers([{ name: fullname, phone, email: str(body.email, 120), province: str(body.province, 40), source: `calculator ${body.type}` }]);
   return NextResponse.json({ ok: true, token: report_token });
 }

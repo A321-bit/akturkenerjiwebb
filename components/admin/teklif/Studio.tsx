@@ -6,7 +6,7 @@ import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, Pen
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal, type QuoteOption } from "@/lib/teklif/proposal";
-import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, quoteChecks, salePrice, similarProduction, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
+import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, pickRecipe, quoteChecks, recipeLines, salePrice, similarProduction, targetKwp, type QuoteSettings, type Recipe, type RoofKind } from "@/lib/teklif/pricing";
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
 import { suggestBattery } from "@/lib/teklif/simulate";
 import { shadeLosses } from "@/lib/teklif/shading";
@@ -31,6 +31,7 @@ type Props = {
   inverters: Product[];
   batteries: Omit<BatteryChoice, "adet">[];
   accessories: Accessory[];
+  recipes: Recipe[];
   packages: { kw: number; price: number }[];
   company: Company;
   initialCalcId?: number;
@@ -87,7 +88,7 @@ function blank(panel: PanelModel): Proposal {
   };
 }
 
-export default function Studio({ panels, inverters, batteries, accessories, company, initialCalcId, initialId, initialCustomerId }: Props) {
+export default function Studio({ panels, inverters, batteries, accessories, recipes, company, initialCalcId, initialId, initialCustomerId }: Props) {
   const defaultPanel = panels.find((p) => p.wp === 620) ?? panels[0] ?? { name: "620 Wp TOPCon panel", wp: 620, lengthM: 2.382, widthM: 1.134 };
   const [p, setP] = useState<Proposal>(() => blank(defaultPanel));
   const [tab, setTab] = useState(0);
@@ -313,6 +314,15 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     update({ inverter, battery, batteryKwh: battery ? battery.kwh * battery.adet : 0 });
   }
   function buildLines() {
+    // Off grid ve sulama: seçili paket, yoksa panel sayısına en yakın paketin reçetesi.
+    if ((p.systemType ?? "ongrid") !== "ongrid") {
+      const kind = p.systemType as Recipe["kind"];
+      const r = recipes.find((x) => x.slug === p.recipeSlug && x.kind === kind) ?? pickRecipe(recipes, kind, n.panelCount);
+      if (!r) return setMsg("Bu tip için reçetesi olan paket bulunamadı.");
+      update({ recipeSlug: r.slug, recipeName: r.name, lines: recipeLines(r, settings.defaultMarginPct, uid), inverter: null, battery: null, batteryKwh: 0, priceCurrency: "USD", priceMode: p.priceMode ?? "malzeme", pricesIncludeVat: p.priceCurrency === "USD" ? p.pricesIncludeVat : false, paymentPlan: p.paymentPlan ?? settings.paymentPlan, hikeTable: p.hikeTable ?? settings.hikeTable });
+      if (!p.usdTry) fetchKur();
+      return;
+    }
     // Ürün seçilmemişse sistem kendisi atar; elle seçilen ürün korunur.
     const picked = p.inverter ? { inverter: p.inverter, battery: p.battery ?? null } : autoPick();
     update({
@@ -584,6 +594,22 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             <NumInput label="Günlük tüketim (kWh)" value={p.dailyKwh ?? 0} onChange={(v) => update({ dailyKwh: Math.max(0, v) })} note={n.monthlyBillTl ? `Tahmini aylık fatura ${tl(n.monthlyBillTl)}` : undefined} />
           )}
           <NumInput label="Elektrikli araç (yıllık km)" value={p.evKm ?? 0} step={1000} onChange={(v) => update({ evKm: Math.max(0, v) })} note="Şarjı faturada yoksa girin; tüketime eklenir. 18 kWh/100 km varsayılır." />
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="text-[12.5px] font-semibold text-slate">Gerilim</span>
+              <select value={p.voltage ?? "ag"} onChange={(e) => update({ voltage: e.target.value as Proposal["voltage"] })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
+                <option value="ag">Alçak gerilim</option>
+                <option value="og">Orta gerilim</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-[12.5px] font-semibold text-slate">Terim</span>
+              <select value={p.term ?? "tek"} onChange={(e) => update({ term: e.target.value as Proposal["term"] })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
+                <option value="tek">Tek terimli</option>
+                <option value="cift">Çift terimli</option>
+              </select>
+            </label>
+          </div>
           <NumInput label="Elle birim fiyat (kuruş/kWh, KDV hariç)" value={p.unitKr ?? 0} onChange={(v) => update({ unitKr: Math.max(0, v) })} note="Boş bırakılırsa EPDK tarifesi kullanılır. Perakende + dağıtım toplamı." />
           <label className="block">
             <span className="text-[12.5px] font-semibold text-slate">Rapor tipi</span>
@@ -757,10 +783,56 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       {/* 3. Sistem ve üretim */}
       {tab === 2 && (
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <section className="rounded-2xl border border-line bg-paper-raised p-5 lg:col-span-2">
+            <div className="flex flex-wrap items-end gap-4">
+              <label className="block">
+                <span className="text-[12.5px] font-semibold text-slate">Sistem tipi</span>
+                <select value={p.systemType ?? "ongrid"} onChange={(e) => update({ systemType: e.target.value as Proposal["systemType"], recipeSlug: undefined, recipeName: undefined, lines: [], inverter: null, battery: null, batteryKwh: 0 })} className="mt-1 block rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]">
+                  <option value="ongrid">Şebeke bağlantılı</option>
+                  <option value="offgrid">Off grid (şebekesiz)</option>
+                  <option value="sulama">Tarımsal sulama</option>
+                </select>
+              </label>
+              {(p.systemType ?? "ongrid") !== "ongrid" && (
+                <>
+                  <label className="block min-w-[260px] flex-1">
+                    <span className="text-[12.5px] font-semibold text-slate">Paket</span>
+                    <select
+                      value={p.recipeSlug ?? ""}
+                      onChange={(e) => {
+                        const r = recipes.find((x) => x.slug === e.target.value);
+                        update(r ? { recipeSlug: r.slug, recipeName: r.name, lines: recipeLines(r, settings.defaultMarginPct, uid) } : { recipeSlug: undefined, recipeName: undefined });
+                      }}
+                      className="mt-1 block w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]"
+                    >
+                      <option value="">Otomatik: panel sayısına en yakın</option>
+                      {recipes.filter((r) => r.kind === p.systemType).map((r) => <option key={r.slug} value={r.slug}>{r.name}</option>)}
+                    </select>
+                  </label>
+                  <NumInput label="Mevcut yıllık enerji gideri (TL)" value={p.currentEnergyCostTl ?? 0} onChange={(v) => update({ currentEnergyCostTl: Math.max(0, v) })} note="Mazot, jeneratör vb.; geri ödeme buna göre." />
+                </>
+              )}
+              {p.systemType === "sulama" && (
+                <>
+                  <NumInput label="Kuyu derinliği (m)" value={p.sulama?.kuyuM ?? 0} onChange={(v) => update({ sulama: { ...p.sulama, kuyuM: v } })} />
+                  <label className="block">
+                    <span className="text-[12.5px] font-semibold text-slate">Sulama tipi</span>
+                    <select value={p.sulama?.tip ?? ""} onChange={(e) => update({ sulama: { ...p.sulama, tip: e.target.value } })} className="mt-1 block rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]">
+                      <option value="">Seçin</option>
+                      <option>Yüzey sulama</option>
+                      <option>Yağmurlama sulama</option>
+                      <option>Damlama sulama</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 pb-2 text-[13px]"><input type="checkbox" checked={Boolean(p.sulama?.pompaDahil)} onChange={(e) => update({ sulama: { ...p.sulama, pompaDahil: e.target.checked } })} /> Pompa teklife dahil</label>
+                </>
+              )}
+            </div>
+          </section>
           <div className="lg:col-span-2 lg:order-last">
             <EnergyFlow p={{ ...p, cells }} n={n} onBattery={(v) => update({ batteryKwh: v })} />
           </div>
-          <div className="lg:col-span-2">
+          {(p.systemType ?? "ongrid") === "ongrid" && <div className="lg:col-span-2">
             <StringDesign
               panelKey={p.panel.slug ?? p.panel.name}
               panelName={p.panel.name}
@@ -771,7 +843,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
               settings={settings}
               onSettings={setSettings}
             />
-          </div>
+          </div>}
           <section className="rounded-2xl border border-line bg-paper-raised p-5">
             <div className="mb-3 inline-flex rounded-lg border border-line bg-paper p-1 text-[13px] font-semibold">
               <button onClick={() => { setBatteryMode(false); update({ battery: null, batteryKwh: 0, inverter: null }); }} className={`rounded-md px-3 py-1.5 ${!batteryMode ? "bg-ink text-paper" : "text-slate"}`}>Bataryasız</button>
@@ -1048,6 +1120,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Btn onClick={() => navigator.clipboard.writeText(`${location.origin}/teklif/${p.shareToken}`).then(() => setMsg("Bağlantı kopyalandı."))}>Kopyala</Btn>
                 <a href={`https://wa.me/${customerWa(p.customer.phone)}?text=${encodeURIComponent(`Sayın ${p.customer.name}, güneş enerjisi teklifinizi hazırladık. Çatınızın üç boyutlu tasarımını ve teklif detaylarını buradan inceleyebilirsiniz:\n${location.origin}/teklif/${p.shareToken}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-lg bg-volt px-3 py-2 text-[13px] font-semibold text-paper">WhatsApp ile gönder</a>
+                {p.customer.email && <a href={`mailto:${p.customer.email}?subject=${encodeURIComponent(`Güneş enerjisi teklifiniz ${p.proposalNo}`)}&body=${encodeURIComponent(`Sayın ${p.customer.name},\n\nGüneş enerjisi teklifinizi hazırladık. Çatınızın üç boyutlu tasarımını ve teklif detaylarını buradan inceleyebilirsiniz:\n${location.origin}/teklif/${p.shareToken}\n\n${company.name}\n${company.phone}`)}`} className="inline-flex items-center rounded-lg border border-line px-3 py-2 text-[13px] font-semibold hover:border-ink">E-posta ile gönder</a>}
                 <a href={`/teklif/${p.shareToken}`} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-brand hover:underline">Müşteri gözüyle aç</a>
               </div>
               <p className="mt-2 text-[12px] text-slate">Müşteri açınca e-posta bildirimi gelir ve “Teklifler” listesinde sayı görünür. Kendi oturumunuzla açmanız sayılmaz. Teklifi değiştirip kaydederseniz bağlantı aynı kalır, müşteri güncel hâlini görür.</p>

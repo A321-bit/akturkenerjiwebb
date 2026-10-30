@@ -94,6 +94,16 @@ export type Proposal = {
   shadeLoss?: Record<string, number[]>;
   /** Benzer kurulumların gerçek üretim ortalaması. */
   realRef?: { count: number; specific: number };
+  /** Sistem tipi: şebeke bağlantılı, off grid ya da tarımsal sulama. */
+  systemType?: "ongrid" | "offgrid" | "sulama";
+  /** Off grid ve sulamada kullanılan paket reçetesi. */
+  recipeSlug?: string;
+  recipeName?: string;
+  /** Off grid ve sulamada karşılaştırılan yıllık enerji gideri (jeneratör, mazot vb.). */
+  currentEnergyCostTl?: number;
+  sulama?: { kuyuM?: number; tip?: string; pompaDahil?: boolean };
+  voltage?: "ag" | "og";
+  term?: "tek" | "cift";
   /** Müşteri linki ve açılma takibi. */
   shareToken?: string;
   views?: number;
@@ -174,9 +184,11 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const ev = p.evKm ? evMonthlyKwh(p.evKm) : 0;
   const monthlyKwh = PROFIL.map((f) => avg * f + ev);
   const annualKwh = monthlyKwh.reduce((a, b) => a + b, 0);
-  const annualSavingTl = monthlyKwh.reduce((s, c, i) => s + bill(c) - bill(Math.max(0, c - monthlyProduction[i])), 0);
+  // Şebekesiz sistemde tasarruf, girilen mevcut enerji gideridir (mazot, jeneratör).
+  const annualSavingTl = (p.systemType ?? "ongrid") !== "ongrid" ? (p.currentEnergyCostTl ?? 0) : monthlyKwh.reduce((s, c, i) => s + bill(c) - bill(Math.max(0, c - monthlyProduction[i])), 0);
   // Aylık tüketimi aşan üretim, satış bedeli girildiyse gelir sayılır.
-  const surplusTl = ((p.saleKr ?? 0) / 100) * monthlyProduction.reduce((s, m, i) => s + Math.max(0, m - monthlyKwh[i]), 0);
+  const offGrid = (p.systemType ?? "ongrid") !== "ongrid";
+  const surplusTl = offGrid ? 0 : ((p.saleKr ?? 0) / 100) * monthlyProduction.reduce((s, m, i) => s + Math.max(0, m - monthlyKwh[i]), 0);
   const offset = monthlyKwh.reduce((s, c, i) => s + Math.min(c, monthlyProduction[i]), 0);
 
   const lineSum = p.lines.reduce((s, l) => s + l.adet * l.birimFiyat, 0);

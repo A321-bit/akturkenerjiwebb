@@ -36,6 +36,12 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
     .filter((p) => p.kwh > 0)
     .sort((a, b) => a.kwh - b.kwh);
 
+  // Off grid ve sulama: paket reçeteleri.
+  type RecipeRow = { qty?: number; name?: string; unit?: number };
+  const recipes = (costRes.data ?? [])
+    .filter((c) => (c.category === "off-grid-paketler" || c.category === "tarimsal-sulama-paketleri") && Array.isArray(c.bom) && c.bom.length)
+    .map((c) => ({ slug: c.slug as string, name: c.name as string, kind: c.category === "off-grid-paketler" ? ("offgrid" as const) : ("sulama" as const), bom: (c.bom as RecipeRow[]).map((b) => ({ qty: Number(b.qty) || 0, name: String(b.name ?? ""), unit: Number(b.unit) || 0 })) }));
+
   // Bataryalı sistemin BMS, sayaç ve Wi-Fi kalemleri: mağaza ürünü ve hibrit paket reçetelerinden.
   type BomRow = { name?: string; unit?: number };
   const accessoryMap = new Map<string, number>();
@@ -58,6 +64,7 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
       inverters={inverters}
       batteries={batteries}
       accessories={accessories}
+      recipes={recipes}
       packages={packages}
       company={{ name: site.name, phone: site.contact.phoneDisplay, email: site.contact.email, address: site.contact.addressLine, web: SITE_URL.replace(/^https?:\/\//, "") }}
       initialCalcId={sp.calc ? Number(sp.calc) : undefined}

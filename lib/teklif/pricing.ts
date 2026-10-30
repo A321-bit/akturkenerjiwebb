@@ -143,12 +143,16 @@ export function quoteChecks(p: Proposal, n: ProposalNumbers, minMarginPct: numbe
   if (p.priceCurrency === "USD" && !p.usdTry) hata("USD/TL kuru girilmedi; geri ödeme hesaplanamaz.");
   const panelLine = p.lines.find((l) => l.kind === "panel");
   if (panelLine && panelLine.adet !== n.panelCount) uyari(`Listede ${panelLine.adet} panel var, tasarımda ${n.panelCount}.`);
-  if (!p.inverter) uyari("İnvertör seçilmedi.");
+  const onGrid = (p.systemType ?? "ongrid") === "ongrid";
+  if (onGrid && !p.inverter) uyari("İnvertör seçilmedi.");
+  if (!onGrid && !p.lines.length) hata("Paket seçilmedi.");
+  if ((p.voltage === "og" || p.term === "cift") && !p.unitKr) hata("Orta gerilim ya da çift terimde elle birim fiyat girilmeli; EPDK tablosu yalnız AG tek terimi kapsıyor.");
   if (n.dcAcRatio != null && (n.dcAcRatio > 1.3 || n.dcAcRatio < 0.85)) uyari(`DC/AC oranı ${n.dcAcRatio.toFixed(2)}; önerilen aralık 0,85-1,30.`);
   if (p.abone === "mesken" && n.acKw > 25) uyari("Mesken aboneliğinde AC güç en fazla 25 kW olabilir.");
   if (p.contractKw && n.acKw > p.contractKw) uyari(`AC güç (${n.acKw} kW) sözleşme gücünü (${p.contractKw} kW) aşıyor.`);
   if (p.battery && p.inverter && !/hibrit|hybrid/i.test(p.inverter.name)) uyari("Bataryalı teklifte hibrit olmayan invertör seçili.");
-  if (n.annualKwh <= 0) uyari("Tüketim girilmedi; tasarruf ve geri ödeme belgede yer almaz.");
+  if (onGrid && n.annualKwh <= 0) uyari("Tüketim girilmedi; tasarruf ve geri ödeme belgede yer almaz.");
+  if (!onGrid && !p.currentEnergyCostTl) uyari("Mevcut yıllık enerji gideri girilmedi; geri ödeme hesaplanmaz.");
   if (p.usdDate && p.showTl) {
     const [d, m, y] = p.usdDate.split(".").map(Number);
     const age = (Date.now() - new Date(y, m - 1, d).getTime()) / 864e5;
@@ -160,4 +164,19 @@ export function quoteChecks(p: Proposal, n: ProposalNumbers, minMarginPct: numbe
     if (cost > 0 && ((net - cost) / cost) * 100 < minMarginPct) uyari(`Kâr oranı %${(((net - cost) / cost) * 100).toFixed(0)}; alt sınır %${minMarginPct}.`);
   }
   return out;
+}
+
+export type Recipe = { slug: string; name: string; kind: "offgrid" | "sulama"; bom: { qty: number; name: string; unit: number }[] };
+const isPanelRow = (name: string) => /panel/i.test(name) && !/kablo|konstr|montaj|set/i.test(name);
+
+/** Off grid ve sulama: mağaza paketinin reçetesi kalem listesi olur. */
+export function recipeLines(r: Recipe, marginPct: number, uid: () => string): PriceLine[] {
+  return r.bom.map((b) => ({ id: uid(), ad: b.name, adet: b.qty, birim: "adet", maliyetUsd: b.unit, marjPct: marginPct, birimFiyat: salePrice(b.unit, marginPct), kind: isPanelRow(b.name) ? ("panel" as const) : undefined }));
+}
+
+/** Tasarımdaki panel sayısına en yakın (mümkünse yetecek kadar büyük) paket. */
+export function pickRecipe(list: Recipe[], kind: Recipe["kind"], panelCount: number) {
+  const own = list.filter((r) => r.kind === kind && r.bom.length);
+  const count = (r: Recipe) => r.bom.filter((b) => isPanelRow(b.name)).reduce((a, b) => a + b.qty, 0);
+  return [...own].sort((a, b) => Math.abs(count(a) - panelCount) - Math.abs(count(b) - panelCount))[0] ?? null;
 }
