@@ -165,6 +165,11 @@ export default function CalculationLeadsPage() {
                   <a href={`tel:${r.phone.replace(/\s+/g, "")}`} className="flex items-center gap-1 rounded-full border border-line px-3 py-1.5 text-[13px] font-semibold text-ink hover:border-brand">
                     <PhoneCall size={14} /> {r.phone}
                   </a>
+                  {r.type === "on_grid" && (
+                    <a href={`/admin/teklif-studyosu?calc=${r.id}`} className="rounded-full bg-brand px-3 py-1.5 text-[13px] font-semibold text-paper hover:bg-brand-deep">
+                      Teklif hazırla
+                    </a>
+                  )}
                   <a href={whatsappLink(waNumber(r.phone), waMessage(r))} target="_blank" rel="noopener noreferrer" className="rounded-full border border-line p-2 text-volt hover:border-volt" aria-label="WhatsApp">
                     <MessageCircle size={15} />
                   </a>

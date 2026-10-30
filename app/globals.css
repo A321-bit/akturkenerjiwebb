@@ -207,3 +207,39 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Teklif belgesi (admin Teklif Stüdyosu): ekranda A4 önizleme, yazdırmada yalnızca belge. */
+.proposal-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 14mm 16mm 26mm;
+  box-shadow: 0 20px 50px -30px rgba(14, 22, 38, 0.45);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .proposal-doc,
+  .proposal-doc * {
+    visibility: visible;
+  }
+  .proposal-doc {
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+  .proposal-sheet {
+    box-shadow: none;
+    height: 297mm;
+    overflow: hidden;
+  }
+  .proposal-break {
+    break-after: page;
+  }
+}

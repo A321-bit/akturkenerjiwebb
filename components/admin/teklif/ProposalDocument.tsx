@@ -1,0 +1,234 @@
+/* eslint-disable @next/next/no-img-element -- yazdırma belgesinde data URL görselleri */
+import { YON_ADI, isFlat } from "@/lib/teklif/geometry";
+import type { Proposal, ProposalNumbers } from "@/lib/teklif/proposal";
+import { ABONE_ADLARI } from "@/lib/elektrik-tarife";
+
+// Teklif belgesi (A4). Tarayıcının "PDF olarak kaydet" çıktısı için tasarlanmıştır;
+// ekranda da önizleme olarak gösterilir.
+
+export type Company = { name: string; phone: string; email: string; address: string; web: string };
+
+const AY = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+const tl = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} TL`;
+const num = (n: number, d = 0) => n.toLocaleString("tr-TR", { maximumFractionDigits: d, minimumFractionDigits: d });
+const date = (iso: string, addDays = 0) => new Date(new Date(iso).getTime() + addDays * 864e5).toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
+
+function Sheet({ children, last }: { children: React.ReactNode; last?: boolean }) {
+  return <section className={`proposal-sheet relative mx-auto bg-white text-[#0e1626] ${last ? "" : "proposal-break"}`}>{children}</section>;
+}
+
+function Head({ company, title, no }: { company: Company; title: string; no: string }) {
+  return (
+    <header className="flex items-center justify-between border-b-2 border-[#0e1626] pb-3">
+      <img src="/logo.svg" alt={company.name} className="h-9" />
+      <div className="text-right">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-[#5b6577]">{title}</p>
+        <p className="font-mono text-[11px] font-semibold">{no}</p>
+      </div>
+    </header>
+  );
+}
+
+function Foot({ company, page }: { company: Company; page: number }) {
+  return (
+    <footer className="absolute bottom-[12mm] left-[16mm] right-[16mm] flex justify-between border-t border-[#d9dee6] pt-2 text-[9px] text-[#5b6577]">
+      <span>
+        {company.name} · {company.address}
+      </span>
+      <span>
+        {company.phone} · {company.email} · Sayfa {page}
+      </span>
+    </footer>
+  );
+}
+
+function Fig({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-[#f2f5f9] px-3 py-2.5">
+      <p className="text-[9.5px] uppercase tracking-wide text-[#5b6577]">{label}</p>
+      <p className="mt-0.5 font-mono text-[15px] font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function Chart({ prod, cons }: { prod: number[]; cons: number[] }) {
+  const max = Math.max(1, ...prod, ...cons);
+  const W = 520;
+  const H = 150;
+  const bw = W / 12;
+  return (
+    <svg viewBox={`0 0 ${W} ${H + 34}`} className="w-full">
+      {[0.25, 0.5, 0.75, 1].map((f) => (
+        <line key={f} x1={0} x2={W} y1={H - H * f} y2={H - H * f} stroke="#e6eaf0" />
+      ))}
+      {prod.map((p, i) => {
+        const hp = (p / max) * H;
+        const hc = (cons[i] / max) * H;
+        const x = i * bw + bw * 0.14;
+        const w = bw * 0.34;
+        return (
+          <g key={i}>
+            <rect x={x} y={H - hp} width={w} height={hp} rx={2} fill="#3f74c4" />
+            {cons.some((c) => c > 0) && <rect x={x + w + 2} y={H - hc} width={w} height={hc} rx={2} fill="#d4861f" />}
+            <text x={x + w} y={H - Math.max(hp, hc) - 4} textAnchor="middle" fontSize="8" fill="#3d4757" fontFamily="monospace">
+              {Math.round(p).toLocaleString("tr-TR")}
+            </text>
+            <text x={x + w} y={H + 13} textAnchor="middle" fontSize="9" fill="#5b6577">
+              {AY[i]}
+            </text>
+          </g>
+        );
+      })}
+      <g fontSize="9" fill="#3d4757">
+        <rect x={0} y={H + 22} width={9} height={9} rx={2} fill="#3f74c4" />
+        <text x={13} y={H + 30}>Güneş üretimi (kWh)</text>
+        {cons.some((c) => c > 0) && (
+          <>
+            <rect x={130} y={H + 22} width={9} height={9} rx={2} fill="#d4861f" />
+            <text x={143} y={H + 30}>Tüketiminiz (kWh)</text>
+          </>
+        )}
+      </g>
+    </svg>
+  );
+}
+
+export default function ProposalDocument({ p, n, company }: { p: Proposal; n: ProposalNumbers; company: Company }) {
+  const hasCons = p.monthlyBillTl > 0;
+  return (
+    <div className="proposal-doc space-y-6 print:space-y-0">
+      {/* 1. Kapak ve özet */}
+      <Sheet>
+        <Head company={company} title="Güneş enerjisi sistemi teklifi" no={p.proposalNo} />
+        <div className="mt-6 grid grid-cols-[1.3fr_1fr] gap-6">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.16em] text-[#d4861f]">Sayın</p>
+            <h1 className="mt-1 text-[24px] font-semibold leading-tight">{p.customer.name || "Müşteri"}</h1>
+            <p className="mt-1 text-[11.5px] text-[#3d4757]">
+              {[p.customer.address, p.customer.province].filter(Boolean).join(", ")}
+              {p.customer.phone ? ` · ${p.customer.phone}` : ""}
+            </p>
+            <p className="mt-4 text-[12px] leading-relaxed text-[#3d4757]">
+              Çatınız için hazırladığımız {num(n.dcKwp, 2)} kWp güneş enerjisi sisteminin tasarımını, beklenen üretimini, tasarruf hesabını ve fiyatını bilgilerinize sunarız.
+            </p>
+          </div>
+          <dl className="space-y-1 rounded-lg border border-[#d9dee6] p-3 text-[11px]">
+            <div className="flex justify-between"><dt className="text-[#5b6577]">Teklif no</dt><dd className="font-mono font-semibold">{p.proposalNo}</dd></div>
+            <div className="flex justify-between"><dt className="text-[#5b6577]">Tarih</dt><dd>{date(p.createdAt)}</dd></div>
+            <div className="flex justify-between"><dt className="text-[#5b6577]">Geçerlilik</dt><dd>{date(p.createdAt, p.validDays)}</dd></div>
+            <div className="flex justify-between"><dt className="text-[#5b6577]">Abonelik</dt><dd>{ABONE_ADLARI[p.abone]}</dd></div>
+          </dl>
+        </div>
+        {p.images?.perspective && <img src={p.images.perspective} alt="Sistem 3B görünümü" className="mt-5 h-[92mm] w-full rounded-xl object-cover" />}
+        <div className="mt-5 grid grid-cols-4 gap-2.5">
+          <Fig label="Sistem gücü" value={`${num(n.dcKwp, 2)} kWp`} />
+          <Fig label="Panel" value={`${n.panelCount} adet`} />
+          <Fig label="Yıllık üretim" value={`${num(n.annualProduction)} kWh`} />
+          <Fig label="Teklif tutarı" value={tl(n.total)} />
+          {hasCons && <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />}
+          {hasCons && <Fig label="Geri ödeme" value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />}
+          {hasCons && <Fig label="Tüketimi karşılama" value={`%${num(n.coveragePct)}`} />}
+          <Fig label="Yıllık CO₂ azaltımı" value={`${num(n.co2Tons, 1)} ton`} />
+        </div>
+        <Foot company={company} page={1} />
+      </Sheet>
+
+      {/* 2. Tasarım ve üretim */}
+      <Sheet>
+        <Head company={company} title="Sistem tasarımı ve üretim" no={p.proposalNo} />
+        <div className="mt-5 grid grid-cols-[1fr_1fr] gap-5">
+          {p.images?.top ? <img src={p.images.top} alt="Panel yerleşimi (üstten)" className="h-[78mm] w-full rounded-xl object-cover" /> : <div />}
+          <div>
+            <h2 className="text-[13px] font-semibold">Ekipman</h2>
+            <table className="mt-2 w-full text-[11px]">
+              <tbody>
+                <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Güneş paneli</td><td className="py-1.5 text-right">{n.panelCount} × {p.panel.name} ({p.panel.wp} Wp)</td></tr>
+                {p.inverter && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">İnvertör</td><td className="py-1.5 text-right">{p.inverter.adet} × {p.inverter.name}</td></tr>}
+                <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">DC güç / AC güç</td><td className="py-1.5 text-right">{num(n.dcKwp, 2)} kWp / {n.acKw ? `${num(n.acKw, 1)} kW` : "—"}</td></tr>
+                <tr><td className="py-1.5 text-[#5b6577]">Özgül üretim</td><td className="py-1.5 text-right">{num(n.specificYield)} kWh/kWp·yıl</td></tr>
+              </tbody>
+            </table>
+            <h2 className="mt-4 text-[13px] font-semibold">Çatı yüzeyleri</h2>
+            <table className="mt-2 w-full text-[10.5px]">
+              <thead className="text-[#5b6577]">
+                <tr className="border-b border-[#d9dee6] text-left"><th className="py-1 font-medium">Yüzey</th><th className="font-medium">Yön / eğim</th><th className="text-right font-medium">Panel</th><th className="text-right font-medium">kWp</th><th className="text-right font-medium">kWh/yıl</th></tr>
+              </thead>
+              <tbody>
+                {n.byFace.filter((f) => f.count > 0).map((f) => {
+                  const face = p.faces.find((x) => x.id === f.faceId)!;
+                  return (
+                    <tr key={f.faceId} className="border-b border-[#e6eaf0]">
+                      <td className="py-1">{f.name}</td>
+                      <td>{YON_ADI(face.azimuth)} · {isFlat(face) ? `düz, sehpa ${face.mountTilt}°` : `${face.pitch}°`}</td>
+                      <td className="text-right">{f.count}</td>
+                      <td className="text-right">{num(f.kwp, 2)}</td>
+                      <td className="text-right">{num(f.annualKwh)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <h2 className="mt-6 text-[13px] font-semibold">Aylık üretim{hasCons ? " ve tüketim" : ""}</h2>
+        <p className="text-[10px] text-[#5b6577]">Avrupa Komisyonu PVGIS uydu güneş verisiyle, her çatı yüzeyinin yönü ve eğimine göre hesaplanmıştır (%14 sistem kaybı dahil).</p>
+        <div className="mt-2"><Chart prod={n.monthlyProduction} cons={hasCons ? n.monthlyKwh : n.monthlyProduction.map(() => 0)} /></div>
+        {hasCons && (
+          <div className="mt-3 grid grid-cols-4 gap-2.5">
+            <Fig label="Bugünkü aylık fatura" value={tl(p.monthlyBillTl)} />
+            <Fig label="Yıllık tüketim" value={`${num(n.annualKwh)} kWh`} />
+            <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />
+            <Fig label="25 yılda tasarruf" value={tl(n.savings25Tl)} />
+          </div>
+        )}
+        <Foot company={company} page={2} />
+      </Sheet>
+
+      {/* 3. Fiyat ve koşullar */}
+      <Sheet last>
+        <Head company={company} title="Fiyat ve koşullar" no={p.proposalNo} />
+        <table className="mt-5 w-full text-[11px]">
+          <thead>
+            <tr className="border-b-2 border-[#0e1626] text-left">
+              <th className="py-1.5 font-semibold">Kalem</th>
+              <th className="text-right font-semibold">Miktar</th>
+              <th className="text-right font-semibold">Birim fiyat</th>
+              <th className="text-right font-semibold">Tutar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {p.lines.map((l) => (
+              <tr key={l.id} className="border-b border-[#e6eaf0]">
+                <td className="py-1.5">{l.ad}</td>
+                <td className="text-right">{num(l.adet)} {l.birim}</td>
+                <td className="text-right">{tl(l.birimFiyat)}</td>
+                <td className="text-right font-mono">{tl(l.adet * l.birimFiyat)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="text-[11.5px]">
+            <tr><td colSpan={3} className="pt-2 text-right text-[#5b6577]">Ara toplam</td><td className="pt-2 text-right font-mono">{tl(n.subtotal)}</td></tr>
+            {p.discountTl > 0 && <tr><td colSpan={3} className="text-right text-[#5b6577]">İndirim</td><td className="text-right font-mono">−{tl(p.discountTl)}</td></tr>}
+            <tr><td colSpan={3} className="text-right text-[#5b6577]">{p.pricesIncludeVat ? "Dahil KDV (%20)" : "KDV (%20)"}</td><td className="text-right font-mono">{tl(n.vat)}</td></tr>
+            <tr className="text-[14px]"><td colSpan={3} className="pt-1 text-right font-semibold">Genel toplam (KDV dahil)</td><td className="pt-1 text-right font-mono font-semibold">{tl(n.total)}</td></tr>
+          </tfoot>
+        </table>
+
+        <div className="mt-6 space-y-4 text-[11px] leading-relaxed text-[#3d4757]">
+          <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Ödeme koşulları</h3><p className="mt-1 whitespace-pre-line">{p.paymentTerms}</p></div>
+          <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Teklif kapsamı</h3><p className="mt-1 whitespace-pre-line">{p.scopeNotes}</p></div>
+          <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Garanti</h3><p className="mt-1 whitespace-pre-line">{p.warrantyNotes}</p></div>
+          <p className="text-[10px] text-[#5b6577]">
+            Üretim ve tasarruf değerleri; konumunuzun uzun yıllık güneş verisi, EPDK güncel elektrik tarifesi ve aylık mahsuplaşma esasına göre hesaplanmış tahminlerdir. Hava koşulları, gölgelenme ve tarife değişiklikleri sonuçları etkileyebilir. Teklif {date(p.createdAt, p.validDays)} tarihine kadar geçerlidir.
+          </p>
+        </div>
+
+        <div className="mt-10 grid grid-cols-2 gap-10 text-[11px]">
+          <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{company.name}</p><p className="text-[#5b6577]">Kaşe / imza</p></div>
+          <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{p.customer.name || "Müşteri"}</p><p className="text-[#5b6577]">Onay / imza</p></div>
+        </div>
+        <Foot company={company} page={3} />
+      </Sheet>
+    </div>
+  );
+}

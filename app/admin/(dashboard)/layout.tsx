@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList, Search, Globe, ChevronDown, Calculator } from "lucide-react";
+import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList, Search, Globe, ChevronDown, Calculator, PencilRuler } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: typeof Inbox };
 type NavEntry = NavItem | { group: string; icon: typeof Inbox; items: NavItem[] };
@@ -18,6 +18,7 @@ const nav: NavEntry[] = [
       { href: "/admin/talepler", label: "Tüm Talepler", icon: Inbox },
       { href: "/admin/web-formlari", label: "Web Sitesi Formları", icon: Globe },
       { href: "/admin/hesaplama-talepleri", label: "Hesaplama Talepleri", icon: Calculator },
+      { href: "/admin/teklif-studyosu", label: "Teklif Stüdyosu", icon: PencilRuler },
       { href: "/admin/meta-formlari", label: "Meta Formları", icon: ClipboardList },
       { href: "/admin/potansiyel-musteriler", label: "Potansiyel Müşteriler", icon: Target },
       { href: "/admin/is-basvurulari", label: "İş Başvuruları", icon: Users },
