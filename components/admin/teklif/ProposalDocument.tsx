@@ -105,7 +105,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
             <p className="text-[11px] uppercase tracking-[0.16em] text-[#d4861f]">Sayın</p>
             <h1 className="mt-1 text-[24px] font-semibold leading-tight">{p.customer.name || "Müşteri"}</h1>
             <p className="mt-1 text-[11.5px] text-[#3d4757]">
-              {[p.customer.address, p.customer.province].filter(Boolean).join(", ")}
+              {[p.customer.address, p.customer.mahalle, p.customer.province, p.customer.ada && p.customer.parsel ? `Ada/Parsel: ${p.customer.ada}/${p.customer.parsel}` : null].filter(Boolean).join(", ")}
               {p.customer.phone ? ` · ${p.customer.phone}` : ""}
             </p>
             <p className="mt-4 text-[12px] leading-relaxed text-[#3d4757]">

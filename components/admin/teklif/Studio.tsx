@@ -7,6 +7,8 @@ import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type InverterChoice, type PriceLine, type Proposal } from "@/lib/teklif/proposal";
 import ProposalDocument, { type Company } from "./ProposalDocument";
+import LocateBar from "./LocateBar";
+import type { Parcel } from "@/lib/teklif/locate";
 import type { EditorMode } from "./SatelliteEditor";
 import type { Roof3DHandle } from "./Roof3D";
 
@@ -66,6 +68,7 @@ export default function Studio({ panels, inverters, packages, company, initialCa
   const [mode, setMode] = useState<EditorMode>("sec");
   const [selected, setSelected] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [focus, setFocus] = useState<{ center: LatLon; zoom: number; key: number } | null>(null);
   const [list, setList] = useState<{ id: number; proposal_no: string; customer_name: string | null; total: number | null; updated_at: string }[] | null>(null);
   const [loaded, setLoaded] = useState(false);
   const r3d = useRef<Roof3DHandle>(null);
@@ -162,6 +165,18 @@ export default function Studio({ panels, inverters, packages, company, initialCa
     setP((x) => ({ ...x, site: { ...x.site, center }, faces: [...x.faces, face] }));
     setSelected(face.id);
     setMode("sec");
+  }
+  // Çatı bulma: henüz yüzey çizilmediyse tasarım merkezi de yeni konuma alınır (3B uydu zemini için).
+  function locate(center: LatLon, zoom: number) {
+    setFocus({ center, zoom, key: Date.now() });
+    setP((x) => (x.faces.length ? x : { ...x, site: { ...x.site, center, zoom } }));
+  }
+  function foundParcel(c: Parcel | null) {
+    setP((x) => ({
+      ...x,
+      parcelRing: c?.ring ?? null,
+      customer: c ? { ...x.customer, province: x.customer.province || c.il, mahalle: c.mahalle, ada: c.ada, parsel: c.parsel } : x.customer,
+    }));
   }
   const patchFace = (id: string, patch: Partial<RoofFace>) => setP((x) => ({ ...x, faces: x.faces.map((f) => (f.id === id ? { ...f, ...patch } : f)) }));
   function fill(id: string) {
@@ -299,6 +314,11 @@ export default function Studio({ panels, inverters, packages, company, initialCa
           <Field label="E-posta" value={p.customer.email} onChange={(v) => update({ customer: { ...p.customer, email: v } })} />
           <Field label="İl" value={p.customer.province} onChange={(v) => update({ customer: { ...p.customer, province: v } })} />
           <Field label="Adres" value={p.customer.address} onChange={(v) => update({ customer: { ...p.customer, address: v } })} className="sm:col-span-2" />
+          <Field label="Mahalle" value={p.customer.mahalle ?? ""} onChange={(v) => update({ customer: { ...p.customer, mahalle: v } })} />
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Ada" value={p.customer.ada ?? ""} onChange={(v) => update({ customer: { ...p.customer, ada: v } })} />
+            <Field label="Parsel" value={p.customer.parsel ?? ""} onChange={(v) => update({ customer: { ...p.customer, parsel: v } })} />
+          </div>
           <label className="block">
             <span className="text-[12.5px] font-semibold text-slate">Abonelik</span>
             <select value={p.abone} onChange={(e) => update({ abone: e.target.value as AboneGrubu })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
@@ -326,6 +346,7 @@ export default function Studio({ panels, inverters, packages, company, initialCa
                 </>
               )}
             </div>
+            {view === "2d" && <LocateBar onFocus={locate} onParcel={foundParcel} />}
             {view === "2d" && (
               <SatelliteEditor
                 center={p.site.center}
@@ -339,6 +360,8 @@ export default function Studio({ panels, inverters, packages, company, initialCa
                 onFaceDrawn={addFace}
                 onSelectFace={setSelected}
                 onPanelClick={togglePanel}
+                focus={focus}
+                parcelRing={p.parcelRing}
               />
             )}
             <div className={view === "3d" ? "" : "pointer-events-none fixed -left-[3000px] top-0 h-[560px] w-[1000px]"}>

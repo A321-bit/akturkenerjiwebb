@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { LayerGroup, Map as LeafletMap } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Search } from "lucide-react";
 import { cellFootprint, toLatLon, toXY, type FaceFrame, type LatLon, type LayoutSettings, type PanelCell, type XY } from "@/lib/teklif/geometry";
 import { ESRI, getImagery } from "@/lib/teklif/imagery";
 
@@ -25,6 +24,10 @@ type Props = {
   onSelectFace: (id: string | null) => void;
   /** Panel modunda tıklanan nokta (tasarım merkezine göre metre). */
   onPanelClick: (p: XY) => void;
+  /** Harita bu konuma götürülür (adres, koordinat, parsel araması). */
+  focus?: { center: LatLon; zoom: number; key: number } | null;
+  /** Parsel sınırı (turuncu çizgi); tıklamaları engellemez. */
+  parcelRing?: LatLon[] | null;
 };
 
 export default function SatelliteEditor(props: Props) {
@@ -32,11 +35,11 @@ export default function SatelliteEditor(props: Props) {
   const map = useRef<LeafletMap | null>(null);
   const layer = useRef<LayerGroup | null>(null);
   const draftLayer = useRef<LayerGroup | null>(null);
+  const parcelLayer = useRef<LayerGroup | null>(null);
   const L = useRef<typeof import("leaflet") | null>(null);
   const propsRef = useRef(props);
   const [draft, setDraft] = useState<LatLon[]>([]);
   const draftRef = useRef<LatLon[]>([]);
-  const [query, setQuery] = useState("");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -63,6 +66,7 @@ export default function SatelliteEditor(props: Props) {
       });
       layer.current = lib.layerGroup().addTo(m);
       draftLayer.current = lib.layerGroup().addTo(m);
+      parcelLayer.current = lib.layerGroup().addTo(m);
       m.on("moveend", () => {
         const c = m.getCenter();
         propsRef.current.onView([c.lat, c.lng], m.getZoom());
@@ -139,27 +143,21 @@ export default function SatelliteEditor(props: Props) {
     shown.forEach((p) => g.addLayer(lib.circleMarker(p, { radius: 4, color: "#f5b301", fillColor: "#fff", fillOpacity: 1, weight: 2 })));
   }, [draft, drawing, ready]);
 
-  async function search() {
-    if (query.trim().length < 3 || !map.current) return;
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=tr&accept-language=tr&q=${encodeURIComponent(query)}`);
-    const [hit] = await r.json();
-    if (hit) map.current.setView([Number(hit.lat), Number(hit.lon)], 20);
-  }
+  const { focus, parcelRing } = props;
+  useEffect(() => {
+    if (ready && focus) map.current?.setView(focus.center, focus.zoom);
+  }, [focus, ready]);
+
+  useEffect(() => {
+    const lib = L.current;
+    const g = parcelLayer.current;
+    if (!ready || !lib || !g) return;
+    g.clearLayers();
+    if (parcelRing?.length) g.addLayer(lib.polygon(parcelRing, { color: "#ff7a1a", weight: 2.5, fill: false, interactive: false }));
+  }, [parcelRing, ready]);
 
   return (
     <div className="relative">
-      <div className="absolute left-14 right-3 top-3 z-[500] flex max-w-md gap-2">
-        <div className="flex flex-1 items-center rounded-lg bg-paper-raised/95 shadow">
-          <Search size={15} className="ml-2.5 text-slate" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && search()}
-            placeholder="Adres ara (mahalle, sokak, ilçe)"
-            className="w-full bg-transparent px-2 py-2 text-[13px] outline-none"
-          />
-        </div>
-      </div>
       {props.mode === "ciz" && (
         <div className="absolute bottom-3 left-3 z-[500] flex items-center gap-2 rounded-lg bg-ink/85 px-3 py-2 text-[12.5px] text-paper">
           <span>Çatı yüzeyinin köşelerine sırayla tıklayın ({draft.length} nokta)</span>
