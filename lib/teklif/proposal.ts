@@ -22,7 +22,7 @@ export type Proposal = {
   createdAt: string;
   validDays: number;
   calcId?: number;
-  customer: { name: string; phone: string; email: string; address: string; province: string; mahalle?: string; ada?: string; parsel?: string };
+  customer: { name: string; phone: string; email: string; address: string; province: string; district?: string; mahalle?: string; ada?: string; parsel?: string };
   /** Parsel Sorgu'dan bulunan sınır (haritada gösterilir). */
   parcelRing?: LatLon[] | null;
   abone: AboneGrubu;

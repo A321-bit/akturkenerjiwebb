@@ -10,6 +10,7 @@ import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, quoteChecks, salePrice, si
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
 import { suggestBattery } from "@/lib/teklif/simulate";
 import { shadeLosses } from "@/lib/teklif/shading";
+import CustomerPlace from "./CustomerPlace";
 import PricingRules from "./PricingRules";
 import StringDesign from "./StringDesign";
 import ProposalDocument, { type Company } from "./ProposalDocument";
@@ -535,10 +536,10 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       {/* 1. Müşteri */}
       {tab === 0 && (
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Field label="Ad soyad / firma" value={p.customer.name} onChange={(v) => update({ customer: { ...p.customer, name: v } })} />
-          <Field label="Telefon" value={p.customer.phone} onChange={(v) => update({ customer: { ...p.customer, phone: v } })} />
+          <Field label="Ad soyad *" value={p.customer.name} onChange={(v) => update({ customer: { ...p.customer, name: v } })} />
+          <Field label="Telefon *" value={p.customer.phone} onChange={(v) => update({ customer: { ...p.customer, phone: v } })} />
           <Field label="E-posta" value={p.customer.email} onChange={(v) => update({ customer: { ...p.customer, email: v } })} />
-          <Field label="İl" value={p.customer.province} onChange={(v) => update({ customer: { ...p.customer, province: v } })} />
+          <CustomerPlace province={p.customer.province} district={p.customer.district ?? ""} onChange={(x) => update({ customer: { ...p.customer, ...x } })} />
           <Field label="Adres" value={p.customer.address} onChange={(v) => update({ customer: { ...p.customer, address: v } })} className="sm:col-span-2" />
           <Field label="Mahalle" value={p.customer.mahalle ?? ""} onChange={(v) => update({ customer: { ...p.customer, mahalle: v } })} />
           <div className="grid grid-cols-2 gap-4">

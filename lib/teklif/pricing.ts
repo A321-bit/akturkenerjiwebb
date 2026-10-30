@@ -124,7 +124,14 @@ export function quoteChecks(p: Proposal, n: ProposalNumbers, minMarginPct: numbe
   const hata = (text: string) => out.push({ level: "hata", text });
   const uyari = (text: string) => out.push({ level: "uyari", text });
   const mode = p.priceMode ?? "malzeme";
-  if (!p.customer.name.trim()) hata("Müşteri adı girilmedi.");
+  const c = p.customer;
+  if (c.name.trim().split(/\s+/).length < 2) hata("Müşterinin adı ve soyadı girilmedi.");
+  const tel = c.phone.replace(/\D/g, "").replace(/^90/, "").replace(/^0/, "");
+  if (tel.length !== 10) hata("Telefon numarası eksik ya da hatalı (10 hane olmalı).");
+  if (!c.province.trim()) hata("İl girilmedi.");
+  if (!c.district?.trim()) hata("İlçe girilmedi.");
+  if (!c.email.trim()) uyari("E-posta girilmedi.");
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim())) hata("E-posta adresi hatalı.");
   if (n.panelCount === 0) hata("Çatıda panel yok.");
   if (n.total <= 0) hata("Teklif tutarı 0.");
   if (mode === "malzeme") {
