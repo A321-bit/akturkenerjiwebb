@@ -327,10 +327,14 @@ export function MonthlyPair({ a, b, aLabel, bLabel, unit, format = (n: number) =
       <div className="relative mt-5 flex h-44 items-end gap-1.5" onMouseLeave={() => setHover(null)}>
         {a.map((p, i) => (
           <div key={i} className="flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(i)}>
-            <div className="flex h-full items-end justify-center gap-[2px]">
-              <div className="relative w-1/2 rounded-t-[4px]" style={{ height: `${(p / max) * 100}%`, background: aColor, opacity: hover == null || hover === i ? 1 : 0.45 }}>
-                {p > 0 && <span className="absolute bottom-full left-1/2 mb-0.5 -translate-x-1/2 whitespace-nowrap font-mono-data text-[8.5px] font-semibold text-slate sm:text-[10px]">{num(p)}</span>}
-              </div>
+            <div className="relative flex h-full items-end justify-center gap-[2px]">
+              {/* Değer, çiftin uzun çubuğunun üstüne yazılır; yandaki çubukla çakışmaz. */}
+              {p > 0 && (
+                <span className="absolute left-1/2 mb-0.5 -translate-x-1/2 whitespace-nowrap font-mono-data text-[8.5px] font-semibold text-slate sm:text-[10px]" style={{ bottom: `${(Math.max(p, b[i]) / max) * 100}%` }}>
+                  {num(p)}
+                </span>
+              )}
+              <div className="w-1/2 rounded-t-[4px]" style={{ height: `${(p / max) * 100}%`, background: aColor, opacity: hover == null || hover === i ? 1 : 0.45 }} />
               <div className="w-1/2 rounded-t-[4px]" style={{ height: `${(b[i] / max) * 100}%`, background: bColor, opacity: hover == null || hover === i ? 1 : 0.45 }} />
             </div>
             <span className="mt-1 text-center text-[10.5px] text-slate">{AYLAR[i]}</span>

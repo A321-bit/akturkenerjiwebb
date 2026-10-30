@@ -207,7 +207,7 @@ function Result({
         </section>
       </div>
 
-      <CallUs contact={contact} team="Ziraat ve elektrik mühendislerimiz" waText="Merhaba, sitenizde güneş enerjili sulama fizibilite raporumu oluşturdum. Ücretsiz keşif için görüşmek istiyorum." />
+      <CallUs contact={contact} team="Mühendislerimiz" waText="Merhaba, sitenizde güneş enerjili sulama fizibilite raporumu oluşturdum. Ücretsiz keşif için görüşmek istiyorum." />
 
       <p className="mt-4 text-[12px] leading-relaxed text-slate">
         Bu rapor; ürünün ortalama sezonluk sulama suyu ihtiyacı (yağış düşülmüş), sulama yönteminin randımanı, pompa derinliği ve arazinizin güneş verisiyle hazırlanmış bir ön fizibilitedir.
