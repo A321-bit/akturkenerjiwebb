@@ -91,6 +91,8 @@ export type HeatPumpResult = {
   paybackYears: number | null;
   co2TonsPerYear: number;
   elPrice: number;
+  /** Evin ısınma dışı tüketiminin (alt kademe) birim fiyatı; güneş fazlası bununla değerlenir. */
+  elPriceBase: number;
   /** Isı pompasının yıllık elektriğini karşılayacak güneş sistemi (kWp). */
   pvKwp: number;
   calibrated: boolean;
@@ -180,9 +182,24 @@ export function calculateHeatPump(input: HeatPumpInput, climate: Climate, option
     paybackYears: pkg?.price && annualSavingTl > 0 ? Math.round((pkg.price / annualSavingTl) * 10) / 10 : null,
     co2TonsPerYear: Math.round(((annualHeatKwh / yakit.verim) * yakit.co2 - annualElKwh * SEBEKE_CO2) / 100) / 10,
     elPrice,
-    pvKwp: Math.max(1, Math.round((annualElKwh / 1450) * 2) / 2),
+    elPriceBase: bf.dusuk,
+    pvKwp: Math.max(1, Math.round((annualElKwh / PV_KWH_PER_KWP) * 2) / 2),
     calibrated,
   };
+}
+
+export const PV_KWH_PER_KWP = 1450;
+/** Güneş fazlasının evin diğer tüketimine sayılan üst sınırı (kWh/yıl; ortalama konut tüketimi). */
+export const EV_TUKETIMI_KWH = 3000;
+
+/** Isı pompası + güneş paketi: yatırım, yıllık kazanç ve geri ödeme. */
+export function solarCombo(r: HeatPumpResult, solar: { kw: number; price?: number } | null) {
+  if (!solar?.price || !r.package?.price) return null;
+  const production = solar.kw * 1.1 * PV_KWH_PER_KWP;
+  const extraKwh = Math.min(EV_TUKETIMI_KWH, Math.max(0, production - r.annualElKwh));
+  const saving = r.currentAnnualTl + extraKwh * r.elPriceBase;
+  const cost = r.package.price + solar.price;
+  return { cost, saving: Math.round(saving), extraKwh: Math.round(extraKwh), production: Math.round(production), payback: Math.round((cost / saving) * 10) / 10 };
 }
 
 /** Satış önceliği (0-100): büyük ihtiyaç, yüksek tasarruf ve kısa geri ödeme öne çıkar. */

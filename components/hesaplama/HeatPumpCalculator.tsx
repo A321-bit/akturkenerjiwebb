@@ -11,6 +11,7 @@ import {
   calculateHeatPump,
   fallbackClimate,
   heatPumpScore,
+  solarCombo,
   type BinaTipi,
   type Climate,
   type HeatPumpInput,
@@ -192,8 +193,9 @@ function Result({
   const yakit = YAKITLAR[input.yakit];
   // Güneş paketi: ısı pompasının yıllık elektriğini karşılayan en küçük fiyatlı paket (paket gücü AC; DC ≈ 1,1 kat).
   const solar = solarPackages.filter((p) => p.price && p.kw * 1.1 >= r.pvKwp).sort((a, b) => a.kw - b.kw)[0] ?? null;
-  const comboCost = r.package?.price && solar?.price ? r.package.price + solar.price : null;
-  const comboPayback = comboCost && r.currentAnnualTl > 0 ? comboCost / r.currentAnnualTl : null;
+  const combo = solarCombo(r, solar);
+  // Doğalgaz ucuz olduğundan cihaz tek başına geç amorti eder; asıl kazanç güneşle birlikte kurulumdadır.
+  const longAlone = r.paybackYears == null || r.paybackYears > 12;
 
   return (
     <div>
@@ -209,6 +211,11 @@ function Result({
               Binanızın en soğuk günde ({designT} °C) ihtiyacı {num(r.peakKw, 1)} kW · yılda {num(r.annualHeatKwh)} kWh ısı{input.kisi > 0 ? " ve sıcak su" : ""}
             </p>
             {r.calibrated && <p className="mt-3 rounded-lg bg-paper/10 px-3 py-2 text-[13px] text-sun-soft">Hesap, geçen kışki harcamanıza göre evinizin gerçek tüketimine ayarlandı.</p>}
+            {longAlone && combo && combo.payback < (r.paybackYears ?? Infinity) && (
+              <p className="mt-3 rounded-lg bg-paper/10 px-3 py-2 text-[13px] text-sun-soft">
+                Isı pompası tek başına mevcut yakıtınıza göre uzun vadede geri öder; güneş enerjisiyle birlikte kurulduğunda geri ödeme {num(combo.payback, 1)} yıla iner (aşağıda).
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Kpi icon={<Wallet size={16} />} label="Yıllık tasarruf" value={r.annualSavingTl > 0 ? tl(r.annualSavingTl) : "Tasarruf yok"} />
@@ -249,11 +256,16 @@ function Result({
               Isı pompasının yıllık {num(r.annualElKwh)} kWh elektriğini yaklaşık {num(r.pvKwp, 1)} kWp güneş sistemi üretir. Yazın fazla üretilen elektrik şebekeye verilir, kışın şebekeden geri çekilir (aylık mahsuplaşma).
             </p>
             <dl className="mt-4 grid gap-x-6 gap-y-1.5 text-[13px] sm:grid-cols-2">
-              {solar && <Row k="Güneş paketi" v={solar.name.replace(" Güneş Paneli Paketi", "")} />}
-              {comboCost && <Row k="Toplam yatırım (cihaz + güneş)" v={tl(comboCost)} />}
-              <Row k="Yıllık tasarruf" v={tl(r.currentAnnualTl)} />
-              {comboPayback && <Row k="Birlikte geri ödeme" v={`${num(comboPayback, 1)} yıl`} />}
+              {solar && <Row k="Güneş paketi" v={`${solar.name.replace(" Güneş Paneli Paketi", "")} · yılda ~${num(combo?.production ?? 0)} kWh`} />}
+              {combo && <Row k="Toplam yatırım (cihaz + güneş)" v={tl(combo.cost)} />}
+              <Row k="Yıllık kazanç" v={tl(combo?.saving ?? r.currentAnnualTl)} />
+              {combo && <Row k="Birlikte geri ödeme" v={`${num(combo.payback, 1)} yıl`} />}
             </dl>
+            {combo && combo.extraKwh > 0 && (
+              <p className="mt-2 text-[12px] text-slate">
+                Kazanç; bugünkü ısınma gideriniz ile paketin ısı pompası dışında kalan üretiminin evinizin diğer elektriğini karşılamasından (yılda {num(combo.extraKwh)} kWh) oluşur.
+              </p>
+            )}
             <Link href="/hesaplama/on-grid" className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand hover:underline">
               Evinizin tüm elektriği için güneş enerjisi hesaplayın <ArrowRight size={15} />
             </Link>
