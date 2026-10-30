@@ -139,7 +139,10 @@ function PaybackChart({ data }: { data: number[] }) {
 
 export default function ProposalDocument({ p, n, company }: { p: Proposal; n: ProposalNumbers; company: Company }) {
   const system = p.systemType ?? "ongrid";
-  const hasCons = n.annualKwh > 0 || (system !== "ongrid" && (p.currentEnergyCostTl ?? 0) > 0);
+  const offGrid = system !== "ongrid";
+  const hasCons = n.annualKwh > 0;
+  // Şebekesiz sistemde tasarruf, girilen mevcut enerji gideridir; girilmediyse tasarruf hesabı belgede yer almaz.
+  const hasSaving = offGrid ? (p.currentEnergyCostTl ?? 0) > 0 : hasCons;
   // Fiyat gösterimi: USD teklifte seçime göre dolar ya da günün kuruyla TL; eski tekliflerde TL.
   const isUsd = p.priceCurrency === "USD";
   const money = (v: number) => (!isUsd ? tl(v) : p.showTl && p.usdTry ? tl(v * p.usdTry) : `${Math.round(v).toLocaleString("tr-TR")} USD`);
@@ -147,7 +150,8 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
   const plan = p.paymentPlan ?? [];
   const hike = p.hikeTable ?? [];
   const reportName = system === "offgrid" ? "Off grid sistem raporu" : system === "sulama" ? "Tarımsal sulama raporu" : p.reportType === "maksimum" ? "Maksimum kurulacak güç raporu" : "Optimal kurulacak güç raporu";
-  const hasFlow = hasCons && n.annualProduction > 0 && !p.shortReport;
+  const hasFlow = !offGrid && hasCons && n.annualProduction > 0 && !p.shortReport;
+  const hasPayback = hasFlow || (offGrid && hasSaving && !p.shortReport);
   const options = p.optionMode === "uc" ? (p.options ?? []) : [];
   let page = 0;
   const nextPage = () => ++page;
@@ -166,18 +170,18 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
             <p className="text-[11px] uppercase tracking-[0.16em] text-[#d4861f]">Sayın</p>
             <h1 className="mt-1 text-[24px] font-semibold leading-tight">{p.customer.name || "Müşteri"}</h1>
             <p className="mt-1 text-[11.5px] text-[#3d4757]">
-              {[p.customer.address, p.customer.mahalle, p.customer.province, p.customer.ada && p.customer.parsel ? `Ada/Parsel: ${p.customer.ada}/${p.customer.parsel}` : null].filter(Boolean).join(", ")}
+              {[p.customer.address, p.customer.mahalle, p.customer.district, p.customer.province, p.customer.ada && p.customer.parsel ? `Ada/Parsel: ${p.customer.ada}/${p.customer.parsel}` : null].filter(Boolean).join(", ")}
               {p.customer.phone ? ` · ${p.customer.phone}` : ""}
             </p>
             <p className="mt-4 text-[12px] leading-relaxed text-[#3d4757]">
-              Çatınız için hazırladığımız {num(n.dcKwp, 2)} kWp güneş enerjisi sisteminin tasarımını, beklenen üretimini, tasarruf hesabını ve fiyatını bilgilerinize sunarız.
+              {system === "sulama" ? "Sulama sisteminiz" : "Çatınız"} için hazırladığımız {num(n.dcKwp, 2)} kWp güneş enerjisi sisteminin tasarımını, beklenen üretimini{hasSaving ? ", tasarruf hesabını" : ""} ve fiyatını bilgilerinize sunarız.
             </p>
           </div>
           <dl className="space-y-1 rounded-lg border border-[#d9dee6] p-3 text-[11px]">
             <div className="flex justify-between"><dt className="text-[#5b6577]">Teklif no</dt><dd className="font-mono font-semibold">{p.proposalNo}</dd></div>
             <div className="flex justify-between"><dt className="text-[#5b6577]">Tarih</dt><dd>{date(p.createdAt)}</dd></div>
             <div className="flex justify-between"><dt className="text-[#5b6577]">Geçerlilik</dt><dd>{date(p.createdAt, p.validDays)}</dd></div>
-            <div className="flex justify-between"><dt className="text-[#5b6577]">Abonelik</dt><dd>{ABONE_ADLARI[p.abone]}</dd></div>
+            {!offGrid && <div className="flex justify-between"><dt className="text-[#5b6577]">Abonelik</dt><dd>{ABONE_ADLARI[p.abone]}</dd></div>}
           </dl>
         </div>
         {p.images?.perspective && <img src={p.images.perspective} alt="Sistem 3B görünümü" className="mt-5 h-[92mm] w-full rounded-xl object-cover" />}
@@ -186,8 +190,8 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
           <Fig label="Panel" value={`${n.panelCount} adet`} />
           <Fig label="Yıllık üretim" value={`${num(n.annualProduction)} kWh`} />
           <Fig label="Teklif tutarı" value={money(n.total)} />
-          {hasCons && <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />}
-          {hasCons && <Fig label="Geri ödeme" value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />}
+          {hasSaving && <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />}
+          {hasSaving && <Fig label="Geri ödeme" value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />}
           {hasCons && <Fig label="Tüketimi karşılama" value={`%${num(n.coveragePct)}`} />}
           <Fig label="Yıllık CO₂ azaltımı" value={`${num(n.co2Tons, 1)} ton`} />
         </div>
@@ -239,29 +243,31 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
         <h2 className="mt-6 text-[13px] font-semibold">Aylık üretim{hasCons ? " ve tüketim" : ""}</h2>
         <p className="text-[10px] text-[#5b6577]">Avrupa Komisyonu PVGIS uydu güneş verisiyle, her çatı yüzeyinin yönü ve eğimine göre hesaplanmıştır (%14 sistem kaybı dahil{n.shadePct > 0.05 ? `, %${num(n.shadePct, 1)} gölge kaybı dahil` : ""}).{p.realRef ? ` Benzer güçteki ${p.realRef.count} kurulumumuzun gerçek ortalaması ${num(p.realRef.specific)} kWh/kWp·yıldır.` : ""}</p>
         <div className="mt-2"><Chart prod={n.monthlyProduction} cons={hasCons ? n.monthlyKwh : n.monthlyProduction.map(() => 0)} /></div>
-        {hasCons && (
+        {(hasCons || hasSaving) && (
           <div className="mt-3 grid grid-cols-4 gap-2.5">
-            <Fig label="Bugünkü aylık fatura" value={tl(n.monthlyBillTl)} />
-            <Fig label="Yıllık tüketim" value={`${num(n.annualKwh)} kWh`} />
-            <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />
-            <Fig label="25 yılda tasarruf" value={tl(n.savings25Tl)} />
+            {!offGrid && <Fig label="Bugünkü aylık fatura" value={tl(n.monthlyBillTl)} />}
+            {hasCons && <Fig label="Yıllık tüketim" value={`${num(n.annualKwh)} kWh`} />}
+            {offGrid && hasSaving && <Fig label="Mevcut yıllık enerji gideri" value={tl(p.currentEnergyCostTl ?? 0)} />}
+            {hasSaving && <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />}
+            {hasSaving && <Fig label="25 yılda tasarruf" value={tl(n.savings25Tl)} />}
           </div>
         )}
         <Foot company={company} page={nextPage()} />
       </Sheet>
 
-      {/* 3. Tasarruf ve enerji akışı (fatura girildiyse) */}
-      {hasFlow && year && (
+      {/* 3. Tasarruf ve enerji akışı (tüketim girildiyse; şebekesiz sistemde akış yok) */}
+      {hasPayback && (
         <Sheet>
-          <Head company={company} title="Tasarruf ve enerji akışı" no={p.proposalNo} />
+          <Head company={company} title={hasFlow ? "Tasarruf ve enerji akışı" : "Tasarruf"} no={p.proposalNo} />
           <h2 className="mt-5 text-[13px] font-semibold">25 yıllık birikimli kazanç</h2>
-          <p className="text-[10px] text-[#5b6577]">Yıllık tasarruftan yatırım bedeli düşülerek, yılda %0,5 panel verim kaybıyla hesaplanmıştır. {hike.length ? `Varsayım: elektrik fiyatı 2. yılda %${hike[0]}, 10. yılda %${hike[hike.length - 1]} artmış olur (bugüne göre), sonra sabit kalır. Gerçek zamlar farklı olabilir.` : "Elektrik zamları dahil değildir."}</p>
+          <p className="text-[10px] text-[#5b6577]">Yıllık tasarruftan yatırım bedeli düşülerek, yılda %0,5 panel verim kaybıyla hesaplanmıştır. {hike.length ? `Varsayım: ${offGrid ? "enerji" : "elektrik"} fiyatı 2. yılda %${hike[0]}, 10. yılda %${hike[hike.length - 1]} artmış olur (bugüne göre), sonra sabit kalır. Gerçek zamlar farklı olabilir.` : offGrid ? "Enerji fiyatı artışları dahil değildir." : "Elektrik zamları dahil değildir."}</p>
           <div className="mt-2"><PaybackChart data={n.cumulativeTl} /></div>
           <div className="mt-3 grid grid-cols-3 gap-2.5">
             <Fig label={hike.length && n.paybackFlatYears != null ? `Geri ödeme (zamsız ${num(n.paybackFlatYears, 1)} yıl)` : "Geri ödeme"} value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />
             <Fig label="25 yılda toplam tasarruf" value={tl(n.savings25Tl)} />
             <Fig label="25 yıl sonunda net" value={tl(n.cumulativeTl[24] ?? 0)} />
           </div>
+          {hasFlow && year && <>
           <h2 className="mt-6 text-[13px] font-semibold">Bir günde enerji akışı</h2>
           <p className="text-[10px] text-[#5b6577]">Turuncu alan güneş üretimi, mavi çizgi tüketiminiz (kW). Üretimin tüketimi aştığı saatlerde fazlası {battery > 0 ? "önce bataryaya, sonra " : ""}şebekeye verilir; diğer saatlerde {battery > 0 ? "batarya ve " : ""}şebeke devreye girer.</p>
           <div className="mt-2 grid grid-cols-2 gap-5">
@@ -274,6 +280,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
             <Fig label="Şebekeden çekilen" value={`${num(year.fromGrid)} kWh`} />
             <Fig label="Batarya" value={battery > 0 ? `${num(battery)} kWh` : "Yok"} />
           </div>
+          </>}
           <Foot company={company} page={nextPage()} />
         </Sheet>
       )}

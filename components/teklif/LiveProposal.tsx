@@ -54,6 +54,8 @@ export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDis
   const isUsd = p.priceCurrency === "USD";
   const money = (v: number) => (!isUsd ? tl(v) : p.showTl && p.usdTry ? tl(v * p.usdTry) : `${num(Math.round(v))} USD`);
   const hasCons = n.annualKwh > 0;
+  // Şebekesiz sistemde tasarruf, girilen mevcut enerji gideridir; girilmediyse gösterilmez.
+  const hasSaving = (p.systemType ?? "ongrid") !== "ongrid" ? (p.currentEnergyCostTl ?? 0) > 0 : hasCons;
   const until = new Date(new Date(p.createdAt).getTime() + p.validDays * 864e5);
   const wa = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba, ${p.proposalNo} numaralı teklifimi incelediğimi bildirmek ve görüşmek istiyorum.`)}`;
 
@@ -86,10 +88,10 @@ export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDis
         <Kpi label="Panel" value={`${n.panelCount} adet`} />
         <Kpi label="Yıllık üretim" value={`${num(n.annualProduction)} kWh`} />
         <Kpi label="Teklif tutarı (KDV dahil)" value={money(n.total)} />
-        {hasCons && <Kpi label="İlk yıl tasarruf" value={tl(n.annualSavingTl)} />}
+        {hasSaving && <Kpi label="İlk yıl tasarruf" value={tl(n.annualSavingTl)} />}
         {hasCons && <Kpi label="Tüketimi karşılama" value={`%${num(n.coveragePct)}`} />}
-        {hasCons && n.paybackYears != null && <Kpi label="Tahmini geri ödeme" value={`${num(n.paybackYears, 1)} yıl`} />}
-        {hasCons && <Kpi label="25 yılda tasarruf" value={tl(n.savings25Tl)} />}
+        {hasSaving && n.paybackYears != null && <Kpi label="Tahmini geri ödeme" value={`${num(n.paybackYears, 1)} yıl`} />}
+        {hasSaving && <Kpi label="25 yılda tasarruf" value={tl(n.savings25Tl)} />}
       </section>
 
       {p.optionMode === "uc" && (p.options?.length ?? 0) > 0 && (
