@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { requireAdmin } from "@/lib/admin-guard";
+import { currentUser, requireAdmin } from "@/lib/admin-guard";
+import { permsOf } from "@/lib/staff";
 import { LOST_STAGES, WON_STAGES, channelOf } from "@/lib/crm";
 
 // Yönetim: bugünün işleri ve yönetici göstergeleri. POST: personel, görev tamamlama, tahsilat işlemleri.
@@ -89,15 +90,15 @@ export async function GET(req: Request) {
   const overdue = pay.filter((x) => !x.paid_at && x.due_at && x.due_at < today);
 
   const propById = new Map(all.map((p) => [p.id, p]));
-  return NextResponse.json({
-    staff: staff.data,
-    today: {
-      tasks: tasks.data,
-      hot: hot.map((p) => ({ id: p.id, customerId: p.customer_id, ad: p.customer_name, phone: p.customer_phone, no: p.proposal_no, at: p.last_view_at })),
-      follow: follow.map((p) => ({ id: p.id, customerId: p.customer_id, ad: p.customer_name, phone: p.customer_phone, no: p.proposal_no, note: (p.tracking as { note?: string }).note })),
-      fresh,
-      overdue: overdue.map((x) => ({ ...x, ad: propById.get(x.proposal_id)?.customer_name, customerId: propById.get(x.proposal_id)?.customer_id })),
-    },
+  // Personel: tüm müşteri yetkisi yoksa yalnız kendi işleri; şirket özeti ve kâr yetkiye bağlı.
+  const user = await currentUser();
+  const perms = permsOf(user);
+  const mine = (customerId: unknown) => {
+    if (user?.kind !== "staff" || perms.allCustomers) return true;
+    const a = custById.get(customerId as number)?.assigned_to;
+    return a == null || a === user.id;
+  };
+  const summary = {
     kpi: {
       days,
       talep: (leads.count ?? 0) + (calcs.count ?? 0) + (meta.count ?? 0),
@@ -106,7 +107,7 @@ export async function GET(req: Request) {
       satis: won.length,
       kayip: lost.length,
       ciroUsd: usdWon.reduce((a, p) => a + Number(p.total ?? 0), 0),
-      karUsd: usdWon.reduce((a, p) => a + profitOf(p), 0),
+      karUsd: perms.cost ? usdWon.reduce((a, p) => a + profitOf(p), 0) : null,
       kw: won.reduce((a, p) => a + Number(p.dc_kwp ?? 0), 0),
       kapanmaGun: closes.length ? closes.reduce((a, b) => a + b, 0) / closes.length : null,
       bekleyenTahsilat: pay.filter((x) => !x.paid_at && x.currency === "USD").reduce((a, x) => a + Number(x.amount), 0),
@@ -117,6 +118,18 @@ export async function GET(req: Request) {
     perStaff,
     reasons: Object.entries(reasons).map(([ad, adet]) => ({ ad, adet })).sort((a, b) => b.adet - a.adet),
     openProjects: open.filter((p) => WON_STAGES.includes(stageOf(p))).length,
+  };
+  return NextResponse.json({
+    me: { kind: user?.kind ?? "owner", perms },
+    staff: staff.data,
+    ...(perms.dashboard ? summary : {}),
+    today: {
+      tasks: (tasks.data ?? []).filter((x) => mine(x.customer_id)),
+      hot: hot.filter((p) => mine(p.customer_id)).map((p) => ({ id: p.id, customerId: p.customer_id, ad: p.customer_name, phone: p.customer_phone, no: p.proposal_no, at: p.last_view_at })),
+      follow: follow.filter((p) => mine(p.customer_id)).map((p) => ({ id: p.id, customerId: p.customer_id, ad: p.customer_name, phone: p.customer_phone, no: p.proposal_no, note: (p.tracking as { note?: string }).note })),
+      fresh: fresh.filter((c) => mine(c.id)),
+      overdue: overdue.filter((x) => mine(propById.get(x.proposal_id)?.customer_id)).map((x) => ({ ...x, ad: propById.get(x.proposal_id)?.customer_name, customerId: propById.get(x.proposal_id)?.customer_id })),
+    },
   });
 }
 
@@ -125,6 +138,8 @@ export async function POST(req: Request) {
   if (denied) return denied;
   const b = await req.json().catch(() => null);
   const db = adminClient();
+  const isOwner = (await currentUser())?.kind === "owner";
+  if ((b?.action === "staffAdd" || b?.action === "staffActive") && !isOwner) return NextResponse.json({ error: "Bu işlem yalnız sahip hesabıyla yapılır." }, { status: 403 });
   switch (b?.action) {
     case "staffAdd": {
       const name = typeof b.full_name === "string" ? b.full_name.trim() : "";

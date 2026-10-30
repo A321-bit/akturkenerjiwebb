@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { requireAdmin } from "@/lib/admin-guard";
+import { currentUser, requireAdmin } from "@/lib/admin-guard";
+import { permsOf } from "@/lib/staff";
 import { phoneKey } from "@/lib/crm";
 
 // Müşteri kartı: kimlik, teklifler, faaliyetler, talepler ve tahsilat. Düzenleme ve faaliyet ekleme.
+
+/** Kartı görme yetkisi: tüm müşteriler yetkisi, kendine atanmış ya da atanmamış. */
+async function canAccess(customerId: string) {
+  const user = await currentUser();
+  if (user?.kind !== "staff" || permsOf(user).allCustomers) return { ok: true, user };
+  const { data } = await adminClient().from("customers").select("assigned_to").eq("id", customerId).maybeSingle();
+  return { ok: !data || data.assigned_to == null || data.assigned_to === user.id, user };
+}
+const forbidden = () => NextResponse.json({ error: "Bu müşteri size atanmamış." }, { status: 403 });
 
 const FIELDS = ["full_name", "company", "phone", "email", "province", "district", "address", "mahalle", "ada", "parsel", "source", "segment", "notes"] as const;
 
@@ -11,6 +21,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const denied = await requireAdmin();
   if (denied) return denied;
   const { id } = await ctx.params;
+  if (!(await canAccess(id)).ok) return forbidden();
   const db = adminClient();
   const { data: customer, error } = await db.from("customers").select("*").eq("id", id).maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -43,8 +54,12 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const denied = await requireAdmin();
   if (denied) return denied;
   const { id } = await ctx.params;
+  const access = await canAccess(id);
+  if (!access.ok) return forbidden();
   const b = await req.json().catch(() => null);
   if (!b) return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
+  // Sorumlu atamayı, tüm müşterileri gören kişi değiştirir.
+  if ("assigned_to" in b && access.user?.kind === "staff" && !permsOf(access.user).allCustomers) delete b.assigned_to;
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const f of FIELDS) if (typeof b[f] === "string") patch[f] = b[f].trim().slice(0, f === "notes" ? 2000 : 400) || null;
   if ("assigned_to" in b) patch.assigned_to = Number.isFinite(b.assigned_to) ? b.assigned_to : null;
@@ -63,11 +78,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   const denied = await requireAdmin();
   if (denied) return denied;
   const { id } = await ctx.params;
+  const access = await canAccess(id);
+  if (!access.ok) return forbidden();
   const b = await req.json().catch(() => null);
   if (typeof b?.kind !== "string") return NextResponse.json({ error: "Geçersiz faaliyet." }, { status: 400 });
   const { data, error } = await adminClient()
     .from("customer_activities")
-    .insert({ customer_id: Number(id), kind: b.kind.slice(0, 30), text: typeof b.text === "string" ? b.text.slice(0, 2000) : null, due_at: b.due_at || null, staff_id: Number.isFinite(b.staff_id) ? b.staff_id : null, proposal_id: Number.isFinite(b.proposal_id) ? b.proposal_id : null })
+    .insert({ customer_id: Number(id), kind: b.kind.slice(0, 30), text: typeof b.text === "string" ? b.text.slice(0, 2000) : null, due_at: b.due_at || null, staff_id: access.user?.kind === "staff" ? access.user.id : Number.isFinite(b.staff_id) ? b.staff_id : null, proposal_id: Number.isFinite(b.proposal_id) ? b.proposal_id : null })
     .select("*")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 // 6 haneli kod (ya da yedek kod) istenir.
 export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [needCode, setNeedCode] = useState(false);
   const [error, setError] = useState("");
@@ -20,7 +21,7 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, code: needCode ? code : undefined }),
+        body: JSON.stringify({ email: email || undefined, password, code: needCode ? code : undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -47,6 +48,7 @@ export default function AdminLoginPage() {
       <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Aktürk Enerji</p>
       <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">Yönetim Paneli</h1>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-posta (personel girişi)" autoComplete="username" readOnly={needCode} className={input} />
         <input
           type="password"
           value={password}

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { requireAdmin } from "@/lib/admin-guard";
+import { currentUser, requireAdmin } from "@/lib/admin-guard";
+import { permsOf } from "@/lib/staff";
+import { restoreCosts } from "@/lib/teklif/costs";
 import { phoneKey } from "@/lib/crm";
 
 // Teklif Stüdyosu kayıtları: liste (özet alanlar) ve kaydet (yeni ya da güncelle).
@@ -23,6 +25,11 @@ export async function POST(req: Request) {
   if (!p || typeof p.proposalNo !== "string") return NextResponse.json({ error: "Geçersiz teklif." }, { status: 400 });
   if (JSON.stringify(p).length > 4_000_000) return NextResponse.json({ error: "Teklif çok büyük." }, { status: 400 });
 
+  const user = await currentUser();
+  // Maliyet yetkisi yoksa ekrandaki değer satış fiyatıdır; gerçek maliyet sunucuda geri konur.
+  if (user && !permsOf(user).cost && Array.isArray(p.lines)) p.lines = await restoreCosts(p.lines);
+  const staffId = user?.kind === "staff" ? user.id : null;
+
   // Müşteri kartı: telefondan bulunur ya da açılır; böylece aynı kişinin teklifleri tek kartta toplanır.
   const key = phoneKey(p.customer?.phone);
   let customerId: number | null = null;
@@ -33,9 +40,9 @@ export async function POST(req: Request) {
     const fields = { full_name: String(c.name || "İsimsiz").slice(0, 120), phone: String(c.phone).slice(0, 30), email: c.email || null, province: c.province || null, district: c.district || null, address: c.address || null, mahalle: c.mahalle || null, ada: c.ada || null, parsel: c.parsel || null, updated_at: new Date().toISOString() };
     if (found) {
       customerId = found.id;
-      await cust.update(fields).eq("id", found.id);
+      await cust.update({ ...fields, ...(found.assigned_to == null && staffId ? { assigned_to: staffId } : {}) }).eq("id", found.id);
     } else {
-      const { data: made } = await cust.insert({ ...fields, phone_key: key, source: "teklif" }).select("id").single();
+      const { data: made } = await cust.insert({ ...fields, phone_key: key, source: "teklif", assigned_to: staffId }).select("id").single();
       customerId = made?.id ?? null;
     }
   }
@@ -49,6 +56,7 @@ export async function POST(req: Request) {
     dc_kwp: Number.isFinite(body.dcKwp) ? body.dcKwp : null,
     total: Number.isFinite(body.total) ? body.total : null,
     customer_id: customerId,
+    ...(staffId ? { assigned_to: staffId } : {}),
     data: { ...p, id: undefined },
     updated_at: new Date().toISOString(),
   };
@@ -62,6 +70,6 @@ export async function POST(req: Request) {
   const { data, error } = p.id ? await db.update(row).eq("id", p.id).select("id").single() : await db.insert(row).select("id").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   // İlk kayıt müşterinin geçmişine işlenir.
-  if (!p.id && customerId) await adminClient().from("customer_activities").insert({ customer_id: customerId, proposal_id: data.id, kind: "teklif", text: `${row.proposal_no} oluşturuldu` });
+  if (!p.id && customerId) await adminClient().from("customer_activities").insert({ customer_id: customerId, proposal_id: data.id, staff_id: staffId, kind: "teklif", text: `${row.proposal_no} oluşturuldu` });
   return NextResponse.json({ id: data.id });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { requireAdmin } from "@/lib/admin-guard";
+import { currentUser, requireAdmin } from "@/lib/admin-guard";
+import { permsOf } from "@/lib/staff";
 import { phoneKey } from "@/lib/crm";
 
 // Müşteriler: liste ve arama, ekleme (aynı telefon ikinci kez eklenmez), taleplerden toplu aktarma.
@@ -21,6 +22,9 @@ export async function GET(req: Request) {
     const safe = q.replace(/[,()%*]/g, " ");
     query = digits.length >= 4 ? query.ilike("phone_key", `%${digits.replace(/^0/, "")}%`) : query.or(`full_name.ilike.%${safe}%,company.ilike.%${safe}%,district.ilike.%${safe}%,province.ilike.%${safe}%`);
   }
+  // Telefon denetimi mükerrer kaydı önlemek içindir, herkes için çalışır; listede ise kendi ve atanmamış müşteriler.
+  const user = await currentUser();
+  if (user?.kind === "staff" && !permsOf(user).allCustomers && !phone) query = query.or(`assigned_to.eq.${user.id},assigned_to.is.null`);
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const ids = (data ?? []).map((c) => c.id);
@@ -40,6 +44,7 @@ export async function POST(req: Request) {
   const db = adminClient();
 
   if (b?.action === "import") {
+    if ((await currentUser())?.kind !== "owner") return NextResponse.json({ error: "Toplu aktarma yalnız sahip hesabıyla yapılır." }, { status: 403 });
     // Web, hesaplama ve Meta talepleri tek müşteri listesine: telefon başına bir kayıt, en eski talebin kaynağıyla.
     const [leads, calcs, meta] = await Promise.all([
       db.from("leads").select("fullname, phone, email, province, source, utm_source, created_at").limit(5000),

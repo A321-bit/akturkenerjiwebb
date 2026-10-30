@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import StaffAccess from "@/components/admin/StaffAccess";
 
 // Yönetim: personelin bugünkü işleri ve yöneticinin şirket özeti tek ekranda.
 
-type Kpi = { days: number; talep: number; musteri: number; teklif: number; satis: number; kayip: number; ciroUsd: number; karUsd: number; kw: number; kapanmaGun: number | null; bekleyenTahsilat: number; alinanTahsilat: number; gecikenTahsilat: number };
+type Kpi = { days: number; talep: number; musteri: number; teklif: number; satis: number; kayip: number; ciroUsd: number; karUsd: number | null; kw: number; kapanmaGun: number | null; bekleyenTahsilat: number; alinanTahsilat: number; gecikenTahsilat: number };
 type Item = { id: number; customerId: number | null; ad: string | null; phone: string | null; no: string; at?: string; note?: string };
 type Data = {
+  me: { kind: "owner" | "staff"; perms: { dashboard: boolean; cost: boolean } };
   staff: { id: number; full_name: string; title: string | null; active: boolean }[];
   today: {
     tasks: { id: number; customer_id: number; kind: string; text: string | null; due_at: string; customers: { full_name: string; phone: string } | null }[];
@@ -17,11 +19,11 @@ type Data = {
     fresh: { id: number; full_name: string; phone: string; source: string | null }[];
     overdue: { id: number; step: string; amount: number; currency: string; due_at: string; ad: string | null; customerId: number | null }[];
   };
-  kpi: Kpi;
-  channels: { ad: string; musteri: number; teklif: number; satis: number }[];
-  perStaff: { id: number; ad: string; musteri: number; teklif: number; satis: number; ciro: number }[];
-  reasons: { ad: string; adet: number }[];
-  openProjects: number;
+  kpi?: Kpi;
+  channels?: { ad: string; musteri: number; teklif: number; satis: number }[];
+  perStaff?: { id: number; ad: string; musteri: number; teklif: number; satis: number; ciro: number }[];
+  reasons?: { ad: string; adet: number }[];
+  openProjects?: number;
 };
 
 const n0 = (v: number) => Math.round(v).toLocaleString("tr-TR");
@@ -70,12 +72,13 @@ export default function YonetimPage() {
   if (!d) return <p className="text-slate">Yükleniyor…</p>;
   const k = d.kpi;
   const t = d.today;
+  const owner = d.me.kind === "owner";
   const todayCount = t.tasks.length + t.hot.length + t.follow.length + t.overdue.length + t.fresh.length;
-  const funnel = [
+  const funnel = k ? [
     { ad: "Talep", v: k.talep },
     { ad: "Teklif", v: k.teklif },
     { ad: "Satış", v: k.satis },
-  ];
+  ] : [];
   const top = Math.max(1, ...funnel.map((f) => f.v));
 
   return (
@@ -107,6 +110,7 @@ export default function YonetimPage() {
         </Group>
       </div>
 
+      {k && d.channels && d.perStaff && d.reasons && <>
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-[17px] font-semibold">Şirket özeti</h2>
         <div className="flex gap-1">
@@ -116,7 +120,7 @@ export default function YonetimPage() {
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Satış" value={`${k.satis}`} note={`Tekliften ${pct(k.satis, k.teklif)}`} />
         <Stat label="Ciro (KDV dahil)" value={`${n0(k.ciroUsd)} $`} note="Dolar bazlı teklifler" />
-        <Stat label="Tahmini kâr (KDV hariç)" value={`${n0(k.karUsd)} $`} note="Kalem maliyetlerinden" />
+        {k.karUsd != null && <Stat label="Tahmini kâr (KDV hariç)" value={`${n0(k.karUsd)} $`} note="Kalem maliyetlerinden" />}
         <Stat label="Satılan güç" value={`${n0(k.kw)} kWp`} note={`${d.openProjects} açık proje`} />
         <Stat label="Alınan tahsilat" value={`${n0(k.alinanTahsilat)} $`} />
         <Stat label="Bekleyen tahsilat" value={`${n0(k.bekleyenTahsilat)} $`} />
@@ -159,12 +163,14 @@ export default function YonetimPage() {
           <tbody>{d.perStaff.map((s) => <tr key={s.id} className="border-b border-line last:border-0"><td className="py-1.5">{s.ad}</td><td className="text-right">{s.musteri}</td><td className="text-right">{s.teklif}</td><td className="text-right">{s.satis}</td><td className="text-right font-mono-data">{n0(s.ciro)}</td></tr>)}</tbody>
         </table>
         {d.staff.length === 0 && <p className="mt-2 text-[13px] text-slate">Henüz personel yok.</p>}
-        <div className="mt-3 flex flex-wrap gap-2">
+        {owner && <div className="mt-3 flex flex-wrap gap-2">
           <input value={yeni.full_name} onChange={(e) => setYeni({ ...yeni, full_name: e.target.value })} placeholder="Ad soyad" className="rounded-lg border border-line bg-paper px-3 py-1.5 text-[13.5px]" />
           <input value={yeni.title} onChange={(e) => setYeni({ ...yeni, title: e.target.value })} placeholder="Unvan" className="rounded-lg border border-line bg-paper px-3 py-1.5 text-[13.5px]" />
           <button onClick={() => yeni.full_name.trim() && post({ action: "staffAdd", ...yeni }).then(() => setYeni({ full_name: "", title: "" }))} className="rounded-lg bg-ink px-3 py-1.5 text-[13px] font-semibold text-paper">Personel ekle</button>
-        </div>
+        </div>}
       </section>
+      </>}
+      {owner && <StaffAccess key={d.staff.length} />}
     </div>
   );
 }

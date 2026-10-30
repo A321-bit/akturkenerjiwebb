@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { supabaseAdmin } from "./supabase";
+import { userFromSession, type SessionUser } from "./staff";
 
 // Admin oturumu: çerezde "<oturum-id>.<imza>" durur. İmza (HMAC-SHA256,
 // ADMIN_SESSION_SECRET) çerezin değiştirilmediğini, veritabanındaki kayıt
@@ -29,9 +30,15 @@ export function sessionIdFromCookie(token: string | undefined | null): string | 
   return expected.length === given.length && timingSafeEqual(expected, given) ? id : null;
 }
 
-export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
+/** Çerezdeki oturumun sahibi: sahip hesabı ya da yetkileriyle personel; geçersizse null. */
+export async function sessionUser(token: string | undefined | null): Promise<SessionUser | null> {
   const id = sessionIdFromCookie(token);
-  if (!id) return false;
-  const { data } = await supabaseAdmin().from("admin_sessions").select("expires_at, revoked_at").eq("id", id).maybeSingle();
-  return Boolean(data && !data.revoked_at && new Date(data.expires_at).getTime() > Date.now());
+  if (!id) return null;
+  const { data } = await supabaseAdmin().from("admin_sessions").select("expires_at, revoked_at, user_agent").eq("id", id).maybeSingle();
+  if (!data || data.revoked_at || new Date(data.expires_at).getTime() <= Date.now()) return null;
+  return userFromSession(data.user_agent);
+}
+
+export async function verifySessionToken(token: string | undefined | null): Promise<boolean> {
+  return Boolean(await sessionUser(token));
 }

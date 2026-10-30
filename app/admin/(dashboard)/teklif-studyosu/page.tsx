@@ -1,6 +1,8 @@
 import { adminClient, getSiteSettings, SITE_URL } from "@/lib/data";
 import { getStoreProducts } from "@/lib/store-data";
 import { kwOf } from "@/lib/store-details";
+import { currentUser } from "@/lib/admin-guard";
+import { permsOf } from "@/lib/staff";
 import Studio from "@/components/admin/teklif/Studio";
 
 // Teklif Stüdyosu: uydu üzerinde çatı çizimi, panel yerleşimi, 3B görünüm, üretim ve PDF teklif.
@@ -58,13 +60,19 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
     .map((p) => ({ kw: kwOf(p), price: p.price! }))
     .filter((p) => p.kw > 0);
 
+  // Maliyet yetkisi yoksa tarayıcıya maliyet inmez: ürünler satış fiyatıyla (kâr %0) gider.
+  const perms = permsOf(await currentUser());
+  const sell = <T extends { costUsd?: number; marginPct?: number }>(x: T): T => (perms.cost ? x : { ...x, costUsd: x.costUsd != null ? x.costUsd * (1 + (x.marginPct ?? 45) / 100) : undefined, marginPct: 0 });
+
   return (
     <Studio
-      panels={panels}
-      inverters={inverters}
-      batteries={batteries}
-      accessories={accessories}
-      recipes={recipes}
+      panels={panels.map(sell)}
+      inverters={inverters.map(sell)}
+      batteries={batteries.map(sell)}
+      accessories={accessories.map((a) => (perms.cost ? a : { ...a, costUsd: a.costUsd * 1.45 }))}
+      recipes={perms.cost ? recipes : recipes.map((r) => ({ ...r, bom: r.bom.map((b) => ({ ...b, unit: b.unit * 1.45 })) }))}
+      hideCost={!perms.cost}
+      canEditRules={perms.rules}
       packages={packages}
       company={{ name: site.name, phone: site.contact.phoneDisplay, email: site.contact.email, address: site.contact.addressLine, web: SITE_URL.replace(/^https?:\/\//, "") }}
       initialCalcId={sp.calc ? Number(sp.calc) : undefined}

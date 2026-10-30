@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Wrench, MapPin, Newspaper, Settings, LogOut, Video, Inbox, Users, Target, Star, Store, TrendingUp, Share2, ShieldCheck, Menu, X, BarChart3, Megaphone, ClipboardList, Search, Globe, ChevronDown, Calculator, PencilRuler, Building2 } from "lucide-react";
 
@@ -55,6 +55,13 @@ const nav: NavEntry[] = [
   },
   { href: "/admin/guvenlik", label: "Güvenlik", icon: ShieldCheck },
 ];
+const STAFF_NAV: NavItem[] = [
+  { href: "/admin/yonetim", label: "Yönetim", icon: LayoutDashboard },
+  { href: "/admin/musteriler", label: "Müşteriler", icon: Users },
+  { href: "/admin/teklif-studyosu", label: "Teklif Stüdyosu", icon: PencilRuler },
+  { href: "/admin/teklif-takip", label: "Teklif ve Proje Takibi", icon: Target },
+  { href: "/admin/hesaplama-talepleri", label: "Hesaplama Talepleri", icon: Calculator },
+];
 const navItems: NavItem[] = nav.flatMap((e) => ("group" in e ? e.items : [e]));
 const isActive = (href: string, pathname: string | null) => pathname === href || (href !== "/admin" && Boolean(pathname?.startsWith(href)));
 
@@ -66,6 +73,15 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   const current = navItems.find((i) => isActive(i.href, pathname));
   // Gruplar kapalı başlar; başlığa tıklayınca alt sekmeler açılır, aynı anda tek grup açık kalır.
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  // Personelde menü izinli sayfalara iner (asıl denetim proxy'dedir).
+  const [staffView, setStaffView] = useState<{ name: string; allCustomers: boolean } | null>(null);
+  useEffect(() => {
+    fetch("/api/admin/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.kind === "staff" && setStaffView({ name: d.name, allCustomers: d.perms.allCustomers }))
+      .catch(() => {});
+  }, []);
+  const visibleNav: NavEntry[] = staffView ? STAFF_NAV.filter((i) => staffView.allCustomers || i.href !== "/admin/hesaplama-talepleri") : nav;
   const toggleGroup = (g: string) => setOpenGroup((prev) => (prev === g ? null : g));
 
   async function handleLogout() {
@@ -96,10 +112,10 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         <p className="px-2 font-mono-data text-[11px] uppercase tracking-[0.16em] text-brand">
           Aktürk Enerji
         </p>
-        <p className="px-2 mt-0.5 font-display text-[15px] font-semibold">Yönetim Paneli</p>
+        <p className="px-2 mt-0.5 font-display text-[15px] font-semibold">{staffView?.name ?? "Yönetim Paneli"}</p>
 
         <nav className="mt-6 flex flex-col gap-1 lg:mt-8">
-          {nav.map((entry) => {
+          {visibleNav.map((entry) => {
             if (!("group" in entry)) return <NavLink key={entry.href} item={entry} active={isActive(entry.href, pathname)} onClick={() => setOpen(false)} />;
             const expanded = openGroup === entry.group;
             const hasActive = entry.items.some((i) => isActive(i.href, pathname));

@@ -32,6 +32,8 @@ type Props = {
   batteries: Omit<BatteryChoice, "adet">[];
   accessories: Accessory[];
   recipes: Recipe[];
+  hideCost?: boolean;
+  canEditRules?: boolean;
   packages: { kw: number; price: number }[];
   company: Company;
   initialCalcId?: number;
@@ -88,7 +90,7 @@ function blank(panel: PanelModel): Proposal {
   };
 }
 
-export default function Studio({ panels, inverters, batteries, accessories, recipes, company, initialCalcId, initialId, initialCustomerId }: Props) {
+export default function Studio({ panels, inverters, batteries, accessories, recipes, hideCost, canEditRules, company, initialCalcId, initialId, initialCustomerId }: Props) {
   const defaultPanel = panels.find((p) => p.wp === 620) ?? panels[0] ?? { name: "620 Wp TOPCon panel", wp: 620, lengthM: 2.382, widthM: 1.134 };
   const [p, setP] = useState<Proposal>(() => blank(defaultPanel));
   const [tab, setTab] = useState(0);
@@ -506,11 +508,12 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
     setTimeout(() => window.print(), 300);
   }
 
-  const checks = quoteChecks({ ...p, cells }, n, settings.minMarginPct);
+  const checks = quoteChecks({ ...p, cells }, n, hideCost ? -Infinity : settings.minMarginPct);
   const errorCount = checks.filter((c) => c.level === "hata").length;
   const costTotal = p.lines.reduce((a, l) => a + l.adet * (l.maliyetUsd ?? 0), 0);
   const netSale = Math.max(0, n.subtotal - p.discountTl);
   const marginPct = costTotal > 0 ? ((netSale - costTotal) / costTotal) * 100 : 0;
+  const lineCols = hideCost ? "1fr 70px 60px 90px 90px 28px" : "1fr 70px 60px 90px 70px 90px 90px 28px";
   const panelCountOf = (id: string) => cells.filter((c) => c.faceId === id).length;
   const withBattery = Boolean(p.battery);
   const batteryMode = batteryChoice || withBattery;
@@ -552,7 +555,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
       )}
 
       <nav className="mt-5 flex flex-wrap gap-1 border-b border-line">
-        {TABS.map((t, i) => (
+        {TABS.filter((t) => canEditRules || t !== "Fiyat kuralları").map((t, i) => (
           <button key={t} onClick={() => goTab(i)} className={`-mb-px border-b-2 px-3.5 py-2 text-[13.5px] font-semibold ${tab === i ? "border-brand text-ink" : "border-transparent text-slate hover:text-ink"}`}>
             {i + 1}. {t}
           </button>
@@ -966,11 +969,11 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
             {p.lines.some((l) => !l.birimFiyat) && <p className="mt-2 rounded-lg bg-red-500/10 p-2.5 text-[12.5px] text-red-700">{p.lines.filter((l) => !l.birimFiyat).length} kalemin fiyatı yok. “Fiyat kuralları” sekmesinden girin ya da satırda düzeltin.</p>}
             <div className="mt-3 overflow-x-auto">
               <div className="min-w-[820px] space-y-2">
-                <div className="grid grid-cols-[1fr_70px_60px_90px_70px_90px_90px_28px] gap-2 text-[11.5px] font-semibold text-slate">
-                  <span>Kalem</span><span className="text-right">Miktar</span><span>Birim</span><span className="text-right">Maliyet $</span><span className="text-right">Kâr %</span><span className="text-right">Birim $</span><span className="text-right">Tutar $</span><span />
+                <div style={{ gridTemplateColumns: lineCols }} className="grid gap-2 text-[11.5px] font-semibold text-slate">
+                  <span>Kalem</span><span className="text-right">Miktar</span><span>Birim</span>{!hideCost && <><span className="text-right">Maliyet $</span><span className="text-right">Kâr %</span></>}<span className="text-right">Birim $</span><span className="text-right">Tutar $</span><span />
                 </div>
                 {p.lines.map((l) => (
-                  <div key={l.id} className="grid grid-cols-[1fr_70px_60px_90px_70px_90px_90px_28px] items-center gap-2 text-[13px]">
+                  <div key={l.id} style={{ gridTemplateColumns: lineCols }} className="grid items-center gap-2 text-[13px]">
                     {l.kind === "inverter" ? (
                       <select value={p.inverter?.slug ?? ""} onChange={(e) => setInverter(e.target.value)} aria-label="İnvertör" className="min-w-0 rounded-lg border border-brand/50 bg-paper px-2 py-1.5">
                         {invOptions.map((i) => <option key={i.slug} value={i.slug}>{i.name}</option>)}
@@ -988,8 +991,8 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
                     )}
                     <input type="number" value={l.adet} onChange={(e) => setLineQty(l, Number(e.target.value))} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
                     <input value={l.birim} onChange={(e) => patchLine(l.id, { birim: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
-                    <input type="number" value={Math.round((l.maliyetUsd ?? 0) * 100) / 100} onChange={(e) => { const c = Number(e.target.value); patchLine(l.id, { maliyetUsd: c, birimFiyat: salePrice(c, l.marjPct ?? 0) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
-                    <input type="number" value={l.marjPct ?? 0} onChange={(e) => { const m = Number(e.target.value); patchLine(l.id, { marjPct: m, birimFiyat: salePrice(l.maliyetUsd ?? 0, m) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
+                    {!hideCost && <input type="number" value={Math.round((l.maliyetUsd ?? 0) * 100) / 100} onChange={(e) => { const c = Number(e.target.value); patchLine(l.id, { maliyetUsd: c, birimFiyat: salePrice(c, l.marjPct ?? 0) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />}
+                    {!hideCost && <input type="number" value={l.marjPct ?? 0} onChange={(e) => { const m = Number(e.target.value); patchLine(l.id, { marjPct: m, birimFiyat: salePrice(l.maliyetUsd ?? 0, m) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />}
                     <input type="number" value={Math.round(l.birimFiyat * 100) / 100} onChange={(e) => patchLine(l.id, { birimFiyat: Number(e.target.value) })} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
                     <span className="text-right font-mono-data">{num(l.adet * l.birimFiyat)}</span>
                     <button onClick={() => update({ lines: p.lines.filter((x) => x.id !== l.id), ...(l.kind === "inverter2" ? { extraInverters: (p.extraInverters ?? []).filter((x) => x.id !== l.id) } : {}) })} className="text-slate hover:text-red-600" aria-label="Kalemi sil"><Trash2 size={15} /></button>
@@ -1018,7 +1021,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
                 <p className="font-display text-2xl font-semibold">{p.priceCurrency === "USD" ? usd(n.total) : tl(n.total)}</p>
                 {p.priceCurrency === "USD" && <p className="text-[12.5px] text-slate">{p.usdTry ? tl(n.totalTl) : "Kur girilmedi"}</p>}
                 {n.paybackYears != null && <p className="text-[12.5px] text-slate">Geri ödeme {num(n.paybackYears, 1)} yıl{n.paybackFlatYears != null ? ` · zamsız ${num(n.paybackFlatYears, 1)} yıl` : ""}</p>}
-                {costTotal > 0 && <p className={`mt-1 text-[13px] font-semibold ${marginPct < settings.minMarginPct ? "text-red-600" : "text-volt"}`}>Kâr {usd(netSale - costTotal)} · %{num(marginPct)}</p>}
+                {costTotal > 0 && !hideCost && <p className={`mt-1 text-[13px] font-semibold ${marginPct < settings.minMarginPct ? "text-red-600" : "text-volt"}`}>Kâr {usd(netSale - costTotal)} · %{num(marginPct)}</p>}
               </div>
             </div>
           </section>
