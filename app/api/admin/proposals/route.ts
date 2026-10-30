@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/admin-guard";
 
 // Teklif Stüdyosu kayıtları: liste (özet alanlar) ve kaydet (yeni ya da güncelle).
 
-const LIST = "id, created_at, updated_at, proposal_no, status, customer_name, customer_phone, province, dc_kwp, total";
+const LIST = "id, created_at, updated_at, proposal_no, status, customer_name, customer_phone, province, dc_kwp, total, views:data->views, last_view_at:data->>lastViewAt";
 
 export async function GET() {
   const denied = await requireAdmin();
@@ -35,6 +35,12 @@ export async function POST(req: Request) {
     updated_at: new Date().toISOString(),
   };
   const db = adminClient().from("proposals");
+  // Açılma takibi sunucuda tutulur; ekrandaki eski değer üzerine yazmasın.
+  const { data: cur } = p.id ? await db.select("views:data->views, last:data->>lastViewAt, notified:data->>notifiedAt").eq("id", p.id).maybeSingle() : { data: null };
+  if (cur) {
+    const c = cur as { views?: number; last?: string; notified?: string };
+    row.data = { ...row.data, views: c.views ?? undefined, lastViewAt: c.last ?? undefined, notifiedAt: c.notified ?? undefined };
+  }
   const { data, error } = p.id ? await db.update(row).eq("id", p.id).select("id").single() : await db.insert(row).select("id").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ id: data.id });

@@ -41,6 +41,11 @@ const tl = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} TL`;
 const usd = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} $`;
 const num = (n: number, d = 0) => n.toLocaleString("tr-TR", { maximumFractionDigits: d });
 const uid = () => Math.random().toString(36).slice(2, 9);
+// Türkiye numarası wa.me biçimine çevrilir.
+const customerWa = (phone: string) => {
+  const d = phone.replace(/\D/g, "");
+  return d.startsWith("90") ? d : d.startsWith("0") ? `9${d}` : `90${d}`;
+};
 
 function blank(panel: PanelModel): Proposal {
   return {
@@ -87,7 +92,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
   const [selected, setSelected] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [focus, setFocus] = useState<{ center: LatLon; zoom: number; key: number } | null>(null);
-  const [list, setList] = useState<{ id: number; proposal_no: string; customer_name: string | null; total: number | null; updated_at: string }[] | null>(null);
+  const [list, setList] = useState<{ id: number; proposal_no: string; customer_name: string | null; total: number | null; updated_at: string; views: number | null; last_view_at: string | null }[] | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [settings, setSettings] = useState<QuoteSettings>(DEFAULT_SETTINGS);
   const [kurMsg, setKurMsg] = useState<string | null>(null);
@@ -364,8 +369,10 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
   }
   // Son onay: ekrandaki hâliyle görseller alınır, kaydedilir ve teklif belgesi açılır.
   async function createProposal() {
-    captureImages();
-    await save();
+    const images = captureImages();
+    // Müşteri linki ilk oluşturmada üretilir, sonraki güncellemelerde aynı kalır.
+    const shareToken = p.shareToken ?? crypto.randomUUID().replace(/-/g, "");
+    await save({ shareToken, images: images ?? p.images });
     setTab(4);
   }
 
@@ -373,16 +380,19 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
   function captureImages() {
     const perspective = r3d.current?.snapshot("perspective") ?? undefined;
     const top = r3d.current?.snapshot("top") ?? undefined;
-    if (perspective || top) update({ images: { perspective, top } });
+    const images = perspective || top ? { perspective, top } : undefined;
+    if (images) update({ images });
+    return images;
   }
-  async function save() {
+  async function save(extra?: Partial<Proposal>) {
     setMsg("Kaydediliyor…");
-    const r = await fetch("/api/admin/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proposal: { ...p, cells }, dcKwp: n.dcKwp, total: n.total }) });
+    const r = await fetch("/api/admin/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proposal: { ...p, ...extra, cells }, dcKwp: n.dcKwp, total: n.total }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
-      update({ id: d.id });
+      update({ ...extra, id: d.id });
       setMsg("Kaydedildi.");
     } else setMsg(/proposals/.test(d.error ?? "") ? "Veritabanında teklif tablosu henüz yok (supabase/proposals.sql çalıştırılmalı). Taslak bu tarayıcıda saklanıyor." : `Kaydedilemedi: ${d.error ?? r.status}`);
+    return r.ok;
   }
   async function openList() {
     const r = await fetch("/api/admin/proposals");
@@ -437,7 +447,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
         <div className="flex flex-wrap gap-2">
           <Btn icon={<FilePlus2 size={15} />} onClick={startNew}>Yeni</Btn>
           <Btn icon={<FolderOpen size={15} />} onClick={openList}>Teklifler</Btn>
-          <Btn icon={<Save size={15} />} onClick={save} primary>Kaydet</Btn>
+          <Btn icon={<Save size={15} />} onClick={() => save()} primary>Kaydet</Btn>
           <Btn icon={<Printer size={15} />} onClick={() => { goTab(4); print(); }}>PDF</Btn>
         </div>
       </div>
@@ -451,7 +461,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             {list.map((x) => (
               <button key={x.id} onClick={() => openProposal(x.id)} className="flex w-full justify-between gap-3 py-2 text-left text-[13.5px] hover:text-brand">
                 <span>{x.proposal_no} · {x.customer_name ?? "—"}</span>
-                <span className="text-slate">{x.total ? tl(x.total) : ""} · {new Date(x.updated_at).toLocaleDateString("tr-TR")}</span>
+                <span className="text-slate">{x.views ? <b className="text-volt">{x.views} kez açıldı · </b> : null}{new Date(x.updated_at).toLocaleDateString("tr-TR")}</span>
               </button>
             ))}
           </div>
@@ -895,6 +905,20 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       {/* 5. Önizleme ve PDF */}
       {tab === 4 && (
         <div className="mt-5">
+          {p.id && p.shareToken ? (
+            <div className="mb-4 rounded-2xl border border-volt/40 bg-paper-raised p-4">
+              <p className="font-semibold">Müşteri linki</p>
+              <p className="mt-1 break-all font-mono-data text-[13px]">{`${location.origin}/teklif/${p.shareToken}`}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Btn onClick={() => navigator.clipboard.writeText(`${location.origin}/teklif/${p.shareToken}`).then(() => setMsg("Bağlantı kopyalandı."))}>Kopyala</Btn>
+                <a href={`https://wa.me/${customerWa(p.customer.phone)}?text=${encodeURIComponent(`Sayın ${p.customer.name}, güneş enerjisi teklifinizi hazırladık. Çatınızın üç boyutlu tasarımını ve teklif detaylarını buradan inceleyebilirsiniz:\n${location.origin}/teklif/${p.shareToken}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-lg bg-volt px-3 py-2 text-[13px] font-semibold text-paper">WhatsApp ile gönder</a>
+                <a href={`/teklif/${p.shareToken}`} target="_blank" rel="noopener noreferrer" className="text-[13px] font-semibold text-brand hover:underline">Müşteri gözüyle aç</a>
+              </div>
+              <p className="mt-2 text-[12px] text-slate">Müşteri açınca e-posta bildirimi gelir ve “Teklifler” listesinde sayı görünür. Kendi oturumunuzla açmanız sayılmaz. Teklifi değiştirip kaydederseniz bağlantı aynı kalır, müşteri güncel hâlini görür.</p>
+            </div>
+          ) : (
+            <p className="mb-4 rounded-xl bg-sun/15 p-3 text-[13px]">Müşteri linki için 4. adımda “Teklif oluştur”a basın.</p>
+          )}
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <Btn icon={<Printer size={15} />} onClick={print} primary>PDF olarak kaydet / yazdır</Btn>
             <Btn icon={<Box size={15} />} onClick={captureImages}>3B görselleri yenile</Btn>

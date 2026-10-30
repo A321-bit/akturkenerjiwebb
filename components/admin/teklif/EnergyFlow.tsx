@@ -62,7 +62,7 @@ function DayChart({ day, hour, onHour }: { day: HourFlow[]; hour: number; onHour
   );
 }
 
-export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: ProposalNumbers; onBattery: (kwh: number) => void }) {
+export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: ProposalNumbers; onBattery?: (kwh: number) => void }) {
   const [month, setMonth] = useState(5);
   const [hour, setHour] = useState(13);
   const [playing, setPlaying] = useState(false);
@@ -109,7 +109,7 @@ export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: Propos
         </div>
       </div>
 
-      {!hasLoad && <p className="mt-3 rounded-lg bg-sun/10 p-3 text-[13px]">Tüketim ve şebeke akışı için 1. adımda aylık fatura tutarını girin.</p>}
+      {!hasLoad && <p className="mt-3 rounded-lg bg-sun/10 p-3 text-[13px]">Tüketim ve şebeke akışı için tüketim bilgisi gerekir.</p>}
 
       <div className="mt-4 grid gap-5 lg:grid-cols-2">
         <svg viewBox="0 0 560 300" className="w-full" role="img" aria-label="Panel, ev, şebeke ve batarya arasındaki enerji akışı">
@@ -134,7 +134,7 @@ export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: Propos
         </div>
       </div>
 
-      {hasLoad && (
+      {hasLoad && onBattery && (
         <div className="mt-5 border-t border-line pt-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h4 className="font-semibold">Batarya karşılaştırması</h4>

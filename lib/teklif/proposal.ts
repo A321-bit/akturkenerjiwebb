@@ -70,6 +70,11 @@ export type Proposal = {
   scopeNotes: string;
   warrantyNotes: string;
   images?: { perspective?: string; top?: string };
+  /** Müşteri linki ve açılma takibi. */
+  shareToken?: string;
+  views?: number;
+  lastViewAt?: string;
+  notifiedAt?: string;
 };
 
 export const DEFAULT_TERMS = {
