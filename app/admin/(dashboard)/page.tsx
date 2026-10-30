@@ -134,7 +134,9 @@ export default async function AdminDashboardPage() {
   if (meta30.length) channelRows.push({ label: "Meta Form (reklam içi form)", value: meta30.length });
   channelRows.sort((a, b) => b.value - a.value);
 
-  const contactClicks = clicks.filter((c) => /whatsapp|call_button/.test(c.label ?? "") && t(c) >= now - 30 * DAY);
+  // Aynı şehirden aynı butona 30 dakika içindeki tekrar tıklamalar tek sayılır (reklam ağı botları
+  // dakikada onlarca tıklama üretiyordu; yeni kayıtlar zaten oturum başına bir kez tutuluyor).
+  const contactClicks = dedupeClicks(clicks.filter((c) => /whatsapp|call_button/.test(c.label ?? "") && t(c) >= now - 30 * DAY));
   const won = siteLeads.filter((l) => l.status === "Olumlu").length;
 
   const stats = [
@@ -180,7 +182,7 @@ export default async function AdminDashboardPage() {
             <BarList rows={channelRows} color={GOLD} empty="Son 30 günde talep yok." />
           </Card>
           <Card title="WhatsApp'a yazanlar nereden geliyor" note="WhatsApp butonuna tıklayanların siteye geldiği kanal">
-            <BarList rows={top(tally(waSources, (e) => chLabel.get(e.label!.slice(7) as LeadChannel) ?? "Bilinmiyor"))} empty="Henüz veri yok; yeni tıklamalarla dolacak." />
+            <BarList rows={top(tally(dedupeClicks(waSources), (e) => chLabel.get(e.label!.slice(7) as LeadChannel) ?? "Bilinmiyor"))} empty="Henüz veri yok; yeni tıklamalarla dolacak." />
           </Card>
           <Card title="En çok talep gelen sayfalar" note="Formun doldurulduğu sayfa · tüm zamanlar">
             <BarList rows={top(tally(siteLeads, (l) => pageName(l.form_page)), 6)} color={GOLD} />
@@ -190,7 +192,7 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card title="Tıklanan butonlar" note="Son 30 gün">
-          <BarList rows={top(tally(clicks, (c) => (c.label ? BUTTON_NAMES[c.label] ?? c.label : null)), 8)} />
+          <BarList rows={top(tally(dedupeClicks(clicks), (c) => (c.label ? BUTTON_NAMES[c.label] ?? c.label : null)), 8)} />
         </Card>
         <Card title="Ziyaretçi şehirleri" note="Son 30 gün">
           <BarList rows={top(tally(views, (e) => e.city), 8)} />
@@ -211,4 +213,17 @@ function Card({ title, note, className = "", children }: { title: string; note?:
       <div className="mt-4">{children}</div>
     </section>
   );
+}
+
+function dedupeClicks<T extends { label: string | null; city: string | null; created_at: string }>(rows: T[]): T[] {
+  const last = new Map<string, number>();
+  return [...rows]
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .filter((r) => {
+      const key = `${r.label}|${r.city ?? "?"}`;
+      const at = new Date(r.created_at).getTime();
+      const prev = last.get(key);
+      last.set(key, at);
+      return prev == null || at - prev > 30 * 60e3;
+    });
 }
