@@ -67,7 +67,7 @@ export function buildQuoteLines(input: {
   roof: RoofKind;
   panel: Item;
   inverter?: (Item & { adet: number }) | null;
-  battery?: (Item & { adet: number }) | null;
+  battery?: (Item & { adet: number; extras?: { name: string; adet: number; costUsd: number }[] }) | null;
   settings: QuoteSettings;
   uid: () => string;
 }): PriceLine[] {
@@ -76,7 +76,10 @@ export function buildQuoteLines(input: {
   const m = (i: Item) => i.marginPct ?? settings.defaultMarginPct;
   const lines = [item(panel.name, panelCount, "adet", panel.costUsd ?? 0, m(panel))];
   if (inverter) lines.push(item(inverter.name, inverter.adet, "adet", inverter.costUsd ?? 0, m(inverter)));
-  if (battery) lines.push(item(battery.name, battery.adet, "adet", battery.costUsd ?? 0, m(battery)));
+  if (battery) {
+    lines.push(item(battery.name, battery.adet, "adet", battery.costUsd ?? 0, m(battery)));
+    for (const x of battery.extras ?? []) lines.push(item(x.name, x.adet, "adet", x.costUsd, settings.defaultMarginPct));
+  }
   for (const r of settings.rules) {
     if (r.cati !== "hepsi" && r.cati !== roof) continue;
     if (kwp < r.kwFrom || kwp > r.kwTo) continue;

@@ -10,7 +10,7 @@ export type PaymentStep = { id: string; ad: string; pct: number; sure: string };
 export type PriceMode = "malzeme" | "kwp" | "manuel";
 
 export type InverterChoice = { name: string; kw: number; price?: number; slug?: string; adet: number; costUsd?: number; marginPct?: number };
-export type BatteryChoice = { name: string; kwh: number; slug?: string; adet: number; costUsd?: number; marginPct?: number };
+export type BatteryChoice = { name: string; kwh: number; slug?: string; adet: number; costUsd?: number; marginPct?: number; extras?: { name: string; adet: number; costUsd: number }[] };
 
 export type Proposal = {
   id?: number;

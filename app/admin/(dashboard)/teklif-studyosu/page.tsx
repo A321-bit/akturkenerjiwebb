@@ -7,7 +7,7 @@ import Studio from "@/components/admin/teklif/Studio";
 // Ürün ve fiyat seçenekleri mağazadan gelir.
 
 export default async function TeklifStudyosuPage({ searchParams }: { searchParams: Promise<{ calc?: string; id?: string }> }) {
-  const [products, site, sp, costRes] = await Promise.all([getStoreProducts(), getSiteSettings(), searchParams, adminClient().from("store_products").select("slug, cost_usd, margin_pct")]);
+  const [products, site, sp, costRes] = await Promise.all([getStoreProducts(), getSiteSettings(), searchParams, adminClient().from("store_products").select("slug, name, cost_usd, margin_pct, bom, category")]);
   // Maliyetler yalnız bu admin sayfasına gelir; mağaza verisinde bulunmaz.
   const costs = new Map((costRes.data ?? []).map((c) => [c.slug as string, { costUsd: c.cost_usd == null ? undefined : Number(c.cost_usd), marginPct: c.margin_pct == null ? undefined : Number(c.margin_pct) }]));
 
@@ -36,6 +36,16 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
     .filter((p) => p.kwh > 0)
     .sort((a, b) => a.kwh - b.kwh);
 
+  // Bataryalı sistemin BMS, sayaç ve Wi-Fi kalemleri: mağaza ürünü ve hibrit paket reçetelerinden.
+  type BomRow = { name?: string; unit?: number };
+  const accessoryMap = new Map<string, number>();
+  for (const c of costRes.data ?? []) {
+    if (c.category === "lityum-batarya-ve-setleri" && /BMS/i.test(c.name) && c.cost_usd) accessoryMap.set(c.name, Number(c.cost_usd));
+    if (c.category === "hibrit-paketler")
+      for (const b of (c.bom ?? []) as BomRow[]) if (b.name && b.unit && /BMS|Smart Meter|Dongle/i.test(b.name)) accessoryMap.set(b.name, b.unit);
+  }
+  const accessories = [...accessoryMap].map(([name, costUsd]) => ({ name, costUsd }));
+
   // Anahtar teslim fiyat karşılaştırması için on grid paketleri (TL/kW).
   const packages = products
     .filter((p) => p.category === "on-grid-paketler" && p.price)
@@ -47,6 +57,7 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
       panels={panels}
       inverters={inverters}
       batteries={batteries}
+      accessories={accessories}
       packages={packages}
       company={{ name: site.name, phone: site.contact.phoneDisplay, email: site.contact.email, address: site.contact.addressLine, web: SITE_URL.replace(/^https?:\/\//, "") }}
       initialCalcId={sp.calc ? Number(sp.calc) : undefined}

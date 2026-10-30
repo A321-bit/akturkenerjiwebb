@@ -7,6 +7,8 @@ import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal } from "@/lib/teklif/proposal";
 import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, salePrice, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
+import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
+import { suggestBattery } from "@/lib/teklif/simulate";
 import PricingRules from "./PricingRules";
 import ProposalDocument, { type Company } from "./ProposalDocument";
 import EnergyFlow from "./EnergyFlow";
@@ -25,6 +27,7 @@ type Props = {
   panels: (PanelModel & { slug?: string })[];
   inverters: Product[];
   batteries: Omit<BatteryChoice, "adet">[];
+  accessories: Accessory[];
   packages: { kw: number; price: number }[];
   company: Company;
   initialCalcId?: number;
@@ -74,7 +77,7 @@ function blank(panel: PanelModel): Proposal {
   };
 }
 
-export default function Studio({ panels, inverters, batteries, company, initialCalcId, initialId }: Props) {
+export default function Studio({ panels, inverters, batteries, accessories, company, initialCalcId, initialId }: Props) {
   const defaultPanel = panels.find((p) => p.wp === 620) ?? panels[0] ?? { name: "620 Wp TOPCon panel", wp: 620, lengthM: 2.382, widthM: 1.134 };
   const [p, setP] = useState<Proposal>(() => blank(defaultPanel));
   const [tab, setTab] = useState(0);
@@ -258,16 +261,42 @@ export default function Studio({ panels, inverters, batteries, company, initialC
   }
 
   // --- Fiyat kalemleri ---
+  // Güce göre ürün seçimi: bataryasızda on grid invertör, bataryalıda hibrit invertör + uyumlu batarya.
+  function autoPick() {
+    const contract = p.contractKw ?? 0;
+    if (batteryMode) {
+      const wanted = p.batteryKwh || (n.annualKwh ? suggestBattery(n.monthlyKwh, p.abone) : 0);
+      const set = pickHybridSet(inverters, batteries, accessories, n.dcKwp, contract, wanted);
+      if (!set) {
+        setMsg("Bu güç için hazır hibrit eşleşmesi yok; invertör ve bataryayı elle seçin.");
+        return { inverter: p.inverter, battery: p.battery };
+      }
+      setMsg(null);
+      return set;
+    }
+    const inverter = pickOnGridInverter(inverters, n.dcKwp, contract);
+    if (!inverter) setMsg("Uygun invertör bulunamadı; elle seçin.");
+    return { inverter: inverter ?? p.inverter, battery: null };
+  }
+  function applyAutoPick() {
+    const { inverter, battery } = autoPick();
+    update({ inverter, battery, batteryKwh: battery ? battery.kwh * battery.adet : 0 });
+  }
   function buildLines() {
+    // Ürün seçilmemişse sistem kendisi atar; elle seçilen ürün korunur.
+    const picked = p.inverter ? { inverter: p.inverter, battery: p.battery ?? null } : autoPick();
     update({
+      inverter: picked.inverter,
+      battery: picked.battery,
+      batteryKwh: picked.battery ? picked.battery.kwh * picked.battery.adet : 0,
       // Maliyetler teklifte eski kalmış olabilir; güncel mağaza verisi esas alınır.
       lines: buildQuoteLines({
         kwp: n.dcKwp,
         panelCount: n.panelCount,
         roof: p.roofType ?? "kiremit",
         panel: panels.find((x) => x.slug && x.slug === p.panel.slug) ?? p.panel,
-        inverter: p.inverter ? { ...p.inverter, ...inverters.find((x) => x.slug === p.inverter!.slug), adet: p.inverter.adet } : null,
-        battery: p.battery ? { ...p.battery, ...batteries.find((x) => x.slug === p.battery!.slug), adet: p.battery.adet } : null,
+        inverter: picked.inverter ? { ...picked.inverter, ...inverters.find((x) => x.slug === picked.inverter!.slug), adet: picked.inverter.adet } : null,
+        battery: picked.battery ? { ...picked.battery, ...batteries.find((x) => x.slug === picked.battery!.slug), adet: picked.battery.adet } : null,
         settings,
         uid,
       }),
@@ -545,7 +574,10 @@ export default function Studio({ panels, inverters, batteries, company, initialC
               <button onClick={() => { setBatteryMode(false); update({ battery: null, batteryKwh: 0, inverter: null }); }} className={`rounded-md px-3 py-1.5 ${!batteryMode ? "bg-ink text-paper" : "text-slate"}`}>Bataryasız</button>
               <button onClick={() => { setBatteryMode(true); update({ inverter: null }); }} className={`rounded-md px-3 py-1.5 ${batteryMode ? "bg-ink text-paper" : "text-slate"}`}>Bataryalı</button>
             </div>
-            <h3 className="font-semibold">{batteryMode ? "Hibrit invertör" : "İnvertör"}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-semibold">{batteryMode ? "Hibrit invertör" : "İnvertör"}</h3>
+              <Btn icon={<Wand2 size={14} />} onClick={applyAutoPick} primary>Otomatik seç</Btn>
+            </div>
             <p className="text-[12.5px] text-slate">Panel gücü {num(n.dcKwp, 2)} kWp. Uygun aralık: {num(n.dcKwp / 1.3, 1)}–{num(n.dcKwp / 0.85, 1)} kW AC (DC/AC 0,85–1,30).</p>
             <select
               value={p.inverter?.slug ?? ""}
