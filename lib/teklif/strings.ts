@@ -5,8 +5,8 @@ export type PanelSpec = { voc: number; vmp: number; isc: number; tcVoc: number }
 export type InverterSpec = { vMax: number; mpptMin: number; mpptMax: number; mpptCount: number; stringsPerMppt: number; iMax: number };
 export type SiteTemps = { minC: number; maxCellC: number };
 
-export const panelVocCold = (p: PanelSpec, t: SiteTemps) => p.voc * (1 + (p.tcVoc / 100) * (t.minC - 25));
-export const panelVmpHot = (p: PanelSpec, t: SiteTemps) => p.vmp * (1 + (p.tcVoc / 100) * (t.maxCellC - 25));
+export const panelVocCold = (p: PanelSpec, t: SiteTemps) => p.voc * (1 - (Math.abs(p.tcVoc) / 100) * (t.minC - 25));
+export const panelVmpHot = (p: PanelSpec, t: SiteTemps) => p.vmp * (1 - (Math.abs(p.tcVoc) / 100) * (t.maxCellC - 25));
 
 export type FaceString = { name: string; panels: number; strings: number; perString: number[]; ok: boolean };
 export type StringPlan = { nMin: number; nMax: number; faces: FaceString[]; usedStrings: number; capacity: number; problems: string[] };
