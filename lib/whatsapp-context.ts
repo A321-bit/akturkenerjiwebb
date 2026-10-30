@@ -50,8 +50,11 @@ export function tagWhatsappHref(href: string): { href: string; channel: LeadChan
       // oturum deposu kapalı: yalnızca kaynak eklenir
     }
     const extra = [calc ? `Hesaplama: ${calc}` : null, `${MARK} ${ch.text}`].filter(Boolean).join("\n");
-    url.searchParams.set("text", text ? `${text}\n\n${extra}` : extra);
-    return { href: url.toString(), channel: ch.key };
+    // URLSearchParams boşluğu "+" yapar; WhatsApp'ta "+" olarak kalmasın diye elle kodlanır.
+    url.searchParams.delete("text");
+    const rest = url.searchParams.toString();
+    const msg = encodeURIComponent(text ? `${text}\n\n${extra}` : extra);
+    return { href: `${url.origin}${url.pathname}?${rest ? `${rest}&` : ""}text=${msg}`, channel: ch.key };
   } catch {
     return null;
   }
