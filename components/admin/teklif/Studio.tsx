@@ -6,7 +6,7 @@ import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, Pen
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal } from "@/lib/teklif/proposal";
-import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, salePrice, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
+import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, quoteChecks, salePrice, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
 import { suggestBattery } from "@/lib/teklif/simulate";
 import PricingRules from "./PricingRules";
@@ -67,8 +67,9 @@ function blank(panel: PanelModel): Proposal {
     roofType: "kiremit",
     showLinePrices: false,
     showTl: false,
-    hikePct: DEFAULT_SETTINGS.hikePct,
-    hikeYears: DEFAULT_SETTINGS.hikeYears,
+    hikeTable: DEFAULT_SETTINGS.hikeTable,
+    reportType: "optimal",
+    consumptionMode: "fatura",
     oversizePct: DEFAULT_SETTINGS.oversizePct,
     paymentPlan: DEFAULT_SETTINGS.paymentPlan,
     paymentTerms: DEFAULT_TERMS.payment,
@@ -233,8 +234,9 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     if (!fr) return;
     setP((x) => {
       const others = x.cells.filter((c) => c.faceId !== id);
-      // Sözleşme gücü girildiyse hedef güçten fazla panel konmaz.
-      const target = targetKwp(x.contractKw ?? 0, x.oversizePct ?? settings.oversizePct);
+      // Maksimum raporda çatı tamamen dolar; optimalde hedef sözleşme gücü, yoksa yıllık tüketim.
+      const byUse = n.annualKwh > 0 ? n.annualKwh / (n.specificYield || 1450) : 0;
+      const target = x.reportType === "maksimum" ? 0 : targetKwp(x.contractKw ?? 0, x.oversizePct ?? settings.oversizePct) || byUse;
       const room = target > 0 ? Math.max(0, Math.ceil((target * 1000) / x.panel.wp) - others.length) : Infinity;
       return { ...x, cells: [...others, ...autoFill(fr, layout).slice(0, room)] };
     });
@@ -302,8 +304,8 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       }),
       priceCurrency: "USD",
       paymentPlan: p.paymentPlan ?? settings.paymentPlan,
-      hikePct: p.hikePct ?? settings.hikePct,
-      hikeYears: p.hikeYears ?? settings.hikeYears,
+      hikeTable: p.hikeTable ?? settings.hikeTable,
+      extraInverters: [],
       priceMode: p.priceMode ?? "malzeme",
       pricesIncludeVat: p.priceCurrency === "USD" ? p.pricesIncludeVat : false,
     });
@@ -323,6 +325,24 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       lines: inv ? p.lines.map((l) => (l.kind === "inverter" ? productLine(l, inv, adet) : l)) : p.lines,
     });
   }
+  function addExtraInverter() {
+    const inv = invOptions[0];
+    if (!inv) return;
+    const id = uid();
+    const marjPct = inv.marginPct ?? settings.defaultMarginPct;
+    update({
+      extraInverters: [...(p.extraInverters ?? []), { ...inv, id, adet: 1 }],
+      lines: [...p.lines, { id, ad: inv.name, adet: 1, birim: "adet", maliyetUsd: inv.costUsd ?? 0, marjPct, birimFiyat: salePrice(inv.costUsd ?? 0, marjPct), kind: "inverter2" }],
+    });
+  }
+  function setExtraInverter(id: string, slug: string) {
+    const inv = inverters.find((x) => x.slug === slug);
+    if (!inv) return;
+    update({
+      extraInverters: (p.extraInverters ?? []).map((x) => (x.id === id ? { ...inv, id, adet: x.adet } : x)),
+      lines: p.lines.map((l) => (l.id === id ? productLine(l, inv, l.adet) : l)),
+    });
+  }
   function setBattery(slug: string) {
     const b = batteries.find((x) => x.slug === slug);
     const adet = p.battery?.adet ?? 1;
@@ -338,6 +358,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     update({
       lines: p.lines.map((x) => (x.id === l.id ? { ...x, adet } : x)),
       ...(l.kind === "inverter" && p.inverter ? { inverter: { ...p.inverter, adet: Math.max(1, Math.round(adet)) } } : {}),
+      ...(l.kind === "inverter2" ? { extraInverters: (p.extraInverters ?? []).map((x) => (x.id === l.id ? { ...x, adet: Math.max(1, Math.round(adet)) } : x)) } : {}),
       ...(l.kind === "battery" && p.battery ? { battery: { ...p.battery, adet: Math.max(1, Math.round(adet)) }, batteryKwh: p.battery.kwh * Math.max(1, Math.round(adet)) } : {}),
     });
   }
@@ -392,6 +413,11 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     setTimeout(() => window.print(), 300);
   }
 
+  const checks = quoteChecks({ ...p, cells }, n, settings.minMarginPct);
+  const errorCount = checks.filter((c) => c.level === "hata").length;
+  const costTotal = p.lines.reduce((a, l) => a + l.adet * (l.maliyetUsd ?? 0), 0);
+  const netSale = Math.max(0, n.subtotal - p.discountTl);
+  const marginPct = costTotal > 0 ? ((netSale - costTotal) / costTotal) * 100 : 0;
   const panelCountOf = (id: string) => cells.filter((c) => c.faceId === id).length;
   const withBattery = Boolean(p.battery);
   const batteryMode = batteryChoice || withBattery;
@@ -459,7 +485,26 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
               {(Object.keys(ABONE_ADLARI) as AboneGrubu[]).map((k) => <option key={k} value={k}>{ABONE_ADLARI[k]}</option>)}
             </select>
           </label>
-          <NumInput label="Ortalama aylık fatura (TL)" value={p.monthlyBillTl} onChange={(v) => update({ monthlyBillTl: v })} note="Tasarruf ve geri ödeme bu faturaya göre hesaplanır." />
+          <label className="block">
+            <span className="text-[12.5px] font-semibold text-slate">Tüketim bilgisi</span>
+            <select value={p.consumptionMode ?? "fatura"} onChange={(e) => update({ consumptionMode: e.target.value as Proposal["consumptionMode"] })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
+              <option value="fatura">Aylık fatura tutarı</option>
+              <option value="gunluk">Günlük tüketim (kWh)</option>
+            </select>
+          </label>
+          {(p.consumptionMode ?? "fatura") === "fatura" ? (
+            <NumInput label="Ortalama aylık fatura (TL)" value={p.monthlyBillTl} onChange={(v) => update({ monthlyBillTl: v })} note="Tasarruf ve geri ödeme buna göre hesaplanır." />
+          ) : (
+            <NumInput label="Günlük tüketim (kWh)" value={p.dailyKwh ?? 0} onChange={(v) => update({ dailyKwh: Math.max(0, v) })} note={n.monthlyBillTl ? `Tahmini aylık fatura ${tl(n.monthlyBillTl)}` : undefined} />
+          )}
+          <NumInput label="Elle birim fiyat (kuruş/kWh, KDV hariç)" value={p.unitKr ?? 0} onChange={(v) => update({ unitKr: Math.max(0, v) })} note="Boş bırakılırsa EPDK tarifesi kullanılır. Perakende + dağıtım toplamı." />
+          <label className="block">
+            <span className="text-[12.5px] font-semibold text-slate">Rapor tipi</span>
+            <select value={p.reportType ?? "optimal"} onChange={(e) => update({ reportType: e.target.value as Proposal["reportType"] })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
+              <option value="optimal">Optimal güç (tüketime göre)</option>
+              <option value="maksimum">Maksimum güç (çatının tamamı)</option>
+            </select>
+          </label>
           <NumInput label="Sözleşme gücü (kW)" value={p.contractKw ?? 0} step={0.5} onChange={(v) => update({ contractKw: Math.max(0, v) })} note="Faturadan. Otomatik doldurma hedef güçte durur." />
           <div className="grid grid-cols-2 gap-4">
             <NumInput label="PV fazlası (%)" value={p.oversizePct ?? settings.oversizePct} onChange={(v) => update({ oversizePct: v })} note={p.contractKw ? `Hedef ${num(targetKwp(p.contractKw, p.oversizePct ?? settings.oversizePct), 1)} kWp` : undefined} />
@@ -716,6 +761,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
               <h3 className="font-semibold">Malzeme listesi</h3>
               <div className="flex gap-2">
                 <Btn icon={<Sparkles size={14} />} onClick={() => (!p.lines.length || confirm("Liste tasarımdan yeniden oluşturulacak; elle yaptığınız değişiklikler silinir. Devam edilsin mi?")) && buildLines()} primary>Tasarımdan oluştur</Btn>
+                <Btn icon={<Plus size={14} />} onClick={addExtraInverter}>İnvertör ekle</Btn>
                 <Btn icon={<Plus size={14} />} onClick={() => update({ lines: [...p.lines, { id: uid(), ad: "Yeni kalem", adet: 1, birim: "adet", birimFiyat: 0, maliyetUsd: 0, marjPct: settings.defaultMarginPct }] })}>Kalem ekle</Btn>
               </div>
             </div>
@@ -733,6 +779,10 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                       <select value={p.inverter?.slug ?? ""} onChange={(e) => setInverter(e.target.value)} aria-label="İnvertör" className="min-w-0 rounded-lg border border-brand/50 bg-paper px-2 py-1.5">
                         {invOptions.map((i) => <option key={i.slug} value={i.slug}>{i.name}</option>)}
                       </select>
+                    ) : l.kind === "inverter2" ? (
+                      <select value={p.extraInverters?.find((x) => x.id === l.id)?.slug ?? ""} onChange={(e) => setExtraInverter(l.id, e.target.value)} aria-label="Ek invertör" className="min-w-0 rounded-lg border border-brand/50 bg-paper px-2 py-1.5">
+                        {invOptions.map((i) => <option key={i.slug} value={i.slug}>{i.name}</option>)}
+                      </select>
                     ) : l.kind === "battery" ? (
                       <select value={p.battery?.slug ?? ""} onChange={(e) => setBattery(e.target.value)} aria-label="Batarya" className="min-w-0 rounded-lg border border-brand/50 bg-paper px-2 py-1.5">
                         {batteries.map((b) => <option key={b.slug} value={b.slug}>{b.name}</option>)}
@@ -746,7 +796,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                     <input type="number" value={l.marjPct ?? 0} onChange={(e) => { const m = Number(e.target.value); patchLine(l.id, { marjPct: m, birimFiyat: salePrice(l.maliyetUsd ?? 0, m) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
                     <input type="number" value={Math.round(l.birimFiyat * 100) / 100} onChange={(e) => patchLine(l.id, { birimFiyat: Number(e.target.value) })} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
                     <span className="text-right font-mono-data">{num(l.adet * l.birimFiyat)}</span>
-                    <button onClick={() => update({ lines: p.lines.filter((x) => x.id !== l.id) })} className="text-slate hover:text-red-600" aria-label="Kalemi sil"><Trash2 size={15} /></button>
+                    <button onClick={() => update({ lines: p.lines.filter((x) => x.id !== l.id), ...(l.kind === "inverter2" ? { extraInverters: (p.extraInverters ?? []).filter((x) => x.id !== l.id) } : {}) })} className="text-slate hover:text-red-600" aria-label="Kalemi sil"><Trash2 size={15} /></button>
                   </div>
                 ))}
               </div>
@@ -772,6 +822,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                 <p className="font-display text-2xl font-semibold">{p.priceCurrency === "USD" ? usd(n.total) : tl(n.total)}</p>
                 {p.priceCurrency === "USD" && <p className="text-[12.5px] text-slate">{p.usdTry ? tl(n.totalTl) : "Kur girilmedi"}</p>}
                 {n.paybackYears != null && <p className="text-[12.5px] text-slate">Geri ödeme {num(n.paybackYears, 1)} yıl{n.paybackFlatYears != null ? ` · zamsız ${num(n.paybackFlatYears, 1)} yıl` : ""}</p>}
+                {costTotal > 0 && <p className={`mt-1 text-[13px] font-semibold ${marginPct < settings.minMarginPct ? "text-red-600" : "text-volt"}`}>Kâr {usd(netSale - costTotal)} · %{num(marginPct)}</p>}
               </div>
             </div>
           </section>
@@ -800,11 +851,15 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             </div>
             <div className="rounded-2xl border border-line bg-paper-raised p-5">
               <h3 className="font-semibold">Elektrik zammı senaryosu</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <NumInput label="Yıllık zam (%)" value={p.hikePct ?? settings.hikePct} onChange={(v) => update({ hikePct: v })} />
-                <NumInput label="Kaç yıl uygulansın" value={p.hikeYears ?? settings.hikeYears} onChange={(v) => update({ hikeYears: Math.max(0, Math.min(25, Math.round(v))) })} />
+              <p className="mt-1 text-[12px] text-slate">Bugüne göre artış (%). 10. yıldan sonra sabit kabul edilir; varsayım belgede yazılır.</p>
+              <div className="mt-2 grid grid-cols-5 gap-2 sm:grid-cols-9">
+                {(p.hikeTable ?? settings.hikeTable).map((v, i) => (
+                  <label key={i} className="block">
+                    <span className="text-[10.5px] text-slate">{i + 2}. yıl</span>
+                    <input type="number" value={v} onChange={(e) => update({ hikeTable: (p.hikeTable ?? settings.hikeTable).map((x, j) => (j === i ? Number(e.target.value) : x)) })} className="w-full rounded-lg border border-line bg-paper px-1.5 py-1 text-[12.5px]" />
+                  </label>
+                ))}
               </div>
-              <p className="mt-2 text-[12px] text-slate">Bu sürenin sonunda elektrik fiyatı sabit kabul edilir. Varsayım teklif belgesinde yazılır.</p>
               <label className="mt-4 block max-w-xs">
                 <span className="text-[12.5px] font-semibold text-slate">Teklif durumu</span>
                 <select value={p.status} onChange={(e) => update({ status: e.target.value as Proposal["status"] })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
@@ -817,9 +872,19 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             <Area label="Teklif kapsamı" value={p.scopeNotes} onChange={(v) => update({ scopeNotes: v })} />
             <Area label="Garanti" value={p.warrantyNotes} onChange={(v) => update({ warrantyNotes: v })} />
           </section>
+          {checks.length > 0 && (
+            <section className="rounded-2xl border border-line bg-paper-raised p-4">
+              <h3 className="font-semibold">Kontrol listesi</h3>
+              <ul className="mt-2 space-y-1 text-[13px]">
+                {checks.map((c) => (
+                  <li key={c.text} className={c.level === "hata" ? "font-semibold text-red-600" : "text-ink"}>{c.level === "hata" ? "Hata: " : "Uyarı: "}{c.text}</li>
+                ))}
+              </ul>
+            </section>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-ink p-4 text-paper">
             <p className="text-[13.5px]">Son kontrol: teklif, bu ekrandaki ürün, adet, maliyet ve fiyatlarla oluşturulur.</p>
-            <button onClick={createProposal} disabled={!p.lines.length && (p.priceMode ?? "malzeme") === "malzeme"} className="rounded-lg bg-sun px-5 py-2.5 text-[14px] font-semibold text-ink disabled:opacity-40">Teklif oluştur</button>
+            <button onClick={() => (errorCount === 0 || confirm(`${errorCount} hata var. Yine de teklif oluşturulsun mu?`)) && createProposal()} className="rounded-lg bg-sun px-5 py-2.5 text-[14px] font-semibold text-ink">Teklif oluştur</button>
           </div>
         </div>
       )}

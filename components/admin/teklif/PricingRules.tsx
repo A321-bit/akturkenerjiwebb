@@ -39,12 +39,24 @@ export default function PricingRules({ settings, onChange }: { settings: QuoteSe
       {missing > 0 && <p className="mt-3 rounded-lg bg-sun/15 p-2.5 text-[12.5px]">{missing} kuralın maliyeti girilmedi. Aynı kalem güce göre değişiyorsa kuralı çoğaltıp kW aralıklarını ayırın.</p>}
 
       <div className="mt-4 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
-        {([["defaultMarginPct", "Varsayılan kâr %"], ["oversizePct", "PV fazlası %"], ["hikePct", "Yıllık zam %"], ["hikeYears", "Zam kaç yıl"]] as const).map(([k, label]) => (
+        {([["defaultMarginPct", "Varsayılan kâr %"], ["minMarginPct", "En düşük kâr %"], ["oversizePct", "PV fazlası %"]] as const).map(([k, label]) => (
           <label key={k} className="block">
             <span className="text-[11.5px] font-semibold text-slate">{label}</span>
             <input type="number" value={settings[k]} onChange={(e) => onChange({ ...settings, [k]: Number(e.target.value) })} className={`mt-0.5 ${input}`} />
           </label>
         ))}
+      </div>
+
+      <div className="mt-4">
+        <p className="text-[11.5px] font-semibold text-slate">Elektrik zam tablosu: bugüne göre artış (%). 10. yıldan sonra sabit kabul edilir.</p>
+        <div className="mt-1 grid max-w-3xl grid-cols-5 gap-2 sm:grid-cols-9">
+          {settings.hikeTable.map((v, i) => (
+            <label key={i} className="block">
+              <span className="text-[11px] text-slate">{i + 2}. yıl</span>
+              <input type="number" value={v} onChange={(e) => onChange({ ...settings, hikeTable: settings.hikeTable.map((x, j) => (j === i ? Number(e.target.value) : x)) })} className={input} />
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="mt-4 overflow-x-auto">

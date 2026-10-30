@@ -4,7 +4,7 @@ import { faturaTutari, faturadanTuketim, type AboneGrubu } from "../elektrik-tar
 import type { LatLon, PanelCell, PanelModel, RoofFace } from "./geometry";
 
 /** birimFiyat, teklifin para biriminde (yeni tekliflerde USD) satış fiyatıdır. */
-export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number; maliyetUsd?: number; marjPct?: number; kind?: "panel" | "inverter" | "battery" };
+export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number; maliyetUsd?: number; marjPct?: number; kind?: "panel" | "inverter" | "inverter2" | "battery" };
 export type PaymentStep = { id: string; ad: string; pct: number; sure: string };
 /** malzeme: kalem toplamı · kwp: kWp başına tutar · manuel: elle girilen toplam. */
 export type PriceMode = "malzeme" | "kwp" | "manuel";
@@ -49,9 +49,18 @@ export type Proposal = {
   showTl?: boolean;
   /** Belgede kalem fiyatlarını göster. */
   showLinePrices?: boolean;
-  hikePct?: number;
-  hikeYears?: number;
+  /** Elektrik fiyatının bugüne göre artışı (%): 2. yıldan 10. yıla; sonrası sabit. */
+  hikeTable?: number[];
   paymentPlan?: PaymentStep[];
+  /** Ek invertörler (farklı model); kalemle aynı id'yi taşır. */
+  extraInverters?: (InverterChoice & { id: string })[];
+  /** optimal: tüketime/sözleşmeye göre · maksimum: çatının tamamı. */
+  reportType?: "optimal" | "maksimum";
+  /** Tüketim kaynağı: fatura tutarı ya da günlük kWh. */
+  consumptionMode?: "fatura" | "gunluk";
+  dailyKwh?: number;
+  /** Elle birim fiyat (kuruş/kWh, KDV hariç); boşsa EPDK tarifesi. */
+  unitKr?: number;
   /** Yüzey kimliğine göre PVGIS aylık üretimi (1 kWp, kWh). */
   yields: Record<string, number[]>;
   lines: PriceLine[];
@@ -90,6 +99,8 @@ export type ProposalNumbers = {
   specificYield: number;
   monthlyKwh: number[];
   annualKwh: number;
+  /** Bugünkü tahmini aylık fatura. */
+  monthlyBillTl: number;
   annualSavingTl: number;
   coveragePct: number;
   subtotal: number;
@@ -118,12 +129,17 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const annualProduction = monthlyProduction.reduce((a, b) => a + b, 0);
   const panelCount = byFace.reduce((s, f) => s + f.count, 0);
   const dcKwp = (panelCount * wp) / 1000;
-  const acKw = p.inverter ? p.inverter.kw * p.inverter.adet : 0;
+  const acKw = (p.inverter ? p.inverter.kw * p.inverter.adet : 0) + (p.extraInverters ?? []).reduce((a, i) => a + i.kw * i.adet, 0);
 
-  const avg = p.monthlyBillTl > 0 ? faturadanTuketim(p.abone, p.monthlyBillTl) : 0;
+  // Elle birim fiyat varsa fatura: kWh × kuruş, tüketim vergisi ve KDV ile; yoksa EPDK tarifesi.
+  const vergi = (1 + (p.abone === "sanayi" ? 0.01 : 0.05)) * (1 + (p.abone === "mesken" || p.abone === "tarimsal" ? 0.1 : 0.2));
+  const kr = p.unitKr ?? 0;
+  const bill = (kwh: number) => (kr > 0 ? (kwh * kr * vergi) / 100 : faturaTutari(p.abone, kwh));
+  const fromBill = (tl: number) => (kr > 0 ? (tl * 100) / (kr * vergi) : faturadanTuketim(p.abone, tl));
+  const avg = p.consumptionMode === "gunluk" ? (p.dailyKwh ?? 0) * 30.4 : p.monthlyBillTl > 0 ? fromBill(p.monthlyBillTl) : 0;
   const monthlyKwh = PROFIL.map((f) => avg * f);
   const annualKwh = monthlyKwh.reduce((a, b) => a + b, 0);
-  const annualSavingTl = monthlyKwh.reduce((s, c, i) => s + faturaTutari(p.abone, c) - faturaTutari(p.abone, Math.max(0, c - monthlyProduction[i])), 0);
+  const annualSavingTl = monthlyKwh.reduce((s, c, i) => s + bill(c) - bill(Math.max(0, c - monthlyProduction[i])), 0);
   const offset = monthlyKwh.reduce((s, c, i) => s + Math.min(c, monthlyProduction[i]), 0);
 
   const lineSum = p.lines.reduce((s, l) => s + l.adet * l.birimFiyat, 0);
@@ -134,12 +150,13 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const grand = p.pricesIncludeVat ? total : total + vat;
   const totalTl = p.priceCurrency === "USD" ? grand * (p.usdTry ?? 0) : grand;
 
-  const hike = (p.hikePct ?? 0) / 100;
-  const hikeYears = p.hikeYears ?? 0;
-  const paybackOf = (rate: number) => {
+  // Elektrik fiyatı çarpanı: 1. yıl bugünkü fiyat, 2-10. yıl tablodan, sonrası sabit.
+  const table = p.hikeTable ?? [];
+  const hikeAt = (y: number) => (y === 0 || !table.length ? 1 : 1 + (table[Math.min(y - 1, table.length - 1)] ?? 0) / 100);
+  const paybackOf = (factor: (y: number) => number) => {
     let cum = 0;
     for (let y = 0; y < 25; y++) {
-      const ys = annualSavingTl * (1 - DEGRADATION) ** y * (1 + rate) ** Math.min(y, hikeYears);
+      const ys = annualSavingTl * (1 - DEGRADATION) ** y * factor(y);
       if (totalTl > 0 && ys > 0 && cum + ys >= totalTl) return y + (totalTl - cum) / ys;
       cum += ys;
     }
@@ -148,7 +165,7 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   let s25 = 0;
   const cumulativeTl: number[] = [];
   for (let y = 0; y < 25; y++) {
-    s25 += annualSavingTl * (1 - DEGRADATION) ** y * (1 + hike) ** Math.min(y, hikeYears);
+    s25 += annualSavingTl * (1 - DEGRADATION) ** y * hikeAt(y);
     cumulativeTl.push(s25 - totalTl);
   }
 
@@ -163,14 +180,15 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
     specificYield: dcKwp > 0 ? annualProduction / dcKwp : 0,
     monthlyKwh,
     annualKwh,
+    monthlyBillTl: avg > 0 ? bill(avg) : 0,
     annualSavingTl,
     coveragePct: annualKwh > 0 ? Math.min(100, (offset / annualKwh) * 100) : 0,
     subtotal,
     total: grand,
     totalTl,
     vat,
-    paybackYears: paybackOf(hike),
-    paybackFlatYears: paybackOf(0),
+    paybackYears: paybackOf(hikeAt),
+    paybackFlatYears: paybackOf(() => 1),
     savings25Tl: s25,
     cumulativeTl,
     co2Tons: (annualProduction * 0.44) / 1000,

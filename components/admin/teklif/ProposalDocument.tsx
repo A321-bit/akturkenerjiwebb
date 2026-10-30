@@ -138,13 +138,14 @@ function PaybackChart({ data }: { data: number[] }) {
 }
 
 export default function ProposalDocument({ p, n, company }: { p: Proposal; n: ProposalNumbers; company: Company }) {
-  const hasCons = p.monthlyBillTl > 0;
+  const hasCons = n.annualKwh > 0;
   // Fiyat gösterimi: USD teklifte seçime göre dolar ya da günün kuruyla TL; eski tekliflerde TL.
   const isUsd = p.priceCurrency === "USD";
   const money = (v: number) => (!isUsd ? tl(v) : p.showTl && p.usdTry ? tl(v * p.usdTry) : `${Math.round(v).toLocaleString("tr-TR")} USD`);
   const showPrices = !isUsd || Boolean(p.showLinePrices);
   const plan = p.paymentPlan ?? [];
-  const hike = p.hikePct ?? 0;
+  const hike = p.hikeTable ?? [];
+  const reportName = p.reportType === "maksimum" ? "Maksimum kurulacak güç raporu" : "Optimal kurulacak güç raporu";
   const hasFlow = hasCons && n.annualProduction > 0;
   const lat = p.site.center[0];
   const azimuth = meanAzimuth(n.byFace.map((f) => ({ azimuth: p.faces.find((x) => x.id === f.faceId)?.azimuth ?? 0, weight: f.annualKwh })));
@@ -155,7 +156,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
     <div className="proposal-doc space-y-6 print:space-y-0">
       {/* 1. Kapak ve özet */}
       <Sheet>
-        <Head company={company} title="Güneş enerjisi sistemi teklifi" no={p.proposalNo} />
+        <Head company={company} title={`Güneş enerjisi teklifi · ${reportName}`} no={p.proposalNo} />
         <div className="mt-6 grid grid-cols-[1.3fr_1fr] gap-6">
           <div>
             <p className="text-[11px] uppercase tracking-[0.16em] text-[#d4861f]">Sayın</p>
@@ -200,6 +201,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
               <tbody>
                 <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Güneş paneli</td><td className="py-1.5 text-right">{n.panelCount} × {p.panel.name} ({p.panel.wp} Wp)</td></tr>
                 {p.inverter && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">İnvertör</td><td className="py-1.5 text-right">{p.inverter.adet} × {p.inverter.name}</td></tr>}
+                {(p.extraInverters ?? []).map((i) => <tr key={i.id} className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">İnvertör</td><td className="py-1.5 text-right">{i.adet} × {i.name}</td></tr>)}
                 {battery > 0 && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Batarya</td><td className="py-1.5 text-right">{num(battery)} kWh lityum</td></tr>}
                 <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">DC güç / AC güç</td><td className="py-1.5 text-right">{num(n.dcKwp, 2)} kWp / {n.acKw ? `${num(n.acKw, 1)} kW` : "—"}</td></tr>
                 <tr><td className="py-1.5 text-[#5b6577]">Özgül üretim</td><td className="py-1.5 text-right">{num(n.specificYield)} kWh/kWp·yıl</td></tr>
@@ -232,7 +234,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
         <div className="mt-2"><Chart prod={n.monthlyProduction} cons={hasCons ? n.monthlyKwh : n.monthlyProduction.map(() => 0)} /></div>
         {hasCons && (
           <div className="mt-3 grid grid-cols-4 gap-2.5">
-            <Fig label="Bugünkü aylık fatura" value={tl(p.monthlyBillTl)} />
+            <Fig label="Bugünkü aylık fatura" value={tl(n.monthlyBillTl)} />
             <Fig label="Yıllık tüketim" value={`${num(n.annualKwh)} kWh`} />
             <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />
             <Fig label="25 yılda tasarruf" value={tl(n.savings25Tl)} />
@@ -246,10 +248,10 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
         <Sheet>
           <Head company={company} title="Tasarruf ve enerji akışı" no={p.proposalNo} />
           <h2 className="mt-5 text-[13px] font-semibold">25 yıllık birikimli kazanç</h2>
-          <p className="text-[10px] text-[#5b6577]">Yıllık tasarruftan yatırım bedeli düşülerek, yılda %0,5 panel verim kaybıyla hesaplanmıştır. {hike > 0 ? `Varsayım: elektrik fiyatı ${p.hikeYears ?? 0} yıl boyunca yılda %${hike} artar, sonra sabit kalır. Gerçek zamlar farklı olabilir.` : "Elektrik zamları dahil değildir."}</p>
+          <p className="text-[10px] text-[#5b6577]">Yıllık tasarruftan yatırım bedeli düşülerek, yılda %0,5 panel verim kaybıyla hesaplanmıştır. {hike.length ? `Varsayım: elektrik fiyatı 2. yılda %${hike[0]}, 10. yılda %${hike[hike.length - 1]} artmış olur (bugüne göre), sonra sabit kalır. Gerçek zamlar farklı olabilir.` : "Elektrik zamları dahil değildir."}</p>
           <div className="mt-2"><PaybackChart data={n.cumulativeTl} /></div>
           <div className="mt-3 grid grid-cols-3 gap-2.5">
-            <Fig label={hike > 0 && n.paybackFlatYears != null ? `Geri ödeme (zamsız ${num(n.paybackFlatYears, 1)} yıl)` : "Geri ödeme"} value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />
+            <Fig label={hike.length && n.paybackFlatYears != null ? `Geri ödeme (zamsız ${num(n.paybackFlatYears, 1)} yıl)` : "Geri ödeme"} value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />
             <Fig label="25 yılda toplam tasarruf" value={tl(n.savings25Tl)} />
             <Fig label="25 yıl sonunda net" value={tl(n.cumulativeTl[24] ?? 0)} />
           </div>
