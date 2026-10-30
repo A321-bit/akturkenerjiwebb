@@ -262,7 +262,8 @@ const addRange = (q: URLSearchParams, prefix: string, d: Date) => {
 /** Son `days` gün + önceki `days` gün: günlük seriler (Google verisi birkaç gün gecikmelidir). */
 export async function performance(location: string, days = 28) {
   const end = new Date(Date.now() - 864e5);
-  const start = new Date(end.getTime() - (days * 2 - 1) * 864e5);
+  // Gecikmeli günler atılacağı için birkaç gün fazla istenir.
+  const start = new Date(end.getTime() - (days * 2 + 6) * 864e5);
   const q = new URLSearchParams();
   METRICS.forEach((m) => q.append("dailyMetrics", m));
   addRange(q, "dailyRange.startDate", start);
@@ -286,7 +287,9 @@ export async function performance(location: string, days = 28) {
     website: r.WEBSITE_CLICKS ?? 0,
     directions: r.BUSINESS_DIRECTION_REQUESTS ?? 0,
   }));
-  return { rows, days };
+  // Google'ın henüz işlemediği son günler sıfır gelir; grafiği ve karşılaştırmayı bozmasın.
+  while (rows.length && !rows[rows.length - 1].search && !rows[rows.length - 1].maps) rows.pop();
+  return { rows: rows.slice(-days * 2), days };
 }
 
 /** Son tam ayların arama terimleri (Google düşük hacimlileri "<15" olarak verir). */
