@@ -7,6 +7,7 @@ import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type InverterChoice, type PriceLine, type Proposal } from "@/lib/teklif/proposal";
 import ProposalDocument, { type Company } from "./ProposalDocument";
+import EnergyFlow from "./EnergyFlow";
 import LocateBar from "./LocateBar";
 import type { Parcel } from "@/lib/teklif/locate";
 import type { EditorMode } from "./SatelliteEditor";
@@ -374,7 +375,7 @@ export default function Studio({ panels, inverters, packages, company, initialCa
             <div className={view === "3d" ? "" : "pointer-events-none fixed -left-[3000px] top-0 h-[560px] w-[1000px]"}>
               <Roof3D ref={r3d} center={p.site.center} frames={frames} cells={cells} layout={layout} lat={p.site.center[0]} />
             </div>
-            {view === "3d" && <p className="mt-2 text-[12.5px] text-slate">Fareyle döndürün, tekerlekle yakınlaştırın, sağ tuşla kaydırın. Zemin: uydu görüntüsü (Esri).</p>}
+            {view === "3d" && <p className="mt-2 text-[12.5px] text-slate">Fareyle döndürün, tekerlekle yakınlaştırın, sağ tuşla kaydırın. Çatı ve zemin gerçek uydu görüntüsüdür; yükseklikler girilen değerlerdir.</p>}
           </div>
 
           <aside className="space-y-4">
@@ -468,6 +469,9 @@ export default function Studio({ panels, inverters, packages, company, initialCa
       {/* 3. Sistem ve üretim */}
       {tab === 2 && (
         <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <div className="lg:col-span-2 lg:order-last">
+            <EnergyFlow p={{ ...p, cells }} n={n} onBattery={(v) => update({ batteryKwh: v })} />
+          </div>
           <section className="rounded-2xl border border-line bg-paper-raised p-5">
             <h3 className="font-semibold">İnvertör</h3>
             <p className="text-[12.5px] text-slate">Panel gücü {num(n.dcKwp, 2)} kWp. Uygun aralık: {num(n.dcKwp / 1.3, 1)}–{num(n.dcKwp / 0.85, 1)} kW AC (DC/AC 0,85–1,30).</p>

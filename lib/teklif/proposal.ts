@@ -26,6 +26,8 @@ export type Proposal = {
   setbackM: number;
   gapM: number;
   inverter: InverterChoice | null;
+  /** Teklife dahil batarya (kWh); 0 ya da boşsa bataryasız. */
+  batteryKwh?: number;
   /** Yüzey kimliğine göre PVGIS aylık üretimi (1 kWp, kWh). */
   yields: Record<string, number[]>;
   lines: PriceLine[];
@@ -71,6 +73,8 @@ export type ProposalNumbers = {
   vat: number;
   paybackYears: number | null;
   savings25Tl: number;
+  /** Yıl sonu birikimli net kazanç (tasarruf − yatırım), 25 yıl. */
+  cumulativeTl: number[];
   co2Tons: number;
 };
 
@@ -102,9 +106,11 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   let cum = 0;
   let payback: number | null = null;
   let s25 = 0;
+  const cumulativeTl: number[] = [];
   for (let y = 0; y < 25; y++) {
     const ys = annualSavingTl * (1 - DEGRADATION) ** y;
     s25 += ys;
+    cumulativeTl.push(s25 - grand);
     if (payback == null && grand > 0 && ys > 0) {
       if (cum + ys >= grand) payback = y + (grand - cum) / ys;
       cum += ys;
@@ -129,6 +135,7 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
     vat,
     paybackYears: payback,
     savings25Tl: s25,
+    cumulativeTl,
     co2Tons: (annualProduction * 0.44) / 1000,
   };
 }

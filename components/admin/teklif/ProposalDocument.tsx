@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- yazdırma belgesinde data URL görselleri */
 import { YON_ADI, isFlat } from "@/lib/teklif/geometry";
 import type { Proposal, ProposalNumbers } from "@/lib/teklif/proposal";
+import { meanAzimuth, simulateDay, simulateYear, type HourFlow } from "@/lib/teklif/simulate";
 import { ABONE_ADLARI } from "@/lib/elektrik-tarife";
 
 // Teklif belgesi (A4). Tarayıcının "PDF olarak kaydet" çıktısı için tasarlanmıştır;
@@ -93,8 +94,57 @@ function Chart({ prod, cons }: { prod: number[]; cons: number[] }) {
   );
 }
 
+// Tipik gün: üretim alanı, tüketim çizgisi.
+function DayCurve({ title, day }: { title: string; day: HourFlow[] }) {
+  const W = 250;
+  const H = 88;
+  const max = Math.max(0.5, ...day.map((d) => Math.max(d.pv, d.load)));
+  const x = (h: number) => (h / 23) * W;
+  const y = (v: number) => H - (v / max) * H;
+  const path = (f: (d: HourFlow) => number) => day.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(f(d)).toFixed(1)}`).join(" ");
+  return (
+    <div>
+      <p className="text-[10.5px] font-semibold">{title}</p>
+      <svg viewBox={`0 0 ${W} ${H + 12}`} className="mt-1 w-full">
+        <line x1={0} x2={W} y1={H} y2={H} stroke="#c6ccd6" />
+        <path d={`${path((d) => d.pv)} L${W} ${H} L0 ${H}Z`} fill="#d4861f" fillOpacity={0.2} />
+        <path d={path((d) => d.pv)} fill="none" stroke="#d4861f" strokeWidth={1.5} />
+        <path d={path((d) => d.load)} fill="none" stroke="#3f74c4" strokeWidth={1.5} />
+        {[0, 6, 12, 18].map((h) => <text key={h} x={x(h)} y={H + 10} fontSize="7.5" fill="#5b6577" textAnchor={h ? "middle" : "start"}>{String(h).padStart(2, "0")}:00</text>)}
+      </svg>
+    </div>
+  );
+}
+
+// 25 yıllık birikimli net kazanç: yatırım geri dönene kadar gri, sonrası yeşil.
+function PaybackChart({ data }: { data: number[] }) {
+  const W = 520;
+  const H = 130;
+  const hi = Math.max(0, ...data);
+  const lo = Math.min(0, ...data);
+  const span = hi - lo || 1;
+  const zero = H - ((0 - lo) / span) * H;
+  const bw = W / data.length;
+  return (
+    <svg viewBox={`0 0 ${W} ${H + 16}`} className="w-full">
+      {data.map((v, i) => {
+        const h = (Math.abs(v) / span) * H;
+        return <rect key={i} x={i * bw + 2} y={v >= 0 ? zero - h : zero} width={bw - 4} height={Math.max(1, h)} rx={2} fill={v >= 0 ? "#2f9e6e" : "#aeb6c2"} />;
+      })}
+      <line x1={0} x2={W} y1={zero} y2={zero} stroke="#0e1626" />
+      {[1, 5, 10, 15, 20, 25].map((y) => <text key={y} x={(y - 0.5) * bw} y={H + 12} fontSize="8.5" fill="#5b6577" textAnchor="middle">{y}. yıl</text>)}
+    </svg>
+  );
+}
+
 export default function ProposalDocument({ p, n, company }: { p: Proposal; n: ProposalNumbers; company: Company }) {
   const hasCons = p.monthlyBillTl > 0;
+  const hasFlow = hasCons && n.annualProduction > 0;
+  const lat = p.site.center[0];
+  const azimuth = meanAzimuth(n.byFace.map((f) => ({ azimuth: p.faces.find((x) => x.id === f.faceId)?.azimuth ?? 0, weight: f.annualKwh })));
+  const battery = p.batteryKwh ?? 0;
+  const flow = (month: number) => simulateDay({ month, monthlyPv: n.monthlyProduction[month], monthlyLoad: n.monthlyKwh[month], abone: p.abone, lat, azimuth, batteryKwh: battery });
+  const year = hasFlow ? simulateYear({ monthlyPv: n.monthlyProduction, monthlyLoad: n.monthlyKwh, abone: p.abone, lat, azimuth, batteryKwh: battery }) : null;
   return (
     <div className="proposal-doc space-y-6 print:space-y-0">
       {/* 1. Kapak ve özet */}
@@ -144,6 +194,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
               <tbody>
                 <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Güneş paneli</td><td className="py-1.5 text-right">{n.panelCount} × {p.panel.name} ({p.panel.wp} Wp)</td></tr>
                 {p.inverter && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">İnvertör</td><td className="py-1.5 text-right">{p.inverter.adet} × {p.inverter.name}</td></tr>}
+                {battery > 0 && <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">Batarya</td><td className="py-1.5 text-right">{num(battery)} kWh lityum</td></tr>}
                 <tr className="border-b border-[#e6eaf0]"><td className="py-1.5 text-[#5b6577]">DC güç / AC güç</td><td className="py-1.5 text-right">{num(n.dcKwp, 2)} kWp / {n.acKw ? `${num(n.acKw, 1)} kW` : "—"}</td></tr>
                 <tr><td className="py-1.5 text-[#5b6577]">Özgül üretim</td><td className="py-1.5 text-right">{num(n.specificYield)} kWh/kWp·yıl</td></tr>
               </tbody>
@@ -184,7 +235,35 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
         <Foot company={company} page={2} />
       </Sheet>
 
-      {/* 3. Fiyat ve koşullar */}
+      {/* 3. Tasarruf ve enerji akışı (fatura girildiyse) */}
+      {hasFlow && year && (
+        <Sheet>
+          <Head company={company} title="Tasarruf ve enerji akışı" no={p.proposalNo} />
+          <h2 className="mt-5 text-[13px] font-semibold">25 yıllık birikimli kazanç</h2>
+          <p className="text-[10px] text-[#5b6577]">Yıllık tasarruftan yatırım bedeli düşülerek, bugünkü elektrik fiyatıyla ve yılda %0,5 panel verim kaybıyla hesaplanmıştır. Elektrik zamları dahil değildir.</p>
+          <div className="mt-2"><PaybackChart data={n.cumulativeTl} /></div>
+          <div className="mt-3 grid grid-cols-3 gap-2.5">
+            <Fig label="Geri ödeme" value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />
+            <Fig label="25 yılda toplam tasarruf" value={tl(n.savings25Tl)} />
+            <Fig label="25 yıl sonunda net" value={tl(n.cumulativeTl[24] ?? 0)} />
+          </div>
+          <h2 className="mt-6 text-[13px] font-semibold">Bir günde enerji akışı</h2>
+          <p className="text-[10px] text-[#5b6577]">Turuncu alan güneş üretimi, mavi çizgi tüketiminiz (kW). Üretimin tüketimi aştığı saatlerde fazlası {battery > 0 ? "önce bataryaya, sonra " : ""}şebekeye verilir; diğer saatlerde {battery > 0 ? "batarya ve " : ""}şebeke devreye girer.</p>
+          <div className="mt-2 grid grid-cols-2 gap-5">
+            <DayCurve title="Haziran, tipik gün" day={flow(5)} />
+            <DayCurve title="Aralık, tipik gün" day={flow(11)} />
+          </div>
+          <div className="mt-4 grid grid-cols-4 gap-2.5">
+            <Fig label="Üretimin evde kullanımı" value={`%${num(year.selfUsePct)}`} />
+            <Fig label="Şebekeye verilen" value={`${num(year.toGrid)} kWh`} />
+            <Fig label="Şebekeden çekilen" value={`${num(year.fromGrid)} kWh`} />
+            <Fig label="Batarya" value={battery > 0 ? `${num(battery)} kWh` : "Yok"} />
+          </div>
+          <Foot company={company} page={3} />
+        </Sheet>
+      )}
+
+      {/* Fiyat ve koşullar */}
       <Sheet last>
         <Head company={company} title="Fiyat ve koşullar" no={p.proposalNo} />
         <table className="mt-5 w-full text-[11px]">
@@ -227,7 +306,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
           <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{company.name}</p><p className="text-[#5b6577]">Kaşe / imza</p></div>
           <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{p.customer.name || "Müşteri"}</p><p className="text-[#5b6577]">Onay / imza</p></div>
         </div>
-        <Foot company={company} page={3} />
+        <Foot company={company} page={hasFlow ? 4 : 3} />
       </Sheet>
     </div>
   );

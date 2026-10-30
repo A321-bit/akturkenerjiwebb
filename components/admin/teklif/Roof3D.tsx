@@ -1,14 +1,17 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { Maximize2, Orbit } from "lucide-react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { cellPose, heightAt, toXY, type FaceFrame, type LatLon, type LayoutSettings, type PanelCell } from "@/lib/teklif/geometry";
 import { ESRI, getImagery, tileUrl } from "@/lib/teklif/imagery";
 
 // 3B görünüm: uydu görüntüsü zemin, çizilen çatı yüzeyleri (bina kütlesiyle) ve paneller.
-// Sahne koordinatı: X doğu, Y yukarı, Z güney (Z = -kuzey). Güneş öğle saatinde güneyden gelir;
-// gölgeler açık. Teklif PDF'i için perspektif ve üstten görüntü alınabilir.
+// Sahne koordinatı: X doğu, Y yukarı, Z güney (Z = -kuzey). Uydu görüntüsü çatıya da kaplanır;
+// güneş seçilen ay ve saatte gerçek konumundadır, gölgeler buna göre düşer.
+// Teklif PDF'i için perspektif ve üstten görüntü alınabilir.
 
 export type Roof3DHandle = { snapshot: (view: "perspective" | "top") => string | null };
 
@@ -16,33 +19,69 @@ type Props = { center: LatLon; frames: FaceFrame[]; cells: PanelCell[]; layout: 
 
 const V = (x: number, y: number, n: number) => new THREE.Vector3(x, y, -n);
 
-// Panel yüzeyi: hücre çizgili koyu mavi doku (bir kez üretilir).
+// Panel yüzeyi: hücre, bara ve alüminyum çerçeve çizgili doku (bir kez üretilir).
 function panelTexture() {
   const c = document.createElement("canvas");
-  c.width = 132;
-  c.height = 264;
+  c.width = 264;
+  c.height = 528;
   const g = c.getContext("2d")!;
-  g.fillStyle = "#0d1f3c";
+  g.fillStyle = "#0a1730";
   g.fillRect(0, 0, c.width, c.height);
   const cols = 6;
   const rows = 12;
+  const w = c.width / cols;
+  const h = c.height / rows;
   for (let i = 0; i < cols; i++)
     for (let j = 0; j < rows; j++) {
-      const w = c.width / cols;
-      const h = c.height / rows;
       const grad = g.createLinearGradient(i * w, j * h, (i + 1) * w, (j + 1) * h);
-      grad.addColorStop(0, "#1b3a6b");
-      grad.addColorStop(1, "#102446");
+      grad.addColorStop(0, "#14305e");
+      grad.addColorStop(1, "#0c1f42");
       g.fillStyle = grad;
-      g.fillRect(i * w + 1, j * h + 1, w - 2, h - 2);
+      g.fillRect(i * w + 1.5, j * h + 1.5, w - 3, h - 3);
+      g.fillStyle = "rgba(190,205,225,.28)";
+      for (const f of [0.33, 0.66]) g.fillRect(i * w + w * f, j * h + 1.5, 1, h - 3);
     }
-  g.strokeStyle = "#c9d3df";
-  g.lineWidth = 3;
-  g.strokeRect(1.5, 1.5, c.width - 3, c.height - 3);
+  g.strokeStyle = "#d5dbe3";
+  g.lineWidth = 7;
+  g.strokeRect(3.5, 3.5, c.width - 7, c.height - 7);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
+  t.anisotropy = 8;
   return t;
+}
+
+// Gökyüzü: üstten aşağı açılan renk geçişi.
+function skyTexture() {
+  const c = document.createElement("canvas");
+  c.width = 4;
+  c.height = 256;
+  const g = c.getContext("2d")!;
+  const grad = g.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, "#6fa3d8");
+  grad.addColorStop(0.65, "#c4dcf0");
+  grad.addColorStop(1, "#eef3f7");
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 4, 256);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+const AYLAR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+const ORTA_GUN = [15, 46, 75, 105, 135, 162, 198, 228, 258, 288, 318, 344];
+
+/** Güneş yönü (birim vektör, sahne ekseninde) ve yüksekliği; saat yerel güneş saatidir. */
+function sunDirection(lat: number, month: number, hour: number) {
+  const phi = (lat * Math.PI) / 180;
+  const decl = (23.45 * Math.PI * Math.sin((2 * Math.PI * (284 + ORTA_GUN[month])) / 365)) / 180;
+  const ha = ((hour - 12) * 15 * Math.PI) / 180;
+  const sinEl = Math.sin(phi) * Math.sin(decl) + Math.cos(phi) * Math.cos(decl) * Math.cos(ha);
+  const el = Math.asin(sinEl);
+  const cosEl = Math.max(1e-3, Math.cos(el));
+  // Güneyden batıya pozitif azimut: sabah doğu (+X), öğleden sonra batı (-X).
+  const west = (Math.cos(decl) * Math.sin(ha)) / cosEl;
+  const south = (sinEl * Math.sin(phi) - Math.sin(decl)) / (cosEl * Math.cos(phi));
+  return { dir: new THREE.Vector3(-west * cosEl, sinEl, south * cosEl).normalize(), el };
 }
 
 // Uydu zemini: merkezin çevresindeki karoları tuvalde birleştirir.
@@ -96,6 +135,11 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
   const box = useRef<HTMLDivElement>(null);
   const ctx = useRef<{ renderer: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.PerspectiveCamera; controls: OrbitControls; content: THREE.Group; ground: THREE.Group; sun: THREE.DirectionalLight } | null>(null);
   const panelTex = useRef<THREE.Texture | null>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+  const [imagery, setImagery] = useState<{ tex: THREE.Texture; nw: { x: number; n: number }; se: { x: number; n: number } } | null>(null);
+  const [month, setMonth] = useState(5);
+  const [hour, setHour] = useState(13);
+  const [spin, setSpin] = useState(false);
 
   useImperativeHandle(ref, () => ({
     snapshot(view) {
@@ -132,11 +176,18 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#dfe8f2");
-    scene.fog = new THREE.Fog("#dfe8f2", 160, 320);
+    scene.background = skyTexture();
+    scene.fog = new THREE.Fog("#dbe7f1", 170, 340);
+    // Panel camında gökyüzü yansıması için ortam ışığı.
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environmentIntensity = 0.45;
+    pmrem.dispose();
     const camera = new THREE.PerspectiveCamera(42, el.clientWidth / el.clientHeight, 0.5, 1000);
     camera.position.set(22, 20, 32);
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -145,10 +196,11 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     controls.minDistance = 5;
     controls.maxDistance = 200;
 
-    scene.add(new THREE.HemisphereLight("#ffffff", "#7a8a70", 0.9));
-    const sun = new THREE.DirectionalLight("#fff6e5", 2.2);
+    scene.add(new THREE.HemisphereLight("#ffffff", "#7a8a70", 0.7));
+    const sun = new THREE.DirectionalLight("#fff4e0", 2.6);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.mapSize.set(4096, 4096);
+    sun.shadow.normalBias = 0.03;
     sun.shadow.camera.left = -40;
     sun.shadow.camera.right = 40;
     sun.shadow.camera.top = 40;
@@ -185,13 +237,26 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     };
   }, []);
 
-  // Güneş: öğle vakti, enleme göre yükseklik (ekinoks).
+  // Güneş: seçilen ay ve saatteki gerçek konumu.
   useEffect(() => {
     const c = ctx.current;
     if (!c) return;
-    const elev = ((90 - Math.abs(lat)) * Math.PI) / 180;
-    c.sun.position.set(-8, Math.sin(elev) * 60, Math.cos(elev) * 60);
-  }, [lat]);
+    const { dir, el } = sunDirection(lat, month, hour);
+    const above = el > 0.02;
+    c.sun.visible = above;
+    c.sun.position.copy(c.sun.target.position).addScaledVector(dir, 70);
+    c.sun.intensity = above ? 0.9 + 2 * Math.min(1, Math.sin(el) * 1.6) : 0;
+    c.sun.color.set(el < 0.3 ? "#ffd2a0" : "#fff4e0");
+    c.scene.environmentIntensity = above ? 0.45 : 0.18;
+  }, [lat, month, hour, frames]);
+
+  // Otomatik tur (sunum ve video kaydı için).
+  useEffect(() => {
+    const c = ctx.current;
+    if (!c) return;
+    c.controls.autoRotate = spin;
+    c.controls.autoRotateSpeed = 1.1;
+  }, [spin]);
 
   // Uydu zemini (merkez değişince).
   useEffect(() => {
@@ -208,6 +273,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       plane.position.set(nw.x + w / 2, 0, -(se.n + h / 2));
       plane.receiveShadow = true;
       c.ground.add(plane);
+      setImagery({ tex, nw, se });
     });
     return () => {
       cancel = true;
@@ -223,8 +289,9 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     });
     c.content.clear();
 
-    const roofMat = new THREE.MeshStandardMaterial({ color: "#a65a3a", roughness: 0.85, side: THREE.DoubleSide });
-    const flatMat = new THREE.MeshStandardMaterial({ color: "#b9b4ab", roughness: 0.95, side: THREE.DoubleSide });
+    // Uydu görüntüsü geldiyse çatıya kaplanır; böylece gerçek çatı görünür.
+    const roofMat = imagery ? new THREE.MeshStandardMaterial({ map: imagery.tex, roughness: 0.9, side: THREE.DoubleSide }) : new THREE.MeshStandardMaterial({ color: "#a65a3a", roughness: 0.85, side: THREE.DoubleSide });
+    const flatMat = imagery ? roofMat : new THREE.MeshStandardMaterial({ color: "#b9b4ab", roughness: 0.95, side: THREE.DoubleSide });
     const wallMat = new THREE.MeshStandardMaterial({ color: "#efe9df", roughness: 0.9, side: THREE.DoubleSide });
 
     for (const fr of frames) {
@@ -237,9 +304,15 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
         []
       );
       const pos: number[] = [];
-      for (const t of tris) for (const k of t) pos.push(pts[k].x, hs[k], -pts[k].n);
+      const uv: number[] = [];
+      for (const t of tris)
+        for (const k of t) {
+          pos.push(pts[k].x, hs[k], -pts[k].n);
+          if (imagery) uv.push((pts[k].x - imagery.nw.x) / (imagery.se.x - imagery.nw.x), (pts[k].n - imagery.se.n) / (imagery.nw.n - imagery.se.n));
+        }
       const geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      if (imagery) geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
       geo.computeVertexNormals();
       const roof = new THREE.Mesh(geo, fr.face.pitch < 3 ? flatMat : roofMat);
       roof.castShadow = true;
@@ -270,8 +343,8 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     }
 
     // Paneller: çerçeveli ince kutu; üst yüzde hücre dokusu. Düz çatıda sehpa ayakları.
-    const frameMat = new THREE.MeshStandardMaterial({ color: "#c4ccd6", metalness: 0.6, roughness: 0.35 });
-    const topMat = new THREE.MeshStandardMaterial({ map: panelTex.current, metalness: 0.3, roughness: 0.25 });
+    const frameMat = new THREE.MeshStandardMaterial({ color: "#c9d0d9", metalness: 0.7, roughness: 0.35 });
+    const topMat = new THREE.MeshPhysicalMaterial({ map: panelTex.current, metalness: 0.35, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 });
     const legMat = new THREE.MeshStandardMaterial({ color: "#9aa3ad", metalness: 0.5, roughness: 0.5 });
     const byId = new Map(frames.map((f) => [f.face.id, f]));
     for (const cell of cells) {
@@ -313,9 +386,27 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       c.camera.position.set(mid.x + size * 0.6, size * 0.7, mid.z + size * 0.9);
       c.sun.target.position.copy(mid);
     }
-  }, [frames, cells, layout, center]);
+  }, [frames, cells, layout, center, imagery]);
 
-  return <div ref={box} className="h-[560px] w-full overflow-hidden rounded-2xl border border-line" />;
+  const hud = "rounded-lg bg-black/55 px-3 py-2 text-[12.5px] font-semibold text-white backdrop-blur";
+  return (
+    <div ref={wrap} className="relative h-[560px] w-full overflow-hidden rounded-2xl border border-line bg-[#c4dcf0]">
+      <div ref={box} className="h-full w-full" />
+      <div className={`absolute left-3 top-3 flex flex-wrap items-center gap-3 ${hud}`}>
+        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label="Ay" className="rounded bg-white/15 px-1.5 py-1 outline-none [&>option]:text-black">
+          {AYLAR.map((a, i) => <option key={a} value={i}>{a}</option>)}
+        </select>
+        <label className="flex items-center gap-2">
+          <span className="font-mono-data">{String(Math.floor(hour)).padStart(2, "0")}:{hour % 1 ? "30" : "00"}</span>
+          <input type="range" min={5} max={20} step={0.5} value={hour} onChange={(e) => setHour(Number(e.target.value))} aria-label="Saat" className="w-36 accent-sun" />
+        </label>
+      </div>
+      <div className="absolute right-3 top-3 flex gap-2">
+        <button onClick={() => setSpin((v) => !v)} className={`inline-flex items-center gap-1.5 ${hud} ${spin ? "ring-2 ring-sun" : ""}`}><Orbit size={14} /> Tur</button>
+        <button onClick={() => (document.fullscreenElement ? document.exitFullscreen() : wrap.current?.requestFullscreen())} className={`inline-flex items-center gap-1.5 ${hud}`} aria-label="Tam ekran"><Maximize2 size={14} /></button>
+      </div>
+    </div>
+  );
 });
 
 export default Roof3D;
