@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExternalLink, MapPin, MessageSquareReply, Navigation, PhoneCall, Search, Send, Star, Trash2, MousePointerClick } from "lucide-react";
 import { BarList, DailyArea, GOLD } from "@/components/admin/OverviewCharts";
+import PlannedTab from "./Planned";
 
 // Google İşletme Profili: performans, arama terimleri, yorumlar ve gönderiler.
 // Yanıt ve gönderiler Google'da herkese açık yayınlanır; yalnızca butonla gönderilir.
@@ -14,7 +15,7 @@ type Row = { date: string; search: number; maps: number; calls: number; website:
 type Keyword = { keyword: string; value: number | null; threshold: number | null };
 type Metric = "search" | "maps" | "calls" | "website" | "directions";
 
-const TABS = ["Performans", "Yorumlar", "Gönderiler"] as const;
+const TABS = ["Performans", "Yorumlar", "Gönderiler", "Planlı"] as const;
 const num = (n: number) => n.toLocaleString("tr-TR");
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
 
@@ -102,6 +103,7 @@ export default function GoogleIsletmePage() {
             {tab === "Performans" && <Performance loc={loc} />}
             {tab === "Yorumlar" && <Reviews loc={loc} />}
             {tab === "Gönderiler" && <Posts loc={loc} />}
+            {tab === "Planlı" && <PlannedTab location={loc.name} />}
           </div>
         </>
       )}

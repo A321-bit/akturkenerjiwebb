@@ -246,8 +246,9 @@ export async function listPosts(account: string, location: string): Promise<GbpP
   return all.map((p) => ({ name: p.name, summary: p.summary, createTime: p.createTime, state: p.state, searchUrl: p.searchUrl, photo: p.media?.[0]?.googleUrl ?? p.media?.[0]?.sourceUrl, ctaUrl: p.callToAction?.url }));
 }
 
-export function createPost(account: string, location: string, p: { summary: string; url?: string; photoUrl?: string }) {
-  return api(`https://mybusiness.googleapis.com/v4/${account}/${location}/localPosts`, {
+/** Gönderi oluşturur; scheduledTime verilirse Google ileri tarihte yayınlar (durum: SCHEDULED). */
+export function createPost(account: string, location: string, p: { summary: string; url?: string; photoUrl?: string; scheduledTime?: string }) {
+  return api<{ name: string; state?: string }>(`https://mybusiness.googleapis.com/v4/${account}/${location}/localPosts`, {
     method: "POST",
     body: JSON.stringify({
       languageCode: "tr",
@@ -255,6 +256,7 @@ export function createPost(account: string, location: string, p: { summary: stri
       summary: p.summary,
       ...(p.url ? { callToAction: { actionType: "LEARN_MORE", url: p.url } } : {}),
       ...(p.photoUrl ? { media: [{ mediaFormat: "PHOTO", sourceUrl: p.photoUrl }] } : {}),
+      ...(p.scheduledTime ? { scheduledTime: p.scheduledTime } : {}),
     }),
   });
 }

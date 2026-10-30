@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
+import { adminClient } from "@/lib/data";
 import { createPost, deletePost, deleteReply, disconnect, isConnected, listLocations, listPosts, listReviews, performance, replyReview, searchKeywords } from "@/lib/gbp";
 
 // Admin panel Google İşletme sayfasının veri ucu. Yayınlama işlemleri (yanıt, gönderi)
@@ -9,6 +10,8 @@ const ACCOUNT = /^accounts\/\d+$/;
 const LOCATION = /^locations\/\d+$/;
 const REVIEW = /^accounts\/\d+\/locations\/\d+\/reviews\/[\w-]+$/;
 const POST_NAME = /^accounts\/\d+\/locations\/\d+\/localPosts\/[\w-]+$/;
+
+const plan = () => adminClient().from("gbp_scheduled_posts");
 
 const fail = (e: unknown) => NextResponse.json({ error: e instanceof Error ? e.message : "Google API hatası" }, { status: 502 });
 
@@ -26,6 +29,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ connected: true, connectedAt: conn.connectedAt, locations: await listLocations() });
     }
     if (!LOCATION.test(location)) return NextResponse.json({ error: "Geçersiz işletme." }, { status: 400 });
+    if (view === "planned") {
+      const { data, error } = await adminClient().from("gbp_scheduled_posts").select("*").eq("location", location).order("scheduled_at");
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ items: data });
+    }
     if (view === "performance") {
       const [perf, keywords] = await Promise.all([performance(location), searchKeywords(location).catch(() => [])]);
       return NextResponse.json({ ...perf, keywords });
@@ -70,6 +78,44 @@ export async function POST(req: Request) {
         if (!POST_NAME.test(b.post)) return NextResponse.json({ error: "Geçersiz gönderi." }, { status: 400 });
         await deletePost(b.post);
         break;
+      case "planUpdate": {
+        const summary = text(b.summary, 1500);
+        const when = new Date(b.scheduledAt);
+        const url = text(b.url, 500);
+        if (!summary || Number.isNaN(when.getTime())) return NextResponse.json({ error: "Metin ve tarih gerekli." }, { status: 400 });
+        if (url && !url.startsWith("https://")) return NextResponse.json({ error: "Bağlantı https:// ile başlamalı." }, { status: 400 });
+        const { error } = await plan().update({ summary, url: url || null, scheduled_at: when.toISOString(), updated_at: new Date().toISOString() }).eq("id", b.id).eq("approved", false);
+        if (error) throw new Error(error.message);
+        break;
+      }
+      case "planApprove": {
+        const { data: row, error } = await plan().select("*").eq("id", b.id).single();
+        if (error) throw new Error(error.message);
+        if (row.approved) break; // çift gönderimi önler
+        if (new Date(row.scheduled_at).getTime() < Date.now() + 10 * 60e3) return NextResponse.json({ error: "Tarih geçmiş ya da çok yakın; tarihi güncelleyin." }, { status: 400 });
+        try {
+          const created = await createPost(row.account, row.location, { summary: row.summary, url: row.url ?? undefined, photoUrl: row.photo_url ?? undefined, scheduledTime: new Date(row.scheduled_at).toISOString() });
+          await plan().update({ approved: true, status: created.state ?? "SCHEDULED", published_name: created.name, error: null, updated_at: new Date().toISOString() }).eq("id", b.id);
+        } catch (e) {
+          await plan().update({ error: e instanceof Error ? e.message : "Google hatası", updated_at: new Date().toISOString() }).eq("id", b.id);
+          throw e;
+        }
+        break;
+      }
+      case "planRevoke": {
+        const { data: row, error } = await plan().select("published_name").eq("id", b.id).single();
+        if (error) throw new Error(error.message);
+        if (row.published_name) await deletePost(row.published_name);
+        await plan().update({ approved: false, status: "taslak", published_name: null, updated_at: new Date().toISOString() }).eq("id", b.id);
+        break;
+      }
+      case "planDelete": {
+        const { data: row, error } = await plan().select("published_name").eq("id", b.id).single();
+        if (error) throw new Error(error.message);
+        if (row.published_name) await deletePost(row.published_name);
+        await plan().delete().eq("id", b.id);
+        break;
+      }
       case "disconnect":
         await disconnect();
         break;
