@@ -92,6 +92,27 @@ export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDis
         {hasCons && <Kpi label="25 yılda tasarruf" value={tl(n.savings25Tl)} />}
       </section>
 
+      {p.optionMode === "uc" && (p.options?.length ?? 0) > 0 && (
+        <section className="mt-6">
+          <h2 className="font-semibold text-ink">Seçenekleriniz</h2>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            {p.options!.map((o) => (
+              <div key={o.key} className={`rounded-2xl border p-4 ${o.key === "onerilen" ? "border-brand bg-brand/5" : "border-line bg-paper-raised"}`}>
+                <p className="font-display text-[17px] font-semibold text-ink">{o.ad}</p>
+                <p className="mt-1 font-mono-data text-[19px] font-semibold">{money(o.total)}</p>
+                <dl className="mt-3 space-y-1 text-[13px] text-slate">
+                  <div>{num(o.kwp, 2)} kWp · yılda {num(o.annualKwh)} kWh</div>
+                  <div>{o.panel}</div>
+                  <div>{o.inverter}</div>
+                  {o.battery && <div>{num(o.batteryKwh ?? 0, 1)} kWh batarya</div>}
+                  {o.paybackYears != null && <div>Geri ödeme {num(o.paybackYears, 1)} yıl</div>}
+                </dl>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="mt-6 rounded-2xl border border-line bg-paper-raised p-5">
         <h2 className="font-semibold text-ink">Aylık üretim{hasCons ? " ve tüketim" : ""}</h2>
         <p className="mb-3 text-[12.5px] text-slate">Çatınızın yönü ve eğimine göre, Avrupa Komisyonu PVGIS güneş verisiyle hesaplanmıştır.</p>

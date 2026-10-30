@@ -146,7 +146,10 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
   const plan = p.paymentPlan ?? [];
   const hike = p.hikeTable ?? [];
   const reportName = p.reportType === "maksimum" ? "Maksimum kurulacak güç raporu" : "Optimal kurulacak güç raporu";
-  const hasFlow = hasCons && n.annualProduction > 0;
+  const hasFlow = hasCons && n.annualProduction > 0 && !p.shortReport;
+  const options = p.optionMode === "uc" ? (p.options ?? []) : [];
+  let page = 0;
+  const nextPage = () => ++page;
   const lat = p.site.center[0];
   const azimuth = meanAzimuth(n.byFace.map((f) => ({ azimuth: p.faces.find((x) => x.id === f.faceId)?.azimuth ?? 0, weight: f.annualKwh })));
   const battery = p.batteryKwh ?? 0;
@@ -187,7 +190,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
           {hasCons && <Fig label="Tüketimi karşılama" value={`%${num(n.coveragePct)}`} />}
           <Fig label="Yıllık CO₂ azaltımı" value={`${num(n.co2Tons, 1)} ton`} />
         </div>
-        <Foot company={company} page={1} />
+        <Foot company={company} page={nextPage()} />
       </Sheet>
 
       {/* 2. Tasarım ve üretim */}
@@ -240,7 +243,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
             <Fig label="25 yılda tasarruf" value={tl(n.savings25Tl)} />
           </div>
         )}
-        <Foot company={company} page={2} />
+        <Foot company={company} page={nextPage()} />
       </Sheet>
 
       {/* 3. Tasarruf ve enerji akışı (fatura girildiyse) */}
@@ -267,7 +270,52 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
             <Fig label="Şebekeden çekilen" value={`${num(year.fromGrid)} kWh`} />
             <Fig label="Batarya" value={battery > 0 ? `${num(battery)} kWh` : "Yok"} />
           </div>
-          <Foot company={company} page={3} />
+          <Foot company={company} page={nextPage()} />
+        </Sheet>
+      )}
+
+      {/* Karşılaştırmalı seçenekler */}
+      {options.length > 0 && (
+        <Sheet>
+          <Head company={company} title="Seçenekler" no={p.proposalNo} />
+          <h2 className="mt-5 text-[13px] font-semibold">Size uygun seçenekler</h2>
+          <p className="text-[10px] text-[#5b6577]">Aynı çatı için hazırlanan seçenekler. Tutarlar KDV dahildir; sonraki sayfalar “Önerilen” seçeneği anlatır.</p>
+          <table className="mt-3 w-full text-[11px]">
+            <thead>
+              <tr className="border-b-2 border-[#0e1626] text-left">
+                <th className="py-1.5 font-semibold" />
+                {options.map((o) => <th key={o.key} className="py-1.5 font-semibold">{o.ad}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {([
+                ["Panel", (o) => o.panel],
+                ["İnvertör", (o) => o.inverter],
+                ["Batarya", (o) => (o.battery ? `${num(o.batteryKwh ?? 0, 1)} kWh` : "Yok")],
+                ["Sistem gücü", (o) => `${num(o.kwp, 2)} kWp`],
+                ["Yıllık üretim", (o) => `${num(o.annualKwh)} kWh`],
+                ["Yıllık tasarruf", (o) => tl(o.savingTl)],
+                ["Geri ödeme", (o) => (o.paybackYears != null ? `${num(o.paybackYears, 1)} yıl` : "—")],
+                ["Teklif tutarı", (o) => money(o.total)],
+              ] as [string, (o: (typeof options)[number]) => string][]).map(([label, f]) => (
+                <tr key={label} className="border-b border-[#e6eaf0] align-top">
+                  <td className="py-1.5 text-[#5b6577]">{label}</td>
+                  {options.map((o) => <td key={o.key} className="py-1.5 pr-2">{f(o)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Foot company={company} page={nextPage()} />
+        </Sheet>
+      )}
+
+      {/* Özel sayfa */}
+      {p.customPageText?.trim() && (
+        <Sheet>
+          <Head company={company} title={p.customPageTitle || "Ek bilgi"} no={p.proposalNo} />
+          {p.customPageTitle && <h2 className="mt-5 text-[14px] font-semibold">{p.customPageTitle}</h2>}
+          <p className="mt-3 whitespace-pre-line text-[11.5px] leading-relaxed text-[#3d4757]">{p.customPageText}</p>
+          <Foot company={company} page={nextPage()} />
         </Sheet>
       )}
 
@@ -322,7 +370,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
 
         <div className="mt-5 space-y-3 text-[10.5px] leading-relaxed text-[#3d4757]">
           {plan.length === 0 && <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Ödeme koşulları</h3><p className="mt-1 whitespace-pre-line">{p.paymentTerms}</p></div>}
-          <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Teklif kapsamı</h3><p className="mt-1 whitespace-pre-line">{p.scopeNotes}</p></div>
+          <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Teklif kapsamı</h3><p className="mt-1 whitespace-pre-line">{p.scopeNotes}{p.callLetter ? " Çağrı mektubu başvuru dosyasının hazırlanması ve takibi teklife dahildir." : ""}</p></div>
           <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Garanti</h3><p className="mt-1 whitespace-pre-line">{p.warrantyNotes}</p></div>
           <p className="text-[10px] text-[#5b6577]">
             Üretim ve tasarruf değerleri; konumunuzun uzun yıllık güneş verisi, EPDK güncel elektrik tarifesi ve aylık mahsuplaşma esasına göre hesaplanmış tahminlerdir. Hava koşulları, gölgelenme ve tarife değişiklikleri sonuçları etkileyebilir. Teklif {date(p.createdAt, p.validDays)} tarihine kadar geçerlidir.
@@ -333,7 +381,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
           <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{company.name}</p><p className="text-[#5b6577]">Kaşe / imza</p></div>
           <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{p.customer.name || "Müşteri"}</p><p className="text-[#5b6577]">Onay / imza</p></div>
         </div>
-        <Foot company={company} page={hasFlow ? 4 : 3} />
+        <Foot company={company} page={nextPage()} />
       </Sheet>
     </div>
   );

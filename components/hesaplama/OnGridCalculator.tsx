@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ArrowLeft, Building2, Factory, Home, Leaf, Sprout, Sun, Wallet, Zap } from "lucide-react";
 import { calculateOnGrid, evMonthlyKwh, FUEL_L_PER_100KM, FUEL_TL_PER_L, EV_KWH_PER_100KM, fuelCostPerYear, leadScore, panelsForRoof, PANEL_WP, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
@@ -325,7 +326,7 @@ function Result({
             Yılda {num(evKm)} km için yaklaşık {num(evMonthlyKwh(evKm) * 12)} kWh şarj elektriği bu hesaba eklendi. Aynı yolu yakıtlı araçla gitmek yılda yaklaşık <b className="text-ink">{tl(fuelCostPerYear(evKm))}</b> yakıt demektir.
           </p>
           <p className="mt-1 text-[12px] text-slate">Varsayım: elektrikli araç {EV_KWH_PER_100KM} kWh/100 km, yakıtlı araç {FUEL_L_PER_100KM} L/100 km, yakıt {FUEL_TL_PER_L} TL/L. Araca göre değişir.</p>
-          <a href="/magaza/elektrikli-arac-sarj-istasyonu" className="mt-2 inline-block text-[13.5px] font-semibold text-brand hover:underline">Araç şarj istasyonlarını inceleyin</a>
+          <Link href="/magaza/elektrikli-arac-sarj-istasyonu" className="mt-2 inline-block text-[13.5px] font-semibold text-brand hover:underline">Araç şarj istasyonlarını inceleyin</Link>
         </section>
       )}
 

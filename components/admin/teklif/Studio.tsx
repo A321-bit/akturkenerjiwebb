@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, PenLine, Plus, Printer, RotateCcw, Save, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
-import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal } from "@/lib/teklif/proposal";
+import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal, type QuoteOption } from "@/lib/teklif/proposal";
 import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, quoteChecks, salePrice, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
 import { suggestBattery } from "@/lib/teklif/simulate";
@@ -368,12 +368,37 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       ...(l.kind === "battery" && p.battery ? { battery: { ...p.battery, adet: Math.max(1, Math.round(adet)) }, batteryKwh: p.battery.kwh * Math.max(1, Math.round(adet)) } : {}),
     });
   }
+  // Karşılaştırma: ekonomik (en uygun panel ve invertör), önerilen (ekrandaki hâl), bataryalı (hibrit set).
+  function buildOptions(): QuoteOption[] {
+    const base: Proposal = { ...p, cells };
+    const summary = (key: string, ad: string, x: Proposal): QuoteOption => {
+      const m = computeNumbers(x);
+      return { key, ad, panel: x.panel.name, inverter: x.inverter ? `${x.inverter.adet} × ${x.inverter.name}` : "", battery: x.battery?.name, batteryKwh: x.battery ? x.battery.kwh * x.battery.adet : undefined, kwp: m.dcKwp, total: m.total, annualKwh: m.annualProduction, savingTl: m.annualSavingTl, paybackYears: m.paybackYears };
+    };
+    const variant = (over: Pick<Proposal, "panel" | "inverter" | "battery">): Proposal => ({
+      ...base,
+      ...over,
+      priceMode: "malzeme",
+      extraInverters: [],
+      batteryKwh: over.battery ? over.battery.kwh * over.battery.adet : 0,
+      lines: buildQuoteLines({ kwp: (cells.length * over.panel.wp) / 1000, panelCount: cells.length, roof: p.roofType ?? "kiremit", panel: over.panel, inverter: over.inverter, battery: over.battery, settings, uid }),
+    });
+    const out: QuoteOption[] = [];
+    const cheapPanel = [...panels].filter((x) => x.costUsd && x.wp >= p.panel.wp - 10).sort((a, b) => a.costUsd! - b.costUsd!)[0] ?? p.panel;
+    const sameKw = p.inverter ? inverters.filter((i) => !i.hybrid && i.costUsd && i.kw === p.inverter!.kw).sort((a, b) => a.costUsd! - b.costUsd!)[0] : undefined;
+    const ecoInv = sameKw ? { ...sameKw, adet: p.inverter!.adet } : pickOnGridInverter(inverters, n.dcKwp, p.contractKw ?? 0);
+    out.push(summary("ekonomik", "Ekonomik", variant({ panel: cheapPanel, inverter: ecoInv, battery: null })));
+    out.push(summary("onerilen", "Önerilen", base));
+    const set = pickHybridSet(inverters, batteries, accessories, n.dcKwp, p.contractKw ?? 0, n.annualKwh ? suggestBattery(n.monthlyKwh, p.abone) : 0);
+    if (set) out.push(summary("bataryali", "Bataryalı", variant({ panel: p.panel, inverter: set.inverter, battery: set.battery })));
+    return out;
+  }
   // Son onay: ekrandaki hâliyle görseller alınır, kaydedilir ve teklif belgesi açılır.
   async function createProposal() {
     const images = captureImages();
     // Müşteri linki ilk oluşturmada üretilir, sonraki güncellemelerde aynı kalır.
     const shareToken = p.shareToken ?? crypto.randomUUID().replace(/-/g, "");
-    await save({ shareToken, images: images ?? p.images });
+    await save({ shareToken, images: images ?? p.images, options: p.optionMode === "uc" ? buildOptions() : undefined });
     setTab(4);
   }
 
@@ -518,6 +543,8 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             </select>
           </label>
           <NumInput label="Sözleşme gücü (kW)" value={p.contractKw ?? 0} step={0.5} onChange={(v) => update({ contractKw: Math.max(0, v) })} note="Faturadan. Otomatik doldurma hedef güçte durur." />
+          <NumInput label="Trafo gücü (kVA, varsa)" value={p.trafoKva ?? 0} onChange={(v) => update({ trafoKva: Math.max(0, v), contractKw: v > 0 ? (v * (p.trafoPct ?? 100)) / 100 : p.contractKw })} note="Trafonun yüzdesine göre sözleşme gücünü doldurur." />
+          <NumInput label="Trafo kullanım yüzdesi" value={p.trafoPct ?? 100} onChange={(v) => update({ trafoPct: v, contractKw: p.trafoKva ? (p.trafoKva * v) / 100 : p.contractKw })} />
           <div className="grid grid-cols-2 gap-4">
             <NumInput label="PV fazlası (%)" value={p.oversizePct ?? settings.oversizePct} onChange={(v) => update({ oversizePct: v })} note={p.contractKw ? `Hedef ${num(targetKwp(p.contractKw, p.oversizePct ?? settings.oversizePct), 1)} kWp` : undefined} />
             <label className="block">
@@ -883,6 +910,28 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
           <section className="grid gap-4 lg:grid-cols-2">
             <Area label="Teklif kapsamı" value={p.scopeNotes} onChange={(v) => update({ scopeNotes: v })} />
             <Area label="Garanti" value={p.warrantyNotes} onChange={(v) => update({ warrantyNotes: v })} />
+          </section>
+          <section className="rounded-2xl border border-line bg-paper-raised p-5">
+            <h3 className="font-semibold">Rapor seçenekleri</h3>
+            <div className="mt-3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <label className="block">
+                <span className="text-[12.5px] font-semibold text-slate">Teklif biçimi</span>
+                <select value={p.optionMode ?? "tek"} onChange={(e) => update({ optionMode: e.target.value as Proposal["optionMode"] })} className="mt-1 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]">
+                  <option value="tek">Tek seçenek</option>
+                  <option value="uc">Karşılaştırmalı (ekonomik, önerilen, bataryalı)</option>
+                </select>
+              </label>
+              <NumInput label="Fazla enerji satış bedeli (kuruş/kWh)" value={p.saleKr ?? 0} onChange={(v) => update({ saleKr: Math.max(0, v) })} note="Boşsa fazla üretim gelir sayılmaz." />
+              <div className="space-y-1.5 pt-5 text-[13px]">
+                <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(p.shortReport)} onChange={(e) => update({ shortReport: e.target.checked })} /> Kısa rapor (tasarruf sayfası çıkmaz)</label>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(p.callLetter)} onChange={(e) => update({ callLetter: e.target.checked })} /> Çağrı mektubu süreci dahil</label>
+              </div>
+              <label className="block md:col-span-2 lg:col-span-3">
+                <span className="text-[12.5px] font-semibold text-slate">Özel sayfa (isteğe bağlı): başlık ve metin belgeye eklenir</span>
+                <input value={p.customPageTitle ?? ""} onChange={(e) => update({ customPageTitle: e.target.value })} placeholder="Başlık" className="mt-1 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]" />
+                <textarea value={p.customPageText ?? ""} onChange={(e) => update({ customPageText: e.target.value })} rows={3} placeholder="Metin" className="mt-1 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]" />
+              </label>
+            </div>
           </section>
           {checks.length > 0 && (
             <section className="rounded-2xl border border-line bg-paper-raised p-4">

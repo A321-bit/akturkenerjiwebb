@@ -8,6 +8,8 @@ import type { LatLon, PanelCell, PanelModel, RoofFace } from "./geometry";
 export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number; maliyetUsd?: number; marjPct?: number; kind?: "panel" | "inverter" | "inverter2" | "battery" };
 export type PaymentStep = { id: string; ad: string; pct: number; sure: string };
 /** malzeme: kalem toplamı · kwp: kWp başına tutar · manuel: elle girilen toplam. */
+/** Karşılaştırmalı teklifte bir seçeneğin özeti (teklif anındaki değerler). */
+export type QuoteOption = { key: string; ad: string; panel: string; inverter: string; battery?: string; batteryKwh?: number; kwp: number; total: number; annualKwh: number; savingTl: number; paybackYears: number | null };
 export type PriceMode = "malzeme" | "kwp" | "manuel";
 
 export type InverterChoice = { name: string; kw: number; price?: number; slug?: string; adet: number; costUsd?: number; marginPct?: number };
@@ -37,6 +39,8 @@ export type Proposal = {
   battery?: BatteryChoice | null;
   /** Sözleşme gücü (kW) ve üzerine eklenecek PV payı. */
   contractKw?: number;
+  trafoKva?: number;
+  trafoPct?: number;
   oversizePct?: number;
   roofType?: import("./pricing").RoofKind;
   /** "USD" ise fiyatlar dolardır; boşsa eski TL teklif. */
@@ -73,6 +77,18 @@ export type Proposal = {
   scopeNotes: string;
   warrantyNotes: string;
   images?: { perspective?: string; top?: string };
+  /** Tek seçenek ya da karşılaştırmalı; personel görüşmeye göre seçer. */
+  optionMode?: "tek" | "uc";
+  options?: QuoteOption[];
+  /** Kısa raporda tasarruf ve enerji akışı sayfası çıkmaz. */
+  shortReport?: boolean;
+  /** Çağrı mektubu süreci teklife dahil mi. */
+  callLetter?: boolean;
+  /** Belgeye eklenecek serbest sayfa. */
+  customPageTitle?: string;
+  customPageText?: string;
+  /** Şebekeye verilen fazla enerjinin satış bedeli (kuruş/kWh); boşsa değerlendirilmez. */
+  saleKr?: number;
   /** Müşteri linki ve açılma takibi. */
   shareToken?: string;
   views?: number;
@@ -149,6 +165,8 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const monthlyKwh = PROFIL.map((f) => avg * f + ev);
   const annualKwh = monthlyKwh.reduce((a, b) => a + b, 0);
   const annualSavingTl = monthlyKwh.reduce((s, c, i) => s + bill(c) - bill(Math.max(0, c - monthlyProduction[i])), 0);
+  // Aylık tüketimi aşan üretim, satış bedeli girildiyse gelir sayılır.
+  const surplusTl = ((p.saleKr ?? 0) / 100) * monthlyProduction.reduce((s, m, i) => s + Math.max(0, m - monthlyKwh[i]), 0);
   const offset = monthlyKwh.reduce((s, c, i) => s + Math.min(c, monthlyProduction[i]), 0);
 
   const lineSum = p.lines.reduce((s, l) => s + l.adet * l.birimFiyat, 0);
@@ -165,7 +183,7 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const paybackOf = (factor: (y: number) => number) => {
     let cum = 0;
     for (let y = 0; y < 25; y++) {
-      const ys = annualSavingTl * (1 - DEGRADATION) ** y * factor(y);
+      const ys = (annualSavingTl + surplusTl) * (1 - DEGRADATION) ** y * factor(y);
       if (totalTl > 0 && ys > 0 && cum + ys >= totalTl) return y + (totalTl - cum) / ys;
       cum += ys;
     }
@@ -174,7 +192,7 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   let s25 = 0;
   const cumulativeTl: number[] = [];
   for (let y = 0; y < 25; y++) {
-    s25 += annualSavingTl * (1 - DEGRADATION) ** y * hikeAt(y);
+    s25 += (annualSavingTl + surplusTl) * (1 - DEGRADATION) ** y * hikeAt(y);
     cumulativeTl.push(s25 - totalTl);
   }
 
@@ -190,7 +208,7 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
     monthlyKwh,
     annualKwh,
     monthlyBillTl: avg > 0 ? bill(avg) : 0,
-    annualSavingTl,
+    annualSavingTl: annualSavingTl + surplusTl,
     coveragePct: annualKwh > 0 ? Math.min(100, (offset / annualKwh) * 100) : 0,
     subtotal,
     total: grand,
