@@ -395,7 +395,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
 
   const hud = "rounded-lg bg-black/55 px-3 py-2 text-[12.5px] font-semibold text-white backdrop-blur";
   return (
-    <div ref={wrap} className="relative h-[560px] w-full overflow-hidden rounded-2xl border border-line bg-[#c4dcf0]">
+    <div ref={wrap} className="relative h-[420px] w-full overflow-hidden rounded-2xl border border-line bg-[#c4dcf0] sm:h-[560px]">
       <div ref={box} className="h-full w-full" />
       <div className={`absolute left-3 top-3 flex flex-wrap items-center gap-3 ${hud}`}>
         <select value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label="Ay" className="rounded bg-white/15 px-1.5 py-1 outline-none [&>option]:text-black">
@@ -403,11 +403,11 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
         </select>
         <label className="flex items-center gap-2">
           <span className="font-mono-data">{String(Math.floor(hour)).padStart(2, "0")}:{hour % 1 ? "30" : "00"}</span>
-          <input type="range" min={5} max={20} step={0.5} value={hour} onChange={(e) => setHour(Number(e.target.value))} aria-label="Saat" className="w-36 accent-sun" />
+          <input type="range" min={5} max={20} step={0.5} value={hour} onChange={(e) => setHour(Number(e.target.value))} aria-label="Saat" className="w-20 accent-sun sm:w-36" />
         </label>
       </div>
       <div className="absolute right-3 top-3 flex gap-2">
-        <button onClick={() => setSpin((v) => !v)} className={`inline-flex items-center gap-1.5 ${hud} ${spin ? "ring-2 ring-sun" : ""}`}><Orbit size={14} /> Tur</button>
+        <button onClick={() => setSpin((v) => !v)} className={`inline-flex items-center gap-1.5 ${hud} ${spin ? "ring-2 ring-sun" : ""}`}><Orbit size={14} /> <span className="hidden sm:inline">Tur</span></button>
         <button onClick={() => (document.fullscreenElement ? document.exitFullscreen() : wrap.current?.requestFullscreen())} className={`inline-flex items-center gap-1.5 ${hud}`} aria-label="Tam ekran"><Maximize2 size={14} /></button>
       </div>
     </div>
