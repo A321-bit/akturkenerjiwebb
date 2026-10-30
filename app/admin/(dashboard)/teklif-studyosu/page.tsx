@@ -6,7 +6,7 @@ import Studio from "@/components/admin/teklif/Studio";
 // Teklif Stüdyosu: uydu üzerinde çatı çizimi, panel yerleşimi, 3B görünüm, üretim ve PDF teklif.
 // Ürün ve fiyat seçenekleri mağazadan gelir.
 
-export default async function TeklifStudyosuPage({ searchParams }: { searchParams: Promise<{ calc?: string; id?: string }> }) {
+export default async function TeklifStudyosuPage({ searchParams }: { searchParams: Promise<{ calc?: string; id?: string; customer?: string }> }) {
   const [products, site, sp, costRes] = await Promise.all([getStoreProducts(), getSiteSettings(), searchParams, adminClient().from("store_products").select("slug, name, cost_usd, margin_pct, bom, category")]);
   // Maliyetler yalnız bu admin sayfasına gelir; mağaza verisinde bulunmaz.
   const costs = new Map((costRes.data ?? []).map((c) => [c.slug as string, { costUsd: c.cost_usd == null ? undefined : Number(c.cost_usd), marginPct: c.margin_pct == null ? undefined : Number(c.margin_pct) }]));
@@ -62,6 +62,7 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
       company={{ name: site.name, phone: site.contact.phoneDisplay, email: site.contact.email, address: site.contact.addressLine, web: SITE_URL.replace(/^https?:\/\//, "") }}
       initialCalcId={sp.calc ? Number(sp.calc) : undefined}
       initialId={sp.id ? Number(sp.id) : undefined}
+      initialCustomerId={sp.customer ? Number(sp.customer) : undefined}
     />
   );
 }

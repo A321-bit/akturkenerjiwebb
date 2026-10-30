@@ -8,6 +8,7 @@ import { LOST_REASONS, STAGES, type Tracking } from "@/lib/teklif/tracking";
 
 type Row = {
   id: number;
+  customer_id: number | null;
   created_at: string;
   updated_at: string;
   proposal_no: string;
@@ -93,7 +94,7 @@ export default function TeklifTakipPage() {
             <div key={r.id} className={`rounded-2xl border bg-paper-raised p-4 ${f.length ? "border-sun/70" : "border-line"}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold">{r.customer_name || "İsimsiz"} <span className="font-mono-data text-[12px] font-normal text-slate">{r.proposal_no}</span></p>
+                  <p className="font-semibold">{r.customer_id ? <a href={`/admin/musteriler/${r.customer_id}`} className="hover:text-brand">{r.customer_name || "İsimsiz"}</a> : r.customer_name || "İsimsiz"} <span className="font-mono-data text-[12px] font-normal text-slate">{r.proposal_no}</span></p>
                   <p className="text-[12.5px] text-slate">
                     {r.province ?? ""}{r.dc_kwp ? ` · ${Number(r.dc_kwp).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} kWp` : ""}{r.total ? ` · ${Math.round(Number(r.total)).toLocaleString("tr-TR")} ${r.currency === "USD" ? "$" : "TL"}` : ""}
                     {r.views ? ` · ${r.views} kez açıldı, son ${new Date(r.last_view_at!).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" })}` : " · henüz açılmadı"}

@@ -18,6 +18,8 @@ const nav: NavEntry[] = [
       { href: "/admin/talepler", label: "Tüm Talepler", icon: Inbox },
       { href: "/admin/web-formlari", label: "Web Sitesi Formları", icon: Globe },
       { href: "/admin/hesaplama-talepleri", label: "Hesaplama Talepleri", icon: Calculator },
+      { href: "/admin/yonetim", label: "Yönetim", icon: LayoutDashboard },
+      { href: "/admin/musteriler", label: "Müşteriler", icon: Users },
       { href: "/admin/teklif-studyosu", label: "Teklif Stüdyosu", icon: PencilRuler },
       { href: "/admin/teklif-takip", label: "Teklif ve Proje Takibi", icon: Target },
       { href: "/admin/meta-formlari", label: "Meta Formları", icon: ClipboardList },

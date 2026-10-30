@@ -35,6 +35,7 @@ type Props = {
   company: Company;
   initialCalcId?: number;
   initialId?: number;
+  initialCustomerId?: number;
 };
 
 const DRAFT_KEY = "aktrk_teklif_taslak";
@@ -86,7 +87,7 @@ function blank(panel: PanelModel): Proposal {
   };
 }
 
-export default function Studio({ panels, inverters, batteries, accessories, company, initialCalcId, initialId }: Props) {
+export default function Studio({ panels, inverters, batteries, accessories, company, initialCalcId, initialId, initialCustomerId }: Props) {
   const defaultPanel = panels.find((p) => p.wp === 620) ?? panels[0] ?? { name: "620 Wp TOPCon panel", wp: 620, lengthM: 2.382, widthM: 1.134 };
   const [p, setP] = useState<Proposal>(() => blank(defaultPanel));
   const [tab, setTab] = useState(0);
@@ -100,6 +101,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
   const [settings, setSettings] = useState<QuoteSettings>(DEFAULT_SETTINGS);
   const [kurMsg, setKurMsg] = useState<string | null>(null);
   const [batteryChoice, setBatteryMode] = useState(false);
+  const [phoneOwner, setPhoneOwner] = useState<{ id: number; full_name: string } | null>(null);
   const r3d = useRef<Roof3DHandle>(null);
   const fetching = useRef(new Set<string>());
 
@@ -149,6 +151,14 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
         if (initialId) {
           const r = await fetch(`/api/admin/proposals/${initialId}`);
           if (r.ok) setP(await r.json());
+        } else if (initialCustomerId) {
+          // Müşteri kartından yeni teklif: bilgiler karttan gelir.
+          const r = await fetch(`/api/admin/customers/${initialCustomerId}`);
+          if (r.ok) {
+            const { customer: c } = await r.json();
+            const base = blank(defaultPanel);
+            setP({ ...base, customer: { name: c.full_name ?? "", phone: c.phone ?? "", email: c.email ?? "", address: c.address ?? "", province: c.province ?? "", district: c.district ?? "", mahalle: c.mahalle ?? "", ada: c.ada ?? "", parsel: c.parsel ?? "" } });
+          }
         } else if (initialCalcId) {
           const r = await fetch("/api/admin/calculations");
           const rows = r.ok ? await r.json() : [];
@@ -469,6 +479,12 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     setTimeout(() => URL.revokeObjectURL(url), 10000);
     setMsg(res.ext === "webm" ? "Video kaydedildi (WebM). WhatsApp için MP4 üreten güncel Chrome önerilir." : "Video kaydedildi.");
   }
+  async function checkPhone() {
+    if (p.customer.phone.replace(/\D/g, "").length < 10) return setPhoneOwner(null);
+    const r = await fetch(`/api/admin/customers?phone=${encodeURIComponent(p.customer.phone)}`);
+    const d = r.ok ? await r.json() : [];
+    setPhoneOwner(d[0] ?? null);
+  }
   function goTab(i: number) {
     if (i === 4) captureImages();
     // Son onay ekranı ilk açılışta tasarımdan dolu gelir; sonrasında elle yapılanlar korunur.
@@ -537,7 +553,10 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
       {tab === 0 && (
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="Ad soyad *" value={p.customer.name} onChange={(v) => update({ customer: { ...p.customer, name: v } })} />
-          <Field label="Telefon *" value={p.customer.phone} onChange={(v) => update({ customer: { ...p.customer, phone: v } })} />
+          <div>
+            <Field label="Telefon *" value={p.customer.phone} onChange={(v) => update({ customer: { ...p.customer, phone: v } })} onBlur={checkPhone} />
+            {phoneOwner && <p className="mt-1 text-[12.5px]">Bu numara kayıtlı: <a href={`/admin/musteriler/${phoneOwner.id}`} className="font-semibold text-brand underline">{phoneOwner.full_name}</a>. Teklif bu müşterinin kartına eklenir.</p>}
+          </div>
           <Field label="E-posta" value={p.customer.email} onChange={(v) => update({ customer: { ...p.customer, email: v } })} />
           <CustomerPlace province={p.customer.province} district={p.customer.district ?? ""} onChange={(x) => update({ customer: { ...p.customer, ...x } })} />
           <Field label="Adres" value={p.customer.address} onChange={(v) => update({ customer: { ...p.customer, address: v } })} className="sm:col-span-2" />
@@ -1069,11 +1088,11 @@ function Seg({ children, icon, on, onClick }: { children: React.ReactNode; icon:
   );
 }
 
-function Field({ label, value, onChange, className = "" }: { label: string; value: string; onChange: (v: string) => void; className?: string }) {
+function Field({ label, value, onChange, onBlur, className = "" }: { label: string; value: string; onChange: (v: string) => void; onBlur?: () => void; className?: string }) {
   return (
     <label className={`block ${className}`}>
       <span className="text-[12.5px] font-semibold text-slate">{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2 outline-none focus:border-brand" />
+      <input value={value} onChange={(e) => onChange(e.target.value)} onBlur={onBlur} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2 outline-none focus:border-brand" />
     </label>
   );
 }
