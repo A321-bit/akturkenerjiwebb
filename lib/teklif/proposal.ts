@@ -3,9 +3,14 @@
 import { faturaTutari, faturadanTuketim, type AboneGrubu } from "../elektrik-tarife";
 import type { LatLon, PanelCell, PanelModel, RoofFace } from "./geometry";
 
-export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number };
+/** birimFiyat, teklifin para biriminde (yeni tekliflerde USD) satış fiyatıdır. */
+export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number; maliyetUsd?: number; marjPct?: number };
+export type PaymentStep = { id: string; ad: string; pct: number; sure: string };
+/** malzeme: kalem toplamı · kwp: kWp başına tutar · manuel: elle girilen toplam. */
+export type PriceMode = "malzeme" | "kwp" | "manuel";
 
-export type InverterChoice = { name: string; kw: number; price?: number; slug?: string; adet: number };
+export type InverterChoice = { name: string; kw: number; price?: number; slug?: string; adet: number; costUsd?: number; marginPct?: number };
+export type BatteryChoice = { name: string; kwh: number; slug?: string; adet: number; costUsd?: number; marginPct?: number };
 
 export type Proposal = {
   id?: number;
@@ -28,6 +33,25 @@ export type Proposal = {
   inverter: InverterChoice | null;
   /** Teklife dahil batarya (kWh); 0 ya da boşsa bataryasız. */
   batteryKwh?: number;
+  battery?: BatteryChoice | null;
+  /** Sözleşme gücü (kW) ve üzerine eklenecek PV payı. */
+  contractKw?: number;
+  oversizePct?: number;
+  roofType?: import("./pricing").RoofKind;
+  /** "USD" ise fiyatlar dolardır; boşsa eski TL teklif. */
+  priceCurrency?: "USD";
+  priceMode?: PriceMode;
+  kwpUsd?: number;
+  manualUsd?: number;
+  usdTry?: number;
+  usdDate?: string;
+  /** Belgede TL göster. */
+  showTl?: boolean;
+  /** Belgede kalem fiyatlarını göster. */
+  showLinePrices?: boolean;
+  hikePct?: number;
+  hikeYears?: number;
+  paymentPlan?: PaymentStep[];
   /** Yüzey kimliğine göre PVGIS aylık üretimi (1 kWp, kWh). */
   yields: Record<string, number[]>;
   lines: PriceLine[];
@@ -70,8 +94,12 @@ export type ProposalNumbers = {
   coveragePct: number;
   subtotal: number;
   total: number;
+  /** Geri ödeme hesabı için TL karşılığı. */
+  totalTl: number;
   vat: number;
   paybackYears: number | null;
+  /** Elektrik zammı olmadan geri ödeme. */
+  paybackFlatYears: number | null;
   savings25Tl: number;
   /** Yıl sonu birikimli net kazanç (tasarruf − yatırım), 25 yıl. */
   cumulativeTl: number[];
@@ -98,23 +126,30 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
   const annualSavingTl = monthlyKwh.reduce((s, c, i) => s + faturaTutari(p.abone, c) - faturaTutari(p.abone, Math.max(0, c - monthlyProduction[i])), 0);
   const offset = monthlyKwh.reduce((s, c, i) => s + Math.min(c, monthlyProduction[i]), 0);
 
-  const subtotal = p.lines.reduce((s, l) => s + l.adet * l.birimFiyat, 0);
+  const lineSum = p.lines.reduce((s, l) => s + l.adet * l.birimFiyat, 0);
+  const mode = p.priceMode ?? "malzeme";
+  const subtotal = mode === "kwp" ? dcKwp * (p.kwpUsd ?? 0) : mode === "manuel" ? (p.manualUsd ?? 0) : lineSum;
   const total = Math.max(0, subtotal - p.discountTl);
   const vat = p.pricesIncludeVat ? total - total / 1.2 : total * 0.2;
   const grand = p.pricesIncludeVat ? total : total + vat;
+  const totalTl = p.priceCurrency === "USD" ? grand * (p.usdTry ?? 0) : grand;
 
-  let cum = 0;
-  let payback: number | null = null;
+  const hike = (p.hikePct ?? 0) / 100;
+  const hikeYears = p.hikeYears ?? 0;
+  const paybackOf = (rate: number) => {
+    let cum = 0;
+    for (let y = 0; y < 25; y++) {
+      const ys = annualSavingTl * (1 - DEGRADATION) ** y * (1 + rate) ** Math.min(y, hikeYears);
+      if (totalTl > 0 && ys > 0 && cum + ys >= totalTl) return y + (totalTl - cum) / ys;
+      cum += ys;
+    }
+    return null;
+  };
   let s25 = 0;
   const cumulativeTl: number[] = [];
   for (let y = 0; y < 25; y++) {
-    const ys = annualSavingTl * (1 - DEGRADATION) ** y;
-    s25 += ys;
-    cumulativeTl.push(s25 - grand);
-    if (payback == null && grand > 0 && ys > 0) {
-      if (cum + ys >= grand) payback = y + (grand - cum) / ys;
-      cum += ys;
-    }
+    s25 += annualSavingTl * (1 - DEGRADATION) ** y * (1 + hike) ** Math.min(y, hikeYears);
+    cumulativeTl.push(s25 - totalTl);
   }
 
   return {
@@ -132,8 +167,10 @@ export function computeNumbers(p: Proposal): ProposalNumbers {
     coveragePct: annualKwh > 0 ? Math.min(100, (offset / annualKwh) * 100) : 0,
     subtotal,
     total: grand,
+    totalTl,
     vat,
-    paybackYears: payback,
+    paybackYears: paybackOf(hike),
+    paybackFlatYears: paybackOf(0),
     savings25Tl: s25,
     cumulativeTl,
     co2Tons: (annualProduction * 0.44) / 1000,

@@ -5,7 +5,9 @@ import dynamic from "next/dynamic";
 import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, PenLine, Plus, Printer, RotateCcw, Save, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
-import { DEFAULT_TERMS, computeNumbers, newProposalNo, type InverterChoice, type PriceLine, type Proposal } from "@/lib/teklif/proposal";
+import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal } from "@/lib/teklif/proposal";
+import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, salePrice, targetKwp, type QuoteSettings, type RoofKind } from "@/lib/teklif/pricing";
+import PricingRules from "./PricingRules";
 import ProposalDocument, { type Company } from "./ProposalDocument";
 import EnergyFlow from "./EnergyFlow";
 import LocateBar from "./LocateBar";
@@ -18,10 +20,11 @@ import type { Roof3DHandle } from "./Roof3D";
 const SatelliteEditor = dynamic(() => import("./SatelliteEditor"), { ssr: false, loading: () => <div className="h-[560px] animate-pulse rounded-2xl bg-ink/5" /> });
 const Roof3D = dynamic(() => import("./Roof3D"), { ssr: false });
 
-type Product = { name: string; kw: number; price?: number; slug?: string };
+type Product = { name: string; kw: number; price?: number; slug?: string; hybrid?: boolean; costUsd?: number; marginPct?: number };
 type Props = {
   panels: (PanelModel & { slug?: string })[];
   inverters: Product[];
+  batteries: Omit<BatteryChoice, "adet">[];
   packages: { kw: number; price: number }[];
   company: Company;
   initialCalcId?: number;
@@ -30,8 +33,9 @@ type Props = {
 
 const DRAFT_KEY = "aktrk_teklif_taslak";
 const ANKARA: LatLon = [39.925, 32.837];
-const TABS = ["Müşteri", "Çatı tasarımı", "Sistem ve üretim", "Fiyat ve koşullar", "Önizleme ve PDF"] as const;
+const TABS = ["Müşteri", "Çatı tasarımı", "Sistem ve üretim", "Fiyat ve koşullar", "Önizleme ve PDF", "Fiyat kuralları"] as const;
 const tl = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} TL`;
+const usd = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} $`;
 const num = (n: number, d = 0) => n.toLocaleString("tr-TR", { maximumFractionDigits: d });
 const uid = () => Math.random().toString(36).slice(2, 9);
 
@@ -53,15 +57,24 @@ function blank(panel: PanelModel): Proposal {
     inverter: null,
     yields: {},
     lines: [],
-    pricesIncludeVat: true,
+    pricesIncludeVat: false,
     discountTl: 0,
+    priceCurrency: "USD",
+    priceMode: "malzeme",
+    roofType: "kiremit",
+    showLinePrices: false,
+    showTl: false,
+    hikePct: DEFAULT_SETTINGS.hikePct,
+    hikeYears: DEFAULT_SETTINGS.hikeYears,
+    oversizePct: DEFAULT_SETTINGS.oversizePct,
+    paymentPlan: DEFAULT_SETTINGS.paymentPlan,
     paymentTerms: DEFAULT_TERMS.payment,
     scopeNotes: DEFAULT_TERMS.scope,
     warrantyNotes: DEFAULT_TERMS.warranty,
   };
 }
 
-export default function Studio({ panels, inverters, packages, company, initialCalcId, initialId }: Props) {
+export default function Studio({ panels, inverters, batteries, company, initialCalcId, initialId }: Props) {
   const defaultPanel = panels.find((p) => p.wp === 620) ?? panels[0] ?? { name: "620 Wp TOPCon panel", wp: 620, lengthM: 2.382, widthM: 1.134 };
   const [p, setP] = useState<Proposal>(() => blank(defaultPanel));
   const [tab, setTab] = useState(0);
@@ -72,6 +85,9 @@ export default function Studio({ panels, inverters, packages, company, initialCa
   const [focus, setFocus] = useState<{ center: LatLon; zoom: number; key: number } | null>(null);
   const [list, setList] = useState<{ id: number; proposal_no: string; customer_name: string | null; total: number | null; updated_at: string }[] | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [settings, setSettings] = useState<QuoteSettings>(DEFAULT_SETTINGS);
+  const [kurMsg, setKurMsg] = useState<string | null>(null);
+  const [batteryChoice, setBatteryMode] = useState(false);
   const r3d = useRef<Roof3DHandle>(null);
   const fetching = useRef(new Set<string>());
 
@@ -88,6 +104,28 @@ export default function Studio({ panels, inverters, packages, company, initialCa
   }, [p.cells, frames, layout]);
   const n = useMemo(() => computeNumbers({ ...p, cells }), [p, cells]);
   const sel = p.faces.find((f) => f.id === selected) ?? null;
+
+  // Fiyat kuralları ve günün kuru (kayıtlı kur varsa korunur).
+  useEffect(() => {
+    fetch("/api/admin/quote-settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setSettings({ ...DEFAULT_SETTINGS, ...d }))
+      .catch(() => {});
+  }, []);
+  async function fetchKur() {
+    setKurMsg("Kur alınıyor…");
+    const r = await fetch("/api/admin/store/usd-rate");
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      update({ usdTry: d.rate, usdDate: d.date });
+      setKurMsg(`TCMB ${d.date}: ${d.rate}`);
+    } else setKurMsg(d.error ?? "Kur alınamadı.");
+  }
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- kur yoksa açılışta bir kez alınır
+    if (loaded && p.priceCurrency === "USD" && !p.usdTry) fetchKur();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız açılışta
+  }, [loaded]);
 
   // Açılış: kayıtlı teklif, hesaplama talebinden ön doldurma ya da tarayıcıdaki taslak.
   useEffect(() => {
@@ -190,7 +228,13 @@ export default function Studio({ panels, inverters, packages, company, initialCa
   function fill(id: string) {
     const fr = frames.find((f) => f.face.id === id);
     if (!fr) return;
-    setP((x) => ({ ...x, cells: [...x.cells.filter((c) => c.faceId !== id), ...autoFill(fr, layout)] }));
+    setP((x) => {
+      const others = x.cells.filter((c) => c.faceId !== id);
+      // Sözleşme gücü girildiyse hedef güçten fazla panel konmaz.
+      const target = targetKwp(x.contractKw ?? 0, x.oversizePct ?? settings.oversizePct);
+      const room = target > 0 ? Math.max(0, Math.ceil((target * 1000) / x.panel.wp) - others.length) : Infinity;
+      return { ...x, cells: [...others, ...autoFill(fr, layout).slice(0, room)] };
+    });
   }
   function clearFace(id: string) {
     setP((x) => ({ ...x, cells: x.cells.filter((c) => c.faceId !== id) }));
@@ -215,15 +259,13 @@ export default function Studio({ panels, inverters, packages, company, initialCa
 
   // --- Fiyat kalemleri ---
   function buildLines() {
-    const lines: PriceLine[] = [{ id: uid(), ad: `${p.panel.name} (${p.panel.wp} Wp)`, adet: n.panelCount, birim: "adet", birimFiyat: p.panel.price ?? 0 }];
-    if (p.inverter) lines.push({ id: uid(), ad: p.inverter.name, adet: p.inverter.adet, birim: "adet", birimFiyat: p.inverter.price ?? 0 });
-    // Kalan kalem: mağaza anahtar teslim paketlerinin kW fiyatından ekipman düşülerek önerilir.
-    const ac = Math.max(1, n.dcKwp / 1.1);
-    const ref = [...packages].sort((a, b) => Math.abs(a.kw - ac) - Math.abs(b.kw - ac))[0];
-    const turnkey = ref ? (ref.price / ref.kw) * ac : 0;
-    const equipment = lines.reduce((s, l) => s + l.adet * l.birimFiyat, 0);
-    lines.push({ id: uid(), ad: "Montaj konstrüksiyonu, DC/AC kablolama, koruma panosu, montaj ve işçilik, elektrik projesi ve kabul işlemleri", adet: 1, birim: "set", birimFiyat: Math.max(0, Math.round((turnkey - equipment) / 100) * 100) });
-    update({ lines });
+    update({
+      lines: buildQuoteLines({ kwp: n.dcKwp, panelCount: n.panelCount, roof: p.roofType ?? "kiremit", panel: p.panel, inverter: p.inverter, battery: p.battery, settings, uid }),
+      priceCurrency: "USD",
+      paymentPlan: p.paymentPlan ?? settings.paymentPlan,
+      hikePct: p.hikePct ?? settings.hikePct,
+      hikeYears: p.hikeYears ?? settings.hikeYears,
+    });
   }
   const patchLine = (id: string, patch: Partial<PriceLine>) => update({ lines: p.lines.map((l) => (l.id === id ? { ...l, ...patch } : l)) });
 
@@ -270,7 +312,10 @@ export default function Studio({ panels, inverters, packages, company, initialCa
   }
 
   const panelCountOf = (id: string) => cells.filter((c) => c.faceId === id).length;
-  const recommendedInv = inverters.filter((i) => i.kw >= n.dcKwp / 1.3 && i.kw <= n.dcKwp / 0.85);
+  const withBattery = Boolean(p.battery);
+  const batteryMode = batteryChoice || withBattery;
+  const invOptions = inverters.filter((i) => (batteryMode ? i.hybrid : !i.hybrid));
+  const recommendedInv = invOptions.filter((i) => i.kw >= n.dcKwp / 1.3 && i.kw <= n.dcKwp / 0.85);
 
   return (
     <div>
@@ -279,7 +324,7 @@ export default function Studio({ panels, inverters, packages, company, initialCa
           <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Satış</p>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">Teklif Stüdyosu</h1>
           <p className="text-[13px] text-slate">
-            {p.proposalNo} · {p.customer.name || "müşteri girilmedi"} · {n.panelCount} panel · {num(n.dcKwp, 2)} kWp{n.total ? ` · ${tl(n.total)}` : ""}
+            {p.proposalNo} · {p.customer.name || "müşteri girilmedi"} · {n.panelCount} panel · {num(n.dcKwp, 2)} kWp{n.total ? ` · ${p.priceCurrency === "USD" ? usd(n.total) : tl(n.total)}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -334,6 +379,16 @@ export default function Studio({ panels, inverters, packages, company, initialCa
             </select>
           </label>
           <NumInput label="Ortalama aylık fatura (TL)" value={p.monthlyBillTl} onChange={(v) => update({ monthlyBillTl: v })} note="Tasarruf ve geri ödeme bu faturaya göre hesaplanır." />
+          <NumInput label="Sözleşme gücü (kW)" value={p.contractKw ?? 0} step={0.5} onChange={(v) => update({ contractKw: Math.max(0, v) })} note="Faturadan. Otomatik doldurma hedef güçte durur." />
+          <div className="grid grid-cols-2 gap-4">
+            <NumInput label="PV fazlası (%)" value={p.oversizePct ?? settings.oversizePct} onChange={(v) => update({ oversizePct: v })} note={p.contractKw ? `Hedef ${num(targetKwp(p.contractKw, p.oversizePct ?? settings.oversizePct), 1)} kWp` : undefined} />
+            <label className="block">
+              <span className="text-[12.5px] font-semibold text-slate">Çatı tipi</span>
+              <select value={p.roofType ?? "kiremit"} onChange={(e) => update({ roofType: e.target.value as RoofKind })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
+                {(Object.keys(CATI_ADI) as RoofKind[]).map((k) => <option key={k} value={k}>{CATI_ADI[k]}</option>)}
+              </select>
+            </label>
+          </div>
           <div className="sm:col-span-2"><Btn icon={<PenLine size={15} />} onClick={() => goTab(1)} primary>Çatı tasarımına geç</Btn></div>
         </div>
       )}
@@ -473,7 +528,11 @@ export default function Studio({ panels, inverters, packages, company, initialCa
             <EnergyFlow p={{ ...p, cells }} n={n} onBattery={(v) => update({ batteryKwh: v })} />
           </div>
           <section className="rounded-2xl border border-line bg-paper-raised p-5">
-            <h3 className="font-semibold">İnvertör</h3>
+            <div className="mb-3 inline-flex rounded-lg border border-line bg-paper p-1 text-[13px] font-semibold">
+              <button onClick={() => { setBatteryMode(false); update({ battery: null, batteryKwh: 0, inverter: null }); }} className={`rounded-md px-3 py-1.5 ${!batteryMode ? "bg-ink text-paper" : "text-slate"}`}>Bataryasız</button>
+              <button onClick={() => { setBatteryMode(true); update({ inverter: null }); }} className={`rounded-md px-3 py-1.5 ${batteryMode ? "bg-ink text-paper" : "text-slate"}`}>Bataryalı</button>
+            </div>
+            <h3 className="font-semibold">{batteryMode ? "Hibrit invertör" : "İnvertör"}</h3>
             <p className="text-[12.5px] text-slate">Panel gücü {num(n.dcKwp, 2)} kWp. Uygun aralık: {num(n.dcKwp / 1.3, 1)}–{num(n.dcKwp / 0.85, 1)} kW AC (DC/AC 0,85–1,30).</p>
             <select
               value={p.inverter?.slug ?? ""}
@@ -490,7 +549,7 @@ export default function Studio({ panels, inverters, packages, company, initialCa
                 </optgroup>
               )}
               <optgroup label="Tümü">
-                {inverters.map((i) => <option key={i.slug} value={i.slug}>{i.name}{i.price ? ` · ${tl(i.price)}` : ""}</option>)}
+                {invOptions.map((i) => <option key={i.slug} value={i.slug}>{i.name}{i.price ? ` · ${tl(i.price)}` : ""}</option>)}
               </optgroup>
             </select>
             {p.inverter && (
@@ -501,6 +560,29 @@ export default function Studio({ panels, inverters, packages, company, initialCa
                   <br />
                   {n.dcAcRatio && n.dcAcRatio > 1.3 ? "İnvertör küçük kalıyor." : n.dcAcRatio && n.dcAcRatio < 0.85 ? "İnvertör gereğinden büyük." : "Uygun."}
                 </div>
+              </div>
+            )}
+            {batteryMode && (
+              <div className="mt-4 border-t border-line pt-4">
+                <h3 className="font-semibold">Batarya</h3>
+                <select
+                  value={p.battery?.slug ?? ""}
+                  onChange={(e) => {
+                    const b = batteries.find((x) => x.slug === e.target.value);
+                    const adet = p.battery?.adet ?? 1;
+                    update({ battery: b ? { ...b, adet } : null, batteryKwh: b ? b.kwh * adet : 0 });
+                  }}
+                  className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]"
+                >
+                  <option value="">Batarya seçin</option>
+                  {batteries.map((b) => <option key={b.slug} value={b.slug}>{b.name}</option>)}
+                </select>
+                {p.battery && (
+                  <div className="mt-3 max-w-[140px]">
+                    <NumInput label="Adet" value={p.battery.adet} onChange={(v) => { const adet = Math.max(1, Math.round(v)); update({ battery: { ...p.battery!, adet }, batteryKwh: p.battery!.kwh * adet }); }} />
+                  </div>
+                )}
+                {withBattery && !p.inverter?.slug && <p className="mt-2 text-[12.5px] text-red-600">Bataryayla uyumlu bir hibrit invertör seçin.</p>}
               </div>
             )}
             {p.abone === "mesken" && n.acKw > 25 && <p className="mt-3 rounded-lg bg-red-500/10 p-3 text-[13px] text-red-700">Mesken aboneliklerinde AC güç en fazla 25 kW olabilir.</p>}
@@ -538,53 +620,120 @@ export default function Studio({ panels, inverters, packages, company, initialCa
       {/* 4. Fiyat ve koşullar */}
       {tab === 3 && (
         <div className="mt-5 space-y-5">
+          {p.priceCurrency !== "USD" && (
+            <p className="rounded-xl bg-sun/15 p-3 text-[13px]">Bu eski bir teklif, tutarları TL. “Tasarımdan oluştur” dersen USD fiyatlamaya geçer.</p>
+          )}
           <section className="rounded-2xl border border-line bg-paper-raised p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-semibold">Fiyat kalemleri</h3>
-              <div className="flex gap-2">
-                <Btn icon={<Sparkles size={14} />} onClick={buildLines}>Tasarımdan oluştur</Btn>
-                <Btn icon={<Plus size={14} />} onClick={() => update({ lines: [...p.lines, { id: uid(), ad: "Yeni kalem", adet: 1, birim: "adet", birimFiyat: 0 }] })}>Kalem ekle</Btn>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="font-semibold">Fiyat nasıl hesaplansın?</h3>
+              <div className="inline-flex rounded-lg border border-line bg-paper p-1 text-[13px] font-semibold">
+                {([["malzeme", "Malzeme + kâr"], ["kwp", "kWp başına"], ["manuel", "Elle toplam"]] as const).map(([k, label]) => (
+                  <button key={k} onClick={() => update({ priceMode: k })} className={`rounded-md px-3 py-1.5 ${(p.priceMode ?? "malzeme") === k ? "bg-ink text-paper" : "text-slate"}`}>{label}</button>
+                ))}
               </div>
             </div>
-            <p className="mt-1 text-[12.5px] text-slate">“Tasarımdan oluştur” panel ve invertörü mağaza fiyatıyla ekler; montaj kalemini mağazadaki anahtar teslim paket fiyatına göre önerir. Tüm tutarları kontrol edip düzenleyin.</p>
-            <div className="mt-3 space-y-2">
-              {p.lines.map((l) => (
-                <div key={l.id} className="grid grid-cols-[1fr_70px_70px_120px_110px_32px] items-center gap-2 text-[13px]">
-                  <input value={l.ad} onChange={(e) => patchLine(l.id, { ad: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
-                  <input type="number" value={l.adet} onChange={(e) => patchLine(l.id, { adet: Number(e.target.value) })} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
-                  <input value={l.birim} onChange={(e) => patchLine(l.id, { birim: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
-                  <input type="number" value={l.birimFiyat} onChange={(e) => patchLine(l.id, { birimFiyat: Number(e.target.value) })} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
-                  <span className="text-right font-mono-data">{tl(l.adet * l.birimFiyat)}</span>
-                  <button onClick={() => update({ lines: p.lines.filter((x) => x.id !== l.id) })} className="text-slate hover:text-red-600" aria-label="Kalemi sil"><Trash2 size={15} /></button>
-                </div>
-              ))}
+            {p.priceMode === "kwp" && <div className="mt-3 max-w-[220px]"><NumInput label="kWp başına tutar (USD, KDV hariç)" value={p.kwpUsd ?? 0} onChange={(v) => update({ kwpUsd: v })} note={`${num(n.dcKwp, 2)} kWp × ${num(p.kwpUsd ?? 0)} $`} /></div>}
+            {p.priceMode === "manuel" && <div className="mt-3 max-w-[220px]"><NumInput label="Toplam tutar (USD, KDV hariç)" value={p.manualUsd ?? 0} onChange={(v) => update({ manualUsd: v })} /></div>}
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+              <h3 className="font-semibold">Malzeme listesi</h3>
+              <div className="flex gap-2">
+                <Btn icon={<Sparkles size={14} />} onClick={buildLines} primary>Tasarımdan oluştur</Btn>
+                <Btn icon={<Plus size={14} />} onClick={() => update({ lines: [...p.lines, { id: uid(), ad: "Yeni kalem", adet: 1, birim: "adet", birimFiyat: 0, maliyetUsd: 0, marjPct: settings.defaultMarginPct }] })}>Kalem ekle</Btn>
+              </div>
             </div>
+            <p className="mt-1 text-[12.5px] text-slate">Panel, invertör ve batarya mağaza maliyetinden; konstrüksiyon çatı tipine, diğer kalemler kW aralığına göre “Fiyat kuralları” sekmesinden gelir. Her satır değiştirilebilir.</p>
+            {p.lines.some((l) => !l.birimFiyat) && <p className="mt-2 rounded-lg bg-red-500/10 p-2.5 text-[12.5px] text-red-700">{p.lines.filter((l) => !l.birimFiyat).length} kalemin fiyatı yok. “Fiyat kuralları” sekmesinden girin ya da satırda düzeltin.</p>}
+            <div className="mt-3 overflow-x-auto">
+              <div className="min-w-[820px] space-y-2">
+                <div className="grid grid-cols-[1fr_70px_60px_90px_70px_90px_90px_28px] gap-2 text-[11.5px] font-semibold text-slate">
+                  <span>Kalem</span><span className="text-right">Miktar</span><span>Birim</span><span className="text-right">Maliyet $</span><span className="text-right">Kâr %</span><span className="text-right">Birim $</span><span className="text-right">Tutar $</span><span />
+                </div>
+                {p.lines.map((l) => (
+                  <div key={l.id} className="grid grid-cols-[1fr_70px_60px_90px_70px_90px_90px_28px] items-center gap-2 text-[13px]">
+                    <input value={l.ad} onChange={(e) => patchLine(l.id, { ad: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
+                    <input type="number" value={l.adet} onChange={(e) => patchLine(l.id, { adet: Number(e.target.value) })} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
+                    <input value={l.birim} onChange={(e) => patchLine(l.id, { birim: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
+                    <input type="number" value={Math.round((l.maliyetUsd ?? 0) * 100) / 100} onChange={(e) => { const c = Number(e.target.value); patchLine(l.id, { maliyetUsd: c, birimFiyat: salePrice(c, l.marjPct ?? 0) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
+                    <input type="number" value={l.marjPct ?? 0} onChange={(e) => { const m = Number(e.target.value); patchLine(l.id, { marjPct: m, birimFiyat: salePrice(l.maliyetUsd ?? 0, m) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
+                    <input type="number" value={Math.round(l.birimFiyat * 100) / 100} onChange={(e) => patchLine(l.id, { birimFiyat: Number(e.target.value) })} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
+                    <span className="text-right font-mono-data">{num(l.adet * l.birimFiyat)}</span>
+                    <button onClick={() => update({ lines: p.lines.filter((x) => x.id !== l.id) })} className="text-slate hover:text-red-600" aria-label="Kalemi sil"><Trash2 size={15} /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-4 flex flex-wrap items-end justify-between gap-4 border-t border-line pt-4">
               <div className="flex flex-wrap items-end gap-4">
-                <NumInput label="İndirim (TL)" value={p.discountTl} onChange={(v) => update({ discountTl: Math.max(0, v) })} />
-                <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={p.pricesIncludeVat} onChange={(e) => update({ pricesIncludeVat: e.target.checked })} /> Fiyatlar KDV dahil</label>
+                <NumInput label="İndirim (USD)" value={p.discountTl} onChange={(v) => update({ discountTl: Math.max(0, v) })} />
                 <NumInput label="Geçerlilik (gün)" value={p.validDays} onChange={(v) => update({ validDays: Math.max(1, Math.round(v)) })} />
+                <div>
+                  <NumInput label="USD/TL kuru" value={p.usdTry ?? 0} step={0.01} onChange={(v) => update({ usdTry: v })} />
+                  <button onClick={fetchKur} className="mt-1 text-[12px] font-semibold text-brand hover:underline">TCMB’den al</button>
+                  {kurMsg && <span className="ml-2 text-[11.5px] text-slate">{kurMsg}</span>}
+                </div>
+                <div className="space-y-1.5 text-[13px]">
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={p.pricesIncludeVat} onChange={(e) => update({ pricesIncludeVat: e.target.checked })} /> Fiyatlar KDV dahil</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(p.showTl)} onChange={(e) => update({ showTl: e.target.checked })} /> Teklifte TL fiyat göster</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(p.showLinePrices)} onChange={(e) => update({ showLinePrices: e.target.checked })} /> Teklifte kalem fiyatlarını göster</label>
+                </div>
               </div>
               <div className="text-right">
                 <p className="text-[12.5px] text-slate">Genel toplam (KDV dahil)</p>
-                <p className="font-display text-2xl font-semibold">{tl(n.total)}</p>
-                {n.paybackYears != null && <p className="text-[12.5px] text-slate">Geri ödeme {num(n.paybackYears, 1)} yıl</p>}
+                <p className="font-display text-2xl font-semibold">{p.priceCurrency === "USD" ? usd(n.total) : tl(n.total)}</p>
+                {p.priceCurrency === "USD" && <p className="text-[12.5px] text-slate">{p.usdTry ? tl(n.totalTl) : "Kur girilmedi"}</p>}
+                {n.paybackYears != null && <p className="text-[12.5px] text-slate">Geri ödeme {num(n.paybackYears, 1)} yıl{n.paybackFlatYears != null ? ` · zamsız ${num(n.paybackFlatYears, 1)} yıl` : ""}</p>}
               </div>
             </div>
           </section>
-          <section className="grid gap-4 lg:grid-cols-3">
-            <Area label="Ödeme koşulları" value={p.paymentTerms} onChange={(v) => update({ paymentTerms: v })} />
+
+          <section className="grid gap-5 lg:grid-cols-2">
+            <div className="rounded-2xl border border-line bg-paper-raised p-5">
+              <h3 className="font-semibold">Ödeme planı</h3>
+              <div className="mt-3 space-y-2">
+                {(p.paymentPlan ?? settings.paymentPlan).map((st) => {
+                  const plan = p.paymentPlan ?? settings.paymentPlan;
+                  const patch = (x: Partial<typeof st>) => update({ paymentPlan: plan.map((q) => (q.id === st.id ? { ...q, ...x } : q)) });
+                  return (
+                    <div key={st.id} className="grid grid-cols-[1fr_64px_90px_24px] items-center gap-2 text-[13px]">
+                      <input value={st.ad} onChange={(e) => patch({ ad: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
+                      <input type="number" value={st.pct} onChange={(e) => patch({ pct: Number(e.target.value) })} aria-label="Yüzde" className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
+                      <input value={st.sure} onChange={(e) => patch({ sure: e.target.value })} aria-label="Süre" className="rounded-lg border border-line bg-paper px-2 py-1.5" />
+                      <button onClick={() => update({ paymentPlan: plan.filter((q) => q.id !== st.id) })} className="text-slate hover:text-red-600" aria-label="Adımı sil"><Trash2 size={14} /></button>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-2 flex items-center justify-between text-[12.5px]">
+                <button onClick={() => update({ paymentPlan: [...(p.paymentPlan ?? settings.paymentPlan), { id: uid(), ad: "Yeni adım", pct: 0, sure: "" }] })} className="font-semibold text-brand hover:underline">+ Adım ekle</button>
+                {(() => { const t = (p.paymentPlan ?? settings.paymentPlan).reduce((a, b) => a + b.pct, 0); return <span className={t === 100 ? "text-slate" : "font-semibold text-red-600"}>Toplam %{t}</span>; })()}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-line bg-paper-raised p-5">
+              <h3 className="font-semibold">Elektrik zammı senaryosu</h3>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <NumInput label="Yıllık zam (%)" value={p.hikePct ?? settings.hikePct} onChange={(v) => update({ hikePct: v })} />
+                <NumInput label="Kaç yıl uygulansın" value={p.hikeYears ?? settings.hikeYears} onChange={(v) => update({ hikeYears: Math.max(0, Math.min(25, Math.round(v))) })} />
+              </div>
+              <p className="mt-2 text-[12px] text-slate">Bu sürenin sonunda elektrik fiyatı sabit kabul edilir. Varsayım teklif belgesinde yazılır.</p>
+              <label className="mt-4 block max-w-xs">
+                <span className="text-[12.5px] font-semibold text-slate">Teklif durumu</span>
+                <select value={p.status} onChange={(e) => update({ status: e.target.value as Proposal["status"] })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
+                  {["Taslak", "Gönderildi", "Kabul edildi", "Reddedildi"].map((st) => <option key={st}>{st}</option>)}
+                </select>
+              </label>
+            </div>
+          </section>
+          <section className="grid gap-4 lg:grid-cols-2">
             <Area label="Teklif kapsamı" value={p.scopeNotes} onChange={(v) => update({ scopeNotes: v })} />
             <Area label="Garanti" value={p.warrantyNotes} onChange={(v) => update({ warrantyNotes: v })} />
           </section>
-          <label className="block max-w-xs">
-            <span className="text-[12.5px] font-semibold text-slate">Teklif durumu</span>
-            <select value={p.status} onChange={(e) => update({ status: e.target.value as Proposal["status"] })} className="mt-1 w-full rounded-lg border border-line bg-paper-raised px-3 py-2">
-              {["Taslak", "Gönderildi", "Kabul edildi", "Reddedildi"].map((s) => <option key={s}>{s}</option>)}
-            </select>
-          </label>
         </div>
       )}
+
+      {/* 6. Fiyat kuralları */}
+      {tab === 5 && <PricingRules settings={settings} onChange={setSettings} />}
 
       {/* 5. Önizleme ve PDF */}
       {tab === 4 && (

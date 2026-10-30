@@ -139,6 +139,12 @@ function PaybackChart({ data }: { data: number[] }) {
 
 export default function ProposalDocument({ p, n, company }: { p: Proposal; n: ProposalNumbers; company: Company }) {
   const hasCons = p.monthlyBillTl > 0;
+  // Fiyat gösterimi: USD teklifte seçime göre dolar ya da günün kuruyla TL; eski tekliflerde TL.
+  const isUsd = p.priceCurrency === "USD";
+  const money = (v: number) => (!isUsd ? tl(v) : p.showTl && p.usdTry ? tl(v * p.usdTry) : `${Math.round(v).toLocaleString("tr-TR")} USD`);
+  const showPrices = !isUsd || Boolean(p.showLinePrices);
+  const plan = p.paymentPlan ?? [];
+  const hike = p.hikePct ?? 0;
   const hasFlow = hasCons && n.annualProduction > 0;
   const lat = p.site.center[0];
   const azimuth = meanAzimuth(n.byFace.map((f) => ({ azimuth: p.faces.find((x) => x.id === f.faceId)?.azimuth ?? 0, weight: f.annualKwh })));
@@ -174,7 +180,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
           <Fig label="Sistem gücü" value={`${num(n.dcKwp, 2)} kWp`} />
           <Fig label="Panel" value={`${n.panelCount} adet`} />
           <Fig label="Yıllık üretim" value={`${num(n.annualProduction)} kWh`} />
-          <Fig label="Teklif tutarı" value={tl(n.total)} />
+          <Fig label="Teklif tutarı" value={money(n.total)} />
           {hasCons && <Fig label="Yıllık tasarruf" value={tl(n.annualSavingTl)} />}
           {hasCons && <Fig label="Geri ödeme" value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />}
           {hasCons && <Fig label="Tüketimi karşılama" value={`%${num(n.coveragePct)}`} />}
@@ -240,10 +246,10 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
         <Sheet>
           <Head company={company} title="Tasarruf ve enerji akışı" no={p.proposalNo} />
           <h2 className="mt-5 text-[13px] font-semibold">25 yıllık birikimli kazanç</h2>
-          <p className="text-[10px] text-[#5b6577]">Yıllık tasarruftan yatırım bedeli düşülerek, bugünkü elektrik fiyatıyla ve yılda %0,5 panel verim kaybıyla hesaplanmıştır. Elektrik zamları dahil değildir.</p>
+          <p className="text-[10px] text-[#5b6577]">Yıllık tasarruftan yatırım bedeli düşülerek, yılda %0,5 panel verim kaybıyla hesaplanmıştır. {hike > 0 ? `Varsayım: elektrik fiyatı ${p.hikeYears ?? 0} yıl boyunca yılda %${hike} artar, sonra sabit kalır. Gerçek zamlar farklı olabilir.` : "Elektrik zamları dahil değildir."}</p>
           <div className="mt-2"><PaybackChart data={n.cumulativeTl} /></div>
           <div className="mt-3 grid grid-cols-3 gap-2.5">
-            <Fig label="Geri ödeme" value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />
+            <Fig label={hike > 0 && n.paybackFlatYears != null ? `Geri ödeme (zamsız ${num(n.paybackFlatYears, 1)} yıl)` : "Geri ödeme"} value={n.paybackYears != null ? `${num(n.paybackYears, 1)} yıl` : "—"} />
             <Fig label="25 yılda toplam tasarruf" value={tl(n.savings25Tl)} />
             <Fig label="25 yıl sonunda net" value={tl(n.cumulativeTl[24] ?? 0)} />
           </div>
@@ -271,30 +277,49 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
             <tr className="border-b-2 border-[#0e1626] text-left">
               <th className="py-1.5 font-semibold">Kalem</th>
               <th className="text-right font-semibold">Miktar</th>
-              <th className="text-right font-semibold">Birim fiyat</th>
-              <th className="text-right font-semibold">Tutar</th>
+              {showPrices && <th className="text-right font-semibold">Birim fiyat</th>}
+              {showPrices && <th className="text-right font-semibold">Tutar</th>}
             </tr>
           </thead>
           <tbody>
             {p.lines.map((l) => (
               <tr key={l.id} className="border-b border-[#e6eaf0]">
                 <td className="py-1.5">{l.ad}</td>
-                <td className="text-right">{num(l.adet)} {l.birim}</td>
-                <td className="text-right">{tl(l.birimFiyat)}</td>
-                <td className="text-right font-mono">{tl(l.adet * l.birimFiyat)}</td>
+                <td className="text-right">{num(l.adet, 2)} {l.birim}</td>
+                {showPrices && <td className="text-right">{money(l.birimFiyat)}</td>}
+                {showPrices && <td className="text-right font-mono">{money(l.adet * l.birimFiyat)}</td>}
               </tr>
             ))}
           </tbody>
           <tfoot className="text-[11.5px]">
-            <tr><td colSpan={3} className="pt-2 text-right text-[#5b6577]">Ara toplam</td><td className="pt-2 text-right font-mono">{tl(n.subtotal)}</td></tr>
-            {p.discountTl > 0 && <tr><td colSpan={3} className="text-right text-[#5b6577]">İndirim</td><td className="text-right font-mono">−{tl(p.discountTl)}</td></tr>}
-            <tr><td colSpan={3} className="text-right text-[#5b6577]">{p.pricesIncludeVat ? "Dahil KDV (%20)" : "KDV (%20)"}</td><td className="text-right font-mono">{tl(n.vat)}</td></tr>
-            <tr className="text-[14px]"><td colSpan={3} className="pt-1 text-right font-semibold">Genel toplam (KDV dahil)</td><td className="pt-1 text-right font-mono font-semibold">{tl(n.total)}</td></tr>
+            <tr><td colSpan={showPrices ? 3 : 1} className="pt-2 text-right text-[#5b6577]">Ara toplam</td><td className="pt-2 text-right font-mono">{money(n.subtotal)}</td></tr>
+            {p.discountTl > 0 && <tr><td colSpan={showPrices ? 3 : 1} className="text-right text-[#5b6577]">İndirim</td><td className="text-right font-mono">−{money(p.discountTl)}</td></tr>}
+            <tr><td colSpan={showPrices ? 3 : 1} className="text-right text-[#5b6577]">{p.pricesIncludeVat ? "Dahil KDV (%20)" : "KDV (%20)"}</td><td className="text-right font-mono">{money(n.vat)}</td></tr>
+            <tr className="text-[14px]"><td colSpan={showPrices ? 3 : 1} className="pt-1 text-right font-semibold">Genel toplam (KDV dahil)</td><td className="pt-1 text-right font-mono font-semibold">{money(n.total)}</td></tr>
           </tfoot>
         </table>
+        {isUsd && p.usdTry ? <p className="mt-1 text-right text-[9.5px] text-[#5b6577]">{p.showTl ? `TCMB ${p.usdDate ?? ""} kuru ${p.usdTry} ile hesaplanmıştır. ` : ""}Ödeme günündeki Merkez Bankası kuru geçerlidir.</p> : null}
 
-        <div className="mt-6 space-y-4 text-[11px] leading-relaxed text-[#3d4757]">
-          <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Ödeme koşulları</h3><p className="mt-1 whitespace-pre-line">{p.paymentTerms}</p></div>
+        {plan.length > 0 && (
+          <div className="mt-5">
+            <h3 className="text-[12px] font-semibold">Ödeme planı</h3>
+            <table className="mt-1 w-full text-[10.5px]">
+              <tbody>
+                {plan.map((st) => (
+                  <tr key={st.id} className="border-b border-[#e6eaf0]">
+                    <td className="py-1">{st.ad}</td>
+                    <td className="text-right">%{st.pct}</td>
+                    <td className="text-right text-[#5b6577]">{st.sure}</td>
+                    <td className="text-right font-mono">{money((n.total * st.pct) / 100)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="mt-5 space-y-3 text-[10.5px] leading-relaxed text-[#3d4757]">
+          {plan.length === 0 && <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Ödeme koşulları</h3><p className="mt-1 whitespace-pre-line">{p.paymentTerms}</p></div>}
           <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Teklif kapsamı</h3><p className="mt-1 whitespace-pre-line">{p.scopeNotes}</p></div>
           <div><h3 className="text-[12px] font-semibold text-[#0e1626]">Garanti</h3><p className="mt-1 whitespace-pre-line">{p.warrantyNotes}</p></div>
           <p className="text-[10px] text-[#5b6577]">
@@ -302,7 +327,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
           </p>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-10 text-[11px]">
+        <div className="mt-6 grid grid-cols-2 gap-10 text-[11px]">
           <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{company.name}</p><p className="text-[#5b6577]">Kaşe / imza</p></div>
           <div className="border-t border-[#0e1626] pt-2"><p className="font-semibold">{p.customer.name || "Müşteri"}</p><p className="text-[#5b6577]">Onay / imza</p></div>
         </div>

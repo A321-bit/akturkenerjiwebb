@@ -9,7 +9,7 @@
 export type LatLon = [number, number];
 export type XY = { x: number; n: number };
 
-export type PanelModel = { name: string; wp: number; lengthM: number; widthM: number; price?: number; slug?: string };
+export type PanelModel = { name: string; wp: number; lengthM: number; widthM: number; price?: number; slug?: string; costUsd?: number; marginPct?: number };
 
 export type RoofFace = {
   id: string;
