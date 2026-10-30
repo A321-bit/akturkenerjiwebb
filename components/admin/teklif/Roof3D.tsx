@@ -188,7 +188,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environmentIntensity = 0.45;
     pmrem.dispose();
-    const camera = new THREE.PerspectiveCamera(42, el.clientWidth / el.clientHeight, 0.5, 1000);
+    const camera = new THREE.PerspectiveCamera(42, el.clientWidth / el.clientHeight, 0.5, 1500);
     camera.position.set(22, 20, 32);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -263,7 +263,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     let cancel = false;
     const c = ctx.current;
     if (!c) return;
-    satelliteGround(center, 140).then(({ tex, nw, se }) => {
+    satelliteGround(center, 240).then(({ tex, nw, se }) => {
       if (cancel || !ctx.current) return;
       c.ground.clear();
       const w = se.x - nw.x;
@@ -273,6 +273,11 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       plane.position.set(nw.x + w / 2, 0, -(se.n + h / 2));
       plane.receiveShadow = true;
       c.ground.add(plane);
+      // Uydu karosunun dışı: ufka kadar sisle eriyen düz zemin (görüntünün köşesi havada kalmasın).
+      const base = new THREE.Mesh(new THREE.CircleGeometry(900, 48), new THREE.MeshStandardMaterial({ color: "#8d927f", roughness: 1 }));
+      base.rotation.x = -Math.PI / 2;
+      base.position.y = -0.08;
+      c.ground.add(base);
       setImagery({ tex, nw, se });
     });
     return () => {
