@@ -57,7 +57,9 @@ function waNumber(phone: string) {
 
 function waMessage(r: CalcRow) {
   const kw = r.systemKw != null ? `${r.systemKw.toLocaleString("tr-TR")} kW` : "";
-  return `Merhaba ${r.fullname}, Aktürk Enerji'den yazıyoruz. Sitemizdeki hesaplamanıza göre çatınız için ${kw} güneş enerjisi sistemi öneriliyor${
+  const what =
+    r.type === "isi_pompasi" ? `evinize ${kw} ısı pompası` : r.type === "sulama" ? `kuyunuza ${kw} pompalı güneş enerjili sulama sistemi` : `çatınıza ${kw} güneş enerjisi sistemi`;
+  return `Merhaba ${r.fullname}, Aktürk Enerji'den yazıyoruz. Sitemizdeki hesaplamanıza göre ${what} öneriliyor${
     r.annualSavingTl ? `; yıllık tasarrufunuz yaklaşık ${tl(r.annualSavingTl)}` : ""
   }. Ücretsiz keşif için size uygun bir gün ve saati paylaşabilir misiniz?`;
 }
@@ -179,8 +181,11 @@ export default function CalculationLeadsPage() {
               </div>
 
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-paper p-3 text-[13px] sm:grid-cols-4">
-                <Fact k="Önerilen sistem" v={r.systemKw != null ? `${r.systemKw.toLocaleString("tr-TR")} kW · ${r.panelCount ?? "?"} panel` : "—"} />
-                <Fact k="Aylık fatura" v={tl(r.monthlyBillTl)} />
+                <Fact
+                  k={r.type === "sulama" ? "Önerilen pompa" : r.type === "isi_pompasi" ? "Önerilen cihaz" : "Önerilen sistem"}
+                  v={r.systemKw != null ? `${r.systemKw.toLocaleString("tr-TR")} kW${r.panelCount ? ` · ${r.panelCount} panel` : ""}` : "—"}
+                />
+                <Fact k={r.type === "isi_pompasi" ? "Aylık ısınma gideri" : "Aylık fatura"} v={tl(r.monthlyBillTl)} />
                 <Fact k="Yıllık tasarruf" v={tl(r.annualSavingTl)} />
                 <Fact k="Geri ödeme" v={r.paybackYears != null ? `${r.paybackYears.toLocaleString("tr-TR", { maximumFractionDigits: 1 })} yıl` : "—"} />
                 <Fact k="Paket" v={r.recommended_product ?? "Özel teklif"} wide />

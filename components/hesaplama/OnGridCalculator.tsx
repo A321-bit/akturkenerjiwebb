@@ -1,23 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Factory, Home, Leaf, MapPin, MessageCircle, Phone, Sprout, Sun, Wallet, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Building2, Factory, Home, Leaf, Sprout, Sun, Wallet, Zap } from "lucide-react";
 import { calculateOnGrid, leadScore, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
-import LocationPicker, { type PickedLocation } from "./LocationPicker";
-import { ILLER } from "@/lib/il-konum";
-import { buildLeadAttributionFields, getAttribution } from "@/lib/attribution";
-import { trackEvent } from "@/lib/track";
-import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
-import { rememberCalculation } from "@/lib/whatsapp-context";
+import { CallUs, Choice, ContactStep, Kpi, MonthlyPair, Nav, Panel, PlacePicker, ProductBox, Row, Stepper, Toggle, num, onlyNum, tl, usePlace, useWizard, type CompanyContact, type Place } from "./ui";
 
 const PAGE = "/hesaplama/on-grid";
-const BLUE = "#3f74c4";
-const GOLD = "#d4861f";
-const AYLAR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
-const tl = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} TL`;
-const num = (n: number, d = 0) => n.toLocaleString("tr-TR", { maximumFractionDigits: d });
 
 const ABONE_IKON: Record<AboneGrubu, typeof Home> = { mesken: Home, ticarethane: Building2, sanayi: Factory, tarimsal: Sprout };
 const YONLER: { key: string; ad: string; azimuth: number; tilt: number }[] = [
@@ -34,33 +23,22 @@ const CATILAR: { key: RoofType; ad: string; not: string }[] = [
 
 type Mode = "fatura" | "aylik" | "gunluk";
 
-/** Rapor sonrası gösterilen firma iletişim bilgisi. */
-export type CompanyContact = { phone: string; whatsapp: string };
-
 export default function OnGridCalculator({ packages, contact }: { packages: PackageOption[]; contact: CompanyContact }) {
-  const [step, setStep] = useState(1);
+  const { step, go, ref } = useWizard(PAGE, "ongrid");
   const [abone, setAbone] = useState<AboneGrubu>("mesken");
   const [mode, setMode] = useState<Mode>("fatura");
   const [value, setValue] = useState("");
   const [klima, setKlima] = useState(false);
   const [isitma, setIsitma] = useState(false);
   const [sozlesme, setSozlesme] = useState("");
-  const [il, setIl] = useState("");
-  const [loc, setLoc] = useState<PickedLocation | null>(null);
-  const [showMap, setShowMap] = useState(false);
+  const loc = usePlace();
+  const konum = loc.place;
   const [cati, setCati] = useState<RoofType>("egimli");
   const [yon, setYon] = useState("guney");
   const [alan, setAlan] = useState("");
   const [yieldPerKwp, setYieldPerKwp] = useState<number[] | null>(null);
   const [yieldSource, setYieldSource] = useState<"pvgis" | "ortalama" | null>(null);
 
-  // Haritada işaret varsa tam nokta, yoksa seçilen ilin merkezi kullanılır (konum paylaşmak zorunlu değil).
-  const ilMerkez = ILLER.find((i) => i.ad === il) ?? ILLER.find((i) => i.ad === "Ankara")!;
-  const konum = loc ? { ad: loc.il, lat: loc.lat, lon: loc.lon } : { ad: ilMerkez.ad, lat: ilMerkez.lat, lon: ilMerkez.lon };
-  const pickOnMap = (v: PickedLocation) => {
-    setLoc(v);
-    setIl(v.il);
-  };
   const yonu = YONLER.find((y) => y.key === yon) ?? YONLER[0];
   // Düz çatıda paneller güneye bakan sehpalara kurulur; yön seçimi uygulanmaz.
   const azimuth = cati === "duz" ? 0 : yonu.azimuth;
@@ -97,23 +75,9 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
   // Hesap hafif (12 aylık döngü); her çizimde yeniden yapılır.
   const result = amount > 0 ? calculateOnGrid(input, packages) : null;
 
-  const wizard = useRef<HTMLDivElement>(null);
-
-  function go(next: number) {
-    setStep(next);
-    trackEvent("click", PAGE, `ongrid_step_${next}`);
-    // Sayfanın en üstüne değil, hesaplayıcının adım çubuğuna kaydırılır (üst menü payı bırakılarak).
-    requestAnimationFrame(() => {
-      const top = (wizard.current?.getBoundingClientRect().top ?? 0) + window.scrollY - 88;
-      window.scrollTo({ top, behavior: "smooth" });
-    });
-  }
-
-  const canNext2 = amount > 0;
-
   return (
-    <div ref={wizard} className="mx-auto max-w-4xl">
-      <Stepper step={step} />
+    <div ref={ref} className="mx-auto max-w-4xl">
+      <Stepper step={step} labels={["Abonelik", "Tüketim", "Konum ve çatı", "İletişim", "Rapor"]} />
 
       {step === 1 && (
         <Panel title="Elektrik aboneliğiniz hangi tipte?" hint="Faturanızın üst kısmında “Abone grubu” olarak yazar.">
@@ -162,7 +126,7 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
               <input
                 inputMode="decimal"
                 value={value}
-                onChange={(e) => setValue(e.target.value.replace(/[^\d.,]/g, ""))}
+                onChange={(e) => setValue(onlyNum(e.target.value))}
                 placeholder={mode === "fatura" ? "ör. 2500" : mode === "aylik" ? "ör. 600" : "ör. 20"}
                 className="w-full bg-transparent px-4 py-3 font-mono-data text-[18px] outline-none"
               />
@@ -181,53 +145,21 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
             <summary className="cursor-pointer font-semibold text-ink">Sözleşme gücümü biliyorum (isteğe bağlı)</summary>
             <p className="mt-2 text-slate">Faturada “Sözleşme gücü” olarak yazar. Kurulabilecek en yüksek sistemi belirler.</p>
             <div className="mt-2 flex max-w-[200px] items-center rounded-xl border border-line bg-paper-raised">
-              <input inputMode="decimal" value={sozlesme} onChange={(e) => setSozlesme(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="ör. 10" className="w-full bg-transparent px-3 py-2 outline-none" />
+              <input inputMode="decimal" value={sozlesme} onChange={(e) => setSozlesme(onlyNum(e.target.value))} placeholder="ör. 10" className="w-full bg-transparent px-3 py-2 outline-none" />
               <span className="pr-3 font-semibold text-slate">kW</span>
             </div>
           </details>
-          <Nav onBack={() => go(1)} onNext={() => go(3)} disabled={!canNext2} />
+          <Nav onBack={() => go(1)} onNext={() => go(3)} disabled={!(amount > 0)} />
         </Panel>
       )}
 
       {step === 3 && (
-        <Panel title="Konum ve çatı" hint="Güneş üretimi tam konumunuzun uydu tabanlı güneş verisiyle ve çatınızın yönüne göre hesaplanır.">
-          <label className="block max-w-sm">
-            <span className="text-[13px] font-semibold text-ink">İl</span>
-            <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-line bg-paper-raised px-3 focus-within:border-brand">
-              <MapPin size={17} className="text-brand" />
-              <select
-                value={il}
-                onChange={(e) => {
-                  setIl(e.target.value);
-                  setLoc(null);
-                }}
-                className="w-full bg-transparent py-3 text-[15px] outline-none"
-              >
-                <option value="">İl seçin</option>
-                {ILLER.map((i) => (
-                  <option key={i.ad}>{i.ad}</option>
-                ))}
-              </select>
-            </div>
-          </label>
-          {showMap ? (
-            <div className="mt-4">
-              <LocationPicker value={loc} onChange={pickOnMap} />
-            </div>
-          ) : (
-            <button onClick={() => setShowMap(true)} className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-brand hover:underline">
-              <MapPin size={15} /> Daha hassas sonuç için çatınızı haritada işaretleyin (isteğe bağlı)
-            </button>
-          )}
+        <Panel title="Konum ve çatı" hint="Güneş üretimi bulunduğunuz yerin uydu tabanlı güneş verisiyle ve çatınızın yönüne göre hesaplanır.">
+          <PlacePicker {...loc} mapLabel="Daha hassas sonuç için çatınızı haritada işaretleyin (isteğe bağlı)" />
 
           <p className="mt-6 text-[13px] font-semibold text-ink">Çatı tipi</p>
-          <div className="mt-2 grid gap-3 sm:grid-cols-3">
-            {CATILAR.map((c) => (
-              <button key={c.key} onClick={() => setCati(c.key)} className={`rounded-xl border p-4 text-left ${cati === c.key ? "border-brand bg-brand/5 ring-2 ring-brand/25" : "border-line bg-paper-raised hover:border-brand/60"}`}>
-                <p className="font-semibold text-ink">{c.ad}</p>
-                <p className="mt-0.5 text-[12.5px] text-slate">{c.not}</p>
-              </button>
-            ))}
+          <div className="mt-2">
+            <Choice value={cati} onChange={setCati} options={CATILAR} />
           </div>
 
           {cati === "egimli" && (
@@ -246,17 +178,40 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
           <label className="mt-6 block max-w-sm">
             <span className="text-[13px] font-semibold text-ink">Kullanılabilir çatı alanı (isteğe bağlı)</span>
             <div className="mt-1.5 flex items-center rounded-xl border border-line bg-paper-raised focus-within:border-brand">
-              <input inputMode="decimal" value={alan} onChange={(e) => setAlan(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="ör. 80" className="w-full bg-transparent px-4 py-3 outline-none" />
+              <input inputMode="decimal" value={alan} onChange={(e) => setAlan(onlyNum(e.target.value))} placeholder="ör. 80" className="w-full bg-transparent px-4 py-3 outline-none" />
               <span className="pr-4 font-semibold text-slate">m²</span>
             </div>
             <span className="mt-1 block text-[12px] text-slate">Bilmiyorsanız boş bırakın; keşifte ölçüyoruz.</span>
           </label>
-          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Raporu hazırla" disabled={!il} />
+          <Nav onBack={() => go(2)} onNext={() => go(4)} nextLabel="Raporu hazırla" disabled={!loc.il} />
         </Panel>
       )}
 
       {step === 4 && result && (
-        <ContactStep result={result} abone={abone} il={konum} input={input} onDone={() => go(5)} onBack={() => go(3)} />
+        <ContactStep
+          page={PAGE}
+          place={konum}
+          bullets={[
+            "Çatınıza uygun sistem gücü ve panel sayısı",
+            `${konum.ad} güneş verisiyle aylık üretim tahmini`,
+            "Aylık tüketim ve üretim dengesi",
+            "Yıllık tasarruf ve geri ödeme süresi",
+            "Önerilen paket ve güncel fiyatı",
+          ]}
+          payload={{
+            needType: "On grid hesaplama",
+            source: "ongrid_calculator",
+            calcType: "on_grid",
+            summary: `On grid · ${result.systemKw} kW (${result.panelCount} panel), ${ABONE_ADLARI[abone]}, ${konum.ad}; aylık fatura ~${Math.round(result.monthlyBillTl)} TL, yıllık tasarruf ~${Math.round(result.annualSavingTl)} TL${result.package ? `, paket: ${result.package.name}` : ""}.`,
+            inputs: input,
+            results: result,
+            recommendedProduct: result.package?.name,
+            estimatedValue: result.package?.price,
+            score: leadScore(result, false),
+          }}
+          onDone={() => go(5)}
+          onBack={() => go(3)}
+        />
       )}
 
       {step === 5 && result && <Result result={result} abone={abone} il={konum} yieldSource={yieldSource} contact={contact} onBack={() => go(3)} />}
@@ -274,7 +229,7 @@ function Result({
 }: {
   result: ReturnType<typeof calculateOnGrid>;
   abone: AboneGrubu;
-  il: { ad: string; lat: number; lon: number };
+  il: Place;
   yieldSource: "pvgis" | "ortalama" | null;
   contact: CompanyContact;
   onBack: () => void;
@@ -311,23 +266,11 @@ function Result({
           <p className="text-[12.5px] text-slate">
             {yieldSource === "pvgis" ? `${il.ad} için Avrupa Komisyonu PVGIS güneş verisiyle` : "Bölge ortalamasıyla"} hesaplanmıştır. Değerler kWh cinsindendir.
           </p>
-          <MonthlyBars production={r.monthlyProduction} consumption={r.monthlyKwh} />
+          <MonthlyPair a={r.monthlyProduction} b={r.monthlyKwh} aLabel="Güneş üretimi" bLabel="Tüketiminiz" unit="kWh" />
         </section>
 
-        <section className="relative flex flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised p-5">
-          <h3 className="font-semibold text-ink">Önerilen paket</h3>
-          {r.package ? (
-            <>
-              <p className="mt-2 font-display text-[18px] font-semibold text-ink">{r.package.name}</p>
-              {r.package.price ? <p className="mt-1 font-mono-data text-[22px] font-semibold text-brand">{tl(r.package.price)}</p> : <p className="mt-1 text-slate">Fiyat için teklif alın</p>}
-              <p className="mt-1 text-[12px] text-slate">KDV dahil · panel, invertör, konstrüksiyon ve elektrik projesi</p>
-              <Link href={r.package.href} className="mt-3 inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand hover:underline">
-                Paketi incele <ArrowRight size={15} />
-              </Link>
-            </>
-          ) : (
-            <p className="mt-2 text-[14px] text-slate">Bu güçte hazır paketimiz yok; size özel sistem teklifi hazırlıyoruz.</p>
-          )}
+        <section className="flex flex-col rounded-2xl border border-line bg-paper-raised p-5">
+          <ProductBox title="Önerilen paket" pkg={r.package} includes="KDV dahil · panel, invertör, konstrüksiyon ve elektrik projesi" empty="Bu güçte hazır paketimiz yok; size özel sistem teklifi hazırlıyoruz." />
           <dl className="mt-4 space-y-1.5 border-t border-line pt-4 text-[13px]">
             <Row k="Bugünkü aylık fatura" v={tl(r.monthlyBillTl)} />
             <Row k="Yıllık tüketim" v={`${num(r.annualKwh)} kWh`} />
@@ -337,7 +280,7 @@ function Result({
         </section>
       </div>
 
-      <CallUs contact={contact} />
+      <CallUs contact={contact} team="Elektrik mühendislerimiz" waText="Merhaba, sitenizde güneş enerjisi fizibilite raporumu oluşturdum. Ücretsiz keşif için görüşmek istiyorum." />
 
       <p className="mt-4 text-[12px] leading-relaxed text-slate">
         Bu rapor; EPDK {TARIFE_TARIHI} tarifesi ({ABONE_ADLARI[abone].replace(/[()]/g, "").replace(" ", " / ")}), aylık mahsuplaşma ve güncel elektrik fiyatlarıyla hazırlanmış bir ön fizibilitedir. Şebekeye verilen fazla
@@ -346,257 +289,6 @@ function Result({
       <button onClick={onBack} className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-slate hover:text-ink">
         <ArrowLeft size={15} /> Bilgileri değiştir
       </button>
-    </div>
-  );
-}
-
-function ContactStep({
-  result: r,
-  abone,
-  il,
-  input,
-  onDone,
-  onBack,
-}: {
-  result: ReturnType<typeof calculateOnGrid>;
-  abone: AboneGrubu;
-  il: { ad: string; lat: number; lon: number };
-  input: OnGridInput;
-  onDone: () => void;
-  onBack: () => void;
-}) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [consent, setConsent] = useState(false);
-  const [state, setState] = useState<"idle" | "sending" | "error">("idle");
-  const valid = name.trim().length > 2 && phone.replace(/\D/g, "").length >= 10 && consent;
-
-  async function submit() {
-    if (!valid) return;
-    setState("sending");
-    const summary = `On grid hesaplama: ${r.systemKw} kW (${r.panelCount} panel), ${ABONE_ADLARI[abone]}, ${il.ad}; aylık fatura ~${Math.round(r.monthlyBillTl)} TL, yıllık tasarruf ~${Math.round(r.annualSavingTl)} TL${r.package ? `, paket: ${r.package.name}` : ""}.`;
-    const attribution = getAttribution();
-    try {
-      const [lead, calc] = await Promise.all([
-        fetch("/api/lead", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ needType: "On grid hesaplama", fullname: name, phone, province: il.ad, source: "ongrid_calculator", notes: summary, ...buildLeadAttributionFields(PAGE) }),
-        }),
-        fetch("/api/hesaplama/kaydet", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "on_grid",
-            fullname: name,
-            phone,
-            province: il.ad,
-            lat: il.lat,
-            lng: il.lon,
-            consent,
-            inputs: input,
-            results: r,
-            recommendedProduct: r.package?.name,
-            estimatedValue: r.package?.price,
-            score: leadScore(r, false),
-            ...attribution,
-          }),
-        }),
-      ]);
-      if (!lead.ok && !calc.ok) throw new Error();
-      rememberCalculation(summary.replace(/^On grid hesaplama: /, "On grid · "));
-      trackEvent("click", PAGE, "ongrid_lead_submit");
-      trackGa4Lead("ongrid_calculator");
-      trackGoogleAdsLead();
-      onDone();
-    } catch {
-      setState("error");
-    }
-  }
-
-  return (
-    <Panel title="Ücretsiz fizibilite raporunuz hazır" hint="Raporu görüntülemek için iletişim bilgilerinizi girin. Elektrik mühendislerimiz raporunuzu inceleyip sizinle iletişime geçecek.">
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-        <ul className="space-y-2.5 rounded-2xl border border-line bg-paper p-5 text-[14px] text-ink">
-          <li className="font-semibold">Raporunuzda yer alanlar</li>
-          {[
-            "Çatınıza uygun sistem gücü ve panel sayısı",
-            `${il.ad} güneş verisiyle aylık üretim tahmini`,
-            "Aylık tüketim ve üretim dengesi",
-            "Yıllık tasarruf ve geri ödeme süresi",
-            "Önerilen paket ve güncel fiyatı",
-          ].map((t) => (
-            <li key={t} className="flex items-start gap-2 text-slate">
-              <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-volt" /> {t}
-            </li>
-          ))}
-        </ul>
-        <div>
-          <div className="grid gap-3">
-            <input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" placeholder="Ad soyad" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" inputMode="tel" placeholder="Telefon (05xx xxx xx xx)" className="rounded-xl border border-line bg-paper-raised px-4 py-3 outline-none focus:border-brand" />
-          </div>
-          <label className="mt-3 flex items-start gap-2 text-[12.5px] text-slate">
-            <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
-            <span>
-              Kişisel verilerimin fizibilite raporu ve teklif hazırlanması amacıyla işlenmesine ilişkin{" "}
-              <Link href="/kvkk-aydinlatma-metni" target="_blank" className="text-brand underline">
-                aydınlatma metnini
-              </Link>{" "}
-              okudum, onaylıyorum.
-            </span>
-          </label>
-          {state === "error" && <p className="mt-2 text-[13px] text-red-600">Gönderilemedi, lütfen tekrar deneyin ya da WhatsApp&apos;tan yazın.</p>}
-        </div>
-      </div>
-      <Nav onBack={onBack} onNext={submit} disabled={!valid || state === "sending"} nextLabel={state === "sending" ? "Hazırlanıyor…" : "Raporumu görüntüle"} />
-    </Panel>
-  );
-}
-
-// Rapor altı: ekibin arayacağı bilgisi; dosya indirilmez, arama ve WhatsApp telefonun kendi uygulamasında açılır.
-function CallUs({ contact }: { contact: CompanyContact }) {
-  return (
-    <div className="mt-6 rounded-2xl border border-volt/30 bg-volt/5 p-5 sm:p-6">
-      <div className="flex items-start gap-3">
-        <CheckCircle2 className="mt-0.5 shrink-0 text-volt" />
-        <div>
-          <p className="font-semibold text-ink">Talebiniz alındı. Elektrik mühendislerimiz sizi arayacak.</p>
-          <p className="mt-1 text-[14px] text-slate">
-            Raporunuzu inceleyip en kısa sürede {contact.phone} numaramızdan size ulaşacağız. Çatınızı ücretsiz ölçüp kesin teklifinizi hazırlayacağız.
-          </p>
-        </div>
-      </div>
-      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-volt/20 pt-4">
-        <p className="w-full text-[13px] text-slate">Aradığımızda tanımanız için numaramızı rehberinize ekleyebilirsiniz:</p>
-        <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[14px] font-semibold text-paper hover:bg-brand">
-          <Phone size={16} /> {contact.phone}
-        </a>
-        <a
-          href={`https://wa.me/${contact.whatsapp}?text=${encodeURIComponent("Merhaba, sitenizde güneş enerjisi fizibilite raporumu oluşturdum. Ücretsiz keşif için görüşmek istiyorum.")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-[14px] font-semibold text-ink hover:border-volt"
-        >
-          <MessageCircle size={16} /> WhatsApp hattımız
-        </a>
-      </div>
-    </div>
-  );
-}
-
-function MonthlyBars({ production, consumption }: { production: number[]; consumption: number[] }) {
-  const [hover, setHover] = useState<number | null>(null);
-  const max = Math.max(1, ...production, ...consumption);
-  return (
-    <div className="mt-4">
-      <div className="mb-2 flex gap-4 text-[12px] text-slate">
-        <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm" style={{ background: BLUE }} /> Güneş üretimi</span>
-        <span className="flex items-center gap-1.5"><i className="h-2.5 w-2.5 rounded-sm" style={{ background: GOLD }} /> Tüketiminiz</span>
-      </div>
-      <div className="relative mt-5 flex h-44 items-end gap-1.5" onMouseLeave={() => setHover(null)}>
-        {production.map((p, i) => (
-          <div key={i} className="flex h-full flex-1 flex-col justify-end" onMouseEnter={() => setHover(i)}>
-            <div className="flex h-full items-end justify-center gap-[2px]">
-              <div className="relative w-1/2 rounded-t-[4px]" style={{ height: `${(p / max) * 100}%`, background: BLUE, opacity: hover == null || hover === i ? 1 : 0.45 }}>
-                <span className="absolute bottom-full left-1/2 mb-0.5 -translate-x-1/2 whitespace-nowrap font-mono-data text-[8.5px] font-semibold text-slate sm:text-[10px]">{num(p)}</span>
-              </div>
-              <div className="w-1/2 rounded-t-[4px]" style={{ height: `${(consumption[i] / max) * 100}%`, background: GOLD, opacity: hover == null || hover === i ? 1 : 0.45 }} />
-            </div>
-            <span className="mt-1 text-center text-[10.5px] text-slate">{AYLAR[i]}</span>
-          </div>
-        ))}
-        {hover != null && (
-          <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 rounded-lg border border-line bg-paper-raised px-3 py-1.5 text-[12px] shadow-sm">
-            <b className="text-ink">{AYLAR[hover]}</b> · üretim {num(production[hover])} kWh · tüketim {num(consumption[hover])} kWh
-          </div>
-        )}
-      </div>
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-line pt-3 text-[12.5px] text-slate">
-        <span>
-          Yıllık üretim <b className="font-mono-data text-ink">{num(production.reduce((a, b) => a + b, 0))} kWh</b>
-        </span>
-        <span>
-          Yıllık tüketim <b className="font-mono-data text-ink">{num(consumption.reduce((a, b) => a + b, 0))} kWh</b>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function Stepper({ step }: { step: number }) {
-  const labels = ["Abonelik", "Tüketim", "Konum ve çatı", "İletişim", "Rapor"];
-  return (
-    <ol className="mb-6 flex items-center gap-2">
-      {labels.map((l, i) => {
-        const n = i + 1;
-        const done = step > n;
-        const active = step === n;
-        return (
-          <li key={l} className="flex flex-1 items-center gap-2">
-            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-mono-data text-[13px] font-bold ${active ? "bg-brand text-paper" : done ? "bg-volt text-paper" : "bg-ink/5 text-slate"}`}>
-              {done ? "✓" : n}
-            </span>
-            <span className={`hidden text-[13px] font-semibold sm:block ${active ? "text-ink" : "text-slate"}`}>{l}</span>
-            {n < labels.length && <span className="h-px flex-1 bg-line" />}
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-function Panel({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-3xl border border-line bg-paper-raised p-6 shadow-[0_24px_60px_-40px_rgba(14,22,38,0.35)] sm:p-8">
-      <h2 className="font-display text-[22px] font-semibold tracking-tight text-ink">{title}</h2>
-      {hint && <p className="mt-1 text-[14px] text-slate">{hint}</p>}
-      <div className="mt-6">{children}</div>
-    </section>
-  );
-}
-
-function Nav({ onBack, onNext, disabled, nextLabel = "Devam" }: { onBack?: () => void; onNext: () => void; disabled?: boolean; nextLabel?: string }) {
-  return (
-    // Butonlar solda: sağ alttaki canlı destek / ara / WhatsApp düğmelerinin altında kalmasın.
-    <div className="mt-8 flex flex-wrap items-center gap-5">
-      <button onClick={onNext} disabled={disabled} className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-[15px] font-semibold text-paper transition hover:bg-brand-deep disabled:opacity-40">
-        {nextLabel} <ArrowRight size={16} />
-      </button>
-      {onBack && (
-        <button onClick={onBack} className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-slate hover:text-ink">
-          <ArrowLeft size={15} /> Geri
-        </button>
-      )}
-    </div>
-  );
-}
-
-function Toggle({ on, set, label }: { on: boolean; set: (v: boolean) => void; label: string }) {
-  return (
-    <button onClick={() => set(!on)} className={`rounded-full border px-4 py-2 text-[13.5px] font-semibold ${on ? "border-brand bg-brand text-paper" : "border-line text-slate hover:border-brand"}`}>
-      {on ? "✓ " : ""}
-      {label}
-    </button>
-  );
-}
-
-function Kpi({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-2xl bg-paper/10 p-4">
-      <p className="flex items-center gap-1.5 text-[12px] text-paper/70">
-        {icon} {label}
-      </p>
-      <p className="mt-1 font-mono-data text-[19px] font-semibold">{value}</p>
-    </div>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex justify-between gap-3">
-      <dt className="text-slate">{k}</dt>
-      <dd className="font-mono-data font-semibold text-ink">{v}</dd>
     </div>
   );
 }
