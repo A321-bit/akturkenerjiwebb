@@ -4,7 +4,7 @@ import { faturaTutari, faturadanTuketim, type AboneGrubu } from "../elektrik-tar
 import type { LatLon, PanelCell, PanelModel, RoofFace } from "./geometry";
 
 /** birimFiyat, teklifin para biriminde (yeni tekliflerde USD) satış fiyatıdır. */
-export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number; maliyetUsd?: number; marjPct?: number };
+export type PriceLine = { id: string; ad: string; adet: number; birim: string; birimFiyat: number; maliyetUsd?: number; marjPct?: number; kind?: "panel" | "inverter" | "battery" };
 export type PaymentStep = { id: string; ad: string; pct: number; sure: string };
 /** malzeme: kalem toplamı · kwp: kWp başına tutar · manuel: elle girilen toplam. */
 export type PriceMode = "malzeme" | "kwp" | "manuel";

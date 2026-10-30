@@ -74,10 +74,10 @@ export function buildQuoteLines(input: {
   const { kwp, panelCount, roof, panel, inverter, battery, settings, uid } = input;
   const item = (ad: string, adet: number, birim: string, costUsd: number, marjPct: number): PriceLine => ({ id: uid(), ad, adet, birim, maliyetUsd: costUsd, marjPct, birimFiyat: salePrice(costUsd, marjPct) });
   const m = (i: Item) => i.marginPct ?? settings.defaultMarginPct;
-  const lines = [item(panel.name, panelCount, "adet", panel.costUsd ?? 0, m(panel))];
-  if (inverter) lines.push(item(inverter.name, inverter.adet, "adet", inverter.costUsd ?? 0, m(inverter)));
+  const lines: PriceLine[] = [{ ...item(panel.name, panelCount, "adet", panel.costUsd ?? 0, m(panel)), kind: "panel" }];
+  if (inverter) lines.push({ ...item(inverter.name, inverter.adet, "adet", inverter.costUsd ?? 0, m(inverter)), kind: "inverter" });
   if (battery) {
-    lines.push(item(battery.name, battery.adet, "adet", battery.costUsd ?? 0, m(battery)));
+    lines.push({ ...item(battery.name, battery.adet, "adet", battery.costUsd ?? 0, m(battery)), kind: "battery" });
     for (const x of battery.extras ?? []) lines.push(item(x.name, x.adet, "adet", x.costUsd, settings.defaultMarginPct));
   }
   for (const r of settings.rules) {

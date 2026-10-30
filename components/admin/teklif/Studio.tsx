@@ -310,6 +310,43 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
     if (!p.usdTry) fetchKur();
   }
   const patchLine = (id: string, patch: Partial<PriceLine>) => update({ lines: p.lines.map((l) => (l.id === id ? { ...l, ...patch } : l)) });
+  // Ürün seçimi ve fiyat kalemi birlikte güncellenir; teklif belgesi ikisinden de okur.
+  const productLine = (l: PriceLine, it: { name: string; costUsd?: number; marginPct?: number }, adet: number): PriceLine => {
+    const marjPct = it.marginPct ?? settings.defaultMarginPct;
+    return { ...l, ad: it.name, adet, maliyetUsd: it.costUsd ?? 0, marjPct, birimFiyat: salePrice(it.costUsd ?? 0, marjPct) };
+  };
+  function setInverter(slug: string) {
+    const inv = inverters.find((x) => x.slug === slug);
+    const adet = p.inverter?.adet ?? 1;
+    update({
+      inverter: inv ? ({ ...inv, adet } as InverterChoice) : null,
+      lines: inv ? p.lines.map((l) => (l.kind === "inverter" ? productLine(l, inv, adet) : l)) : p.lines,
+    });
+  }
+  function setBattery(slug: string) {
+    const b = batteries.find((x) => x.slug === slug);
+    const adet = p.battery?.adet ?? 1;
+    update({
+      // Başka batarya seçilince önceki setin BMS'i geçerli olmayabilir; kalem olarak listede kalır, kontrol edilir.
+      battery: b ? { ...b, adet, extras: p.battery?.extras } : null,
+      batteryKwh: b ? b.kwh * adet : 0,
+      lines: b ? p.lines.map((l) => (l.kind === "battery" ? productLine(l, b, adet) : l)) : p.lines,
+    });
+  }
+  // Kalemdeki adet, sistem seçimiyle aynı kalır (kWp, DC/AC ve batarya hesabı için).
+  function setLineQty(l: PriceLine, adet: number) {
+    update({
+      lines: p.lines.map((x) => (x.id === l.id ? { ...x, adet } : x)),
+      ...(l.kind === "inverter" && p.inverter ? { inverter: { ...p.inverter, adet: Math.max(1, Math.round(adet)) } } : {}),
+      ...(l.kind === "battery" && p.battery ? { battery: { ...p.battery, adet: Math.max(1, Math.round(adet)) }, batteryKwh: p.battery.kwh * Math.max(1, Math.round(adet)) } : {}),
+    });
+  }
+  // Son onay: ekrandaki hâliyle görseller alınır, kaydedilir ve teklif belgesi açılır.
+  async function createProposal() {
+    captureImages();
+    await save();
+    setTab(4);
+  }
 
   // --- Kaydet / aç / yazdır ---
   function captureImages() {
@@ -346,6 +383,8 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
   }
   function goTab(i: number) {
     if (i === 4) captureImages();
+    // Son onay ekranı ilk açılışta tasarımdan dolu gelir; sonrasında elle yapılanlar korunur.
+    if (i === 3 && !p.lines.length && n.panelCount > 0) buildLines();
     setTab(i);
   }
   function print() {
@@ -581,10 +620,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             <p className="text-[12.5px] text-slate">Panel gücü {num(n.dcKwp, 2)} kWp. Uygun aralık: {num(n.dcKwp / 1.3, 1)}–{num(n.dcKwp / 0.85, 1)} kW AC (DC/AC 0,85–1,30).</p>
             <select
               value={p.inverter?.slug ?? ""}
-              onChange={(e) => {
-                const inv = inverters.find((x) => x.slug === e.target.value);
-                update({ inverter: inv ? ({ ...inv, adet: p.inverter?.adet ?? 1 } as InverterChoice) : null });
-              }}
+              onChange={(e) => setInverter(e.target.value)}
               className="mt-3 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]"
             >
               <option value="">İnvertör seçin</option>
@@ -612,11 +648,7 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                 <h3 className="font-semibold">Batarya</h3>
                 <select
                   value={p.battery?.slug ?? ""}
-                  onChange={(e) => {
-                    const b = batteries.find((x) => x.slug === e.target.value);
-                    const adet = p.battery?.adet ?? 1;
-                    update({ battery: b ? { ...b, adet } : null, batteryKwh: b ? b.kwh * adet : 0 });
-                  }}
+                  onChange={(e) => setBattery(e.target.value)}
                   className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px]"
                 >
                   <option value="">Batarya seçin</option>
@@ -683,11 +715,12 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
               <h3 className="font-semibold">Malzeme listesi</h3>
               <div className="flex gap-2">
-                <Btn icon={<Sparkles size={14} />} onClick={buildLines} primary>Tasarımdan oluştur</Btn>
+                <Btn icon={<Sparkles size={14} />} onClick={() => (!p.lines.length || confirm("Liste tasarımdan yeniden oluşturulacak; elle yaptığınız değişiklikler silinir. Devam edilsin mi?")) && buildLines()} primary>Tasarımdan oluştur</Btn>
                 <Btn icon={<Plus size={14} />} onClick={() => update({ lines: [...p.lines, { id: uid(), ad: "Yeni kalem", adet: 1, birim: "adet", birimFiyat: 0, maliyetUsd: 0, marjPct: settings.defaultMarginPct }] })}>Kalem ekle</Btn>
               </div>
             </div>
             <p className="mt-1 text-[12.5px] text-slate">Panel, invertör ve batarya mağaza maliyetinden; konstrüksiyon çatı tipine, diğer kalemler kW aralığına göre “Fiyat kuralları” sekmesinden gelir. Her satır değiştirilebilir.</p>
+            {p.lines.some((l) => l.kind === "panel" && l.adet !== n.panelCount) && <p className="mt-2 rounded-lg bg-sun/15 p-2.5 text-[12.5px]">Listedeki panel adedi tasarımdakinden farklı (tasarımda {n.panelCount} panel). Bilerek değiştirmediyseniz düzeltin.</p>}
             {p.lines.some((l) => !l.birimFiyat) && <p className="mt-2 rounded-lg bg-red-500/10 p-2.5 text-[12.5px] text-red-700">{p.lines.filter((l) => !l.birimFiyat).length} kalemin fiyatı yok. “Fiyat kuralları” sekmesinden girin ya da satırda düzeltin.</p>}
             <div className="mt-3 overflow-x-auto">
               <div className="min-w-[820px] space-y-2">
@@ -696,8 +729,18 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
                 </div>
                 {p.lines.map((l) => (
                   <div key={l.id} className="grid grid-cols-[1fr_70px_60px_90px_70px_90px_90px_28px] items-center gap-2 text-[13px]">
-                    <input value={l.ad} onChange={(e) => patchLine(l.id, { ad: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
-                    <input type="number" value={l.adet} onChange={(e) => patchLine(l.id, { adet: Number(e.target.value) })} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
+                    {l.kind === "inverter" ? (
+                      <select value={p.inverter?.slug ?? ""} onChange={(e) => setInverter(e.target.value)} aria-label="İnvertör" className="min-w-0 rounded-lg border border-brand/50 bg-paper px-2 py-1.5">
+                        {invOptions.map((i) => <option key={i.slug} value={i.slug}>{i.name}</option>)}
+                      </select>
+                    ) : l.kind === "battery" ? (
+                      <select value={p.battery?.slug ?? ""} onChange={(e) => setBattery(e.target.value)} aria-label="Batarya" className="min-w-0 rounded-lg border border-brand/50 bg-paper px-2 py-1.5">
+                        {batteries.map((b) => <option key={b.slug} value={b.slug}>{b.name}</option>)}
+                      </select>
+                    ) : (
+                      <input value={l.ad} onChange={(e) => patchLine(l.id, { ad: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
+                    )}
+                    <input type="number" value={l.adet} onChange={(e) => setLineQty(l, Number(e.target.value))} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
                     <input value={l.birim} onChange={(e) => patchLine(l.id, { birim: e.target.value })} className="rounded-lg border border-line bg-paper px-2 py-1.5" />
                     <input type="number" value={Math.round((l.maliyetUsd ?? 0) * 100) / 100} onChange={(e) => { const c = Number(e.target.value); patchLine(l.id, { maliyetUsd: c, birimFiyat: salePrice(c, l.marjPct ?? 0) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
                     <input type="number" value={l.marjPct ?? 0} onChange={(e) => { const m = Number(e.target.value); patchLine(l.id, { marjPct: m, birimFiyat: salePrice(l.maliyetUsd ?? 0, m) }); }} className="rounded-lg border border-line bg-paper px-2 py-1.5 text-right" />
@@ -774,6 +817,10 @@ export default function Studio({ panels, inverters, batteries, accessories, comp
             <Area label="Teklif kapsamı" value={p.scopeNotes} onChange={(v) => update({ scopeNotes: v })} />
             <Area label="Garanti" value={p.warrantyNotes} onChange={(v) => update({ warrantyNotes: v })} />
           </section>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-ink p-4 text-paper">
+            <p className="text-[13.5px]">Son kontrol: teklif, bu ekrandaki ürün, adet, maliyet ve fiyatlarla oluşturulur.</p>
+            <button onClick={createProposal} disabled={!p.lines.length && (p.priceMode ?? "malzeme") === "malzeme"} className="rounded-lg bg-sun px-5 py-2.5 text-[14px] font-semibold text-ink disabled:opacity-40">Teklif oluştur</button>
+          </div>
         </div>
       )}
 
