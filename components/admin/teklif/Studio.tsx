@@ -260,12 +260,25 @@ export default function Studio({ panels, inverters, batteries, company, initialC
   // --- Fiyat kalemleri ---
   function buildLines() {
     update({
-      lines: buildQuoteLines({ kwp: n.dcKwp, panelCount: n.panelCount, roof: p.roofType ?? "kiremit", panel: p.panel, inverter: p.inverter, battery: p.battery, settings, uid }),
+      // Maliyetler teklifte eski kalmış olabilir; güncel mağaza verisi esas alınır.
+      lines: buildQuoteLines({
+        kwp: n.dcKwp,
+        panelCount: n.panelCount,
+        roof: p.roofType ?? "kiremit",
+        panel: panels.find((x) => x.slug && x.slug === p.panel.slug) ?? p.panel,
+        inverter: p.inverter ? { ...p.inverter, ...inverters.find((x) => x.slug === p.inverter!.slug), adet: p.inverter.adet } : null,
+        battery: p.battery ? { ...p.battery, ...batteries.find((x) => x.slug === p.battery!.slug), adet: p.battery.adet } : null,
+        settings,
+        uid,
+      }),
       priceCurrency: "USD",
       paymentPlan: p.paymentPlan ?? settings.paymentPlan,
       hikePct: p.hikePct ?? settings.hikePct,
       hikeYears: p.hikeYears ?? settings.hikeYears,
+      priceMode: p.priceMode ?? "malzeme",
+      pricesIncludeVat: p.priceCurrency === "USD" ? p.pricesIncludeVat : false,
     });
+    if (!p.usdTry) fetchKur();
   }
   const patchLine = (id: string, patch: Partial<PriceLine>) => update({ lines: p.lines.map((l) => (l.id === id ? { ...l, ...patch } : l)) });
 
