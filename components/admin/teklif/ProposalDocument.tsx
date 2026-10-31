@@ -47,7 +47,7 @@ function Head({ index, title, lead }: { index: string; title: string; lead?: str
 
 function Foot({ company, no, page, lat, lon }: { company: Company; no: string; page: number; lat: number; lon: number }) {
   return (
-    <footer className="font-mono-data absolute bottom-[9mm] left-[16mm] right-[16mm] flex items-center justify-between border-t border-[#1d2739] pt-2 text-[8px] tracking-[0.08em]" style={{ color: "#66728a" }}>
+    <footer className="font-mono-data absolute bottom-[9mm] left-[16mm] right-[16mm] flex items-center justify-between border-t border-[#1d2739] pt-2 text-[8.5px] tracking-[0.06em]" style={{ color: MUTED }}>
       <span>{no}</span>
       <span>{lat.toFixed(4)}°K {lon.toFixed(4)}°D</span>
       <span>{company.phone} · {company.web}</span>
@@ -59,7 +59,7 @@ function Foot({ company, no, page, lat, lon }: { company: Company; no: string; p
 function Stat({ label, value, note, accent }: { label: string; value: string; note?: string; accent?: boolean }) {
   return (
     <div className="pd-card px-4 py-3.5">
-      <p className="text-[9.5px] uppercase tracking-[0.14em]" style={{ color: MUTED }}>{label}</p>
+      <p className="text-[10px] uppercase tracking-[0.12em]" style={{ color: MUTED }}>{label}</p>
       <p className={`mt-1 font-display text-[21px] font-semibold leading-tight ${accent ? "pd-sun-text" : ""}`}>{value}</p>
       {note && <p className="mt-0.5 text-[9.5px]" style={{ color: MUTED }}>{note}</p>}
     </div>
@@ -142,7 +142,7 @@ function EnergyChart({ prod, cons }: { prod: number[]; cons: number[] }) {
       {prod.map((p, i) => (
         <g key={i}>
           <rect x={i * bw + bw * 0.2} y={y(p)} width={bw * 0.6} height={Math.max(1, H - y(p))} rx={6} fill="url(#pd-bar)" />
-          <text x={(i + 0.5) * bw} y={y(p) - 6} textAnchor="middle" fontSize="10" fill="#d7deea" fontFamily="monospace">{Math.round(p).toLocaleString("tr-TR")}</text>
+          <text x={(i + 0.5) * bw} y={y(p) - 6} textAnchor="middle" fontSize="10" fill="#f4f6fb" fontFamily="monospace" stroke="#0d1424" strokeWidth={3} paintOrder="stroke">{Math.round(p).toLocaleString("tr-TR")}</text>
           <text x={(i + 0.5) * bw} y={H + 18} textAnchor="middle" fontSize="11" fill={MUTED}>{AY[i]}</text>
         </g>
       ))}
@@ -197,7 +197,7 @@ function PaybackCurve({ data, payback }: { data: number[]; payback: number | nul
         <g>
           <circle cx={px} cy={zero} r={13} fill={SUN} fillOpacity={0.22} />
           <circle cx={px} cy={zero} r={6} fill={SUN} />
-          <text x={Math.max(0, px - 40)} y={zero - 24} fontSize="13" fontWeight="600" fill="#ffd166">Yatırım kendini amorti eder</text>
+          <text x={Math.max(0, px - 40)} y={zero - 24} fontSize="13" fontWeight="600" fill="#ffd166">{num(payback ?? 0, 1)} yılda yatırım kendini amorti eder</text>
         </g>
       )}
       {[1, 5, 10, 15, 20, 25].map((yr) => <text key={yr} x={x(yr - 1)} y={H + 18} fontSize="11" fill={MUTED} textAnchor={yr === 1 ? "start" : yr === 25 ? "end" : "middle"}>{yr}. yıl</text>)}
@@ -263,8 +263,8 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
   const foot = () => <Foot company={company} no={p.proposalNo} page={nextPage()} lat={lat} lon={lon} />;
   const equipment: [string, string][] = [
     ["Güneş paneli", `${n.panelCount} × ${p.panel.name}`],
-    ...(p.inverter ? [["İnvertör", `${p.inverter.adet} × ${p.inverter.name}`] as [string, string]] : []),
-    ...(p.extraInverters ?? []).map((i) => ["İnvertör", `${i.adet} × ${i.name}`] as [string, string]),
+    ...(p.inverter ? [["İnverter", `${p.inverter.adet} × ${p.inverter.name}`] as [string, string]] : []),
+    ...(p.extraInverters ?? []).map((i) => ["İnverter", `${i.adet} × ${i.name}`] as [string, string]),
     ...(p.recipeName && offGrid ? [["Paket", p.recipeName] as [string, string]] : []),
     ...(system === "sulama" && p.sulama?.tip ? [["Sulama", `${p.sulama.tip}${p.sulama.kuyuM ? `, kuyu ${p.sulama.kuyuM} m` : ""}${p.sulama.pompaDahil ? ", pompa dahil" : ", pompa hariç"}`] as [string, string]] : []),
     ...(battery > 0 ? [["Batarya", `${num(battery, 1)} kWh lityum`] as [string, string]] : []),
@@ -289,7 +289,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
           <div className="mx-auto mt-[4mm] w-[172mm]"><SolarPortal prod={n.monthlyProduction} img={p.images?.top ?? p.images?.perspective} kwp={n.dcKwp} /></div>
           <p className="mt-[3mm] text-center text-[9px] tracking-[0.05em]" style={{ color: MUTED }}>Işınlar, bu konumda beklenen aylık üretiminizi gösterir.</p>
           <div className="mt-auto">
-            <p className="font-mono-data text-[10px] uppercase tracking-[0.3em]" style={{ color: SUN }}>Sayın {p.customer.name || "Müşterimiz"}</p>
+            <p className="font-display text-[17px] font-medium" style={{ color: SUN }}>Sayın {p.customer.name || "Müşterimiz"}</p>
             <h1 className="pd-title mt-2 font-display text-[42px] font-semibold leading-[1.02]">{headline}</h1>
             <p className="mt-2 text-[12px]" style={{ color: MUTED }}>Size özel güneş enerjisi teklifi · {reportName}</p>
             <div className="mt-4 flex items-end justify-between gap-6">
@@ -419,7 +419,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
                 <p className="font-display text-[17px] font-semibold">{o.ad}</p>
                 <p className="pd-sun-text mt-2 font-display text-[24px] font-semibold leading-tight">{money(o.total)}</p>
                 <dl className="mt-3 text-[10px]">
-                  {([["Panel", o.panel], ["İnvertör", o.inverter], ["Batarya", o.battery ? `${num(o.batteryKwh ?? 0, 1)} kWh` : "Yok"], ["Sistem gücü", `${num(o.kwp, 2)} kWp`], ["Yıllık üretim", `${num(o.annualKwh)} kWh`], ["Yıllık tasarruf", tl(o.savingTl)], ["Geri ödeme", o.paybackYears != null ? `${num(o.paybackYears, 1)} yıl` : "—"]] as [string, string][]).map(([k, v]) => (
+                  {([["Panel", o.panel], ["İnverter", o.inverter], ["Batarya", o.battery ? `${num(o.batteryKwh ?? 0, 1)} kWh` : "Yok"], ["Sistem gücü", `${num(o.kwp, 2)} kWp`], ["Yıllık üretim", `${num(o.annualKwh)} kWh`], ["Yıllık tasarruf", tl(o.savingTl)], ["Geri ödeme", o.paybackYears != null ? `${num(o.paybackYears, 1)} yıl` : "—"]] as [string, string][]).map(([k, v]) => (
                     <div key={k} className="border-t border-[#1d2739] py-1.5"><dt style={{ color: MUTED }}>{k}</dt><dd className="mt-0.5">{v}</dd></div>
                   ))}
                 </dl>

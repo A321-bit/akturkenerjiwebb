@@ -237,6 +237,6 @@ export const kelimeUyar = (d: Datasheet, ad: string) => Boolean(d.kelime?.trim()
 /** Teklifteki ürünlere bağlı datasheet'ler. */
 export function matchDatasheets(p: Proposal, list: Datasheet[]) {
   const slugs = [p.panel.slug, p.inverter?.slug, p.battery?.slug, ...(p.extraInverters ?? []).map((x) => x.slug)].filter(Boolean) as string[];
-  const names = [p.panel.name, p.inverter?.name, p.battery?.name, ...p.lines.map((l) => l.ad)].filter(Boolean).join("\n").toLocaleLowerCase("tr-TR");
-  return list.filter((d) => d.slugs?.some((x) => slugs.includes(x)) || (d.kelime?.trim() && names.includes(d.kelime.trim().toLocaleLowerCase("tr-TR"))));
+  const names = [p.panel.name, p.inverter?.name, p.battery?.name, ...p.lines.map((l) => l.ad)].filter(Boolean).join("\n");
+  return list.filter((d) => d.slugs?.some((x) => slugs.includes(x)) || kelimeUyar(d, names));
 }

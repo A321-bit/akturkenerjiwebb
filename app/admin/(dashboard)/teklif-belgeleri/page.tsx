@@ -8,7 +8,7 @@ export default async function TeklifBelgeleriPage() {
   const [products, references] = await Promise.all([getStoreProducts(), getReferences()]);
   const list: DocProduct[] = products.flatMap((p): DocProduct[] => {
     if (p.category === "gunes-panelleri" && /\d{3}\s*W/.test(p.name)) return [{ slug: p.slug, name: p.name, group: "Panel" }];
-    if (p.category === "inverter" && /on grid|hibrit/i.test(p.name) && !/off grid/i.test(p.name)) return [{ slug: p.slug, name: p.name, group: "İnvertör" }];
+    if (p.category === "inverter" && /on grid|hibrit/i.test(p.name) && !/off grid/i.test(p.name)) return [{ slug: p.slug, name: p.name, group: "İnverter" }];
     if (p.category === "lityum-batarya-ve-setleri" && /[\d,.]+\s*kWh/i.test(p.name)) return [{ slug: p.slug, name: p.name, group: "Batarya" }];
     return [];
   });

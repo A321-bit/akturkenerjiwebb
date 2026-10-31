@@ -4,16 +4,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CircleAlert, Search, Trash2 } from "lucide-react";
 import FileUploadField from "@/components/admin/FileUploadField";
-import { DEFAULT_REFERENCE_IDS, DEFAULT_SETTINGS, type Datasheet, type QuoteSettings } from "@/lib/teklif/pricing";
+import { DEFAULT_REFERENCE_IDS, DEFAULT_SETTINGS, kelimeUyar, type Datasheet, type QuoteSettings } from "@/lib/teklif/pricing";
 
 // Teklif belgeleri: ürün datasheet'leri, teklifte görünecek referanslar, şartlar ve banka hesapları.
 // PDF'ler Supabase Storage'a yüklenir; her değişiklik anında kaydedilir.
 
 const uid = () => Math.random().toString(36).slice(2, 9);
-export type DocProduct = { slug: string; name: string; group: "Panel" | "İnvertör" | "Batarya" };
+export type DocProduct = { slug: string; name: string; group: "Panel" | "İnverter" | "Batarya" };
 export type DocProject = { id: number; title: string; location?: string | null; image?: string | null };
 
-const covers = (d: Datasheet, x: DocProduct) => Boolean(d.slugs?.includes(x.slug) || (d.kelime?.trim() && x.name.toLocaleLowerCase("tr-TR").includes(d.kelime.trim().toLocaleLowerCase("tr-TR"))));
+const covers = (d: Datasheet, x: DocProduct) => Boolean(d.slugs?.includes(x.slug) || kelimeUyar(d, x.name));
 
 export default function DocumentAssets({ products, projects }: { products: DocProduct[]; projects: DocProject[] }) {
   const [settings, setSettings] = useState<QuoteSettings | null>(null);
@@ -37,7 +37,7 @@ export default function DocumentAssets({ products, projects }: { products: DocPr
       .map((x) => ({ ...x, sheet: sheets.find((d) => covers(d, x)) }))
       .filter((x) => (group === "Hepsi" || x.group === group) && (!onlyMissing || !x.sheet) && (!s || x.name.toLocaleLowerCase("tr-TR").includes(s)));
   }, [products, sheets, q, group, onlyMissing]);
-  const coverage = (["Panel", "İnvertör", "Batarya"] as const).map((g) => {
+  const coverage = (["Panel", "İnverter", "Batarya"] as const).map((g) => {
     const list = products.filter((x) => x.group === g);
     return { g, total: list.length, done: list.filter((x) => sheets.some((d) => covers(d, x))).length };
   });
