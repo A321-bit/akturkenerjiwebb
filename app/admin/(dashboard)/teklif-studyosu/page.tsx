@@ -20,7 +20,7 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
       const wp = Number(p.name.match(/(\d{3})\s*W/)?.[1]);
       const count = Number(p.name.match(/\((\d+)\s*Adet\)/i)?.[1]) || 1;
       const c = costs.get(p.slug);
-      return { name: p.name.replace(/\s*—.*$/, "").replace(/\s*\(.*\)$/, ""), wp, price: p.price ? Math.round(p.price / count) : undefined, slug: p.slug, lengthM: wp >= 600 ? 2.382 : 2.279, widthM: 1.134, costUsd: c?.costUsd != null ? c.costUsd / count : undefined, marginPct: c?.marginPct };
+      return { name: p.name.replace(/\s*—.*$/, "").replace(/\s*\(.*\)$/, ""), wp, price: p.price ? Math.round(p.price / count) : undefined, slug: p.slug, lengthM: /diamond plus/i.test(p.name) ? 2.278 : wp >= 600 ? 2.382 : 2.279, widthM: 1.134, costUsd: c?.costUsd != null ? c.costUsd / count : undefined, marginPct: c?.marginPct };
     })
     .filter((p) => p.wp > 0);
 

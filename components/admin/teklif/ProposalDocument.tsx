@@ -197,7 +197,8 @@ function PaybackCurve({ data, payback }: { data: number[]; payback: number | nul
         <g>
           <circle cx={px} cy={zero} r={13} fill={SUN} fillOpacity={0.22} />
           <circle cx={px} cy={zero} r={6} fill={SUN} />
-          <text x={Math.max(0, px - 40)} y={zero - 24} fontSize="13" fontWeight="600" fill="#ffd166">{num(payback ?? 0, 1)} yılda yatırım kendini amorti eder</text>
+          <line x1={px} x2={px} y1={zero - 8} y2={zero - 86} stroke={SUN} strokeDasharray="2 4" />
+          <text x={Math.max(0, px - 12)} y={zero - 94} fontSize="13" fontWeight="600" fill="#ffd166">{num(payback ?? 0, 1)} yılda yatırım kendini amorti eder</text>
         </g>
       )}
       {[1, 5, 10, 15, 20, 25].map((yr) => <text key={yr} x={x(yr - 1)} y={H + 18} fontSize="11" fill={MUTED} textAnchor={yr === 1 ? "start" : yr === 25 ? "end" : "middle"}>{yr}. yıl</text>)}
@@ -314,7 +315,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
         <Head index={nextSection()} title="Sisteminiz" lead={`${[p.customer.address, p.customer.mahalle, p.customer.district, p.customer.province, p.customer.ada && p.customer.parsel ? `Ada/Parsel: ${p.customer.ada}/${p.customer.parsel}` : null].filter(Boolean).join(", ")}${p.customer.phone ? ` · ${p.customer.phone}` : ""}`} />
         {p.images?.perspective && (
           <div className="relative mt-5 overflow-hidden rounded-2xl">
-            <img src={p.images.perspective} alt="Sistemin üç boyutlu görünümü" className="h-[88mm] w-full object-cover" />
+            <img src={p.images.perspective} alt="Sistemin üç boyutlu görünümü" className="h-[112mm] w-full origin-[50%_20%] scale-[1.35] object-cover" />
             <div className="absolute inset-x-0 bottom-0 h-20" style={{ background: "linear-gradient(to top, #060a14, transparent)" }} />
           </div>
         )}
