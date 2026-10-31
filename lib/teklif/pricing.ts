@@ -36,7 +36,8 @@ export type QuoteSettings = {
   realProduction?: RealProduction[];
   /** Teklif PDF'inin ekleri. */
   datasheets?: Datasheet[];
-  references?: { id: string; ad: string; url: string }[];
+  /** Teklifte görünecek site referansları; boşsa DEFAULT_REFERENCE_IDS. */
+  referenceIds?: number[];
   banks?: { banka: string; sube: string; iban: string }[];
   hesapSahibi?: string;
   notlar?: string;
@@ -57,9 +58,19 @@ export function similarProduction(rows: RealProduction[] | undefined, kwp: numbe
 
 const rule = (id: string, ad: string, birim: QuoteRule["birim"], cati: QuoteRule["cati"] = "hepsi"): QuoteRule => ({ id, ad, birim, kwFrom: 0, kwTo: 100000, cati, maliyetUsd: 0, marjPct: 45 });
 
+export const DEFAULT_REFERENCE_IDS = [38, 33, 50, 37, 46, 29];
+
+/** Sitedeki referans projelerinden teklif sayfası için seçim, sıra korunur. */
+export function pickReferences<T extends { id?: number; title: string; image?: string | null; location?: string | null; year?: string | number | null }>(rows: T[], ids?: number[]) {
+  const chosen = ids?.length ? ids : DEFAULT_REFERENCE_IDS;
+  return chosen.flatMap((id) => {
+    const r = rows.find((x) => x.id === id);
+    return r?.image ? [{ id, ad: r.title, url: r.image, konum: r.location, yil: r.year }] : [];
+  });
+}
+
 export const DEFAULT_SETTINGS: QuoteSettings = {
   datasheets: [{ id: "tommatech-v-280", ad: "TommaTech V Serisi LFP Lityum Batarya 51.2V 280Ah", url: "/teklif/tommatech-v-serisi-51v-280ah.pdf", kelime: "51.2V 280" }],
-  references: ["incek-villa-1", "incek-villa-2", "beytepe-1", "beytepe-2", "incek-ongrid-1", "incek-ongrid-2"].map((id) => ({ id, ad: "Referans", url: `/teklif/ref-${id}.jpg` })),
   hesapSahibi: "Akturk Yenilenebilir Enerji Teknolojileri Sanayi Ticaret Limited Şirketi",
   banks: [
     { banka: "Ziraat Bankası", sube: "Necatibey Şubesi", iban: "TR03 0001 0021 0191 5377 6550 02" },

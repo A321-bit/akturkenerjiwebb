@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { adminClient, getSiteSettings, SITE_URL } from "@/lib/data";
+import { adminClient, getReferences, getSiteSettings, SITE_URL } from "@/lib/data";
 import { computeNumbers, type Proposal } from "@/lib/teklif/proposal";
-import { DEFAULT_SETTINGS, type QuoteSettings } from "@/lib/teklif/pricing";
+import { DEFAULT_SETTINGS, pickReferences, type QuoteSettings } from "@/lib/teklif/pricing";
 import { SHARE_TOKEN, forCustomer } from "@/lib/teklif/share";
 import ProposalDocument from "@/components/admin/teklif/ProposalDocument";
 import LiveProposal from "@/components/teklif/LiveProposal";
@@ -17,11 +17,11 @@ const isExpired = (p: Proposal) => new Date(p.createdAt).getTime() + p.validDays
 export default async function LiveProposalPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!SHARE_TOKEN.test(token)) notFound();
-  const [{ data }, site, { data: st }] = await Promise.all([adminClient().from("proposals").select("id, data").eq("data->>shareToken", token).maybeSingle(), getSiteSettings(), adminClient().from("quote_settings").select("data").eq("id", 1).maybeSingle()]);
+  const [{ data }, site, siteReferences, { data: st }] = await Promise.all([adminClient().from("proposals").select("id, data").eq("data->>shareToken", token).maybeSingle(), getSiteSettings(), getReferences(), adminClient().from("quote_settings").select("data").eq("id", 1).maybeSingle()]);
   if (!data) notFound();
   // Yalnız belge sayfaları için gereken alanlar; fiyat kuralları ve maliyet buraya taşınmaz.
   const s = { ...DEFAULT_SETTINGS, ...(st?.data as Partial<QuoteSettings> | null) };
-  const assets = { references: s.references, banks: s.banks, hesapSahibi: s.hesapSahibi, notlar: s.notlar, garantiDisi: s.garantiDisi };
+  const assets = { references: pickReferences(siteReferences, s.referenceIds), banks: s.banks, hesapSahibi: s.hesapSahibi, notlar: s.notlar, garantiDisi: s.garantiDisi };
 
   const p = { ...(data.data as Proposal), id: data.id };
   const n = computeNumbers(p);

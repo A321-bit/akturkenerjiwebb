@@ -6,13 +6,12 @@ import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, Pen
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal, type QuoteOption } from "@/lib/teklif/proposal";
-import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, matchDatasheets, pickRecipe, quoteChecks, recipeLines, salePrice, similarProduction, targetKwp, type QuoteSettings, type Recipe, type RoofKind } from "@/lib/teklif/pricing";
+import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, matchDatasheets, pickRecipe, pickReferences, quoteChecks, recipeLines, salePrice, similarProduction, targetKwp, type QuoteSettings, type Recipe, type RoofKind } from "@/lib/teklif/pricing";
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
 import { suggestBattery } from "@/lib/teklif/simulate";
 import { shadeLosses } from "@/lib/teklif/shading";
 import CustomerPlace from "./CustomerPlace";
 import PricingRules from "./PricingRules";
-import DocumentAssets from "./DocumentAssets";
 import { buildProposalPdf } from "@/lib/teklif/export-pdf";
 import StringDesign from "./StringDesign";
 import ProposalDocument, { type Company } from "./ProposalDocument";
@@ -35,6 +34,7 @@ type Props = {
   accessories: Accessory[];
   recipes: Recipe[];
   hideCost?: boolean;
+  siteReferences: { id?: number; title: string; image?: string | null; location?: string | null; year?: string | number | null }[];
   canEditRules?: boolean;
   packages: { kw: number; price: number }[];
   company: Company;
@@ -92,7 +92,7 @@ function blank(panel: PanelModel): Proposal {
   };
 }
 
-export default function Studio({ panels, inverters, batteries, accessories, recipes, hideCost, canEditRules, company, initialCalcId, initialId, initialCustomerId }: Props) {
+export default function Studio({ panels, inverters, batteries, accessories, recipes, hideCost, siteReferences, canEditRules, company, initialCalcId, initialId, initialCustomerId }: Props) {
   const defaultPanel = panels.find((p) => p.wp === 620) ?? panels[0] ?? { name: "620 Wp TOPCon panel", wp: 620, lengthM: 2.382, widthM: 1.134 };
   const [p, setP] = useState<Proposal>(() => blank(defaultPanel));
   const [tab, setTab] = useState(0);
@@ -1143,7 +1143,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
 
       {/* 6. Fiyat kuralları */}
       {tab === 5 && <PricingRules settings={settings} onChange={setSettings} />}
-      {tab === 5 && canEditRules && <DocumentAssets settings={settings} onChange={setSettings} products={[...panels, ...inverters, ...batteries]} />}
+
 
       {/* 5. Önizleme ve PDF */}
       {tab === 4 && (
@@ -1182,10 +1182,10 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
                 </label>
               ))}
             </div>
-            {productsNoSheet.length > 0 && <p className="mt-2 rounded-lg bg-sun/15 p-2.5 text-[12.5px]">Datasheet&apos;i yüklenmemiş ürün: {productsNoSheet.join(", ")}.{canEditRules ? " “Fiyat kuralları” sekmesinden yükleyin." : ""}</p>}
+            {productsNoSheet.length > 0 && <p className="mt-2 rounded-lg bg-sun/15 p-2.5 text-[12.5px]">Datasheet&apos;i yüklenmemiş ürün: {productsNoSheet.join(", ")}.{canEditRules ? " “Teklif Belgeleri” sayfasından yükleyin." : ""}</p>}
           </section>
           <div ref={docRef} className="overflow-x-auto rounded-2xl bg-ink/5 py-6">
-            <ProposalDocument p={{ ...p, cells }} n={n} company={company} assets={settings} />
+            <ProposalDocument p={{ ...p, cells }} n={n} company={company} assets={{ ...settings, references: pickReferences(siteReferences, settings.referenceIds) }} attachments={selectedSheets} />
           </div>
         </div>
       )}

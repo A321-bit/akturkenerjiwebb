@@ -1,4 +1,4 @@
-import { adminClient, getSiteSettings, SITE_URL } from "@/lib/data";
+import { adminClient, getReferences, getSiteSettings, SITE_URL } from "@/lib/data";
 import { getStoreProducts } from "@/lib/store-data";
 import { kwOf } from "@/lib/store-details";
 import { currentUser } from "@/lib/admin-guard";
@@ -9,7 +9,7 @@ import Studio from "@/components/admin/teklif/Studio";
 // Ürün ve fiyat seçenekleri mağazadan gelir.
 
 export default async function TeklifStudyosuPage({ searchParams }: { searchParams: Promise<{ calc?: string; id?: string; customer?: string }> }) {
-  const [products, site, sp, costRes] = await Promise.all([getStoreProducts(), getSiteSettings(), searchParams, adminClient().from("store_products").select("slug, name, cost_usd, margin_pct, bom, category")]);
+  const [products, site, sp, siteReferences, costRes] = await Promise.all([getStoreProducts(), getSiteSettings(), searchParams, getReferences(), adminClient().from("store_products").select("slug, name, cost_usd, margin_pct, bom, category")]);
   // Maliyetler yalnız bu admin sayfasına gelir; mağaza verisinde bulunmaz.
   const costs = new Map((costRes.data ?? []).map((c) => [c.slug as string, { costUsd: c.cost_usd == null ? undefined : Number(c.cost_usd), marginPct: c.margin_pct == null ? undefined : Number(c.margin_pct) }]));
 
@@ -72,6 +72,7 @@ export default async function TeklifStudyosuPage({ searchParams }: { searchParam
       accessories={accessories.map((a) => (perms.cost ? a : { ...a, costUsd: a.costUsd * 1.45 }))}
       recipes={perms.cost ? recipes : recipes.map((r) => ({ ...r, bom: r.bom.map((b) => ({ ...b, unit: b.unit * 1.45 })) }))}
       hideCost={!perms.cost}
+      siteReferences={siteReferences}
       canEditRules={perms.rules}
       packages={packages}
       company={{ name: site.name, phone: site.contact.phoneDisplay, email: site.contact.email, address: site.contact.addressLine, web: SITE_URL.replace(/^https?:\/\//, "") }}

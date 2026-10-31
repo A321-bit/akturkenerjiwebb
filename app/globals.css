@@ -217,6 +217,28 @@ body {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
+.proposal-sheet.pd-dark {
+  background: #060a14;
+  color: #f4f6fb;
+}
+.pd-title {
+  letter-spacing: -0.02em;
+}
+.pd-sun-text {
+  background: linear-gradient(95deg, #ffd166, #ff9a2e 58%, #ff5a36);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.pd-card {
+  background: #0d1424;
+  border: 1px solid #1d2739;
+  border-radius: 14px;
+}
+.pd-card.pd-card-sun {
+  border-color: #6b3d16;
+  background: linear-gradient(120deg, #1d1420, #0d1424 62%);
+}
 .proposal-sheet.proposal-bleed {
   padding: 0;
   height: 297mm;
