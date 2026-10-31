@@ -287,7 +287,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
             </div>
           </div>
           <div className="mx-auto mt-[4mm] w-[172mm]"><SolarPortal prod={n.monthlyProduction} img={p.images?.top ?? p.images?.perspective} kwp={n.dcKwp} /></div>
-          <p className="mt-[-4mm] text-center text-[9px] tracking-[0.05em]" style={{ color: MUTED }}>Işınlar, bu konumda beklenen aylık üretiminizi gösterir.</p>
+          <p className="mt-[3mm] text-center text-[9px] tracking-[0.05em]" style={{ color: MUTED }}>Işınlar, bu konumda beklenen aylık üretiminizi gösterir.</p>
           <div className="mt-auto">
             <p className="font-mono-data text-[10px] uppercase tracking-[0.3em]" style={{ color: SUN }}>Sayın {p.customer.name || "Müşterimiz"}</p>
             <h1 className="pd-title mt-2 font-display text-[42px] font-semibold leading-[1.02]">{headline}</h1>
@@ -554,7 +554,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
               <Head index={nextSection()} title="Gerçek çatılar, gerçek projeler" />
               <div className="mt-5 grid grid-cols-2 gap-2.5">
                 {rows.map((r, i) => (
-                  <figure key={r.id} className={`relative overflow-hidden rounded-xl ${i === 0 ? "col-span-2 h-[80mm]" : "h-[52mm]"}`}>
+                  <figure key={r.id} className={`relative overflow-hidden rounded-xl ${i === 0 ? "col-span-2 h-[74mm]" : i === rows.length - 1 && i % 2 === 1 ? "col-span-2 h-[50mm]" : "h-[50mm]"}`}>
                     <img src={r.url} alt={r.ad} className="h-full w-full object-cover" />
                     <figcaption className="absolute inset-x-0 bottom-0 px-3 pb-2 pt-8" style={{ background: "linear-gradient(to top, rgba(6,10,20,.92), transparent)" }}>
                       <p className="text-[10.5px] font-semibold leading-snug text-white">{r.ad}</p>

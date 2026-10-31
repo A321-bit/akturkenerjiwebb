@@ -17,7 +17,7 @@ export async function buildProposalPdf(root: HTMLElement, attachments: Attachmen
   const fontEmbedCSS = await getFontEmbedCSS(body[0]).catch(() => undefined);
 
   const addSheet = async (el: HTMLElement) => {
-    const jpg = await toJpeg(el, { quality: 0.9, pixelRatio: 2, backgroundColor: "#ffffff", fontEmbedCSS, style: { boxShadow: "none", margin: "0" } });
+    const jpg = await toJpeg(el, { quality: 0.9, pixelRatio: 2, backgroundColor: "#060a14", fontEmbedCSS, style: { boxShadow: "none", margin: "0" } });
     const img = await out.embedJpg(jpg);
     // İçerik A4'ten uzunsa sayfa da uzar, yazı kesilmez.
     const h = Math.max(A4[1], (img.height / img.width) * A4[0]);
