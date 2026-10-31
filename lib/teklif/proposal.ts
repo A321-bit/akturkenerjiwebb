@@ -98,6 +98,10 @@ export type Proposal = {
   systemType?: "ongrid" | "offgrid" | "sulama";
   /** Off grid ve sulamada kullanılan paket reçetesi. */
   recipeSlug?: string;
+  /** Elle seçilen datasheet'ler; boşsa ürünlere göre otomatik. */
+  datasheetSel?: string[];
+  /** Kayıtta yazılır; müşteri sayfasında indirme bağlantısı olur. */
+  attachments?: { ad: string; url: string }[];
   recipeName?: string;
   /** Off grid ve sulamada karşılaştırılan yıllık enerji gideri (jeneratör, mazot vb.). */
   currentEnergyCostTl?: number;

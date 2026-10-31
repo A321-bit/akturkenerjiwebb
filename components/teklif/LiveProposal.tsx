@@ -147,9 +147,18 @@ export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDis
               </li>
             ))}
           </ul>
-          {isUsd && <p className="mt-3 text-[12px] text-slate">Ödeme günündeki Merkez Bankası kuru geçerlidir.</p>}
+          {isUsd && <p className="mt-3 text-[12px] text-slate">TL ödemede ödeme günündeki Ziraat Bankası efektif satış kuru geçerlidir.</p>}
         </div>
       </section>
+
+      {(p.attachments?.length ?? 0) > 0 && (
+        <section className="mt-6 rounded-2xl border border-line bg-paper-raised p-5">
+          <h2 className="font-semibold text-ink">Ürün dokümanları</h2>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {p.attachments!.map((a) => <a key={a.url} href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[13.5px] font-semibold text-ink hover:border-ink"><FileDown size={15} /> {a.ad}</a>)}
+          </div>
+        </section>
+      )}
 
       <p className="mt-5 text-[12px] leading-relaxed text-slate">
         Üretim ve tasarruf değerleri tahmindir; hava koşulları, gölgelenme ve tarife değişiklikleri sonucu etkileyebilir.

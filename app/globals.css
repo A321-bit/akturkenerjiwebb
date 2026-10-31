@@ -217,6 +217,11 @@ body {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
+.proposal-sheet.proposal-bleed {
+  padding: 0;
+  height: 297mm;
+  overflow: hidden;
+}
 @media print {
   @page {
     size: A4;

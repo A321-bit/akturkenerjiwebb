@@ -6,12 +6,14 @@ import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, Pen
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal, type QuoteOption } from "@/lib/teklif/proposal";
-import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, pickRecipe, quoteChecks, recipeLines, salePrice, similarProduction, targetKwp, type QuoteSettings, type Recipe, type RoofKind } from "@/lib/teklif/pricing";
+import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, matchDatasheets, pickRecipe, quoteChecks, recipeLines, salePrice, similarProduction, targetKwp, type QuoteSettings, type Recipe, type RoofKind } from "@/lib/teklif/pricing";
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
 import { suggestBattery } from "@/lib/teklif/simulate";
 import { shadeLosses } from "@/lib/teklif/shading";
 import CustomerPlace from "./CustomerPlace";
 import PricingRules from "./PricingRules";
+import DocumentAssets from "./DocumentAssets";
+import { buildProposalPdf } from "@/lib/teklif/export-pdf";
 import StringDesign from "./StringDesign";
 import ProposalDocument, { type Company } from "./ProposalDocument";
 import EnergyFlow from "./EnergyFlow";
@@ -123,6 +125,9 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
   const n = useMemo(() => computeNumbers({ ...p, cells, shadeLoss }), [p, cells, shadeLoss]);
   const [drawKind, setDrawKind] = useState<"yuzey" | "engel">("yuzey");
   const [videoPct, setVideoPct] = useState<number | null>(null);
+  const [pdfPct, setPdfPct] = useState<number | null>(null);
+  const [pdfMsg, setPdfMsg] = useState<string | null>(null);
+  const docRef = useRef<HTMLDivElement>(null);
   const sel = p.faces.find((f) => f.id === selected) ?? null;
 
   // Fiyat kuralları ve günün kuru (kayıtlı kur varsa korunur).
@@ -446,7 +451,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
   }
   async function save(extra?: Partial<Proposal>) {
     setMsg("Kaydediliyor…");
-    const r = await fetch("/api/admin/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proposal: { ...p, ...extra, cells, shadeLoss }, dcKwp: n.dcKwp, total: n.total }) });
+    const r = await fetch("/api/admin/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proposal: { ...p, ...extra, cells, shadeLoss, attachments: selectedSheets.map((d) => ({ ad: d.ad, url: d.url })) }, dcKwp: n.dcKwp, total: n.total }) });
     const d = await r.json().catch(() => ({}));
     if (r.ok) {
       update({ ...extra, id: d.id });
@@ -507,7 +512,33 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
     captureImages();
     setTimeout(() => window.print(), 300);
   }
+  // Tek dosya PDF: teklif sayfaları + seçili datasheet'ler + teşekkür sayfası.
+  async function downloadPdf() {
+    if (!docRef.current || pdfPct != null) return;
+    captureImages();
+    setPdfPct(0);
+    setPdfMsg(null);
+    try {
+      await new Promise((r) => setTimeout(r, 500));
+      const { bytes, failed, pages } = await buildProposalPdf(docRef.current, selectedSheets.map((d) => ({ ad: d.ad, url: d.url })), setPdfPct);
+      const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(p.customer.name || "Teklif").trim()} ${num(n.dcKwp, 1)} kWp ${p.proposalNo}.pdf`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      setPdfMsg(failed.length ? `${pages} sayfa hazırlandı. Eklenemeyen datasheet: ${failed.join(", ")}.` : `${pages} sayfa, ${(bytes.length / 1048576).toFixed(1)} MB hazırlandı.`);
+    } catch (e) {
+      setPdfMsg(`PDF hazırlanamadı: ${e instanceof Error ? e.message : "bilinmeyen hata"}`);
+    } finally {
+      setPdfPct(null);
+    }
+  }
 
+  const library = settings.datasheets ?? [];
+  const autoSheets = matchDatasheets(p, library);
+  const selectedSheets = p.datasheetSel ? library.filter((d) => p.datasheetSel!.includes(d.id)) : autoSheets;
+  const productsNoSheet = [p.panel, p.inverter, p.battery].filter((x): x is NonNullable<typeof x> => Boolean(x)).filter((x) => !matchDatasheets({ ...p, panel: { ...p.panel, slug: x.slug, name: x.name }, inverter: null, battery: null, extraInverters: [], lines: [] }, library).length).map((x) => x.name);
   const checks = quoteChecks({ ...p, cells }, n, hideCost ? -Infinity : settings.minMarginPct);
   const errorCount = checks.filter((c) => c.level === "hata").length;
   const costTotal = p.lines.reduce((a, l) => a + l.adet * (l.maliyetUsd ?? 0), 0);
@@ -1112,6 +1143,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
 
       {/* 6. Fiyat kuralları */}
       {tab === 5 && <PricingRules settings={settings} onChange={setSettings} />}
+      {tab === 5 && canEditRules && <DocumentAssets settings={settings} onChange={setSettings} products={[...panels, ...inverters, ...batteries]} />}
 
       {/* 5. Önizleme ve PDF */}
       {tab === 4 && (
@@ -1132,13 +1164,28 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
             <p className="mb-4 rounded-xl bg-sun/15 p-3 text-[13px]">Müşteri linki için 4. adımda “Teklif oluştur”a basın.</p>
           )}
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <Btn icon={<Printer size={15} />} onClick={print} primary>PDF olarak kaydet / yazdır</Btn>
+            <Btn icon={<Printer size={15} />} onClick={downloadPdf} primary>{pdfPct != null ? `PDF hazırlanıyor %${pdfPct}` : "PDF indir (datasheet'lerle)"}</Btn>
+            <Btn icon={<Printer size={15} />} onClick={print}>Yazdır</Btn>
             <Btn icon={<Box size={15} />} onClick={captureImages}>3B görselleri yenile</Btn>
             <Btn icon={<Box size={15} />} onClick={makeVideo}>{videoPct != null ? `Video hazırlanıyor %${videoPct}` : "Müşteri videosu oluştur"}</Btn>
-            <p className="text-[12.5px] text-slate">Yazdırma penceresinde hedef olarak “PDF olarak kaydet”i, kâğıt boyutu A4 ve “Arka plan grafikleri” seçeneğini işaretleyin.</p>
+            <p className="text-[12.5px] text-slate">“Yazdır” datasheet'leri içermez; kâğıda basarken A4 ve “Arka plan grafikleri” seçeneğini işaretleyin.</p>
           </div>
-          <div className="overflow-x-auto rounded-2xl bg-ink/5 py-6">
-            <ProposalDocument p={{ ...p, cells }} n={n} company={company} />
+          {pdfMsg && <p className="mb-4 rounded-xl bg-brand/10 p-3 text-[13px] font-semibold">{pdfMsg}</p>}
+          <section className="mb-4 rounded-2xl border border-line bg-paper-raised p-4">
+            <h3 className="font-semibold">Eklenecek datasheet'ler</h3>
+            {library.length === 0 && <p className="mt-1 text-[13px] text-slate">Henüz datasheet yüklenmedi.</p>}
+            <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px]">
+              {library.map((d) => (
+                <label key={d.id} className="flex items-center gap-1.5">
+                  <input type="checkbox" checked={selectedSheets.some((x) => x.id === d.id)} onChange={(e) => update({ datasheetSel: e.target.checked ? [...selectedSheets.map((x) => x.id), d.id] : selectedSheets.filter((x) => x.id !== d.id).map((x) => x.id) })} />
+                  {d.ad}
+                </label>
+              ))}
+            </div>
+            {productsNoSheet.length > 0 && <p className="mt-2 rounded-lg bg-sun/15 p-2.5 text-[12.5px]">Datasheet'i yüklenmemiş ürün: {productsNoSheet.join(", ")}.{canEditRules ? " “Fiyat kuralları” sekmesinden yükleyin." : ""}</p>}
+          </section>
+          <div ref={docRef} className="overflow-x-auto rounded-2xl bg-ink/5 py-6">
+            <ProposalDocument p={{ ...p, cells }} n={n} company={company} assets={settings} />
           </div>
         </div>
       )}

@@ -3,20 +3,25 @@ import { YON_ADI, isFlat } from "@/lib/teklif/geometry";
 import type { Proposal, ProposalNumbers } from "@/lib/teklif/proposal";
 import { meanAzimuth, simulateDay, simulateYear, type HourFlow } from "@/lib/teklif/simulate";
 import { ABONE_ADLARI } from "@/lib/elektrik-tarife";
+import type { QuoteSettings } from "@/lib/teklif/pricing";
 
 // Teklif belgesi (A4). Tarayıcının "PDF olarak kaydet" çıktısı için tasarlanmıştır;
 // ekranda da önizleme olarak gösterilir.
 
 export type Company = { name: string; phone: string; email: string; address: string; web: string };
+/** Teklif PDF'inin kapak, referans ve şart sayfaları için gereken ayarlar; maliyet içermez. */
+export type DocAssets = Pick<QuoteSettings, "references" | "banks" | "hesapSahibi" | "notlar" | "garantiDisi">;
 
 const AY = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 const tl = (n: number) => `${Math.round(n).toLocaleString("tr-TR")} TL`;
 const num = (n: number, d = 0) => n.toLocaleString("tr-TR", { maximumFractionDigits: d, minimumFractionDigits: d });
 const date = (iso: string, addDays = 0) => new Date(new Date(iso).getTime() + addDays * 864e5).toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
 
-function Sheet({ children, last }: { children: React.ReactNode; last?: boolean }) {
-  return <section className={`proposal-sheet relative mx-auto bg-white text-[#0e1626] ${last ? "" : "proposal-break"}`}>{children}</section>;
+function Sheet({ children, last, bleed, final }: { children: React.ReactNode; last?: boolean; bleed?: boolean; final?: boolean }) {
+  return <section data-final={final ? "1" : undefined} className={`proposal-sheet relative mx-auto bg-white text-[#0e1626] ${bleed ? "proposal-bleed" : ""} ${last ? "" : "proposal-break"}`}>{children}</section>;
 }
+
+const satirlar = (t?: string) => (t ?? "").split("\n").map((x) => x.trim()).filter(Boolean);
 
 function Head({ company, title, no }: { company: Company; title: string; no: string }) {
   return (
@@ -137,7 +142,9 @@ function PaybackChart({ data }: { data: number[] }) {
   );
 }
 
-export default function ProposalDocument({ p, n, company }: { p: Proposal; n: ProposalNumbers; company: Company }) {
+export default function ProposalDocument({ p, n, company, assets }: { p: Proposal; n: ProposalNumbers; company: Company; assets?: DocAssets }) {
+  const refs = assets?.references ?? [];
+  const refPages = Array.from({ length: Math.ceil(refs.length / 2) }, (_, i) => refs.slice(i * 2, i * 2 + 2));
   const system = p.systemType ?? "ongrid";
   const offGrid = system !== "ongrid";
   const hasCons = n.annualKwh > 0;
@@ -162,6 +169,19 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
   const year = hasFlow ? simulateYear({ monthlyPv: n.monthlyProduction, monthlyLoad: n.monthlyKwh, abone: p.abone, lat, azimuth, batteryKwh: battery }) : null;
   return (
     <div className="proposal-doc space-y-6 print:space-y-0">
+      {assets && (
+        <>
+          <Sheet bleed><img src="/teklif/kapak.jpg" alt="Anahtar teslim güneş enerjisi sistemi fiyat teklifi" className="h-full w-full object-cover" /></Sheet>
+          <Sheet bleed>
+            <img src="/teklif/hakkimizda.jpg" alt={company.name} className="h-full w-full object-cover" />
+            <div className="absolute left-[9%] right-[9%] top-[76.8%] flex h-[9.4%] flex-col items-center justify-center text-center">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[#5b6577]">Bu teklif size özel hazırlanmıştır</p>
+              <p className="mt-1 text-[16px] font-semibold">Sayın {p.customer.name || "Müşterimiz"}</p>
+              <p className="mt-0.5 text-[11px] text-[#3d4757]">Teklif no {p.proposalNo} · {date(p.createdAt)}</p>
+            </div>
+          </Sheet>
+        </>
+      )}
       {/* 1. Kapak ve özet */}
       <Sheet>
         <Head company={company} title={`Güneş enerjisi teklifi · ${reportName}`} no={p.proposalNo} />
@@ -331,7 +351,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
       )}
 
       {/* Fiyat ve koşullar */}
-      <Sheet last>
+      <Sheet last={!assets}>
         <Head company={company} title="Fiyat ve koşullar" no={p.proposalNo} />
         <table className="mt-5 w-full text-[11px]">
           <thead>
@@ -359,7 +379,7 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
             <tr className="text-[14px]"><td colSpan={showPrices ? 3 : 1} className="pt-1 text-right font-semibold">Genel toplam (KDV dahil)</td><td className="pt-1 text-right font-mono font-semibold">{money(n.total)}</td></tr>
           </tfoot>
         </table>
-        {isUsd && p.usdTry ? <p className="mt-1 text-right text-[9.5px] text-[#5b6577]">{p.showTl ? `TCMB ${p.usdDate ?? ""} kuru ${p.usdTry} ile hesaplanmıştır. ` : ""}Ödeme günündeki Merkez Bankası kuru geçerlidir.</p> : null}
+        {isUsd && p.usdTry ? <p className="mt-1 text-right text-[9.5px] text-[#5b6577]">{p.showTl ? `TCMB ${p.usdDate ?? ""} kuru ${p.usdTry} ile hesaplanmıştır. ` : ""}TL ödemede ödeme günündeki Ziraat Bankası efektif satış kuru geçerlidir.</p> : null}
 
         {plan.length > 0 && (
           <div className="mt-5">
@@ -394,6 +414,49 @@ export default function ProposalDocument({ p, n, company }: { p: Proposal; n: Pr
         </div>
         <Foot company={company} page={nextPage()} />
       </Sheet>
+
+      {assets && (
+        <>
+          <Sheet>
+            <Head company={company} title="Teklif şartları ve ödeme" no={p.proposalNo} />
+            <div className="mt-5 text-[10.5px] leading-relaxed text-[#3d4757]">
+              <h3 className="text-[12px] font-semibold text-[#0e1626]">Önemli notlar</h3>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4">{satirlar(assets.notlar).map((x) => <li key={x}>{x}</li>)}</ul>
+              <h3 className="mt-5 text-[12px] font-semibold text-[#0e1626]">Garanti dışı unsurlar</h3>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4">{satirlar(assets.garantiDisi).map((x) => <li key={x}>{x}</li>)}</ul>
+              <h3 className="mt-5 text-[12px] font-semibold text-[#0e1626]">Banka hesap bilgileri</h3>
+              {assets.hesapSahibi && <p className="mt-1">Hesap sahibi: {assets.hesapSahibi}</p>}
+              <table className="mt-2 w-full">
+                <thead><tr className="border-b-2 border-[#0e1626] text-left text-[#0e1626]"><th className="py-1 font-semibold">Banka</th><th className="font-semibold">Şube</th><th className="font-semibold">IBAN</th></tr></thead>
+                <tbody>{(assets.banks ?? []).map((b) => <tr key={b.iban} className="border-b border-[#e6eaf0]"><td className="py-1.5">{b.banka}</td><td>{b.sube}</td><td className="font-mono">{b.iban}</td></tr>)}</tbody>
+              </table>
+            </div>
+            <Foot company={company} page={nextPage()} />
+          </Sheet>
+
+          {refPages.map((pair) => (
+            <Sheet key={pair[0].id} bleed>
+              <div className="flex h-full flex-col gap-[4mm] p-[8mm]">
+                {pair.map((r) => <img key={r.id} src={r.url} alt={r.ad} className="min-h-0 w-full flex-1 rounded-lg object-cover" />)}
+              </div>
+            </Sheet>
+          ))}
+
+          <Sheet last bleed final>
+            <img src="/teklif/son.jpg" alt="" className="h-full w-full object-cover" />
+            <div className="absolute inset-x-0 top-[40%] flex flex-col items-center text-center">
+              <p className="text-[30px] font-bold leading-tight text-[#1f6fb2]">Bizi Tercih Ettiğiniz İçin<br />Teşekkür Ederiz</p>
+              <div className="mt-3 h-[2px] w-[44mm] bg-[#1f6fb2]" />
+              <div className="mt-8 rounded-xl border-2 border-[#1f6fb2] bg-[#f0f7fd] px-12 py-5">
+                <p className="text-[14px] font-semibold">{company.name}</p>
+                <p className="mt-1 text-[11px]">Tel: {company.phone}</p>
+                <p className="text-[11px]">{company.email}</p>
+              </div>
+              <p className="mt-6 text-[9.5px] text-[#5b6577]">Teklif no {p.proposalNo} · {date(p.createdAt)}</p>
+            </div>
+          </Sheet>
+        </>
+      )}
     </div>
   );
 }

@@ -34,7 +34,17 @@ export type QuoteSettings = {
   temps?: SiteTemps;
   /** Kurulu sistemlerin gerçek yıllık üretimi. */
   realProduction?: RealProduction[];
+  /** Teklif PDF'inin ekleri. */
+  datasheets?: Datasheet[];
+  references?: { id: string; ad: string; url: string }[];
+  banks?: { banka: string; sube: string; iban: string }[];
+  hesapSahibi?: string;
+  notlar?: string;
+  garantiDisi?: string;
 };
+
+/** slugs: bağlı ürünler; kelime: hazır paket kaleminin adında geçen ifade. */
+export type Datasheet = { id: string; ad: string; url: string; slugs?: string[]; kelime?: string };
 
 export type RealProduction = { id: string; ad: string; kwp: number; yillikKwh: number };
 
@@ -48,6 +58,34 @@ export function similarProduction(rows: RealProduction[] | undefined, kwp: numbe
 const rule = (id: string, ad: string, birim: QuoteRule["birim"], cati: QuoteRule["cati"] = "hepsi"): QuoteRule => ({ id, ad, birim, kwFrom: 0, kwTo: 100000, cati, maliyetUsd: 0, marjPct: 45 });
 
 export const DEFAULT_SETTINGS: QuoteSettings = {
+  datasheets: [{ id: "tommatech-v-280", ad: "TommaTech V Serisi LFP Lityum Batarya 51.2V 280Ah", url: "/teklif/tommatech-v-serisi-51v-280ah.pdf", kelime: "51.2V 280" }],
+  references: ["incek-villa-1", "incek-villa-2", "beytepe-1", "beytepe-2", "incek-ongrid-1", "incek-ongrid-2"].map((id) => ({ id, ad: "Referans", url: `/teklif/ref-${id}.jpg` })),
+  hesapSahibi: "Akturk Yenilenebilir Enerji Teknolojileri Sanayi Ticaret Limited Şirketi",
+  banks: [
+    { banka: "Ziraat Bankası", sube: "Necatibey Şubesi", iban: "TR03 0001 0021 0191 5377 6550 02" },
+    { banka: "Türkiye İş Bankası", sube: "Esertepe Şubesi", iban: "TR95 0006 4000 0014 3920 1411 17" },
+    { banka: "Vakıfbank", sube: "Esertepe Şubesi", iban: "TR06 0001 5001 5800 7314 9556 86" },
+  ],
+  notlar: [
+    "Döviz bazlı tekliflerde TL ile ödeme yapılacaksa Ziraat Bankası Efektif Satış kuru baz alınır.",
+    "Döviz bazlı tekliflerde döviz ile ödeme yapılacaksa USD kuru üzerinden gönderim sağlanabilir.",
+    "Sistemin kurulacağı alanın projeye uygunluğu, Aktürk Enerji tarafından onaylanacaktır.",
+    "Sunulan teklif ve dokümanlar gizlilik kapsamındadır, üçüncü kişilerle paylaşılmaması rica olunur.",
+    "Dış müdahale veya hatalı kullanım sonucu arızalarda servis hizmetleri ücretli sağlanabilir.",
+    "Bu teklif yazım hatalarında Aktürk Enerji Teknolojileri'nin düzeltme hakkı saklıdır.",
+    "Doğabilecek uyuşmazlıklarda Ankara Mahkemeleri ve İcra Daireleri yetkilidir.",
+    "Havale/EFT ile yapılan ödemelerde, ödeme açıklaması bölümüne teklif numarasının belirtilmesi rica olunur.",
+    "Kredi kartı ile yapılan taksitli ödemelerde, ilgili banka ve ödeme kuruluşları tarafından uygulanabilecek komisyon oranları toplam tutara yansıtılabilir.",
+    "Ödeme yaptıktan sonra satış temsilcinize dekontu iletmeniz rica olunur.",
+  ].join("\n"),
+  garantiDisi: [
+    "Bakım ve kullanım talimatlarına aykırı kullanım,",
+    "Yanlış kullanım ve ihmaller,",
+    "Mücbir sebepler, doğal felaketler,",
+    "Aktürk Enerji Teknolojileri kapsam alanı dışındaki kazalar,",
+    "Yetkisiz kişilerce açılmış veya tamir edilmeye çalışılmış ekipmanlar,",
+    "Yukarıda yer almayan koşullarda uluslararası standartlar geçerlidir.",
+  ].join("\n"),
   rules: [
     rule("kons-kiremit", "Kiremit çatı montaj sistemi", "kwp", "kiremit"),
     rule("kons-trapez", "Trapez çatı montaj sistemi", "kwp", "trapez"),
@@ -179,4 +217,11 @@ export function pickRecipe(list: Recipe[], kind: Recipe["kind"], panelCount: num
   const own = list.filter((r) => r.kind === kind && r.bom.length);
   const count = (r: Recipe) => r.bom.filter((b) => isPanelRow(b.name)).reduce((a, b) => a + b.qty, 0);
   return [...own].sort((a, b) => Math.abs(count(a) - panelCount) - Math.abs(count(b) - panelCount))[0] ?? null;
+}
+
+/** Teklifteki ürünlere bağlı datasheet'ler. */
+export function matchDatasheets(p: Proposal, list: Datasheet[]) {
+  const slugs = [p.panel.slug, p.inverter?.slug, p.battery?.slug, ...(p.extraInverters ?? []).map((x) => x.slug)].filter(Boolean) as string[];
+  const names = [p.panel.name, p.inverter?.name, p.battery?.name, ...p.lines.map((l) => l.ad)].filter(Boolean).join("\n").toLocaleLowerCase("tr-TR");
+  return list.filter((d) => d.slugs?.some((x) => slugs.includes(x)) || (d.kelime?.trim() && names.includes(d.kelime.trim().toLocaleLowerCase("tr-TR"))));
 }
