@@ -17,6 +17,28 @@ const PROFIL: Record<AboneGrubu, number[]> = {
   tarimsal: [0.6, 0.6, 0.6, 0.6, 0.6, 1, 2.6, 5, 7, 8, 8.4, 8.4, 8.4, 8.4, 8.4, 8, 7, 5, 2.6, 1, 0.6, 0.6, 0.6, 0.6],
 };
 
+// Hava senaryosu. "Ortalama", PVGIS'in uzun yıllık aylık ortalamasıdır (bulutlu günler içinde).
+// Tamamen açık gün ortalamanın üzerindedir; fark kışın büyür, yazın azalır. Diğerleri açık güne oranlanır.
+// Bu oranlar ölçüm değil, tipik kabullerdir; ekranda da böyle belirtilir.
+export type Weather = "ortalama" | "acik" | "gunesli" | "bulutlu" | "yagmurlu";
+export const WEATHERS: { key: Weather; ad: string }[] = [
+  { key: "ortalama", ad: "Ortalama" },
+  { key: "acik", ad: "Tamamen açık" },
+  { key: "gunesli", ad: "Güneşli" },
+  { key: "bulutlu", ad: "Bulutlu" },
+  { key: "yagmurlu", ad: "Yağmurlu" },
+];
+const ACIK_GUN = [1.7, 1.6, 1.45, 1.35, 1.25, 1.15, 1.1, 1.1, 1.15, 1.3, 1.55, 1.75];
+const ACIGA_ORAN: Record<Exclude<Weather, "ortalama">, number> = { acik: 1, gunesli: 0.8, bulutlu: 0.35, yagmurlu: 0.12 };
+export const weatherFactor = (w: Weather, month: number) => (w === "ortalama" ? 1 : ACIK_GUN[month] * ACIGA_ORAN[w]);
+
+/** Çatı sahnesi ile enerji akışı kartının paylaştığı seçim. */
+export type SimState = { month: number; hour: number; weather: Weather };
+export const SIM_DEFAULT: SimState = { month: 5, hour: 13, weather: "ortalama" };
+
+/** Sistemin bir andaki üretim sınırı: DC gücün %90'ı ve invertör gücü. */
+export const pvLimit = (dcKwp: number, acKw: number) => Math.min(dcKwp * 0.9, acKw > 0 ? acKw : Infinity);
+
 export type HourFlow = { pv: number; load: number; direct: number; toBattery: number; fromBattery: number; toGrid: number; fromGrid: number; soc: number };
 
 /** Ayın tipik günü için saatlik üretim dağılımı (toplamı 1). */
@@ -37,8 +59,10 @@ function pvShape(month: number, lat: number, azimuth: number) {
 }
 
 /** Bataryalı ya da bataryasız tipik gün. İki tur çalıştırılır; ikinci tur günü dolu/boş başlangıçtan arındırır. */
-export function simulateDay(input: { month: number; monthlyPv: number; monthlyLoad: number; abone: AboneGrubu; lat: number; azimuth: number; batteryKwh: number }): HourFlow[] {
+export function simulateDay(input: { month: number; monthlyPv: number; monthlyLoad: number; abone: AboneGrubu; lat: number; azimuth: number; batteryKwh: number; weather?: Weather; pvCap?: number }): HourFlow[] {
   const { month, monthlyPv, monthlyLoad, abone, lat, azimuth, batteryKwh } = input;
+  const factor = weatherFactor(input.weather ?? "ortalama", month);
+  const cap0 = input.pvCap ?? Infinity;
   const days = GUN[month];
   const shape = pvShape(month, lat, azimuth);
   const prof = PROFIL[abone];
@@ -50,7 +74,7 @@ export function simulateDay(input: { month: number; monthlyPv: number; monthlyLo
   for (let pass = 0; pass < 2; pass++) {
     out = [];
     for (let h = 0; h < 24; h++) {
-      const pv = (monthlyPv / days) * shape[h];
+      const pv = Math.min(cap0, (monthlyPv / days) * shape[h] * factor);
       const load = (monthlyLoad / days) * (prof[h] / profSum);
       const direct = Math.min(pv, load);
       let toBattery = 0;
@@ -68,6 +92,16 @@ export function simulateDay(input: { month: number; monthlyPv: number; monthlyLo
     }
   }
   return out;
+}
+
+/** Kesirli saatte akış: saat dilimlerinin ortaları arasında geçiş; batarya hariç dengeler korunur. */
+export function flowAt(day: HourFlow[], hour: number): HourFlow {
+  const t = ((hour - 0.5 + 24) % 24);
+  const a = day[Math.floor(t) % 24];
+  const b = day[(Math.floor(t) + 1) % 24];
+  const k = t - Math.floor(t);
+  const mix = (f: (d: HourFlow) => number) => f(a) * (1 - k) + f(b) * k;
+  return { pv: mix((d) => d.pv), load: mix((d) => d.load), direct: mix((d) => d.direct), toBattery: mix((d) => d.toBattery), fromBattery: mix((d) => d.fromBattery), toGrid: mix((d) => d.toGrid), fromGrid: mix((d) => d.fromGrid), soc: mix((d) => d.soc) };
 }
 
 export type YearFlow = { pv: number; load: number; selfUsed: number; toGrid: number; fromGrid: number; selfUsePct: number; independencePct: number };

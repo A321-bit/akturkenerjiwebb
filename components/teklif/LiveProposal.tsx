@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { FileDown, MessageCircle, Phone } from "lucide-react";
 import EnergyFlow from "@/components/admin/teklif/EnergyFlow";
 import { faceFrame, type LayoutSettings } from "@/lib/teklif/geometry";
+import { SIM_DEFAULT, meanAzimuth, type SimState } from "@/lib/teklif/simulate";
 import type { Proposal, ProposalNumbers } from "@/lib/teklif/proposal";
 
 // Müşterinin gördüğü canlı teklif: kendi çatısı 3B, üretim, enerji akışı, fiyat ve iletişim.
@@ -51,6 +52,8 @@ function MonthlyBars({ prod, cons }: { prod: number[]; cons: number[] }) {
 export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDisplay, whatsappNumber }: { p: Proposal; n: ProposalNumbers; token: string; expired: boolean; phoneHref: string; phoneDisplay: string; whatsappNumber: string }) {
   const layout: LayoutSettings = useMemo(() => ({ setbackM: p.setbackM, gapM: p.gapM, lat: p.site.center[0] }), [p]);
   const frames = useMemo(() => p.faces.map((f) => faceFrame(f, p.site.center, p.panel, layout)), [p, layout]);
+  const [simState, setSimState] = useState<SimState>(SIM_DEFAULT);
+  const azimuth = meanAzimuth(n.byFace.map((f) => ({ azimuth: p.faces.find((x) => x.id === f.faceId)?.azimuth ?? 0, weight: f.annualKwh })));
   const isUsd = p.priceCurrency === "USD";
   const money = (v: number) => (!isUsd ? tl(v) : p.showTl && p.usdTry ? tl(v * p.usdTry) : `${num(Math.round(v))} USD`);
   const hasCons = n.annualKwh > 0;
@@ -79,8 +82,8 @@ export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDis
       </header>
 
       <section className="mt-6">
-        <Roof3D center={p.site.center} frames={frames} cells={p.cells} layout={layout} lat={p.site.center[0]} obstacles={p.obstacles} />
-        <p className="mt-2 text-[12.5px] text-slate">Parmağınızla döndürün, iki parmakla yakınlaştırın. Saati değiştirerek gölgeleri görebilirsiniz.</p>
+        <Roof3D center={p.site.center} frames={frames} cells={p.cells} layout={layout} lat={p.site.center[0]} obstacles={p.obstacles} state={simState} onState={setSimState} sim={{ monthlyPv: n.monthlyProduction, monthlyLoad: n.monthlyKwh, abone: p.abone, azimuth, batteryKwh: p.batteryKwh ?? 0, dcKwp: n.dcKwp, acKw: n.acKw }} />
+        <p className="mt-2 text-[12.5px] text-slate">Parmağınızla döndürün, iki parmakla yakınlaştırın. Saati ve havayı değiştirerek gölgeleri, anlık üretiminizi ve şebeke akışını görün. Değerler tahminidir.</p>
       </section>
 
       <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -122,7 +125,7 @@ export default function LiveProposal({ p, n, token, expired, phoneHref, phoneDis
       </section>
 
       <div className="mt-6">
-        <EnergyFlow p={p} n={n} />
+        <EnergyFlow p={p} n={n} state={simState} onState={setSimState} />
       </div>
 
       <section className="mt-6 grid gap-5 lg:grid-cols-2">

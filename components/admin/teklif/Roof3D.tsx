@@ -1,12 +1,14 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { Maximize2, Orbit } from "lucide-react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { BarChart3, Cloud, CloudRain, CloudSun, Maximize2, Orbit, Pause, Play, Sun } from "lucide-react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { cellPose, heightAt, toXY, type FaceFrame, type LatLon, type LayoutSettings, type Obstacle, type PanelCell } from "@/lib/teklif/geometry";
 import { ESRI, getImagery, tileUrl } from "@/lib/teklif/imagery";
+import { SIM_DEFAULT, WEATHERS, flowAt, pvLimit, simulateDay, type SimState, type Weather } from "@/lib/teklif/simulate";
+import type { AboneGrubu } from "@/lib/elektrik-tarife";
 
 // 3B görünüm: uydu görüntüsü zemin, çizilen çatı yüzeyleri (bina kütlesiyle) ve paneller.
 // Sahne koordinatı: X doğu, Y yukarı, Z güney (Z = -kuzey). Uydu görüntüsü çatıya da kaplanır;
@@ -16,7 +18,40 @@ import { ESRI, getImagery, tileUrl } from "@/lib/teklif/imagery";
 export type VideoOptions = { title: string; lines: string[]; footer: string; seconds?: number; onProgress?: (pct: number) => void };
 export type Roof3DHandle = { snapshot: (view: "perspective" | "top") => string | null; record: (o: VideoOptions) => Promise<{ blob: Blob; ext: string } | null> };
 
-type Props = { center: LatLon; frames: FaceFrame[]; cells: PanelCell[]; layout: LayoutSettings; lat: number; obstacles?: Obstacle[] };
+/** Verilirse sahnenin altında o anki üretim, tüketim ve şebeke akışı görünür. */
+export type RoofSim = { monthlyPv: number[]; monthlyLoad: number[]; abone: AboneGrubu; azimuth: number; batteryKwh: number; dcKwp: number; acKw: number };
+type Props = { center: LatLon; frames: FaceFrame[]; cells: PanelCell[]; layout: LayoutSettings; lat: number; obstacles?: Obstacle[]; sim?: RoofSim; state?: SimState; onState?: (s: SimState) => void };
+
+const WX_ICON = { ortalama: BarChart3, acik: Sun, gunesli: CloudSun, bulutlu: Cloud, yagmurlu: CloudRain };
+// Hava görünümü: güneş gücü, ortam ışığı, gökyüzü (üst, orta, ufuk), bulut sayısı ve rengi.
+const WX: Record<Weather, { sun: number; hemi: number; sky: [string, string, string]; clouds: number; cloud: string; fog: string; rain: boolean }> = {
+  ortalama: { sun: 0.85, hemi: 0.7, sky: ["#6fa3d8", "#c4dcf0", "#eef3f7"], clouds: 5, cloud: "#ffffff", fog: "#dbe7f1", rain: false },
+  acik: { sun: 1, hemi: 0.72, sky: ["#2f7fd6", "#9fd0f5", "#e6f3fb"], clouds: 0, cloud: "#ffffff", fog: "#d6e9f6", rain: false },
+  gunesli: { sun: 0.92, hemi: 0.72, sky: ["#4c91da", "#b4d8f3", "#ecf4f9"], clouds: 10, cloud: "#ffffff", fog: "#dbe9f3", rain: false },
+  bulutlu: { sun: 0.26, hemi: 0.88, sky: ["#8c97a5", "#b4bcc6", "#d3d8de"], clouds: 26, cloud: "#a9b1bb", fog: "#c6ccd3", rain: false },
+  yagmurlu: { sun: 0.08, hemi: 0.58, sky: ["#4e5763", "#737c88", "#99a0a9"], clouds: 32, cloud: "#6f7883", fog: "#8f969f", rain: true },
+};
+const NIGHT = ["#050a1c", "#0c1732", "#1a2541"];
+
+const mix = (a: string, b: string, k: number) => new THREE.Color(a).lerp(new THREE.Color(b), k).getStyle();
+
+// Yumuşak bulut dokusu: üst üste binen ışık lekeleri.
+function cloudTexture() {
+  const c = document.createElement("canvas");
+  c.width = 256;
+  c.height = 128;
+  const g = c.getContext("2d")!;
+  for (const [x, y, r] of [[70, 76, 44], [120, 62, 56], [176, 74, 46], [100, 86, 38], [150, 88, 40]]) {
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, "rgba(255,255,255,.95)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 256, 128);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 
 const V = (x: number, y: number, n: number) => new THREE.Vector3(x, y, -n);
 
@@ -56,16 +91,20 @@ function skyTexture() {
   const c = document.createElement("canvas");
   c.width = 4;
   c.height = 256;
-  const g = c.getContext("2d")!;
-  const grad = g.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, "#6fa3d8");
-  grad.addColorStop(0.65, "#c4dcf0");
-  grad.addColorStop(1, "#eef3f7");
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 4, 256);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  return t;
+  const paint = (top: string, mid: string, low: string) => {
+    const g = c.getContext("2d")!;
+    const grad = g.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0, top);
+    grad.addColorStop(0.65, mid);
+    grad.addColorStop(1, low);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 4, 256);
+    t.needsUpdate = true;
+  };
+  paint("#6fa3d8", "#c4dcf0", "#eef3f7");
+  return { t, paint };
 }
 
 const AYLAR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
@@ -132,16 +171,40 @@ async function satelliteGround(center: LatLon, sizeM: number) {
   return { tex, nw, se };
 }
 
-const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames, cells, layout, lat, obstacles }, ref) {
+const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames, cells, layout, lat, obstacles, sim, state, onState }, ref) {
   const box = useRef<HTMLDivElement>(null);
   const ctx = useRef<{ renderer: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.PerspectiveCamera; controls: OrbitControls; content: THREE.Group; ground: THREE.Group; sun: THREE.DirectionalLight } | null>(null);
   const panelTex = useRef<THREE.Texture | null>(null);
   const recording = useRef(false);
   const wrap = useRef<HTMLDivElement>(null);
   const [imagery, setImagery] = useState<{ tex: THREE.Texture; nw: { x: number; n: number }; se: { x: number; n: number } } | null>(null);
-  const [month, setMonth] = useState(5);
-  const [hour, setHour] = useState(13);
+  const [own, setOwn] = useState<SimState>(SIM_DEFAULT);
+  const st = state ?? own;
+  const { month, hour, weather } = st;
+  const stRef = useRef(st);
+  const latRef = useRef(lat);
+  useEffect(() => {
+    stRef.current = st;
+    latRef.current = lat;
+  });
+  const setSim = (x: Partial<SimState>) => {
+    const next = { ...stRef.current, ...x };
+    stRef.current = next;
+    if (onState) onState(next);
+    else setOwn(next);
+  };
+  const [playing, setPlaying] = useState(false);
   const [spin, setSpin] = useState(false);
+  // Ortamı uygular: güneş, gökyüzü, ışık, bulut ve yağmur. Görsel alma ve video da bunu kullanır.
+  const applyEnv = useRef<(w: Weather, m: number, h: number) => void>(() => {});
+
+  // Gün boyu oynatma: 24 saat yaklaşık 15 saniye.
+  useEffect(() => {
+    if (!playing) return;
+    const t = setInterval(() => setSim({ hour: (stRef.current.hour + 0.125) % 24 }), 80);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setSim güncel değeri ref'ten okur
+  }, [playing]);
 
   useImperativeHandle(ref, () => ({
     snapshot(view) {
@@ -152,6 +215,8 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       const box3 = new THREE.Box3().setFromObject(c.content);
       const mid = box3.isEmpty() ? new THREE.Vector3() : box3.getCenter(new THREE.Vector3());
       const size = box3.isEmpty() ? 20 : Math.max(10, box3.getSize(new THREE.Vector3()).length());
+      // Teklif görselleri her zaman açık havada ve öğlen alınır.
+      applyEnv.current("acik", 5, 13);
       if (view === "top") camera.position.set(mid.x, size * 1.6, mid.z + 0.01);
       else camera.position.set(mid.x + size * 0.55, size * 0.6, mid.z + size * 0.85);
       camera.lookAt(mid);
@@ -161,6 +226,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       camera.position.copy(saved.pos);
       controls.target.copy(saved.target);
       controls.update();
+      applyEnv.current(stRef.current.weather, stRef.current.month, stRef.current.hour);
       return url;
     },
     // Müşteri videosu: dikey (720×1280), kamera binanın çevresinde döner, güneş gün boyu ilerler.
@@ -177,6 +243,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       const mid = box3.isEmpty() ? new THREE.Vector3() : box3.getCenter(new THREE.Vector3());
       const size = box3.isEmpty() ? 25 : Math.max(14, box3.getSize(new THREE.Vector3()).length());
       recording.current = true;
+      applyEnv.current("acik", 5, 13);
       controls.enabled = false;
       controls.autoRotate = false;
       renderer.setPixelRatio(1);
@@ -254,7 +321,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       controls.enabled = true;
       controls.autoRotate = saved.auto;
       recording.current = false;
-      setHour((h) => h + 0.0001);
+      applyEnv.current(stRef.current.weather, stRef.current.month, stRef.current.hour);
       return { blob, ext: mime.startsWith("video/mp4") ? "mp4" : "webm" };
     },
   }));
@@ -277,7 +344,8 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     el.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = skyTexture();
+    const sky = skyTexture();
+    scene.background = sky.t;
     scene.fog = new THREE.Fog("#dbe7f1", 170, 340);
     // Panel camında gökyüzü yansıması için ortam ışığı.
     const pmrem = new THREE.PMREMGenerator(renderer);
@@ -292,7 +360,8 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     controls.minDistance = 5;
     controls.maxDistance = 200;
 
-    scene.add(new THREE.HemisphereLight("#ffffff", "#7a8a70", 0.7));
+    const hemi = new THREE.HemisphereLight("#ffffff", "#7a8a70", 0.7);
+    scene.add(hemi);
     const sun = new THREE.DirectionalLight("#fff4e0", 2.6);
     sun.castShadow = true;
     sun.shadow.mapSize.set(4096, 4096);
@@ -309,10 +378,75 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     scene.add(content, ground);
     panelTex.current = panelTexture();
 
+    // Bulutlar: yavaşça sürüklenen yarı saydam kartlar.
+    const clouds = new THREE.Group();
+    const cloudTex = cloudTexture();
+    const cloudMat = new THREE.SpriteMaterial({ map: cloudTex, transparent: true, opacity: 0.9, depthWrite: false, fog: false });
+    for (let i = 0; i < 32; i++) {
+      const sp = new THREE.Sprite(cloudMat);
+      const w = 42 + ((i * 37) % 46);
+      sp.scale.set(w, w * 0.5, 1);
+      sp.position.set(((i * 61) % 300) - 150, 52 + ((i * 13) % 26), ((i * 47) % 300) - 150);
+      clouds.add(sp);
+    }
+    scene.add(clouds);
+
+    // Yağmur: kameranın önünde düşen ince çizgiler.
+    const DROPS = 1100;
+    const rainPos = new Float32Array(DROPS * 6);
+    for (let i = 0; i < DROPS; i++) {
+      const x = (Math.random() - 0.5) * 110;
+      const y = Math.random() * 70;
+      const z = (Math.random() - 0.5) * 110;
+      rainPos.set([x, y, z, x + 0.05, y - 1.1, z], i * 6);
+    }
+    const rainGeo = new THREE.BufferGeometry();
+    rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
+    const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: "#d3e0ec", transparent: true, opacity: 0.5 }));
+    rain.frustumCulled = false;
+    rain.visible = false;
+    scene.add(rain);
+
+    applyEnv.current = (w, m, h) => {
+      const x = WX[w];
+      const { dir, el: elev } = sunDirection(latRef.current, m, h);
+      const above = elev > 0.02;
+      // 0 gece, 1 gündüz; alacakaranlıkta yumuşak geçiş.
+      const day = Math.max(0, Math.min(1, (elev + 0.08) / 0.3));
+      const dusk = w === "bulutlu" || w === "yagmurlu" ? 0 : Math.max(0, 1 - Math.abs(elev - 0.08) / 0.2);
+      sky.paint(mix(NIGHT[0], x.sky[0], day), mix(mix(NIGHT[1], x.sky[1], day), "#ffb27a", dusk * 0.55), mix(mix(NIGHT[2], x.sky[2], day), "#ff9a5c", dusk * 0.75));
+      sun.visible = above;
+      sun.position.copy(sun.target.position).addScaledVector(dir, 70);
+      sun.intensity = above ? (0.9 + 2 * Math.min(1, Math.sin(elev) * 1.6)) * x.sun : 0;
+      sun.color.set(elev < 0.3 ? "#ffd2a0" : "#fff4e0");
+      hemi.intensity = x.hemi * (0.14 + 0.86 * day);
+      scene.environmentIntensity = (above ? 0.45 : 0.14) * (0.5 + 0.5 * x.sun);
+      (scene.fog as THREE.Fog).color.set(mix(NIGHT[2], x.fog, day));
+      cloudMat.color.set(mix("#232c44", x.cloud, day));
+      clouds.children.forEach((sp, i) => (sp.visible = i < x.clouds));
+      rain.visible = x.rain;
+    };
+
     let raf = 0;
     const loop = () => {
       // Video kaydında kamera ve çizim kayıt döngüsündedir.
       if (!recording.current) {
+        for (const sp of clouds.children) {
+          sp.position.x += 0.025;
+          if (sp.position.x > 170) sp.position.x = -170;
+        }
+        if (rain.visible) {
+          const a = rainGeo.getAttribute("position") as THREE.BufferAttribute;
+          const arr = a.array as Float32Array;
+          for (let i = 0; i < DROPS; i++) {
+            let y = arr[i * 6 + 1] - 1.5;
+            if (y < 0) y += 70;
+            arr[i * 6 + 1] = y;
+            arr[i * 6 + 4] = y - 1.1;
+          }
+          a.needsUpdate = true;
+          rain.position.set(controls.target.x, 0, controls.target.z);
+        }
         controls.update();
         renderer.render(scene, camera);
       }
@@ -336,18 +470,10 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     };
   }, []);
 
-  // Güneş: seçilen ay ve saatteki gerçek konumu.
+  // Güneş ve hava: seçilen ay, saat ve hava koşulu.
   useEffect(() => {
-    const c = ctx.current;
-    if (!c) return;
-    const { dir, el } = sunDirection(lat, month, hour);
-    const above = el > 0.02;
-    c.sun.visible = above;
-    c.sun.position.copy(c.sun.target.position).addScaledVector(dir, 70);
-    c.sun.intensity = above ? 0.9 + 2 * Math.min(1, Math.sin(el) * 1.6) : 0;
-    c.sun.color.set(el < 0.3 ? "#ffd2a0" : "#fff4e0");
-    c.scene.environmentIntensity = above ? 0.45 : 0.18;
-  }, [lat, month, hour, frames]);
+    applyEnv.current(weather, month, hour);
+  }, [lat, month, hour, weather, frames]);
 
   // Otomatik tur (sunum ve video kaydı için).
   useEffect(() => {
@@ -514,19 +640,68 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
     }
   }, [frames, cells, layout, center, imagery, obstacles]);
 
+  // O anki enerji akışı.
+  const pvM = sim?.monthlyPv[month] ?? 0;
+  const loadM = sim?.monthlyLoad[month] ?? 0;
+  const day = useMemo(
+    () => (sim ? simulateDay({ month, monthlyPv: pvM, monthlyLoad: loadM, abone: sim.abone, lat, azimuth: sim.azimuth, batteryKwh: sim.batteryKwh, weather, pvCap: pvLimit(sim.dcKwp, sim.acKw) }) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sim her çizimde yeni nesne; değerleri izlenir
+    [month, weather, lat, pvM, loadM, sim?.abone, sim?.azimuth, sim?.batteryKwh, sim?.dcKwp, sim?.acKw]
+  );
+  const f = day ? flowAt(day, hour) : null;
+  const dayPv = day ? day.reduce((a, d) => a + d.pv, 0) : 0;
+  const kw = (v: number) => `${v.toLocaleString("tr-TR", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} kW`;
+  const hasLoad = Boolean(sim?.monthlyLoad.some((v) => v > 0));
+  const pct = (v: number) => (f && f.load > 0 ? (v / f.load) * 100 : 0);
   const hud = "rounded-lg bg-black/55 px-3 py-2 text-[12.5px] font-semibold text-white backdrop-blur";
   return (
-    <div ref={wrap} className="relative h-[420px] w-full overflow-hidden rounded-2xl border border-line bg-[#c4dcf0] sm:h-[560px]">
+    <div ref={wrap} className={`relative w-full overflow-hidden rounded-2xl border border-line bg-[#c4dcf0] ${sim ? "h-[580px] sm:h-[640px]" : "h-[420px] sm:h-[560px]"}`}>
       <div ref={box} className="h-full w-full" />
-      <div className={`absolute left-3 top-3 flex flex-wrap items-center gap-3 ${hud}`}>
-        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label="Ay" className="rounded bg-white/15 px-1.5 py-1 outline-none [&>option]:text-black">
-          {AYLAR.map((a, i) => <option key={a} value={i}>{a}</option>)}
-        </select>
-        <label className="flex items-center gap-2">
-          <span className="font-mono-data">{String(Math.floor(hour)).padStart(2, "0")}:{hour % 1 ? "30" : "00"}</span>
-          <input type="range" min={5} max={20} step={0.5} value={hour} onChange={(e) => setHour(Number(e.target.value))} aria-label="Saat" className="w-20 accent-sun sm:w-36" />
-        </label>
+      <div className="absolute left-3 right-[92px] top-3 flex flex-col items-start gap-2 sm:right-[120px]">
+        <div className={`flex flex-wrap items-center gap-2.5 ${hud}`}>
+          <select value={month} onChange={(e) => setSim({ month: Number(e.target.value) })} aria-label="Ay" className="rounded bg-white/15 px-1.5 py-1 outline-none [&>option]:text-black">
+            {AYLAR.map((a, i) => <option key={a} value={i}>{a}</option>)}
+          </select>
+          <button onClick={() => setPlaying((v) => !v)} aria-label={playing ? "Durdur" : "Günü oynat"} className="rounded bg-white/15 p-1">{playing ? <Pause size={14} /> : <Play size={14} />}</button>
+          <span className="font-mono-data">{String(Math.floor(hour)).padStart(2, "0")}:{String(Math.floor((hour % 1) * 4) * 15).padStart(2, "0")}</span>
+          <input type="range" min={0} max={23.75} step={0.25} value={hour} onChange={(e) => setSim({ hour: Number(e.target.value) })} aria-label="Saat" className="w-24 accent-sun sm:w-44" />
+        </div>
+        <div className="flex gap-1 rounded-lg bg-black/55 p-1 backdrop-blur" role="group" aria-label="Hava durumu">
+          {WEATHERS.map(({ key, ad }) => {
+            const Icon = WX_ICON[key];
+            return (
+              <button key={key} onClick={() => setSim({ weather: key })} title={ad} aria-label={ad} aria-pressed={weather === key} className={`inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[12px] font-semibold ${weather === key ? "bg-sun text-[#1a1205]" : "text-white hover:bg-white/15"}`}>
+                <Icon size={15} />
+                <span className="hidden sm:inline">{ad}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+      {f && sim && (
+        <div className="absolute inset-x-3 bottom-3 rounded-xl bg-black/65 p-3 text-white backdrop-blur">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+            <div><p className="text-[11px] text-white/70">Anlık üretim</p><p className="font-mono-data text-[19px] font-semibold text-[#ffd166]">{kw(f.pv)}</p></div>
+            {hasLoad && <div><p className="text-[11px] text-white/70">Anlık tüketim</p><p className="font-mono-data text-[19px] font-semibold text-[#8fdcff]">{kw(f.load)}</p></div>}
+            {hasLoad && <div><p className="text-[11px] text-white/70">{f.toGrid > 0.05 ? "Şebekeye veriliyor" : f.fromGrid > 0.05 ? "Şebekeden alınıyor" : "Şebeke"}</p><p className="font-mono-data text-[19px] font-semibold">{kw(f.toGrid > 0.05 ? f.toGrid : f.fromGrid)}</p></div>}
+            {sim.batteryKwh > 0 ? (
+              <div><p className="text-[11px] text-white/70">{f.toBattery > 0.05 ? "Batarya şarj oluyor" : f.fromBattery > 0.05 ? "Bataryadan kullanılıyor" : "Batarya"}</p><p className="font-mono-data text-[19px] font-semibold text-[#7ff0bd]">%{Math.round(f.soc * 100)}</p></div>
+            ) : (
+              <div><p className="text-[11px] text-white/70">Bu havada günlük üretim</p><p className="font-mono-data text-[19px] font-semibold">{Math.round(dayPv).toLocaleString("tr-TR")} kWh</p></div>
+            )}
+          </div>
+          {hasLoad && f.load > 0 && (
+            <div className="mt-2">
+              <div className="flex h-2 overflow-hidden rounded-full bg-white/15">
+                <div style={{ width: `${pct(f.direct)}%`, background: "#ffb547" }} />
+                <div style={{ width: `${pct(f.fromBattery)}%`, background: "#7ff0bd" }} />
+                <div style={{ width: `${pct(f.fromGrid)}%`, background: "#9aa6b8" }} />
+              </div>
+              <p className="mt-1 text-[11px] text-white/80">Tüketimin %{Math.round(pct(f.direct))}&apos;i güneşten{f.fromBattery > 0.05 ? `, %${Math.round(pct(f.fromBattery))}'i bataryadan` : ""}{f.fromGrid > 0.05 ? `, %${Math.round(pct(f.fromGrid))}'i şebekeden` : ""} karşılanıyor.</p>
+            </div>
+          )}
+        </div>
+      )}
       <div className="absolute right-3 top-3 flex gap-2">
         <button onClick={() => setSpin((v) => !v)} className={`inline-flex items-center gap-1.5 ${hud} ${spin ? "ring-2 ring-sun" : ""}`}><Orbit size={14} /> <span className="hidden sm:inline">Tur</span></button>
         <button onClick={() => (document.fullscreenElement ? document.exitFullscreen() : wrap.current?.requestFullscreen())} className={`inline-flex items-center gap-1.5 ${hud}`} aria-label="Tam ekran"><Maximize2 size={14} /></button>

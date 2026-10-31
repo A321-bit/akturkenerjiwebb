@@ -16,6 +16,7 @@ import { buildProposalPdf } from "@/lib/teklif/export-pdf";
 import StringDesign from "./StringDesign";
 import ProposalDocument, { type Company } from "./ProposalDocument";
 import EnergyFlow from "./EnergyFlow";
+import { meanAzimuth } from "@/lib/teklif/simulate";
 import LocateBar from "./LocateBar";
 import type { Parcel } from "@/lib/teklif/locate";
 import type { EditorMode } from "./SatelliteEditor";
@@ -705,7 +706,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
               />
             )}
             <div className={view === "3d" ? "" : "pointer-events-none fixed -left-[3000px] top-0 h-[560px] w-[1000px]"}>
-              <Roof3D ref={r3d} center={p.site.center} frames={frames} cells={cells} layout={layout} lat={p.site.center[0]} obstacles={p.obstacles} />
+              <Roof3D ref={r3d} center={p.site.center} frames={frames} cells={cells} layout={layout} lat={p.site.center[0]} obstacles={p.obstacles} sim={{ monthlyPv: n.monthlyProduction, monthlyLoad: n.monthlyKwh, abone: p.abone, azimuth: meanAzimuth(n.byFace.map((f) => ({ azimuth: p.faces.find((x) => x.id === f.faceId)?.azimuth ?? 0, weight: f.annualKwh }))), batteryKwh: p.batteryKwh ?? 0, dcKwp: n.dcKwp, acKw: n.acKw }} />
             </div>
             {view === "3d" && <p className="mt-2 text-[12.5px] text-slate">Fareyle döndürün, tekerlekle yakınlaştırın, sağ tuşla kaydırın. Çatı ve zemin gerçek uydu görüntüsüdür; yükseklikler girilen değerlerdir.</p>}
           </div>

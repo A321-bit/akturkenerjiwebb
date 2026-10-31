@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
-import { meanAzimuth, simulateDay, simulateYear, suggestBattery, type HourFlow } from "@/lib/teklif/simulate";
+import { SIM_DEFAULT, WEATHERS, meanAzimuth, pvLimit, simulateDay, simulateYear, suggestBattery, type HourFlow, type SimState, type Weather } from "@/lib/teklif/simulate";
 import type { Proposal, ProposalNumbers } from "@/lib/teklif/proposal";
 
 // Saatlik enerji akışı: panel, ev, şebeke ve batarya arasındaki akış animasyonu, günlük grafik
@@ -62,9 +62,24 @@ function DayChart({ day, hour, onHour }: { day: HourFlow[]; hour: number; onHour
   );
 }
 
-export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: ProposalNumbers; onBattery?: (kwh: number) => void }) {
-  const [month, setMonth] = useState(5);
-  const [hour, setHour] = useState(13);
+export default function EnergyFlow({ p, n, onBattery, state, onState }: { p: Proposal; n: ProposalNumbers; onBattery?: (kwh: number) => void; state?: SimState; onState?: (s: SimState) => void }) {
+  const [own, setOwn] = useState<SimState>(SIM_DEFAULT);
+  const st = state ?? own;
+  const month = st.month;
+  const hour = Math.floor(st.hour) % 24;
+  const weather = st.weather;
+  const stRef = useRef(st);
+  useEffect(() => {
+    stRef.current = st;
+  });
+  const setSim = (x: Partial<SimState>) => {
+    const next = { ...stRef.current, ...x };
+    stRef.current = next;
+    if (onState) onState(next);
+    else setOwn(next);
+  };
+  const setHour = (h: number) => setSim({ hour: h });
+  const setMonth = (m: number) => setSim({ month: m });
   const [playing, setPlaying] = useState(false);
   const hasLoad = n.annualKwh > 0;
   const lat = p.site.center[0];
@@ -74,11 +89,12 @@ export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: Propos
 
   useEffect(() => {
     if (!playing) return;
-    const t = setInterval(() => setHour((h) => (h + 1) % 24), 700);
+    const t = setInterval(() => setHour((Math.floor(stRef.current.hour) + 1) % 24), 700);
     return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setHour güncel değeri ref'ten okur
   }, [playing]);
 
-  const day = useMemo(() => simulateDay({ month, monthlyPv: n.monthlyProduction[month], monthlyLoad: n.monthlyKwh[month], abone: p.abone, lat, azimuth, batteryKwh: battery }), [month, n.monthlyProduction, n.monthlyKwh, p.abone, lat, azimuth, battery]);
+  const day = useMemo(() => simulateDay({ month, monthlyPv: n.monthlyProduction[month], monthlyLoad: n.monthlyKwh[month], abone: p.abone, lat, azimuth, batteryKwh: battery, weather, pvCap: pvLimit(n.dcKwp, n.acKw) }), [month, n.monthlyProduction, n.monthlyKwh, p.abone, lat, azimuth, battery, weather, n.dcKwp, n.acKw]);
   const compareKwh = battery || suggested;
   const year = useMemo(() => {
     const args = { monthlyPv: n.monthlyProduction, monthlyLoad: n.monthlyKwh, abone: p.abone, lat, azimuth };
@@ -96,11 +112,14 @@ export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: Propos
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="font-semibold">Saatlik enerji akışı</h3>
-          <p className="text-[12.5px] text-slate">{AYLAR[month]} ayının tipik bir günü için tahmin: günde {n0(dayPv)} kWh üretim{hasLoad ? `, ${n0(dayLoad)} kWh tüketim` : ""}.</p>
+          <p className="text-[12.5px] text-slate">{AYLAR[month]} ayında {WEATHERS.find((w) => w.key === weather)?.ad.toLocaleLowerCase("tr-TR")} bir gün için tahmin: günde {n0(dayPv)} kWh üretim{hasLoad ? `, ${n0(dayLoad)} kWh tüketim` : ""}.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label="Ay" className="rounded-lg border border-line bg-paper px-2 py-1.5 text-[13px]">
             {AYLAR.map((a, i) => <option key={a} value={i}>{a}</option>)}
+          </select>
+          <select value={weather} onChange={(e) => setSim({ weather: e.target.value as Weather })} aria-label="Hava durumu" className="rounded-lg border border-line bg-paper px-2 py-1.5 text-[13px]">
+            {WEATHERS.map((w) => <option key={w.key} value={w.key}>{w.ad}</option>)}
           </select>
           <button onClick={() => setPlaying((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-[13px] font-semibold text-paper">
             {playing ? <Pause size={14} /> : <Play size={14} />} {playing ? "Durdur" : "Oynat"}
@@ -130,6 +149,7 @@ export default function EnergyFlow({ p, n, onBattery }: { p: Proposal; n: Propos
             <span className="inline-flex items-center gap-1.5"><span className="h-0.5 w-4" style={{ background: C.load }} /> Tüketim</span>
             <span>Grafiğe dokunarak saat seçebilirsiniz.</span>
           </div>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-slate">Ortalama, PVGIS uzun yıllık verisidir. Diğer hava seçenekleri tipik oranlarla yapılan tahmindir, ölçüm değildir.</p>
           <input type="range" min={0} max={23} value={hour} onChange={(e) => setHour(Number(e.target.value))} aria-label="Saat" className="mt-2 w-full accent-brand" />
         </div>
       </div>

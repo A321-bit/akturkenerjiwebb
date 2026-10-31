@@ -2,7 +2,7 @@
 import qrcode from "qrcode-generator";
 import { YON_ADI, isFlat } from "@/lib/teklif/geometry";
 import type { Proposal, ProposalNumbers } from "@/lib/teklif/proposal";
-import { meanAzimuth, simulateDay, simulateYear, type HourFlow } from "@/lib/teklif/simulate";
+import { WEATHERS, meanAzimuth, pvLimit, simulateDay, simulateYear, type HourFlow } from "@/lib/teklif/simulate";
 import { ABONE_ADLARI } from "@/lib/elektrik-tarife";
 import type { QuoteSettings } from "@/lib/teklif/pricing";
 
@@ -253,6 +253,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
   const battery = p.batteryKwh ?? 0;
   const flow = (month: number) => simulateDay({ month, monthlyPv: n.monthlyProduction[month], monthlyLoad: n.monthlyKwh[month], abone: p.abone, lat, azimuth, batteryKwh: battery });
   const year = hasFlow ? simulateYear({ monthlyPv: n.monthlyProduction, monthlyLoad: n.monthlyKwh, abone: p.abone, lat, azimuth, batteryKwh: battery }) : null;
+  const dayKwh = (month: number, weather: (typeof WEATHERS)[number]["key"]) => simulateDay({ month, monthlyPv: n.monthlyProduction[month], monthlyLoad: n.monthlyKwh[month], abone: p.abone, lat, azimuth, batteryKwh: 0, weather, pvCap: pvLimit(n.dcKwp, n.acKw) }).reduce((a, d) => a + d.pv, 0);
   const liveUrl = p.shareToken ? `https://${company.web}/teklif/${p.shareToken}` : null;
   const refs = assets?.references ?? [];
   const refPages = Array.from({ length: Math.ceil(refs.length / 6) }, (_, i) => refs.slice(i * 6, i * 6 + 6));
@@ -404,6 +405,17 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
                 <Stat label="Şebekeden çekilen" value={`${num(year.fromGrid)} kWh`} />
                 <Stat label="Batarya" value={battery > 0 ? `${num(battery)} kWh` : "Yok"} />
               </div>
+              <h3 className="mt-5 text-[12px] font-semibold">Hava koşuluna göre günlük üretim</h3>
+              <div className="mt-1.5 grid grid-cols-4 gap-2.5">
+                {WEATHERS.filter((w) => w.key !== "ortalama").map((w) => (
+                  <div key={w.key} className="pd-card px-3 py-2">
+                    <p className="text-[9.5px] uppercase tracking-[0.1em]" style={{ color: MUTED }}>{w.ad}</p>
+                    <p className="mt-0.5 font-display text-[14px] font-semibold">{num(dayKwh(5, w.key))} kWh <span className="text-[9.5px] font-normal" style={{ color: MUTED }}>Haz</span></p>
+                    <p className="font-display text-[12px]" style={{ color: MUTED }}>{num(dayKwh(11, w.key))} kWh Ara</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[9px]" style={{ color: MUTED }}>Hava senaryoları tipik oranlarla yapılan tahmindir, ölçüm değildir.</p>
             </>
           )}
           {foot()}
