@@ -129,7 +129,7 @@ function SolarPortal({ prod, img, kwp }: { prod: number[]; img?: string; kwp: nu
 
 function EnergyChart({ prod, cons }: { prod: number[]; cons: number[] }) {
   const W = 640;
-  const H = 210;
+  const H = 330;
   const max = Math.max(1, ...prod, ...cons) * 1.08;
   const bw = W / 12;
   const hasCons = cons.some((c) => c > 0);
@@ -197,7 +197,7 @@ function PaybackCurve({ data, payback }: { data: number[]; payback: number | nul
         <g>
           <circle cx={px} cy={zero} r={13} fill={SUN} fillOpacity={0.22} />
           <circle cx={px} cy={zero} r={6} fill={SUN} />
-          <text x={Math.min(px + 14, W - 180)} y={zero + 26} fontSize="13" fontWeight="600" fill="#ffd166">Yatırım kendini amorti eder</text>
+          <text x={Math.max(0, px - 40)} y={zero - 24} fontSize="13" fontWeight="600" fill="#ffd166">Yatırım kendini amorti eder</text>
         </g>
       )}
       {[1, 5, 10, 15, 20, 25].map((yr) => <text key={yr} x={x(yr - 1)} y={H + 18} fontSize="11" fill={MUTED} textAnchor={yr === 1 ? "start" : yr === 25 ? "end" : "middle"}>{yr}. yıl</text>)}

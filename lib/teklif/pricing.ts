@@ -230,6 +230,10 @@ export function pickRecipe(list: Recipe[], kind: Recipe["kind"], panelCount: num
   return [...own].sort((a, b) => Math.abs(count(a) - panelCount) - Math.abs(count(b) - panelCount))[0] ?? null;
 }
 
+/** Yazım farklarını siler: "51,2 V 280 Ah" ile "51.2V 280Ah" aynı sayılır. */
+const yazim = (t: string) => t.toLocaleLowerCase("tr-TR").replace(/,/g, ".").replace(/\s+/g, "");
+export const kelimeUyar = (d: Datasheet, ad: string) => Boolean(d.kelime?.trim() && yazim(ad).includes(yazim(d.kelime)));
+
 /** Teklifteki ürünlere bağlı datasheet'ler. */
 export function matchDatasheets(p: Proposal, list: Datasheet[]) {
   const slugs = [p.panel.slug, p.inverter?.slug, p.battery?.slug, ...(p.extraInverters ?? []).map((x) => x.slug)].filter(Boolean) as string[];
