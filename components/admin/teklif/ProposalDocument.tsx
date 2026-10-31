@@ -171,9 +171,9 @@ export default function ProposalDocument({ p, n, company, assets }: { p: Proposa
     <div className="proposal-doc space-y-6 print:space-y-0">
       {assets && (
         <>
-          <Sheet bleed><img src="/teklif/kapak.jpg" alt="Anahtar teslim güneş enerjisi sistemi fiyat teklifi" className="h-full w-full object-cover" /></Sheet>
+          <Sheet bleed><img src="/teklif/kapak.jpg" alt="Anahtar teslim güneş enerjisi sistemi fiyat teklifi" className="h-full w-full object-fill" /></Sheet>
           <Sheet bleed>
-            <img src="/teklif/hakkimizda.jpg" alt={company.name} className="h-full w-full object-cover" />
+            <img src="/teklif/hakkimizda.jpg" alt={company.name} className="h-full w-full object-fill" />
             <div className="absolute left-[9%] right-[9%] top-[76.8%] flex h-[9.4%] flex-col items-center justify-center text-center">
               <p className="text-[10px] uppercase tracking-[0.16em] text-[#5b6577]">Bu teklif size özel hazırlanmıştır</p>
               <p className="mt-1 text-[16px] font-semibold">Sayın {p.customer.name || "Müşterimiz"}</p>
@@ -436,14 +436,14 @@ export default function ProposalDocument({ p, n, company, assets }: { p: Proposa
 
           {refPages.map((pair) => (
             <Sheet key={pair[0].id} bleed>
-              <div className="flex h-full flex-col gap-[4mm] p-[8mm]">
+              <div className="flex h-full flex-col gap-[4mm] px-[12mm] py-[8mm]">
                 {pair.map((r) => <img key={r.id} src={r.url} alt={r.ad} className="min-h-0 w-full flex-1 rounded-lg object-cover" />)}
               </div>
             </Sheet>
           ))}
 
           <Sheet last bleed final>
-            <img src="/teklif/son.jpg" alt="" className="h-full w-full object-cover" />
+            <img src="/teklif/son.jpg" alt="" className="h-full w-full object-fill" />
             <div className="absolute inset-x-0 top-[40%] flex flex-col items-center text-center">
               <p className="text-[30px] font-bold leading-tight text-[#1f6fb2]">Bizi Tercih Ettiğiniz İçin<br />Teşekkür Ederiz</p>
               <div className="mt-3 h-[2px] w-[44mm] bg-[#1f6fb2]" />
