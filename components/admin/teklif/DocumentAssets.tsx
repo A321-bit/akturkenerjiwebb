@@ -33,8 +33,8 @@ export default function DocumentAssets({ settings, onChange, products }: { setti
       {msg && <p className="text-[12.5px] font-semibold text-brand">{msg}</p>}
 
       <section className="rounded-2xl border border-line bg-paper-raised p-5">
-        <h3 className="font-semibold">Ürün datasheet'leri</h3>
-        <p className="text-[12.5px] text-slate">Her datasheet'i bir kez yükleyin ve ürüne bağlayın. Teklifte o ürün seçilince PDF'in sonuna kendiliğinden eklenir. Hazır paketlerdeki ürünler için “Kalem adında geçen” alanını doldurun.</p>
+        <h3 className="font-semibold">Ürün datasheet&apos;leri</h3>
+        <p className="text-[12.5px] text-slate">Her datasheet&apos;i bir kez yükleyin ve ürüne bağlayın. Teklifte o ürün seçilince PDF&apos;in sonuna kendiliğinden eklenir. Hazır paketlerdeki ürünler için “Kalem adında geçen” alanını doldurun.</p>
         <div className="mt-3 space-y-3">
           {sheets.map((s) => (
             <div key={s.id} className="rounded-xl border border-line p-3">

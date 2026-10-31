@@ -1168,11 +1168,11 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
             <Btn icon={<Printer size={15} />} onClick={print}>Yazdır</Btn>
             <Btn icon={<Box size={15} />} onClick={captureImages}>3B görselleri yenile</Btn>
             <Btn icon={<Box size={15} />} onClick={makeVideo}>{videoPct != null ? `Video hazırlanıyor %${videoPct}` : "Müşteri videosu oluştur"}</Btn>
-            <p className="text-[12.5px] text-slate">“Yazdır” datasheet'leri içermez; kâğıda basarken A4 ve “Arka plan grafikleri” seçeneğini işaretleyin.</p>
+            <p className="text-[12.5px] text-slate">“Yazdır” datasheet&apos;leri içermez; kâğıda basarken A4 ve “Arka plan grafikleri” seçeneğini işaretleyin.</p>
           </div>
           {pdfMsg && <p className="mb-4 rounded-xl bg-brand/10 p-3 text-[13px] font-semibold">{pdfMsg}</p>}
           <section className="mb-4 rounded-2xl border border-line bg-paper-raised p-4">
-            <h3 className="font-semibold">Eklenecek datasheet'ler</h3>
+            <h3 className="font-semibold">Eklenecek datasheet&apos;ler</h3>
             {library.length === 0 && <p className="mt-1 text-[13px] text-slate">Henüz datasheet yüklenmedi.</p>}
             <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px]">
               {library.map((d) => (
@@ -1182,7 +1182,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
                 </label>
               ))}
             </div>
-            {productsNoSheet.length > 0 && <p className="mt-2 rounded-lg bg-sun/15 p-2.5 text-[12.5px]">Datasheet'i yüklenmemiş ürün: {productsNoSheet.join(", ")}.{canEditRules ? " “Fiyat kuralları” sekmesinden yükleyin." : ""}</p>}
+            {productsNoSheet.length > 0 && <p className="mt-2 rounded-lg bg-sun/15 p-2.5 text-[12.5px]">Datasheet&apos;i yüklenmemiş ürün: {productsNoSheet.join(", ")}.{canEditRules ? " “Fiyat kuralları” sekmesinden yükleyin." : ""}</p>}
           </section>
           <div ref={docRef} className="overflow-x-auto rounded-2xl bg-ink/5 py-6">
             <ProposalDocument p={{ ...p, cells }} n={n} company={company} assets={settings} />
