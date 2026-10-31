@@ -208,7 +208,7 @@ function PaybackCurve({ data, payback }: { data: number[]; payback: number | nul
 
 function DayCurve({ title, day }: { title: string; day: HourFlow[] }) {
   const W = 300;
-  const H = 92;
+  const H = 64;
   const max = Math.max(0.5, ...day.map((d) => Math.max(d.pv, d.load)));
   const x = (h: number) => (h / 23) * W;
   const y = (v: number) => H - (v / max) * H;
@@ -392,7 +392,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
           </div>
           {hasFlow && year && (
             <>
-              <h3 className="mt-6 font-display text-[17px] font-semibold">Bir günde enerji akışı</h3>
+              <h3 className="mt-4 font-display text-[17px] font-semibold">Bir günde enerji akışı</h3>
               <p className="mt-1 text-[10.5px] leading-relaxed" style={{ color: MUTED }}>Üretimin tüketimi aştığı saatlerde fazlası {battery > 0 ? "önce bataryaya, sonra " : ""}şebekeye verilir; diğer saatlerde {battery > 0 ? "batarya ve " : ""}şebeke devreye girer.</p>
               <div className="mt-2"><Legend items={[[SUN, "Güneş üretimi"], [ICE, "Tüketiminiz (kW)"]]} /></div>
               <div className="mt-2 grid grid-cols-2 gap-2.5">
@@ -405,7 +405,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
                 <Stat label="Şebekeden çekilen" value={`${num(year.fromGrid)} kWh`} />
                 <Stat label="Batarya" value={battery > 0 ? `${num(battery)} kWh` : "Yok"} />
               </div>
-              <h3 className="mt-5 text-[12px] font-semibold">Hava koşuluna göre günlük üretim</h3>
+              <h3 className="mt-3 text-[12px] font-semibold">Hava koşuluna göre günlük üretim</h3>
               <div className="mt-1.5 grid grid-cols-4 gap-2.5">
                 {WEATHERS.filter((w) => w.key !== "ortalama").map((w) => (
                   <div key={w.key} className="pd-card px-3 py-2">
