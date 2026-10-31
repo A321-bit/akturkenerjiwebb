@@ -24,12 +24,12 @@ type Props = { center: LatLon; frames: FaceFrame[]; cells: PanelCell[]; layout: 
 
 const WX_ICON = { ortalama: BarChart3, acik: Sun, gunesli: CloudSun, bulutlu: Cloud, yagmurlu: CloudRain };
 // Hava görünümü: güneş gücü, ortam ışığı, gökyüzü (üst, orta, ufuk), bulut sayısı ve rengi.
-const WX: Record<Weather, { sun: number; hemi: number; sky: [string, string, string]; clouds: number; cloud: string; fog: string; rain: boolean }> = {
-  ortalama: { sun: 0.85, hemi: 0.7, sky: ["#6fa3d8", "#c4dcf0", "#eef3f7"], clouds: 5, cloud: "#ffffff", fog: "#dbe7f1", rain: false },
-  acik: { sun: 1, hemi: 0.72, sky: ["#2f7fd6", "#9fd0f5", "#e6f3fb"], clouds: 0, cloud: "#ffffff", fog: "#d6e9f6", rain: false },
-  gunesli: { sun: 0.92, hemi: 0.72, sky: ["#4c91da", "#b4d8f3", "#ecf4f9"], clouds: 10, cloud: "#ffffff", fog: "#dbe9f3", rain: false },
-  bulutlu: { sun: 0.26, hemi: 0.88, sky: ["#8c97a5", "#b4bcc6", "#d3d8de"], clouds: 26, cloud: "#a9b1bb", fog: "#c6ccd3", rain: false },
-  yagmurlu: { sun: 0.08, hemi: 0.58, sky: ["#4e5763", "#737c88", "#99a0a9"], clouds: 32, cloud: "#6f7883", fog: "#8f969f", rain: true },
+const WX: Record<Weather, { exposure: number; sun: number; hemi: number; sky: [string, string, string]; clouds: number; cloud: string; fog: string; rain: boolean }> = {
+  ortalama: { exposure: 1.05, sun: 0.85, hemi: 0.7, sky: ["#6fa3d8", "#c4dcf0", "#eef3f7"], clouds: 5, cloud: "#ffffff", fog: "#dbe7f1", rain: false },
+  acik: { exposure: 1.12, sun: 1, hemi: 0.72, sky: ["#2f7fd6", "#9fd0f5", "#e6f3fb"], clouds: 0, cloud: "#ffffff", fog: "#d6e9f6", rain: false },
+  gunesli: { exposure: 1.08, sun: 0.92, hemi: 0.72, sky: ["#4c91da", "#b4d8f3", "#ecf4f9"], clouds: 10, cloud: "#ffffff", fog: "#dbe9f3", rain: false },
+  bulutlu: { exposure: 0.78, sun: 0.26, hemi: 0.88, sky: ["#8c97a5", "#b4bcc6", "#d3d8de"], clouds: 26, cloud: "#a9b1bb", fog: "#c6ccd3", rain: false },
+  yagmurlu: { exposure: 0.55, sun: 0.08, hemi: 0.58, sky: ["#4e5763", "#737c88", "#99a0a9"], clouds: 32, cloud: "#6f7883", fog: "#8f969f", rain: true },
 };
 const NIGHT = ["#050a1c", "#0c1732", "#1a2541"];
 
@@ -386,7 +386,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       const sp = new THREE.Sprite(cloudMat);
       const w = 42 + ((i * 37) % 46);
       sp.scale.set(w, w * 0.5, 1);
-      sp.position.set(((i * 61) % 300) - 150, 52 + ((i * 13) % 26), ((i * 47) % 300) - 150);
+      sp.position.set(((i * 61) % 300) - 150, 34 + ((i * 13) % 24), ((i * 47) % 300) - 150);
       clouds.add(sp);
     }
     scene.add(clouds);
@@ -398,11 +398,11 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       const x = (Math.random() - 0.5) * 110;
       const y = Math.random() * 70;
       const z = (Math.random() - 0.5) * 110;
-      rainPos.set([x, y, z, x + 0.05, y - 1.1, z], i * 6);
+      rainPos.set([x, y, z, x + 0.05, y - 1.8, z], i * 6);
     }
     const rainGeo = new THREE.BufferGeometry();
     rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPos, 3));
-    const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: "#d3e0ec", transparent: true, opacity: 0.5 }));
+    const rain = new THREE.LineSegments(rainGeo, new THREE.LineBasicMaterial({ color: "#e4edf5", transparent: true, opacity: 0.85 }));
     rain.frustumCulled = false;
     rain.visible = false;
     scene.add(rain);
@@ -425,6 +425,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       cloudMat.color.set(mix("#232c44", x.cloud, day));
       clouds.children.forEach((sp, i) => (sp.visible = i < x.clouds));
       rain.visible = x.rain;
+      renderer.toneMappingExposure = x.exposure;
     };
 
     let raf = 0;
@@ -442,7 +443,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
             let y = arr[i * 6 + 1] - 1.5;
             if (y < 0) y += 70;
             arr[i * 6 + 1] = y;
-            arr[i * 6 + 4] = y - 1.1;
+            arr[i * 6 + 4] = y - 1.8;
           }
           a.needsUpdate = true;
           rain.position.set(controls.target.x, 0, controls.target.z);
@@ -635,7 +636,8 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
       const mid = b.getCenter(new THREE.Vector3());
       const size = Math.max(12, b.getSize(new THREE.Vector3()).length());
       c.controls.target.copy(mid);
-      c.camera.position.set(mid.x + size * 0.6, size * 0.7, mid.z + size * 0.9);
+      const k = Math.max(1, 1.15 / c.camera.aspect);
+      c.camera.position.set(mid.x + size * 0.6 * k, b.max.y + size * 0.16 * k, mid.z + size * 0.95 * k);
       c.sun.target.position.copy(mid);
     }
   }, [frames, cells, layout, center, imagery, obstacles]);
@@ -697,7 +699,7 @@ const Roof3D = forwardRef<Roof3DHandle, Props>(function Roof3D({ center, frames,
                 <div style={{ width: `${pct(f.fromBattery)}%`, background: "#7ff0bd" }} />
                 <div style={{ width: `${pct(f.fromGrid)}%`, background: "#9aa6b8" }} />
               </div>
-              <p className="mt-1 text-[11px] text-white/80">Tüketimin %{Math.round(pct(f.direct))}&apos;i güneşten{f.fromBattery > 0.05 ? `, %${Math.round(pct(f.fromBattery))}'i bataryadan` : ""}{f.fromGrid > 0.05 ? `, %${Math.round(pct(f.fromGrid))}'i şebekeden` : ""} karşılanıyor.</p>
+              <p className="mt-1 text-[11px] text-white/80">Tüketimin kaynağı: {[f.direct > 0.05 && `güneş %${Math.round(pct(f.direct))}`, f.fromBattery > 0.05 && `batarya %${Math.round(pct(f.fromBattery))}`, f.fromGrid > 0.05 && `şebeke %${Math.round(pct(f.fromGrid))}`].filter(Boolean).join(" · ")}</p>
             </div>
           )}
         </div>
