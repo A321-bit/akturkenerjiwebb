@@ -609,7 +609,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
           <p className="font-mono-data text-[12px] uppercase tracking-[0.16em] text-brand">Satış</p>
           <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight">Teklif Stüdyosu</h1>
           <p className="text-[13px] text-slate">
-            {p.proposalNo} · {p.customer.name || "müşteri girilmedi"} · {n.panelCount} panel · {num(n.dcKwp, 2)} kWp{n.total ? ` · ${p.priceCurrency === "USD" ? usd(n.total) : tl(n.total)}` : ""}
+            {loaded ? p.proposalNo : "Yeni teklif"} · {p.customer.name || "müşteri girilmedi"} · {n.panelCount} panel · {num(n.dcKwp, 2)} kWp{n.total ? ` · ${p.priceCurrency === "USD" ? usd(n.total) : tl(n.total)}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
