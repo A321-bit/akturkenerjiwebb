@@ -3,6 +3,7 @@ import { adminClient } from "./data";
 import { adsQuery } from "./google-ads";
 import { adsReport } from "./meta-ads";
 import { gaDay } from "./ga";
+import { dedupeClicks, firstByPhone, isContactClick, isWhatsappClick } from "./lead-metrics";
 
 // Günlük rapor e-postası (her akşam 22:30 TR, Vercel Cron → /api/cron/daily-report).
 // Günün tamamını tek e-postada toplar: site talepleri, Meta form başvuruları, takip
@@ -70,7 +71,7 @@ export async function buildDailyReport() {
       settle(q<{ full_name: string | null; phone: string | null; city: string | null; campaign_name: string | null; status: string | null; created_time: string }[]>(
         db.from("meta_leads").select("full_name, phone, city, campaign_name, status, created_time").gte("created_time", start).order("created_time"))),
       settle(q<{ status: string | null }[]>(db.from("meta_leads").select("status").gte("created_time", new Date(Date.now() - 30 * 86400000).toISOString()))),
-      settle(q<{ type: string; label: string | null; path: string | null; city: string | null }[]>(db.from("analytics_events").select("type, label, path, city").gte("created_at", start).limit(20000))),
+      settle(q<{ type: string; label: string | null; path: string | null; city: string | null; created_at: string }[]>(db.from("analytics_events").select("type, label, path, city, created_at").gte("created_at", start).limit(20000))),
       settle(q<{ title: string; platforms: string[]; fb_status: string | null; ig_status: string | null; error: string | null; scheduled_at: string }[]>(
         db.from("social_posts").select("title, platforms, fb_status, ig_status, error, scheduled_at").gte("scheduled_at", start).lt("scheduled_at", new Date(new Date(start).getTime() + 86400000).toISOString()))),
       settle(q<{ title: string; scheduled_at: string }[]>(
@@ -97,11 +98,13 @@ export async function buildDailyReport() {
   const ev = events.data ?? [];
   const pageviews = ev.filter((e) => e.type === "pageview").length;
   const clicks: Record<string, number> = {};
-  for (const e of ev) if (e.type === "click" && e.label) clicks[e.label] = (clicks[e.label] ?? 0) + 1;
+  const uniqueClicks = dedupeClicks(ev.filter((e) => e.type === "click" && e.label));
+  for (const e of uniqueClicks) clicks[e.label!] = (clicks[e.label!] ?? 0) + 1;
   const evPages: Record<string, number> = {};
   for (const e of ev) if (e.type === "pageview" && e.path) evPages[e.path] = (evPages[e.path] ?? 0) + 1;
-  const wa = (clicks.whatsapp_button ?? 0) + (clicks.whatsapp_cta_banner ?? 0) + (clicks.store_whatsapp_product ?? 0);
-  const calls = clicks.call_button ?? 0;
+  const contactClicks = uniqueClicks.filter((e) => isContactClick(e.label));
+  const wa = contactClicks.filter((e) => isWhatsappClick(e.label)).length;
+  const calls = contactClicks.length - wa;
 
   const micro = (v?: string) => Number(v ?? 0) / 1e6;
   const gCamp = (gAds.data ?? []).map((r) => ({
@@ -115,7 +118,9 @@ export async function buildDailyReport() {
   const mT = mAds.data?.total;
   const mW = mAdsWeek.data?.total;
   const spend = gTotal.cost + (mT?.spend ?? 0);
-  const contacts = leadRows.length + metaRows.length + wa + calls;
+  // Gerçek talep: bırakılan numaralar, aynı numara tek sayılır. Buton tıklamaları eklenmez.
+  const seenPhones = new Set<string>();
+  const contacts = firstByPhone(leadRows, (r) => r.phone, seenPhones).length + firstByPhone(metaRows, (r) => r.phone, seenPhones).length;
 
   const metaFunnel: Record<string, number> = {};
   for (const r of metaOpen.data ?? []) metaFunnel[r.status || "Yeni"] = (metaFunnel[r.status || "Yeni"] ?? 0) + 1;
@@ -177,9 +182,9 @@ export async function buildDailyReport() {
 
   ${h2("Özet")}
   <table style="width:100%;border-collapse:collapse"><tr>
-    ${card("Gelen iletişim", n0(contacts), `form ${leadRows.length + metaRows.length} · WhatsApp ${wa} · telefon ${calls}`)}
+    ${card("Gerçek talep", n0(contacts), `site ${leadRows.length} · Meta form ${metaRows.length} kayıt · tıklama: WhatsApp ${wa}, telefon ${calls}`)}
     ${card("Reklam harcaması", tl(spend), `Google ${tl(gTotal.cost)} · Meta ${tl(mT?.spend ?? 0)}`)}
-    ${card("İletişim başı maliyet", contacts ? tl(spend / contacts) : "—", "harcama ÷ tüm iletişim")}
+    ${card("Talep başı maliyet", contacts ? tl(spend / contacts) : "—", "harcama ÷ gerçek talep")}
     ${card("Site ziyaretçisi", n0(ga4?.totals.activeUsers ?? 0), `${n0(ga4?.totals.sessions ?? 0)} oturum · ${n0(pageviews)} sayfa (site)`)}
   </tr><tr>
     ${card("Site teklif formu", n0(leadRows.length))}
@@ -249,7 +254,7 @@ export async function buildDailyReport() {
   <p style="font-size:12px;color:#6b7280;margin-top:26px">Detaylar: <a href="${SITE}/admin/reklam-ozeti">Reklam Özeti</a> · <a href="${SITE}/admin/analytics">Google Analytics</a> · <a href="${SITE}/admin/seo">SEO</a> · <a href="${SITE}/admin">Admin</a></p>
   </div></div>`;
 
-  const subject = `Günlük Rapor · ${trDate.split("-").reverse().join(".")} · ${contacts} iletişim · ${tl(spend)} reklam`;
+  const subject = `Günlük Rapor · ${trDate.split("-").reverse().join(".")} · ${contacts} talep · ${tl(spend)} reklam`;
   return { subject, html, summary: { contacts, spend, leads: leadRows.length, metaLeads: metaRows.length, wa, calls, errors } };
 }
 

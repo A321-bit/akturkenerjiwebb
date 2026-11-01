@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { adminClient } from "@/lib/data";
+import { dedupeClicks } from "@/lib/lead-metrics";
 
 // Mağaza istatistikleri: WhatsApp'a ve aramaya kaç kez tıklandı, hangi
 // üründen ve sayfanın neresinden. Veri analytics_events tablosundan gelir.
 export const dynamic = "force-dynamic";
 
-type Ev = { type: string; path: string; label: string | null; created_at: string };
+type Ev = { type: string; path: string; label: string | null; city: string | null; created_at: string };
 
 const SOURCES: Record<string, string> = {
   store_whatsapp_card: "Ürün kartı butonu",
@@ -37,7 +38,7 @@ async function fetchStoreEvents(since: string): Promise<Ev[]> {
   for (let from = 0; from < 50000; from += 1000) {
     const { data, error } = await db
       .from("analytics_events")
-      .select("type, path, label, created_at")
+      .select("type, path, label, city, created_at")
       .like("path", "/magaza%")
       .gte("created_at", since)
       .order("created_at", { ascending: false })
@@ -59,7 +60,7 @@ export default async function StoreStatsPage({ searchParams }: { searchParams: P
     adminClient().from("store_products").select("id, slug, category, name"),
   ]);
 
-  const clicks = events.filter((e) => e.type === "click");
+  const clicks = dedupeClicks(events.filter((e) => e.type === "click"));
   const wa = clicks.filter((e) => isWhatsapp(e.label));
   const calls = clicks.filter((e) => isCall(e.label));
   const views = events.filter((e) => e.type === "pageview");

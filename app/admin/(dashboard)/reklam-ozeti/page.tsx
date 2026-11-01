@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-// Reklam Özeti: Google + Meta harcaması ile gelen talepler (site formu, Meta anlık form,
-// WhatsApp ve telefon tıklamaları) yan yana; talep başı maliyet ve form sonuç hunisi.
+// Reklam Özeti: Google + Meta harcaması ile gerçek talepler (site formu, Meta anlık form) yan yana;
+// WhatsApp ve telefon tıklamaları talebe eklenmeden ayrı gösterilir. Talep başı maliyet ve form sonuç hunisi.
 
 type ReklamOzeti = {
   days: number;
   from: string;
   to: string;
-  totals: Record<"googleCost" | "googleClicks" | "googleConversions" | "metaSpend" | "metaClicks" | "metaLeads" | "siteLeads" | "formLeads" | "whatsapp" | "phone", number>;
+  totals: Record<"googleCost" | "googleClicks" | "googleConversions" | "googleClickConversions" | "metaSpend" | "metaClicks" | "metaLeads" | "siteLeads" | "formLeads" | "whatsapp" | "phone", number>;
   daily: { date: string; googleCost: number; metaSpend: number; googleClicks: number; metaClicks: number; siteLeads: number; formLeads: number; whatsapp: number; phone: number }[];
   siteBySource: Record<string, number>;
   formFunnel: Record<string, number>;
@@ -61,9 +61,9 @@ export default function ReklamOzetiPage() {
 
   const t = data?.totals;
   const spend = t ? t.googleCost + t.metaSpend : 0;
-  const contacts = t ? t.siteLeads + t.formLeads + t.whatsapp + t.phone : 0;
+  const contacts = t ? t.siteLeads + t.formLeads : 0;
   const maxDay = Math.max(1, ...(data?.daily ?? []).map((d) => d.googleCost + d.metaSpend));
-  const maxContacts = Math.max(1, ...(data?.daily ?? []).map((d) => d.siteLeads + d.formLeads + d.whatsapp + d.phone));
+  const maxContacts = Math.max(1, ...(data?.daily ?? []).map((d) => d.siteLeads + d.formLeads));
   const failed = Object.entries(data?.errors ?? {}).filter(([, e]) => e);
   const funnelTotal = Object.values(data?.formFunnel ?? {}).reduce((s, n) => s + n, 0);
 
@@ -104,7 +104,7 @@ export default function ReklamOzetiPage() {
         <div className="rounded-xl border border-sun/40 bg-sun/10 p-4 text-[13px]">
           {failed.map(([k, e]) => (
             <p key={k}>
-              <b>{{ google: "Google Ads", meta: "Meta", ga: "Analytics", site: "Site talepleri", form: "Meta formları" }[k] ?? k}:</b> {e}
+              <b>{{ google: "Google Ads", meta: "Meta", clicks: "Buton tıklamaları", site: "Site talepleri", form: "Meta formları" }[k] ?? k}:</b> {e}
             </p>
           ))}
         </div>
@@ -114,13 +114,13 @@ export default function ReklamOzetiPage() {
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Card label="Toplam reklam harcaması" value={tl(spend)} sub={`Google ${tl(t.googleCost)} · Meta ${tl(t.metaSpend)}`} />
-            <Card label="Gelen iletişim" value={fmt(contacts)} sub={`form ${t.siteLeads + t.formLeads} · WhatsApp ${t.whatsapp} · telefon ${t.phone}`} />
-            <Card label="İletişim başı maliyet" value={contacts ? tl(spend / contacts) : "—"} sub="harcama ÷ tüm iletişimler (organik dahil)" />
+            <Card label="Gerçek talep" value={fmt(contacts)} sub={`site ${t.siteLeads} · Meta form ${t.formLeads} · aynı numara tek sayılır`} />
+            <Card label="Talep başı maliyet" value={contacts ? tl(spend / contacts) : "—"} sub="harcama ÷ gerçek talep (organik dahil)" />
             <Card label="Reklam tıklaması" value={fmt(t.googleClicks + t.metaClicks)} sub={`Google ${fmt(t.googleClicks)} · Meta ${fmt(t.metaClicks)}`} />
             <Card label="Site teklif formu" value={fmt(t.siteLeads)} sub={Object.entries(data.siteBySource).map(([k, v]) => `${k} ${v}`).join(" · ") || "talep yok"} />
             <Card label="Meta anlık form" value={fmt(t.formLeads)} sub={t.formLeads && t.metaSpend ? `form başı ${tl(t.metaSpend / t.formLeads)}` : undefined} />
-            <Card label="Google dönüşüm" value={fmt(t.googleConversions)} sub={t.googleConversions ? `dönüşüm başı ${tl(t.googleCost / t.googleConversions)}` : undefined} />
-            <Card label="WhatsApp + telefon tıklaması" value={fmt(t.whatsapp + t.phone)} sub="sitedeki butonlar (Analytics)" />
+            <Card label="Google dönüşüm" value={fmt(t.googleConversions)} sub={`${fmt(t.googleClickConversions)} buton tıklaması · ${fmt(t.googleConversions - t.googleClickConversions)} form/arama`} />
+            <Card label="WhatsApp + telefon tıklaması" value={fmt(t.whatsapp + t.phone)} sub="yazıldığını veya arandığını kanıtlamaz" />
           </div>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -144,18 +144,16 @@ export default function ReklamOzetiPage() {
               </div>
             </div>
             <div className="rounded-2xl border border-line bg-paper-raised p-5">
-              <p className="text-[14px] font-semibold">Günlük gelen iletişim</p>
-              <p className="text-[12px] text-slate-soft">form (site + Meta) · WhatsApp · telefon</p>
+              <p className="text-[14px] font-semibold">Günlük gerçek talep</p>
+              <p className="text-[12px] text-slate-soft">site + Meta formu · buton tıklamaları yalnızca üzerine gelince görünür</p>
               <div className="mt-4 flex h-36 items-end gap-[3px]">
                 {data.daily.map((d) => {
                   const forms = d.siteLeads + d.formLeads;
                   return (
                     <div key={d.date} className="group relative flex h-full flex-1 flex-col justify-end">
-                      <div className="w-full rounded-t bg-sun/70" style={{ height: `${(d.phone / maxContacts) * 100}%` }} />
-                      <div className="w-full bg-volt/70" style={{ height: `${(d.whatsapp / maxContacts) * 100}%` }} />
-                      <div className="w-full bg-brand/70" style={{ height: `${(forms / maxContacts) * 100}%` }} />
+                      <div className="w-full rounded-t bg-brand/70" style={{ height: `${(forms / maxContacts) * 100}%` }} />
                       <span className="pointer-events-none absolute -top-9 left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 text-[11px] text-paper group-hover:block">
-                        {d.date.slice(5)} · form {forms} · WA {d.whatsapp} · tel {d.phone}
+                        {d.date.slice(5)} · talep {forms} · tıklama: WA {d.whatsapp}, tel {d.phone}
                       </span>
                     </div>
                   );
@@ -227,8 +225,9 @@ export default function ReklamOzetiPage() {
             </div>
           </section>
           <p className="text-[12px] text-slate-soft">
-            Reklam verileri dünü son gün sayar. WhatsApp/telefon tıklamaları Google Analytics&apos;ten gelir ve organik ziyaretçileri de kapsar; Meta tarafında yalnızca Aktürk
-            Enerji sayfasının reklamları sayılır.
+            Reklam verileri dünü son gün sayar. WhatsApp/telefon tıklamaları sitenin kendi sayacından gelir, organik ziyaretçileri de kapsar ve talebe eklenmez; aynı şehirden aynı
+            butona 30 dakika içindeki tekrarlar tek sayılır. Kampanyalardaki Google sonucu da çoğunlukla buton tıklamasıdır. Meta tarafında yalnızca Aktürk Enerji sayfasının
+            reklamları sayılır.
           </p>
         </>
       )}

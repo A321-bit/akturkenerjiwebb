@@ -1,6 +1,7 @@
 import { adminClient, getServices, getReferences, getBlogPostSummaries } from "@/lib/data";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
 import { CHANNELS, leadChannel, type LeadChannel } from "@/lib/lead-source";
+import { dedupeClicks, firstByPhone, isContactClick } from "@/lib/lead-metrics";
 import { BarList, DailyArea, GOLD, PageRace, type DayPoint, type RankRow } from "@/components/admin/OverviewCharts";
 
 // Genel Bakış: sitenin kendi ziyaret sayacı (analytics_events) ve talepler (leads, meta_leads).
@@ -9,6 +10,7 @@ import { BarList, DailyArea, GOLD, PageRace, type DayPoint, type RankRow } from 
 type EventRow = { type: string; path: string | null; label: string | null; city: string | null; created_at: string };
 type LeadRow = {
   created_at: string;
+  phone: string | null;
   form_page: string | null;
   province: string | null;
   source: string;
@@ -82,8 +84,8 @@ export default async function AdminDashboardPage() {
   const [events, totalViewsRes, leadsRes, metaRes, services, references, posts, categories, products] = await Promise.all([
     fetchEvents(since30),
     client.from("analytics_events").select("*", { count: "exact", head: true }).eq("type", "pageview"),
-    client.from("leads").select("created_at, form_page, province, source, status, utm_source, utm_medium, utm_campaign, ad_click_id"),
-    client.from("meta_leads").select("created_time, city").gte("created_time", since30),
+    client.from("leads").select("created_at, phone, form_page, province, source, status, utm_source, utm_medium, utm_campaign, ad_click_id").order("created_at"),
+    client.from("meta_leads").select("created_time, phone, city").gte("created_time", since30).order("created_time"),
     getServices(),
     getReferences(),
     getBlogPostSummaries(),
@@ -127,8 +129,10 @@ export default async function AdminDashboardPage() {
 
   const leads = (leadsRes.data ?? []) as LeadRow[];
   const siteLeads = leads.filter((l) => l.source !== "live_chat");
-  const leads30 = siteLeads.filter((l) => t(l) >= now - 30 * DAY);
-  const meta30 = (metaRes.data ?? []) as { created_time: string; city: string | null }[];
+  // Aynı numaranın tekrar formları tek talep sayılır (site ve Meta arasında da).
+  const seenPhones = new Set<string>();
+  const leads30 = firstByPhone(siteLeads.filter((l) => t(l) >= now - 30 * DAY), (l) => l.phone, seenPhones);
+  const meta30 = firstByPhone((metaRes.data ?? []) as { created_time: string; phone: string | null; city: string | null }[], (m) => m.phone, seenPhones);
   const chLabel = new Map(CHANNELS.map((c) => [c.key, c.label]));
   const channelRows = top(tally(leads30, (l) => chLabel.get(leadChannel(l))));
   if (meta30.length) channelRows.push({ label: "Meta Form (reklam içi form)", value: meta30.length });
@@ -136,14 +140,14 @@ export default async function AdminDashboardPage() {
 
   // Aynı şehirden aynı butona 30 dakika içindeki tekrar tıklamalar tek sayılır (reklam ağı botları
   // dakikada onlarca tıklama üretiyordu; yeni kayıtlar zaten oturum başına bir kez tutuluyor).
-  const contactClicks = dedupeClicks(clicks.filter((c) => /whatsapp|call_button/.test(c.label ?? "") && t(c) >= now - 30 * DAY));
+  const contactClicks = dedupeClicks(clicks.filter((c) => isContactClick(c.label) && t(c) >= now - 30 * DAY));
   const won = siteLeads.filter((l) => l.status === "Olumlu").length;
 
   const stats = [
     { label: "Bugün ziyaret", value: today.length, sub: `şu an aktif ~${active.length}` },
     { label: "Son 7 gün ziyaret", value: last7.length, sub: prev7.length ? `önceki 7 gün ${prev7.length.toLocaleString("tr-TR")} (%${Math.round(((last7.length - prev7.length) / prev7.length) * 100)})` : undefined },
     { label: "Son 30 gün talep", value: leads30.length + meta30.length, sub: `site ${leads30.length} · Meta form ${meta30.length}` },
-    { label: "WhatsApp + telefon tıklaması", value: contactClicks.length, sub: "son 30 gün" },
+    { label: "WhatsApp + telefon tıklaması", value: contactClicks.length, sub: "son 30 gün · talep sayılmaz" },
   ];
 
   return (
@@ -215,15 +219,3 @@ function Card({ title, note, className = "", children }: { title: string; note?:
   );
 }
 
-function dedupeClicks<T extends { label: string | null; city: string | null; created_at: string }>(rows: T[]): T[] {
-  const last = new Map<string, number>();
-  return [...rows]
-    .sort((a, b) => a.created_at.localeCompare(b.created_at))
-    .filter((r) => {
-      const key = `${r.label}|${r.city ?? "?"}`;
-      const at = new Date(r.created_at).getTime();
-      const prev = last.get(key);
-      last.set(key, at);
-      return prev == null || at - prev > 30 * 60e3;
-    });
-}

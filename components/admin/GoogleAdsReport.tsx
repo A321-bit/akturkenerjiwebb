@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import type { GoogleAdsApiReport as Report } from "@/lib/google-ads";
+import { isClickConversion } from "@/lib/lead-metrics";
 
 // Admin "Reklamlar" → Google Ads sekmesi. Veri doğrudan Google Ads API'den (hesap
 // 334-276-8968): kampanya durumu, bütçe, performans, dönüşüm türleri, arama terimleri.
@@ -76,6 +77,7 @@ export default function GoogleAdsReport() {
 
   const t = data?.total;
   const maxDay = Math.max(1, ...(data?.daily.map((d) => d.cost) ?? [1]));
+  const clickConversions = (data?.conversionActions ?? []).filter((a) => isClickConversion(a.label)).reduce((s, a) => s + a.value, 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -98,7 +100,11 @@ export default function GoogleAdsReport() {
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Card label="Harcama" value={tl(t.cost)} sub={`${fmt(t.impressions)} gösterim`} />
-            <Card label="Dönüşüm" value={fmt(t.conversions)} sub="WhatsApp + telefon + form" />
+            <Card
+              label="Dönüşüm"
+              value={fmt(t.conversions)}
+              sub={`${fmt(clickConversions)} buton tıklaması · ${fmt(t.conversions - clickConversions)} form/arama`}
+            />
             <Card label="Dönüşüm başı" value={t.conversions ? tl(t.cost / t.conversions) : "–"} />
             <Card label="Tıklama" value={fmt(t.clicks)} sub={`tıklama başı ${t.clicks ? tl(t.cost / t.clicks) : "–"}`} />
           </div>
