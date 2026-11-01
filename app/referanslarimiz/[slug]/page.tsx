@@ -8,6 +8,7 @@ import { relatedReferences, relatedServiceSlugs } from "@/lib/reference-links";
 import { getServiceContent } from "@/lib/service-content";
 import { buildMetadata, breadcrumbJsonLd, stripMarkdown, ogImagePath } from "@/lib/seo";
 import CoverMedia from "@/components/CoverMedia";
+import ExternalEmbed from "@/components/ExternalEmbed";
 import MediaCarousel from "@/components/MediaCarousel";
 import QuoteModal from "@/components/QuoteModal";
 
@@ -170,13 +171,13 @@ export default async function ReferenceDetailPage({
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-line bg-paper-raised">
-          <iframe
+          <ExternalEmbed
+            service="Google Haritalar"
             title={`${reference.title} konumu`}
             src={`https://www.google.com/maps?q=${encodeURIComponent(
               reference.address || reference.location
             )}&output=embed`}
             className="h-full min-h-[220px] w-full border-0"
-            loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
         </div>

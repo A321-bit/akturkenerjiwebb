@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { MessageCircle, Phone } from "lucide-react";
 import { whatsappLink } from "@/lib/data";
 import { formatTL, type StoreProductOption } from "@/lib/store";
+import { OrderLegalNote } from "@/components/store/SalesTerms";
 import TrackedContactLink from "@/components/TrackedContactLink";
 import { trackMetaProduct } from "@/lib/meta-pixel";
 
@@ -106,6 +107,7 @@ export default function ProductBuyBox({
       >
         <Phone size={17} /> Bizi Arayın: {phoneDisplay}
       </TrackedContactLink>
+      <OrderLegalNote />
     </div>
   );
 }

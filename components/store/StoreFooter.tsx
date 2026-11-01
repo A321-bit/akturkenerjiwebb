@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { CookieSettingsButton } from "@/components/CookieConsent";
+import { LEGAL_NAME, companyRegistry } from "@/lib/company";
 import type { SiteSettings } from "@/lib/data";
 import type { StoreCategory } from "@/lib/store";
 
@@ -52,14 +54,25 @@ export default function StoreFooter({
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-5 text-[12.5px] text-slate-soft sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <p>
             © {new Date().getFullYear()} {settings.name}. Tüm hakları saklıdır.
+            <span className="mt-1 block">{[LEGAL_NAME, ...companyRegistry.map((x) => `${x.label}: ${x.value}`)].join(" · ")}</span>
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Link href="/magaza/on-bilgilendirme" className="hover:text-paper">
+              Ön Bilgilendirme
+            </Link>
+            <Link href="/magaza/mesafeli-satis-sozlesmesi" className="hover:text-paper">
+              Mesafeli Satış Sözleşmesi
+            </Link>
             <Link href="/magaza/teslimat-ve-iade" className="hover:text-paper">
               Teslimat ve İade
             </Link>
             <Link href="/kvkk-aydinlatma-metni" target="_blank" className="hover:text-paper">
               KVKK Aydınlatma Metni
             </Link>
+            <Link href="/cerez-politikasi" className="hover:text-paper">
+              Çerez Politikası
+            </Link>
+            <CookieSettingsButton className="hover:text-paper" />
             <Link href="/" className="flex items-center gap-1 text-sun-soft hover:text-sun">
               Kurumsal Site <ArrowUpRight size={13} />
             </Link>

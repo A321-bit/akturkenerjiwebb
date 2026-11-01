@@ -1,5 +1,7 @@
 "use client";
 
+import { CookieSettingsButton } from "@/components/CookieConsent";
+import { LEGAL_NAME, companyRegistry } from "@/lib/company";
 import Link from "next/link";
 import Image from "next/image";
 import { usePagePath } from "@/lib/use-page-path";
@@ -162,11 +164,16 @@ export default function Footer({
         <div className="mt-12 flex flex-col gap-3 border-t border-line-dark pt-6 text-[12.5px] text-slate-soft sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {new Date().getFullYear()} {settings.name}. Tüm hakları saklıdır.
+            <span className="mt-1 block">{[LEGAL_NAME, ...companyRegistry.map((x) => `${x.label}: ${x.value}`)].join(" · ")}</span>
           </p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <Link href="/kvkk-aydinlatma-metni" className="hover:text-paper">
               KVKK Aydınlatma Metni
             </Link>
+            <Link href="/cerez-politikasi" className="hover:text-paper">
+              Çerez Politikası
+            </Link>
+            <CookieSettingsButton className="hover:text-paper" />
             <p className="font-mono-data">{SITE_DOMAIN}</p>
           </div>
         </div>

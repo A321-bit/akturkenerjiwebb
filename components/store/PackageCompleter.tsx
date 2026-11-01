@@ -5,6 +5,7 @@ import { Cable, Minus, MessageCircle, PackagePlus, Plus, Plug, SunMedium, Wrench
 import { whatsappLink } from "@/lib/data";
 import { formatTL } from "@/lib/store";
 import { mc4Count, pickCable, pickSets, suggestedPanels, type PcData } from "@/lib/package-complete";
+import { OrderLegalNote } from "@/components/store/SalesTerms";
 import TrackedContactLink from "@/components/TrackedContactLink";
 
 type Roof = "kiremit" | "trapez" | "kenet" | "zemin" | "yok";
@@ -202,6 +203,7 @@ export default function PackageCompleter({
               <MessageCircle size={18} fill="currentColor" />
               Bu Paketi WhatsApp&apos;tan Sipariş Et
             </TrackedContactLink>
+            <OrderLegalNote />
           </div>
         </div>
       </div>

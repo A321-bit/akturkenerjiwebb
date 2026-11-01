@@ -1,5 +1,6 @@
 import { getVideos } from "@/lib/data";
 import { getYouTubeEmbedUrl } from "@/lib/youtube";
+import ExternalEmbed from "@/components/ExternalEmbed";
 import Reveal from "@/components/Reveal";
 
 export default async function VideosSection() {
@@ -24,13 +25,13 @@ export default async function VideosSection() {
             <Reveal key={v.id ?? v.title} delay={i * 60}>
               <div className="overflow-hidden rounded-2xl border border-line bg-paper-raised">
                 <div className="aspect-video w-full">
-                  <iframe
+                  <ExternalEmbed
+                    service="YouTube"
                     src={embedUrl}
                     title={v.title}
                     className="h-full w-full border-0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    loading="lazy"
                   />
                 </div>
                 <p className="px-4 py-3 text-[14px] font-semibold text-ink">{v.title}</p>

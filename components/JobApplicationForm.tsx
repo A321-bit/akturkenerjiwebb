@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { User, MapPin, PhoneCall, FileText, Paperclip, Loader2, CheckCircle2 } from "lucide-react";
 import { supabasePublic } from "@/lib/supabase";
+import KvkkNotice from "@/components/KvkkNotice";
 
 type Values = {
   fullname: string;
@@ -156,7 +157,8 @@ export default function JobApplicationForm() {
         </button>
       </div>
 
-      <div className="sm:col-span-2">
+      <KvkkNotice purpose="Bilgileriniz başvurunuzu değerlendirmek için işlenir." />
+        <div className="sm:col-span-2">
         <button
           type="submit"
           disabled={status === "sending"}

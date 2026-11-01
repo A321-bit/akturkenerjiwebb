@@ -1,5 +1,6 @@
 "use client";
 
+import ExternalEmbed from "@/components/ExternalEmbed";
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
@@ -38,7 +39,8 @@ export default function MediaCarousel({
     <div>
       <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-ink-soft sm:aspect-[16/9]">
         {current.type === "video" ? (
-          <iframe
+          <ExternalEmbed
+            service="YouTube"
             src={current.embedUrl}
             title={`${title} - video`}
             className="h-full w-full border-0"

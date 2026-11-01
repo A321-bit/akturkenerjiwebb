@@ -1,5 +1,7 @@
 "use client";
 
+import { hasConsent } from "./consent";
+
 // Ziyaretçinin siteye nereden geldiğini (reklam, Google arama, sosyal medya,
 // yapay zekâ, direkt) ilk gelişte yakalayıp tarayıcıda saklıyoruz; form
 // gönderiminde bu bilgi lead kaydına ekleniyor. "İlk dokunuş" modeli: kaynak
@@ -79,7 +81,8 @@ export function captureAttribution() {
       utmContent: params.get("utm_content") ?? undefined,
       utmTerm: params.get("utm_term") ?? undefined,
       // Platformu admin panelde ayırt edebilmek için tıklama kimliğine önek eklenir (ör. "fbclid:AbC123").
-      adClickId: fbclid ? `fbclid:${fbclid}` : gclid ? `gclid:${gclid}` : undefined,
+      // Tıklama kimliği reklam verisidir; yalnız pazarlama onayıyla saklanır.
+      adClickId: !hasConsent("marketing") ? undefined : fbclid ? `fbclid:${fbclid}` : gclid ? `gclid:${gclid}` : undefined,
       referrer,
       landingPage: window.location.pathname,
       savedAt: Date.now(),
@@ -92,6 +95,20 @@ export function captureAttribution() {
     save(next);
   } catch {
     // localStorage kapalıysa (gizli sekme vb.) sessizce yok say
+  }
+}
+
+// Onay, reklamdan gelinen ilk sayfada verildiyse tıklama kimliği kayda sonradan eklenir.
+export function captureClickId() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const fbclid = params.get("fbclid");
+    const gclid = params.get("gclid") ?? params.get("gbraid") ?? params.get("wbraid");
+    const a = getAttribution();
+    if (!a || a.adClickId || (!fbclid && !gclid)) return;
+    save({ ...a, adClickId: fbclid ? `fbclid:${fbclid}` : `gclid:${gclid}` });
+  } catch {
+    // localStorage kapalıysa sessizce yok say
   }
 }
 

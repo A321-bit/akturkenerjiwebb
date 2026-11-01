@@ -79,7 +79,7 @@ export default function ReferenceGrid({
                 </div>
                 <div className="sm:flex-1">
                   <p className="font-display text-[17px] font-semibold text-ink">
-                    Siz de bu referanslar gibi bedava elektrik üretmek ister misiniz?
+                    Siz de bu referanslar gibi kendi elektriğinizi üretmek ister misiniz?
                   </p>
                   <p className="mt-1.5 text-[13.5px] text-slate">
                     4 bilgiyi bırakın, size özel fiyat teklifiyle hemen dönelim.

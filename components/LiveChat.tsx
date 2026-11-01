@@ -174,7 +174,7 @@ export default function LiveChat({ whatsappNumber, pathname }: { whatsappNumber:
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Adınız Soyadınız" autoComplete="name" className="w-full rounded-lg border border-ink/15 px-3 py-2 text-[14px] outline-none focus:border-ink/40" />
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon (05xx xxx xx xx)" inputMode="tel" autoComplete="tel" className="w-full rounded-lg border border-ink/15 px-3 py-2 text-[14px] outline-none focus:border-ink/40" />
             {formErr && <p className="text-[12.5px] text-red-600">{formErr}</p>}
-            <p className="text-[11.5px] text-ink/55">Bilgileriniz yalnızca size dönüş yapmak için kullanılır.</p>
+            <p className="text-[11.5px] text-ink/55">Bilgileriniz size dönüş yapmak için işlenir. <a href="/kvkk-aydinlatma-metni" target="_blank" className="underline">KVKK Aydınlatma Metni</a></p>
             <button type="submit" disabled={saving} className="w-full rounded-lg bg-sun py-2.5 text-[14px] font-bold text-ink hover:bg-sun-soft disabled:opacity-60">
               {saving ? "Kaydediliyor…" : "Sohbete devam et"}
             </button>

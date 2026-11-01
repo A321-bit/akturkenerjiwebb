@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingActions from "@/components/FloatingActions";
 import Analytics from "@/components/Analytics";
+import CookieConsent from "@/components/CookieConsent";
 import { AREA_SERVED, openingHoursFromText, brandTitle, TITLE_BRAND } from "@/lib/seo";
 
 // GA4 Ölçüm Kimliği (Measurement ID) — bu kimlik gizli değildir, her
@@ -103,38 +104,47 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// Google (Analytics + Ads), Meta Pixel ve Clarity mobilde ana iş parçacığını
-// ~1,5 sn tıkıyordu (PageSpeed TBT 1.270 ms). Sayfa açılırken yalnızca
-// olayları biriktiren küçük kuyruklar (gtag/fbq/clarity) kurulur; asıl
-// scriptler ilk etkileşimde (kaydırma, dokunma, tıklama, tuş) ya da en geç
-// 4 sn sonra yüklenir ve kuyruktaki olayları gönderir. Admin panelinde hiçbiri
-// yüklenmez (kendi ziyaretlerimiz ölçümleri kirletmesin).
+// Zorunlu olmayan etiketler yalnızca çerez onayıyla yüklenir (lib/consent.ts, components/CookieConsent.tsx):
+// analiz onayı Google Analytics + Clarity, pazarlama onayı Google Ads + Meta Pixel.
+// Sayfa açılırken yalnızca olayları biriktiren küçük kuyruklar (gtag/fbq/clarity) kurulur; onay yoksa kuyruk
+// hiçbir yere gitmez. Onay varsa scriptler performans için ilk etkileşimde ya da en geç 4 sn sonra yüklenir;
+// onay o an verildiyse hemen yüklenir. Admin panelinde hiçbiri yüklenmez.
 const deferredTagsScript = `
 (function(w,d){
   if (location.pathname.indexOf("/admin") === 0) return;
   w.dataLayer = w.dataLayer || [];
   w.gtag = function(){ w.dataLayer.push(arguments); };
-  w.gtag("js", new Date());
-  w.gtag("config", "${GA_MEASUREMENT_ID}");
-  w.gtag("config", "${GOOGLE_ADS_ID}");
+  w.gtag("consent", "default", { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" });
   var n = w.fbq = function(){ n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
   if (!w._fbq) w._fbq = n;
   n.push = n; n.loaded = true; n.version = "2.0"; n.queue = [];
-  w.fbq("init", "${META_PIXEL_ID}");
-  w.fbq("track", "PageView");
   w.clarity = w.clarity || function(){ (w.clarity.q = w.clarity.q || []).push(arguments); };
-  var loaded = false;
+  var on = {}, pending = [], waiting = true;
   var events = ["scroll", "pointerdown", "touchstart", "keydown", "mousemove"];
   function add(src){ var s = d.createElement("script"); s.async = true; s.src = src; d.head.appendChild(s); }
-  function load(){
-    if (loaded) return; loaded = true;
-    events.forEach(function(e){ w.removeEventListener(e, load, { passive: true }); });
-    add("https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}");
-    add("https://connect.facebook.net/en_US/fbevents.js");
-    add("https://www.clarity.ms/tag/${CLARITY_PROJECT_ID}");
+  function need(src){ if (on[src]) return; on[src] = 1; if (waiting) pending.push(src); else add(src); }
+  function flush(){
+    if (!waiting) return; waiting = false;
+    events.forEach(function(e){ w.removeEventListener(e, flush, { passive: true }); });
+    pending.forEach(add); pending = [];
   }
-  events.forEach(function(e){ w.addEventListener(e, load, { once: true, passive: true }); });
-  setTimeout(load, 4000);
+  events.forEach(function(e){ w.addEventListener(e, flush, { once: true, passive: true }); });
+  setTimeout(flush, 4000);
+  w.__applyConsent = function(c, now){
+    var yes = function(v){ return v ? "granted" : "denied"; };
+    w.gtag("consent", "update", { analytics_storage: yes(c.analytics), ad_storage: yes(c.marketing), ad_user_data: yes(c.marketing), ad_personalization: yes(c.marketing) });
+    if ((c.analytics || c.marketing) && !on.js) { on.js = 1; w.gtag("js", new Date()); need("https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"); }
+    if (c.analytics && !on.ga) { on.ga = 1; w.gtag("config", "${GA_MEASUREMENT_ID}"); need("https://www.clarity.ms/tag/${CLARITY_PROJECT_ID}"); }
+    if (c.marketing && !on.ads) {
+      on.ads = 1;
+      w.gtag("config", "${GOOGLE_ADS_ID}");
+      w.fbq("init", "${META_PIXEL_ID}");
+      w.fbq("track", "PageView");
+      need("https://connect.facebook.net/en_US/fbevents.js");
+    }
+    if (now) flush();
+  };
+  try { var c = JSON.parse(localStorage.getItem("aktrk_cerez_tercih") || "null"); if (c) w.__applyConsent(c); } catch (e) {}
 })(window, document);
 `;
 
@@ -245,21 +255,12 @@ export default async function RootLayout({
         />
         <Analytics />
         <script dangerouslySetInnerHTML={{ __html: deferredTagsScript }} />
-        <noscript>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
-            alt=""
-          />
-        </noscript>
         <Header settings={settings} />
         <main className="flex-1">{children}</main>
         {/* Footer istemci bileşeni: yalnızca listelenen 6 hizmetin adı ve adresi gider (rehber metinleri değil). */}
         <Footer settings={settings} services={services.slice(0, 6).map(({ slug, title }) => ({ slug, title }))} />
         <FloatingActions settings={settings} />
+        <CookieConsent />
       </body>
     </html>
   );

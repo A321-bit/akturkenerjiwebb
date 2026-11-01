@@ -281,11 +281,11 @@ export function ContactStep({ page, place, bullets, payload, onDone, onBack }: {
           <label className="mt-3 flex items-start gap-2 text-[12.5px] text-slate">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
             <span>
-              Kişisel verilerimin fizibilite raporu ve teklif hazırlanması amacıyla işlenmesine ilişkin{" "}
+              Talebime dönüş yapılması, fizibilite raporu ve teklif hazırlanması için verilerimin işlenmesine ilişkin{" "}
               <Link href="/kvkk-aydinlatma-metni" target="_blank" className="text-brand underline">
                 aydınlatma metnini
               </Link>{" "}
-              okudum, onaylıyorum.
+              okudum.
             </span>
           </label>
           {state === "error" && <p className="mt-2 text-[13px] text-red-600">Gönderilemedi, lütfen tekrar deneyin ya da WhatsApp&apos;tan yazın.</p>}

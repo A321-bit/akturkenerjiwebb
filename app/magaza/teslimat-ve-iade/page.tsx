@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { WithdrawalTerms } from "@/components/store/SalesTerms";
 import { getSiteSettings } from "@/lib/data";
 import { breadcrumbJsonLd, buildMetadata } from "@/lib/seo";
 
@@ -68,26 +69,15 @@ export default async function DeliveryReturnsPage() {
 
         <h2>Cayma hakkı (14 gün)</h2>
         <p>
-          6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği kapsamında, tüketici olarak
-          ürünü teslim aldığınız tarihten itibaren <strong>14 gün</strong> içinde hiçbir gerekçe göstermeden cayma hakkınızı
-          kullanabilirsiniz.
+          6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği kapsamındaki cayma hakkınızın koşulları:
         </p>
-        <ul>
-          <li>
-            Cayma bildiriminizi bu süre içinde <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a> adresine
-            e-postayla ya da WhatsApp&apos;tan yazılı olarak iletmeniz yeterlidir.
-          </li>
-          <li>Ürünü, bildirimden sonra 10 gün içinde, kullanılmamış ve yeniden satılabilir durumda, aksesuarları ve ambalajıyla birlikte göndermeniz gerekir.</li>
-          <li>Ürün bedeli ve varsa teslimatta ödediğiniz nakliye ücreti, cayma bildiriminizin bize ulaşmasından itibaren <strong>14 gün</strong> içinde, ödemede kullandığınız yöntemle iade edilir.</li>
-          <li>Ürünün kurulumu yapılmış, kullanılmış ya da olağan kullanım dışında zarar görmüşse, değer kaybı tutarı iadeden düşülebilir.</li>
-          <li>Size özel olarak hazırlanan ya da kişiselleştirilen ürün ve projelerde (ör. talebiniz üzerine özel ölçü veya içerikle hazırlanan siparişler) yönetmelik gereği cayma hakkı kullanılamaz.</li>
-        </ul>
+        <WithdrawalTerms site={site} />
 
-        <h2>İade nakliye ücreti</h2>
-        <ul>
-          <li>Cayma hakkıyla yapılan iadelerde iade nakliye ücreti <strong>alıcıya</strong> aittir.</li>
-          <li>Ürün <strong>hatalı, kusurlu ya da siparişten farklı</strong> gönderildiyse iade nakliye ücreti <strong>Aktürk Enerji&apos;ye</strong> aittir; ürün değiştirilir ya da bedeli iade edilir.</li>
-        </ul>
+        <h2>Hatalı ya da kusurlu gönderim</h2>
+        <p>
+          Ürün <strong>hatalı, kusurlu ya da siparişten farklı</strong> gönderildiyse iade nakliye ücreti Aktürk Enerji&apos;ye aittir; ürün
+          değiştirilir ya da bedeli iade edilir.
+        </p>
 
         <h2>Ayıplı ürün ve garanti</h2>
         <p>
@@ -101,6 +91,10 @@ export default async function DeliveryReturnsPage() {
           Teslimat, iade ve garanti sorularınız için <a href={site.contact.phoneHref}>{site.contact.phoneDisplay}</a>, {" "}
           <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a> ya da{" "}
           <Link href="/magaza/iletisim">mağaza iletişim sayfası</Link>. Adres: {site.contact.addressLine}.
+        </p>
+        <p>
+          Ayrıca bkz. <Link href="/magaza/on-bilgilendirme">Ön Bilgilendirme Formu</Link> ve{" "}
+          <Link href="/magaza/mesafeli-satis-sozlesmesi">Mesafeli Satış Sözleşmesi</Link>.
         </p>
       </div>
     </div>

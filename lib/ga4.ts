@@ -1,6 +1,7 @@
 "use client";
 
 import { getAttribution } from "./attribution";
+import { hasConsent } from "./consent";
 
 declare global {
   interface Window {
@@ -24,7 +25,7 @@ export function trackGa4Lead(purpose?: string) {
 // Fiyat teklifi isteyin > Yönet > Etkinlik snippet'i üzerinden alınan
 // AW-ID/etiket çifti (18330659140 / e5yjCPPtnNIcEMTS3qRE).
 export function trackGoogleAdsLead() {
-  if (typeof window === "undefined" || !window.gtag) return;
+  if (typeof window === "undefined" || !window.gtag || !hasConsent("marketing")) return;
   window.gtag("event", "conversion", { send_to: "AW-18330659140/e5yjCPPtnNIcEMTS3qRE" });
 }
 
@@ -52,7 +53,7 @@ function countsAsAdConversion() {
 }
 
 function sendOncePerSession(name: string) {
-  if (typeof window === "undefined" || !countsAsAdConversion()) return;
+  if (typeof window === "undefined" || !hasConsent("analytics") || !countsAsAdConversion()) return;
   try {
     const key = `ga4_sent_${name}`;
     if (sessionStorage.getItem(key)) return;

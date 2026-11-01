@@ -17,7 +17,7 @@ export function getYouTubeEmbedUrl(url: string): string | null {
 
     if (!id) return null;
     id = id.split("&")[0].split("?")[0];
-    return `https://www.youtube.com/embed/${id}`;
+    return `https://www.youtube-nocookie.com/embed/${id}`;
   } catch {
     return null;
   }
