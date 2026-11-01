@@ -33,7 +33,16 @@ export type RoofFace = {
   offsetV: number;
 };
 
-export type PanelCell = { faceId: string; i: number; j: number };
+export type PanelCell = {
+  faceId: string;
+  i: number;
+  j: number;
+  /** Dizinin ya da tek panelin ızgaradan kayması (m, yüzey üzerinde). */
+  du?: number;
+  dv?: number;
+  /** Tasarımcı elle yerleştirdi: yüzey sınırını geçebilir, sığmıyor diye düşürülmez. */
+  free?: boolean;
+};
 
 export type LayoutSettings = { setbackM: number; gapM: number; lat: number };
 
@@ -135,14 +144,14 @@ function distToEdges(pt: { u: number; v: number }, poly: { u: number; v: number 
 }
 
 /** Hücrenin yüzeydeki dikdörtgeni (u0, v0 alt-sol köşe). */
-export function cellRect(fr: FaceFrame, i: number, j: number, s: LayoutSettings) {
-  const u0 = s.setbackM + fr.face.offsetU + i * fr.stepU;
-  const v0 = s.setbackM + fr.face.offsetV + j * fr.stepV;
+export function cellRect(fr: FaceFrame, i: number, j: number, s: LayoutSettings, du = 0, dv = 0) {
+  const u0 = s.setbackM + fr.face.offsetU + du + i * fr.stepU;
+  const v0 = s.setbackM + fr.face.offsetV + dv + j * fr.stepV;
   return { u0, v0, u1: u0 + fr.pw, v1: v0 + fr.ph };
 }
 
-export function cellFits(fr: FaceFrame, i: number, j: number, s: LayoutSettings) {
-  const r = cellRect(fr, i, j, s);
+export function cellFits(fr: FaceFrame, i: number, j: number, s: LayoutSettings, du = 0, dv = 0) {
+  const r = cellRect(fr, i, j, s, du, dv);
   const corners = [
     { u: r.u0, v: r.v0 },
     { u: r.u1, v: r.v0 },
@@ -153,6 +162,78 @@ export function cellFits(fr: FaceFrame, i: number, j: number, s: LayoutSettings)
   return corners.every((c) => inside(c, fr.poly) && distToEdges(c, fr.poly) >= s.setbackM - 0.01);
 }
 
+/** Elle yerleştirilen panel her zaman geçerli; otomatik olan yüzeye sığmalı. */
+export function cellValid(fr: FaceFrame, c: PanelCell, s: LayoutSettings) {
+  return Boolean(c.free) || cellFits(fr, c.i, c.j, s, c.du, c.dv);
+}
+
+const rectOf = (fr: FaceFrame, c: PanelCell, s: LayoutSettings) => cellRect(fr, c.i, c.j, s, c.du, c.dv);
+
+/** İki panel üst üste biniyor mu (1 cm tolerans). */
+export function cellsOverlap(fr: FaceFrame, a: PanelCell, b: PanelCell, s: LayoutSettings) {
+  const p = rectOf(fr, a, s);
+  const q = rectOf(fr, b, s);
+  return p.u0 < q.u1 - 0.01 && q.u0 < p.u1 - 0.01 && p.v0 < q.v1 - 0.01 && q.v0 < p.v1 - 0.01;
+}
+
+export const sameCell = (a: PanelCell, b: PanelCell) => a.faceId === b.faceId && a.i === b.i && a.j === b.j && (a.du ?? 0) === (b.du ?? 0) && (a.dv ?? 0) === (b.dv ?? 0);
+
+export const sameBlock = (a: PanelCell, b: PanelCell) => a.faceId === b.faceId && (a.du ?? 0) === (b.du ?? 0) && (a.dv ?? 0) === (b.dv ?? 0);
+
+/** Tıklanan noktaya, en yakın diziye hizalı bir panel. */
+export function snappedCell(fr: FaceFrame, own: PanelCell[], p: XY, s: LayoutSettings): PanelCell {
+  const { u, v } = cellAt(fr, p, s);
+  let du = 0;
+  let dv = 0;
+  let best = Infinity;
+  for (const c of own) {
+    const r = rectOf(fr, c, s);
+    const d = Math.hypot((r.u0 + r.u1) / 2 - u, (r.v0 + r.v1) / 2 - v);
+    if (d < best) {
+      best = d;
+      du = c.du ?? 0;
+      dv = c.dv ?? 0;
+    }
+  }
+  const i = Math.floor((u - s.setbackM - fr.face.offsetU - du) / fr.stepU);
+  const j = Math.floor((v - s.setbackM - fr.face.offsetV - dv) / fr.stepV);
+  return { faceId: fr.face.id, i, j, du, dv, free: true };
+}
+
+export type BlockOptions = { cols: number; rows: number; right: boolean; up: boolean };
+
+/** Tıklanan noktayı köşe alan panel dizisi. Sütun ya da sıra 0 ise o yönde yüzey sınırına kadar gider. */
+export function placeBlock(fr: FaceFrame, p: XY, o: BlockOptions, s: LayoutSettings): PanelCell[] {
+  const { s: sAx, e: eAx } = faceAxes(fr.face);
+  const { u, v } = cellAt(fr, p, s);
+  // Harita sağ/yukarı yönleri, yüzey eksenlerinden hangisine daha yakınsa ona bağlanır.
+  const uIsHoriz = Math.abs(eAx.x) >= Math.abs(sAx.x);
+  const h = o.right ? 1 : -1;
+  const w = o.up ? 1 : -1;
+  const sU = (uIsHoriz ? h * eAx.x : w * eAx.n) >= 0 ? 1 : -1;
+  const sV = (uIsHoriz ? w * sAx.n : h * sAx.x) >= 0 ? 1 : -1;
+  const nU = (uIsHoriz ? o.cols : o.rows) || 80;
+  const nV = (uIsHoriz ? o.rows : o.cols) || 80;
+  const du = (sU > 0 ? u : u - fr.pw) - s.setbackM - fr.face.offsetU;
+  const dv = (sV > 0 ? v : v - fr.ph) - s.setbackM - fr.face.offsetV;
+  const toSurface = !o.cols || !o.rows;
+  const out: PanelCell[] = [];
+  for (let b = 0; b < nV; b++) {
+    for (let a = 0; a < nU; a++) {
+      const i = sU * a;
+      const j = sV * b;
+      if (!toSurface || cellFits(fr, i, j, s, du, dv)) out.push({ faceId: fr.face.id, i, j, du, dv, free: true });
+    }
+  }
+  return out;
+}
+
+/** Paneli haritadaki kaymaya göre taşır. */
+export function shiftCell(fr: FaceFrame, c: PanelCell, delta: XY): PanelCell {
+  const { s: sAx, e: eAx } = faceAxes(fr.face);
+  return { ...c, du: (c.du ?? 0) + dot(delta, eAx), dv: (c.dv ?? 0) + dot(delta, sAx) / fr.cosP, free: true };
+}
+
 /** Yüzeye sığan tüm hücreler (otomatik doldurma). */
 export function autoFill(fr: FaceFrame, s: LayoutSettings): PanelCell[] {
   const maxU = Math.max(...fr.poly.map((p) => p.u));
@@ -160,6 +241,34 @@ export function autoFill(fr: FaceFrame, s: LayoutSettings): PanelCell[] {
   const out: PanelCell[] = [];
   for (let j = 0; j * fr.stepV < maxV; j++) for (let i = 0; i * fr.stepU < maxU; i++) if (cellFits(fr, i, j, s)) out.push({ faceId: fr.face.id, i, j });
   return out;
+}
+
+/** Yüzeyin köşeleri değişince paneller yerinde kalsın: ızgara başlangıcı kayar, kayma ofset ve hücre numarasıyla karşılanır. */
+export function reshapeFace(face: RoofFace, points: LatLon[], center: LatLon, model: PanelModel, s: LayoutSettings) {
+  const before = faceFrame(face, center, model, s);
+  const after = faceFrame({ ...face, points }, center, model, s);
+  const rawU = face.offsetU - (after.oU - before.oU);
+  const rawV = face.offsetV - (after.oS - before.oS) / after.cosP;
+  const di = Math.floor(rawU / after.stepU);
+  const dj = Math.floor(rawV / after.stepV);
+  return { face: { ...face, points, offsetU: rawU - di * after.stepU, offsetV: rawV - dj * after.stepV }, di, dj };
+}
+
+/** Kenarları birbirini kesen (kendi üstüne katlanan) çokgen. */
+export function selfIntersects(points: LatLon[]) {
+  const side = (a: LatLon, b: LatLon, c: LatLon) => (b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]);
+  const n = points.length;
+  for (let i = 0; i < n; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % n];
+    for (let j = i + 2; j < n; j++) {
+      if ((j + 1) % n === i) continue;
+      const c = points[j];
+      const d = points[(j + 1) % n];
+      if (side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0) return true;
+    }
+  }
+  return false;
 }
 
 /** Yüzeydeki bir noktayı (u, v) hücreye çevirir. */
@@ -194,13 +303,13 @@ export function heightAt(fr: FaceFrame, p: XY) {
 
 /** Panelin uydu üzerindeki izdüşümü (harita çizimi için). */
 export function cellFootprint(fr: FaceFrame, c: PanelCell, s: LayoutSettings): XY[] {
-  const r = cellRect(fr, c.i, c.j, s);
+  const r = rectOf(fr, c, s);
   return [faceToXY(fr, r.u0, r.v0), faceToXY(fr, r.u1, r.v0), faceToXY(fr, r.u1, r.v1), faceToXY(fr, r.u0, r.v1)];
 }
 
 /** Panelin 3B yerleşimi: merkez, eksenler (x doğu, y yukarı, n kuzey) ve boyut. */
 export function cellPose(fr: FaceFrame, c: PanelCell, s: LayoutSettings) {
-  const r = cellRect(fr, c.i, c.j, s);
+  const r = rectOf(fr, c, s);
   const { s: sAx, e: eAx } = faceAxes(fr.face);
   const t = rad(fr.tilt);
   const flat = isFlat(fr.face);

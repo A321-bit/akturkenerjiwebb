@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Box, FilePlus2, FolderOpen, Grid3x3, Map as MapIcon, MousePointer2, PenLine, Plus, Printer, RotateCcw, Save, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { ABONE_ADLARI, type AboneGrubu } from "@/lib/elektrik-tarife";
-import { YON_ADI, autoFill, cellAt, cellFits, faceFrame, guessAzimuth, isFlat, pointInFace, polygonArea, toXY, type LatLon, type LayoutSettings, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
+import { YON_ADI, autoFill, cellValid, cellsOverlap, faceFrame, guessAzimuth, isFlat, placeBlock, pointInFace, polygonArea, reshapeFace, sameCell, shiftCell, snappedCell, toXY, type BlockOptions, type LatLon, type LayoutSettings, type PanelCell, type PanelModel, type RoofFace, type XY } from "@/lib/teklif/geometry";
 import { DEFAULT_TERMS, computeNumbers, newProposalNo, type BatteryChoice, type InverterChoice, type PriceLine, type Proposal, type QuoteOption } from "@/lib/teklif/proposal";
 import { CATI_ADI, DEFAULT_SETTINGS, buildQuoteLines, matchDatasheets, pickRecipe, pickReferences, quoteChecks, recipeLines, salePrice, similarProduction, targetKwp, type QuoteSettings, type Recipe, type RoofKind } from "@/lib/teklif/pricing";
 import { pickHybridSet, pickOnGridInverter, type Accessory } from "@/lib/teklif/autoselect";
@@ -119,7 +119,7 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
     const byId = new Map(frames.map((f) => [f.face.id, f]));
     return p.cells.filter((c) => {
       const fr = byId.get(c.faceId);
-      return fr && cellFits(fr, c.i, c.j, layout);
+      return fr && cellValid(fr, c, layout);
     });
   }, [p.cells, frames, layout]);
   const shadeLoss = useMemo(() => shadeLosses(frames, cells, layout, p.obstacles ?? [], p.site.center, p.site.center[0]), [frames, cells, layout, p.obstacles, p.site.center]);
@@ -265,38 +265,88 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
       customer: c ? { ...x.customer, province: x.customer.province || c.il, mahalle: c.mahalle, ada: c.ada, parsel: c.parsel } : x.customer,
     }));
   }
+  // Yüzey ve panel düzenlemeleri geri alınabilir; başka teklife geçilince geçmiş geçersiz sayılır.
+  const [history, setHistory] = useState<Pick<Proposal, "id" | "faces" | "cells" | "obstacles">[]>([]);
+  const undoable = history.filter((u) => u.id === p.id);
+  const remember = () => setHistory([...undoable.slice(-29), { id: p.id, faces: p.faces, cells: p.cells, obstacles: p.obstacles }]);
+  function undoEdit() {
+    const last = undoable[undoable.length - 1];
+    if (!last) return;
+    setHistory(undoable.slice(0, -1));
+    setP((x) => ({ ...x, faces: last.faces, cells: last.cells, obstacles: last.obstacles }));
+  }
+  function editShape(id: string, points: LatLon[], whole: boolean) {
+    remember();
+    setP((x) => {
+      if (x.obstacles?.some((o) => o.id === id)) return { ...x, obstacles: x.obstacles.map((o) => (o.id === id ? { ...o, points } : o)) };
+      const f = x.faces.find((q) => q.id === id);
+      if (!f) return x;
+      // Tümü taşınırken paneller yüzeyle gider; köşe değişince dünyadaki yerlerinde kalır.
+      if (whole || !x.cells.some((c) => c.faceId === id)) return { ...x, faces: x.faces.map((q) => (q.id === id ? { ...q, points } : q)) };
+      const r = reshapeFace(f, points, x.site.center, x.panel, layout);
+      return { ...x, faces: x.faces.map((q) => (q.id === id ? r.face : q)), cells: x.cells.map((c) => (c.faceId === id ? { ...c, i: c.i + r.di, j: c.j + r.dj } : c)) };
+    });
+  }
   const patchFace = (id: string, patch: Partial<RoofFace>) => setP((x) => ({ ...x, faces: x.faces.map((f) => (f.id === id ? { ...f, ...patch } : f)) }));
   function fill(id: string) {
     const fr = frames.find((f) => f.face.id === id);
     if (!fr) return;
+    remember();
     setP((x) => {
       const others = x.cells.filter((c) => c.faceId !== id);
       // Maksimum raporda çatı tamamen dolar; optimalde hedef sözleşme gücü, yoksa yıllık tüketim.
       const byUse = n.annualKwh > 0 ? n.annualKwh / (n.specificYield || 1450) : 0;
       const target = x.reportType === "maksimum" ? 0 : targetKwp(x.contractKw ?? 0, x.oversizePct ?? settings.oversizePct) || byUse;
       const room = target > 0 ? Math.max(0, Math.ceil((target * 1000) / x.panel.wp) - others.length) : Infinity;
-      return { ...x, cells: [...others, ...autoFill(fr, layout).slice(0, room)] };
+      // Köşe düzenlemesinden kalan ofset yer kaybettiriyorsa ızgara baştan başlar.
+      const fresh = faceFrame({ ...fr.face, offsetU: 0, offsetV: 0 }, x.site.center, x.panel, layout);
+      const now = autoFill(fr, layout);
+      const alt = autoFill(fresh, layout);
+      const useFresh = alt.length > now.length;
+      return { ...x, faces: useFresh ? x.faces.map((f) => (f.id === id ? { ...f, offsetU: 0, offsetV: 0 } : f)) : x.faces, cells: [...others, ...(useFresh ? alt : now).slice(0, room)] };
     });
   }
   function clearFace(id: string) {
+    remember();
     setP((x) => ({ ...x, cells: x.cells.filter((c) => c.faceId !== id) }));
   }
   function removeFace(id: string) {
     setP((x) => ({ ...x, faces: x.faces.filter((f) => f.id !== id), cells: x.cells.filter((c) => c.faceId !== id) }));
     setSelected(null);
   }
-  function togglePanel(pt: XY) {
-    // Önce seçili yüzey, sonra tıklanan noktayı içeren yüzey.
-    const fr = (selected && frames.find((f) => f.face.id === selected && pointInFace(f, pt))) || frames.find((f) => pointInFace(f, pt));
-    if (!fr) return;
+  // Tıklanan yüzey; yüzey dışına tıklandıysa seçili yüzey, o da yoksa ilk yüzey. Panel yüzeyi geçebilir.
+  const faceAt = (pt: XY) => (selected && frames.find((f) => f.face.id === selected && pointInFace(f, pt))) || frames.find((f) => pointInFace(f, pt)) || frames.find((f) => f.face.id === selected) || frames[0];
+  const liveCells = (fr: (typeof frames)[number]) => cells.filter((c) => c.faceId === fr.face.id);
+  function addPanel(pt: XY) {
+    const fr = faceAt(pt);
+    if (!fr) return setMsg("Panel eklemek için önce bir yüzey çizin.");
+    const own = liveCells(fr);
+    const cell = snappedCell(fr, own, pt, layout);
+    if (own.some((c) => cellsOverlap(fr, c, cell, layout))) return;
+    remember();
     setSelected(fr.face.id);
-    const { i, j } = cellAt(fr, pt, layout);
-    setP((x) => {
-      const has = x.cells.some((c) => c.faceId === fr.face.id && c.i === i && c.j === j);
-      if (has) return { ...x, cells: x.cells.filter((c) => !(c.faceId === fr.face.id && c.i === i && c.j === j)) };
-      if (!cellFits(fr, i, j, layout)) return x;
-      return { ...x, cells: [...x.cells, { faceId: fr.face.id, i, j }] };
-    });
+    // Yüzeye sığmadığı için gizli kalmış eski paneller üst üste binmesin.
+    setP((x) => ({ ...x, cells: [...x.cells.filter((c) => c.faceId !== fr.face.id || !cellsOverlap(fr, c, cell, layout)), cell] }));
+  }
+  function startBlock(pt: XY, o: BlockOptions) {
+    const fr = faceAt(pt);
+    if (!fr) return setMsg("Panel dizmek için önce bir yüzey çizin.");
+    const block = placeBlock(fr, pt, o, layout);
+    if (!block.length) return setMsg("Bu noktadan yüzeye panel sığmıyor. Sütun ve sıra sayısını girerseniz sınırı geçerek dizilir.");
+    setMsg(null);
+    remember();
+    setSelected(fr.face.id);
+    setP((x) => ({ ...x, cells: [...x.cells.filter((c) => c.faceId !== fr.face.id || !block.some((b) => cellsOverlap(fr, c, b, layout))), ...block] }));
+  }
+  function removePanels(list: PanelCell[]) {
+    remember();
+    setP((x) => ({ ...x, cells: x.cells.filter((c) => !list.some((d) => sameCell(c, d))) }));
+  }
+  function movePanels(list: PanelCell[], delta: XY) {
+    const fr = frames.find((f) => f.face.id === list[0]?.faceId);
+    if (!fr) return;
+    remember();
+    setP((x) => ({ ...x, cells: x.cells.map((c) => (list.some((d) => sameCell(c, d)) ? shiftCell(fr, c, delta) : c)) }));
   }
 
   // --- Fiyat kalemleri ---
@@ -699,7 +749,13 @@ export default function Studio({ panels, inverters, batteries, accessories, reci
                 onView={(_c, zoom) => setP((x) => (x.site.zoom === zoom ? x : { ...x, site: { ...x.site, zoom } }))}
                 onFaceDrawn={addFace}
                 onSelectFace={setSelected}
-                onPanelClick={togglePanel}
+                onShapeEdit={editShape}
+                onPanelRemove={removePanels}
+                onPanelMove={movePanels}
+                onBlockStart={startBlock}
+                onUndo={undoEdit}
+                canUndo={undoable.length > 0}
+                onPanelClick={addPanel}
                 focus={focus}
                 parcelRing={p.parcelRing}
                 obstacles={p.obstacles}
