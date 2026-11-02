@@ -9,11 +9,12 @@ export async function GET(_req: Request, ctx: { params: Promise<{ path: string[]
   if (!path.length || path.some((p) => p === ".." || p === ".")) return new Response("Bulunamadı", { status: 404 });
 
   const url = MEDIA + path.map(encodeURIComponent).join("/");
-  // Supabase aynı anda çok istekte ara sıra geçici hata veriyor; bir kez daha denenir.
-  let upstream = await fetch(url, { cache: "no-store" }).catch(() => null);
-  if (!upstream?.ok && upstream?.status !== 404 && upstream?.status !== 400) {
-    await new Promise((r) => setTimeout(r, 300));
+  // Supabase yoğunlukta geçici 429 (istek sınırı) ya da 5xx veriyor; artan aralıkla iki kez daha denenir.
+  let upstream: Response | null = null;
+  for (const wait of [0, 400, 1200]) {
+    if (wait) await new Promise((r) => setTimeout(r, wait));
     upstream = await fetch(url, { cache: "no-store" }).catch(() => null);
+    if (upstream?.ok || upstream?.status === 404 || upstream?.status === 400) break;
   }
   if (!upstream?.ok || !upstream.body) {
     const missing = upstream?.status === 404 || upstream?.status === 400;
