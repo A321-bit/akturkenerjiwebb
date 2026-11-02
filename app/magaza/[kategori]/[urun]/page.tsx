@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Download, FileText, MessageCircle } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata, ogImagePath } from "@/lib/seo";
-import { cdnImageUrl } from "@/lib/imageLoader";
+import { cdnImage, cdnImageUrl } from "@/lib/imageLoader";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import GoogleReviews from "@/components/GoogleReviews";
@@ -260,7 +260,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
             </div>
             {product.datasheet ? (
               <a
-                href={product.datasheet}
+                href={cdnImage(product.datasheet)}
                 download
                 target="_blank"
                 rel="noopener noreferrer"

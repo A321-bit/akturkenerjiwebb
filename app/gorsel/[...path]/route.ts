@@ -8,12 +8,20 @@ export async function GET(_req: Request, ctx: { params: Promise<{ path: string[]
   const { path } = await ctx.params;
   if (!path.length || path.some((p) => p === ".." || p === ".")) return new Response("Bulunamadı", { status: 404 });
 
-  const upstream = await fetch(MEDIA + path.map(encodeURIComponent).join("/"), { cache: "no-store" });
-  if (!upstream.ok || !upstream.body) {
-    // Kesinti ya da olmayan dosya kısa süre saklanır; aynı hatalı istek Supabase'e tekrar tekrar gitmez.
+  const url = MEDIA + path.map(encodeURIComponent).join("/");
+  // Supabase aynı anda çok istekte ara sıra geçici hata veriyor; bir kez daha denenir.
+  let upstream = await fetch(url, { cache: "no-store" }).catch(() => null);
+  if (!upstream?.ok && upstream?.status !== 404 && upstream?.status !== 400) {
+    await new Promise((r) => setTimeout(r, 300));
+    upstream = await fetch(url, { cache: "no-store" }).catch(() => null);
+  }
+  if (!upstream?.ok || !upstream.body) {
+    const missing = upstream?.status === 404 || upstream?.status === 400;
+    console.error("[gorsel]", upstream?.status ?? "fetch hatası", path.join("/"));
+    // Olmayan dosya kısa süre saklanır; geçici hata hiç saklanmaz, sonraki ziyaretçi görseli alır.
     return new Response("Bulunamadı", {
-      status: upstream.status === 404 || upstream.status === 400 ? 404 : 502,
-      headers: { "Cache-Control": "public, max-age=60", "Vercel-CDN-Cache-Control": "public, max-age=600" },
+      status: missing ? 404 : 502,
+      headers: missing ? { "Cache-Control": "public, max-age=60", "Vercel-CDN-Cache-Control": "public, max-age=600" } : { "Cache-Control": "no-store" },
     });
   }
 
