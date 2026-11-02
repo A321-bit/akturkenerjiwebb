@@ -8,6 +8,7 @@ import { ILLER } from "@/lib/il-konum";
 import { buildLeadAttributionFields, getAttribution } from "@/lib/attribution";
 import { trackEvent } from "@/lib/track";
 import { trackGa4Lead, trackGoogleAdsLead } from "@/lib/ga4";
+import { trackMetaLead } from "@/lib/meta-pixel";
 import { rememberCalculation } from "@/lib/whatsapp-context";
 
 // Hesaplayıcıların (on grid, ısı pompası, sulama) ortak parçaları: adım çubuğu, panel,
@@ -256,6 +257,7 @@ export function ContactStep({ page, place, bullets, payload, onDone, onBack }: {
       trackEvent("click", page, `${payload.source}_lead_submit`);
       trackGa4Lead(payload.source);
       trackGoogleAdsLead();
+      trackMetaLead(payload.source);
       onDone();
     } catch {
       setState("error");
