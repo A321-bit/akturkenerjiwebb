@@ -1,5 +1,6 @@
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
+import { cdnImage } from "@/lib/imageLoader";
 
 // Yazılardaki markdown tablolarını (| a | b |) gösterebilmek için GFM.
 const mdxOptions = { mdxOptions: { remarkPlugins: [remarkGfm] } };
@@ -8,7 +9,7 @@ const mdxComponents = {
   // Yazı içi fotoğraflar: ![alt](url "alt yazı"). "-opt.webp" dosyalarının
   // 800px kopyası telefonlarda kullanılır; başlık (title) fotoğraf altı yazısı olur.
   img: ({ src, alt, title }: React.ComponentProps<"img">) => {
-    const url = typeof src === "string" ? src : "";
+    const url = cdnImage(typeof src === "string" ? src : "");
     return (
       <span className="my-7 block">
         {/* eslint-disable-next-line @next/next/no-img-element */}

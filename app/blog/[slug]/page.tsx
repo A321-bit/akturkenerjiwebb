@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getBlogPostBySlug, getSiteSettings, SITE_URL, SITE_NAME } from "@/lib/data";
 import { buildMetadata, breadcrumbJsonLd, ogImagePath } from "@/lib/seo";
+import { cdnImageUrl } from "@/lib/imageLoader";
 import QuoteModal from "@/components/QuoteModal";
 import CoverMedia from "@/components/CoverMedia";
 import MdxContent from "@/components/MdxContent";
@@ -72,7 +73,7 @@ export default async function BlogPostPage({
         datePublished: post.publishedAt,
         dateModified: post.publishedAt,
         mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
-        ...(post.image ? { image: post.image } : {}),
+        ...(post.image ? { image: cdnImageUrl(post.image) } : {}),
         author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
         publisher: {
           "@type": "Organization",

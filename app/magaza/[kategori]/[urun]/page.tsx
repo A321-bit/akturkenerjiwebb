@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Download, FileText, MessageCircle } from "lucide-react";
 import { getSiteSettings, whatsappLink, SITE_URL } from "@/lib/data";
 import { buildMetadata, ogImagePath } from "@/lib/seo";
+import { cdnImageUrl } from "@/lib/imageLoader";
 import { getApprovedReviews, withRatings } from "@/lib/reviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import GoogleReviews from "@/components/GoogleReviews";
@@ -114,7 +115,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
       ...(product.price || optionPrices.length || rating ? [{
         "@type": "Product",
         name: product.name,
-        image: gallery,
+        image: gallery.map(cdnImageUrl),
         description: product.seoDescription || category.intro,
         sku: product.slug,
         category: category.name,

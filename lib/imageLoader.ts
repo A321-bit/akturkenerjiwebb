@@ -11,6 +11,9 @@ const SUPABASE_MEDIA = "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/obje
  */
 export const cdnImage = (src: string) => (src.startsWith(SUPABASE_MEDIA) ? `/gorsel/${src.slice(SUPABASE_MEDIA.length)}` : src);
 
+/** Site dışına verilen tam adres (Merchant feed, yapılandırılmış veri): Google ve Meta da CDN'den çeker. */
+export const cdnImageUrl = (src: string) => (src.startsWith(SUPABASE_MEDIA) ? `https://akturkenerji.com${cdnImage(src)}` : src);
+
 export default function imageLoader({ src, width }: { src: string; width: number }) {
   // Telefonlar (3x ekranda ~1170 px'e kadar) küçük kopyayı indirir: LCP için en büyük kazanç.
   if (src.endsWith("-opt.webp") && width <= 1200) {

@@ -1,3 +1,5 @@
+import { cdnImage } from "@/lib/imageLoader";
+
 // Marka logoları sonsuz döngüde yavaşça kayar (admin → Mağaza Ayarları).
 // Liste art arda basılır; animasyon -50%'ye kaydığında başa dönüş görünmez olur.
 export default function BrandStrip({ title, brands }: { title: string; brands: { name: string; logo: string }[] }) {
@@ -15,7 +17,7 @@ export default function BrandStrip({ title, brands }: { title: string; brands: {
             <div key={`${b.name}-${i}`} className="flex h-16 w-[200px] shrink-0 items-center justify-center px-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={b.logo}
+                src={cdnImage(b.logo)}
                 alt={i < brands.length ? `${b.name} logosu` : ""}
                 aria-hidden={i >= brands.length}
                 loading="lazy"

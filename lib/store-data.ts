@@ -134,24 +134,46 @@ export const getStoreProducts = cache(async (): Promise<StoreProduct[]> => {
 });
 
 /** Ürün sayfasının makale metni; listelerde taşınmaz. */
-export const getStoreProductContent = cache(async (slug: string): Promise<string | undefined> => {
-  const { data, error } = await storeDb.from("store_products").select("content").eq("slug", slug).maybeSingle();
-  if (error) throw new Error(`Ürün yazısı okunamadı: ${error.message}`);
-  return opt((data as { content: string | null } | null)?.content);
-});
+const fetchProductContent = unstable_cache(
+  async (slug: string) => {
+    const { data, error } = await storeDb.from("store_products").select("content").eq("slug", slug).maybeSingle();
+    if (error) throw new Error(`Ürün yazısı okunamadı: ${error.message}`);
+    return (data as { content: string | null } | null)?.content ?? null;
+  },
+  ["store-product-content"],
+  { tags: [STORE_CACHE_TAG], revalidate: 86400 },
+);
+
+export const getStoreProductContent = cache(async (slug: string): Promise<string | undefined> => opt(await fetchProductContent(slug)));
+
+const fetchProductsBySlugs = unstable_cache(
+  async (slugs: string[]) => {
+    const { data, error } = await storeDb.from("store_products").select(PRODUCT_LIST_COLUMNS).in("slug", slugs);
+    if (error || !data) throw new Error(`store_products okunamadı: ${error?.message}`);
+    return data as unknown as ProductRow[];
+  },
+  ["store-products-by-slugs"],
+  { tags: [STORE_CACHE_TAG], revalidate: 86400 },
+);
 
 /** Slug ile ürünler, pasif olanlar dahil (ör. satışa kapalı tekli paneller "Paketi Tamamla"da fiyat kaynağıdır). */
 export const getProductsBySlugs = cache(async (slugs: string[]): Promise<StoreProduct[]> => {
   if (!slugs.length) return [];
-  const { data, error } = await storeDb.from("store_products").select(PRODUCT_LIST_COLUMNS).in("slug", slugs);
-  if (error || !data) return [];
-  return (data as unknown as ProductRow[]).map(mapProduct);
+  return (await fetchProductsBySlugs(slugs)).map(mapProduct);
 });
 
+const fetchSlides = unstable_cache(
+  async () => {
+    const { data, error } = await supabasePublic.from("store_slides").select("*").order("sort_order").order("id");
+    if (error || !data) throw new Error(`store_slides okunamadı: ${error?.message}`);
+    return data as SlideRow[];
+  },
+  ["store-slides"],
+  { tags: [STORE_CACHE_TAG], revalidate: 86400 },
+);
+
 export const getStoreSlides = cache(async (): Promise<StoreSlide[]> => {
-  const { data, error } = await supabasePublic.from("store_slides").select("*").order("sort_order").order("id");
-  if (error || !data) return [];
-  return (data as SlideRow[]).map((s) => ({
+  return (await fetchSlides()).map((s) => ({
     image: s.image,
     eyebrow: opt(s.eyebrow),
     title: s.title,
@@ -175,9 +197,18 @@ const EMPTY_SETTINGS: StoreSettings = {
   footerText: "",
 };
 
+const fetchStoreSettings = unstable_cache(
+  async () => {
+    const { data, error } = await storeDb.from("store_settings").select("*").eq("id", 1).single();
+    if (error || !data) throw new Error(`store_settings okunamadı: ${error?.message}`);
+    return data as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  },
+  ["store-settings"],
+  { tags: [STORE_CACHE_TAG], revalidate: 86400 },
+);
+
 export const getStoreSettings = cache(async (): Promise<StoreSettings> => {
-  const { data, error } = await storeDb.from("store_settings").select("*").eq("id", 1).single();
-  if (error || !data) return EMPTY_SETTINGS;
+  const data = await fetchStoreSettings();
   return {
     pricesUpdated: data.prices_updated ?? "",
     priceNote: data.price_note ?? "",

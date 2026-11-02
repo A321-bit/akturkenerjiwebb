@@ -1,5 +1,5 @@
 import { SITE_URL } from "@/lib/data";
-import { cdnImage } from "@/lib/imageLoader";
+import { cdnImageUrl } from "@/lib/imageLoader";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
 import { productBrand, productGallery, productHref } from "@/lib/store-details";
 
@@ -21,7 +21,7 @@ export async function GET() {
     .filter((p) => p.price && p.image)
     .map((p) => {
       // Google ve Meta görselleri de CDN'den çeker.
-      const images = productGallery(p).map((u) => (cdnImage(u).startsWith("/") ? `${SITE_URL}${cdnImage(u)}` : u));
+      const images = productGallery(p).map(cdnImageUrl);
       const desc = plain([p.seoDescription, p.contents.join(". ")].filter(Boolean).join(" ")).slice(0, 4900);
       return `<item>
 <g:id>${p.id}</g:id>

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { getBlogPostBySlug, getReferenceBySlug, getReferences, getServiceBySlug } from "./data";
+import { cdnImageUrl } from "./imageLoader";
 import { formatTL, priceLabel } from "./store";
 import { getStoreCategories, getStoreProducts } from "./store-data";
 
@@ -104,8 +105,11 @@ async function cardData(type: SocialType, slug: string, withPrice: boolean): Pro
 /** Kaynak görsel (çoğu WebP) → kart boyutuna kırpılmış JPEG data URL (Satori WebP okuyamaz). */
 async function photo(url: string | undefined, width: number, height: number): Promise<string | null> {
   if (!url) return null;
+  // Bağlantı önizlemesinde (botların çoğu) 800'lük kopya yeter; Instagram karesi tam boyu kullanır.
+  // Kaynak Supabase yerine CDN'den (/gorsel) iner.
+  const src = cdnImageUrl(height <= 630 ? url.replace(/-opt\.webp$/, "-opt-800.webp") : url);
   try {
-    const res = await fetch(url.startsWith("http") ? url : `https://akturkenerji.com${url}`);
+    const res = await fetch(src.startsWith("http") ? src : `https://akturkenerji.com${src}`);
     if (!res.ok) return null;
     const buf = await sharp(Buffer.from(await res.arrayBuffer())).resize(width, height, { fit: "cover" }).jpeg({ quality: 85 }).toBuffer();
     return `data:image/jpeg;base64,${buf.toString("base64")}`;

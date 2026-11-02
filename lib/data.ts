@@ -1,5 +1,15 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { supabasePublic, supabaseAdmin } from "./supabase";
+
+/** Admin içerik değiştirince paylaşılan veri önbelleği bu etiketle silinir. */
+export const SITE_CACHE_TAG = "site-data";
+
+// Site verisi sayfalar arasında paylaşılır: 471 sayfanın her üretiminde aynı ayar, hizmet ve
+// yazı listesi veritabanından yeniden inmez (ücretsiz plandaki aylık 5 GB veri çıkışı).
+// Hata önbelleğe alınmaz ve fırlatılır; Vercel sayfanın son sağlam halini sunmaya devam eder.
+const shared = <A extends unknown[], R>(fn: (...args: A) => Promise<R>, key: string) =>
+  unstable_cache(fn, [key], { tags: [SITE_CACHE_TAG], revalidate: 86400 });
 
 export const SITE_URL = "https://akturkenerji.com";
 export const SITE_DOMAIN = "akturkenerji.com";
@@ -150,7 +160,7 @@ function mapSiteSettings(row: SiteSettingsRow): SiteSettings {
   };
 }
 
-export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
+const fetchSiteSettings = shared(async () => {
   const { data, error } = await supabasePublic
     .from("site_settings")
     .select("*")
@@ -159,8 +169,10 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   if (error || !data) {
     throw new Error("site_settings okunamadı: " + (error?.message ?? "kayıt yok"));
   }
-  return mapSiteSettings(data as SiteSettingsRow);
-});
+  return data as SiteSettingsRow;
+}, "site-settings");
+
+export const getSiteSettings = cache(async (): Promise<SiteSettings> => mapSiteSettings(await fetchSiteSettings()));
 
 type ServiceRow = {
   id: number;
@@ -204,15 +216,28 @@ function mapService(row: ServiceRow): Service {
   };
 }
 
-export const getServices = cache(async (): Promise<Service[]> => {
-  const { data, error } = await supabasePublic.from("services").select("*").order("sort_order");
-  if (error) throw new Error(error.message);
-  return (data as ServiceRow[]).map(mapService);
-});
+// Liste her sayfanın altbilgisinde gerekir; uzun rehber yazısı (guide_content) yalnızca
+// hizmetin kendi sayfasında (getServiceBySlug) okunur.
+const SERVICE_LIST_COLUMNS =
+  "id,slug,eyebrow,title,summary,description,bullets,audience,image,updated_at,seo_title,seo_description,seo_heading,guide_title,faqs";
+
+const fetchServices = shared(async () => {
+  const { data, error } = await supabasePublic.from("services").select(SERVICE_LIST_COLUMNS).order("sort_order");
+  if (error || !data) throw new Error(`services okunamadı: ${error?.message}`);
+  return data as unknown as ServiceRow[];
+}, "services");
+
+export const getServices = cache(async (): Promise<Service[]> => (await fetchServices()).map(mapService));
+
+const fetchServiceBySlug = shared(async (slug: string) => {
+  const { data, error } = await supabasePublic.from("services").select("*").eq("slug", slug).maybeSingle();
+  if (error) throw new Error(`Hizmet okunamadı: ${error.message}`);
+  return data as ServiceRow | null;
+}, "service-by-slug");
 
 export const getServiceBySlug = cache(async (slug: string): Promise<Service | null> => {
-  const { data } = await supabasePublic.from("services").select("*").eq("slug", slug).maybeSingle();
-  return data ? mapService(data as ServiceRow) : null;
+  const row = await fetchServiceBySlug(slug);
+  return row ? mapService(row) : null;
 });
 
 type ReferenceRow = {
@@ -255,44 +280,62 @@ function mapReference(row: ReferenceRow): Reference {
 // "Son Tamamlanan Projelerimiz" ve sitemap) bu veriyi yalnızca önizleme
 // kartlarında kullanıyor — detay sayfasına özel "gallery" ve "description"
 // alanlarını (hem daha büyük hem gereksiz) hiç çekmiyoruz.
-export const getReferences = cache(async (): Promise<Reference[]> => {
+const fetchReferences = shared(async () => {
   const { data, error } = await supabasePublic
     .from("project_references")
     .select("id, slug, title, category, location, address, capacity, year, summary, image, updated_at")
     .order("sort_order");
-  if (error) throw new Error(error.message);
-  return (data as ReferenceRow[]).map(mapReference);
-});
+  if (error || !data) throw new Error(`project_references okunamadı: ${error?.message}`);
+  return data as ReferenceRow[];
+}, "references");
 
-export const getReferenceBySlug = cache(async (slug: string): Promise<Reference | null> => {
-  const { data } = await supabasePublic
+export const getReferences = cache(async (): Promise<Reference[]> => (await fetchReferences()).map(mapReference));
+
+const fetchReferenceBySlug = shared(async (slug: string) => {
+  const { data, error } = await supabasePublic
     .from("project_references")
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
-  return data ? mapReference(data as ReferenceRow) : null;
+  if (error) throw new Error(`Referans okunamadı: ${error.message}`);
+  return data as ReferenceRow | null;
+}, "reference-by-slug");
+
+export const getReferenceBySlug = cache(async (slug: string): Promise<Reference | null> => {
+  const row = await fetchReferenceBySlug(slug);
+  return row ? mapReference(row) : null;
 });
 
-export const getTestimonials = cache(async (): Promise<Testimonial[]> => {
+const fetchTestimonials = shared(async () => {
   const { data, error } = await supabasePublic.from("testimonials").select("*").order("sort_order");
-  if (error) throw new Error(error.message);
+  if (error || !data) throw new Error(`testimonials okunamadı: ${error?.message}`);
   return data as Testimonial[];
-});
+}, "testimonials");
+
+export const getTestimonials = cache(async (): Promise<Testimonial[]> => fetchTestimonials());
 
 export type SiteVideo = { id?: number; title: string; youtubeUrl: string };
 
 type SiteVideoRow = { id: number; title: string; youtube_url: string; sort_order: number };
 
+const fetchVideos = shared(async () => {
+  const { data, error } = await supabasePublic.from("site_videos").select("*").order("sort_order");
+  if (error || !data) throw new Error(`site_videos okunamadı: ${error?.message}`);
+  return data as SiteVideoRow[];
+}, "site-videos");
+
 export const getVideos = cache(async (): Promise<SiteVideo[]> => {
   // "site_videos" tablosu yeni eklendi — Supabase'de migration henüz
   // çalıştırılmamışsa (veya geçici bir hata olursa) ana sayfa çökmesin diye
   // bu bölüm sessizce boş liste döndürür.
-  const { data, error } = await supabasePublic.from("site_videos").select("*").order("sort_order");
-  if (error) {
-    console.error("[getVideos] site_videos okunamadı:", error.message);
+  let rows: SiteVideoRow[];
+  try {
+    rows = await fetchVideos();
+  } catch (e) {
+    console.error("[getVideos]", (e as Error).message);
     return [];
   }
-  return (data as SiteVideoRow[]).map((row) => ({
+  return rows.map((row) => ({
     id: row.id,
     title: row.title,
     youtubeUrl: row.youtube_url,
@@ -331,24 +374,33 @@ function mapBlogPost(row: BlogPostRow): BlogPost {
   };
 }
 
-export const getBlogPosts = cache(async (): Promise<BlogPost[]> => {
+// Tarih önbellek anahtarına girer: ileri tarihli yazı günü gelince listeye düşer.
+const fetchBlogPosts = shared(async (today: string) => {
   const { data, error } = await supabasePublic
     .from("blog_posts")
     .select("*")
-    .lte("published_at", todayIso())
+    .lte("published_at", today)
     .order("published_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data as BlogPostRow[]).map(mapBlogPost);
-});
+  if (error || !data) throw new Error(`blog_posts okunamadı: ${error?.message}`);
+  return data as BlogPostRow[];
+}, "blog-posts");
 
-export const getBlogPostBySlug = cache(async (slug: string): Promise<BlogPost | null> => {
-  const { data } = await supabasePublic
+export const getBlogPosts = cache(async (): Promise<BlogPost[]> => (await fetchBlogPosts(todayIso())).map(mapBlogPost));
+
+const fetchBlogPostBySlug = shared(async (slug: string, today: string) => {
+  const { data, error } = await supabasePublic
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
-    .lte("published_at", todayIso())
+    .lte("published_at", today)
     .maybeSingle();
-  return data ? mapBlogPost(data as BlogPostRow) : null;
+  if (error) throw new Error(`Blog yazısı okunamadı: ${error.message}`);
+  return data as BlogPostRow | null;
+}, "blog-post-by-slug");
+
+export const getBlogPostBySlug = cache(async (slug: string): Promise<BlogPost | null> => {
+  const row = await fetchBlogPostBySlug(slug, todayIso());
+  return row ? mapBlogPost(row) : null;
 });
 
 export type BlogPostSummary = Pick<BlogPost, "slug" | "title" | "description" | "category" | "image"> & {
@@ -359,17 +411,23 @@ export type BlogPostSummary = Pick<BlogPost, "slug" | "title" | "description" | 
 // ağır "content" (1000+ kelimelik makale gövdesi) sütununu hiç çekmiyoruz —
 // bu, 13 hizmet sayfasının her isteğinde ~30 yazının tamamını gereksiz yere
 // transfer etmesini önler.
-export const getBlogPostSummaries = cache(async (): Promise<BlogPostSummary[]> => {
+const fetchBlogPostSummaries = shared(async (today: string) => {
   const { data, error } = await supabasePublic
     .from("blog_posts")
     .select("slug, title, description, category, image, published_at")
-    .lte("published_at", todayIso())
+    .lte("published_at", today)
     .order("published_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return (data as (Omit<BlogPostSummary, "image" | "publishedAt"> & { image: string | null; published_at: string })[]).map(
-    ({ image, published_at, ...rest }) => ({ ...rest, image: image ?? undefined, publishedAt: published_at })
-  );
-});
+  if (error || !data) throw new Error(`blog_posts okunamadı: ${error?.message}`);
+  return data as (Omit<BlogPostSummary, "image" | "publishedAt"> & { image: string | null; published_at: string })[];
+}, "blog-post-summaries");
+
+export const getBlogPostSummaries = cache(async (): Promise<BlogPostSummary[]> =>
+  (await fetchBlogPostSummaries(todayIso())).map(({ image, published_at, ...rest }) => ({
+    ...rest,
+    image: image ?? undefined,
+    publishedAt: published_at,
+  }))
+);
 
 // ── Admin (secret anahtar, sadece sunucu tarafı route'larda kullanılır) ──
 

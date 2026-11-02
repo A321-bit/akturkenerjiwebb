@@ -22,7 +22,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ type: string; s
   return new Response(new Uint8Array(jpeg), {
     headers: {
       "Content-Type": "image/jpeg",
-      "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+      // Tarayıcılar ve sosyal ağ botları sık çeker; CDN bir hafta tutar, her istekte kart yeniden çizilmez.
+      "Cache-Control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000",
     },
   });
 }

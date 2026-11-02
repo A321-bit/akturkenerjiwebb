@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { adminClient } from "@/lib/data";
+import { adminClient, SITE_CACHE_TAG } from "@/lib/data";
 import { requireAdmin } from "@/lib/admin-guard";
 import { STORE_CACHE_TAG } from "@/lib/store-data";
 
@@ -8,14 +8,21 @@ import { STORE_CACHE_TAG } from "@/lib/store-data";
 // önbelleği temizlenir ki değişiklik hemen yansısın. Tüm siteyi temizlemek her
 // sayfanın yeniden üretilmesine (Vercel ISR yazma kotası) yol açtığından yalnızca
 // genel ayarlar (telefon, adres vb.) değişince kullanılır; diğer içerikte bölüm bazlı.
-export function revalidateSite() {
+// Sayfalar arası paylaşılan veri önbelleği (lib/data.ts, lib/store-data.ts) her içerik
+// değişikliğinde silinir; aksi halde yeniden üretilen sayfa eski veriyi gösterirdi.
+function clearDataCache() {
+  revalidateTag(SITE_CACHE_TAG, { expire: 0 });
   revalidateTag(STORE_CACHE_TAG, { expire: 0 });
+}
+
+export function revalidateSite() {
+  clearDataCache();
   revalidatePath("/", "layout");
 }
 
 /** Bir bölümün tüm sayfaları (ör. "/blog" → /blog ve /blog/*) + ana sayfa ve sitemap (yeni sayfa hemen listelensin). */
 export function revalidateSection(base: string) {
-  if (base === "/magaza") revalidateTag(STORE_CACHE_TAG, { expire: 0 });
+  clearDataCache();
   revalidatePath(base, "layout");
   revalidatePath("/");
   revalidatePath("/sitemap.xml");
@@ -23,7 +30,7 @@ export function revalidateSection(base: string) {
 
 /** Mağaza kategorisi değişince yalnız o kategorinin sayfaları (+ mağaza ve ana sayfa); tüm mağaza yeniden üretilmez. */
 export function revalidateStoreCategory(slug: string) {
-  revalidateTag(STORE_CACHE_TAG, { expire: 0 });
+  clearDataCache();
   revalidatePath(`/magaza/${slug}`, "layout");
   revalidatePath("/magaza");
   revalidatePath("/");
@@ -32,7 +39,7 @@ export function revalidateStoreCategory(slug: string) {
 
 /** Mağaza: tek ürün değişince ürün, kategori, mağaza ana sayfası ve ana sayfa; yoksa tüm mağaza. */
 export function revalidateStore(product?: { category?: string | null; slug?: string | null }) {
-  revalidateTag(STORE_CACHE_TAG, { expire: 0 });
+  clearDataCache();
   if (product?.category && product.slug) {
     revalidatePath(`/magaza/${product.category}/${product.slug}`);
     revalidatePath(`/magaza/${product.category}`);
