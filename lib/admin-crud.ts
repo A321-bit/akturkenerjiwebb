@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { adminClient } from "@/lib/data";
 import { requireAdmin } from "@/lib/admin-guard";
+import { STORE_CACHE_TAG } from "@/lib/store-data";
 
 // Herkese açık sayfalar önbellekten sunuluyor; içerik değişince ilgili sayfaların
 // önbelleği temizlenir ki değişiklik hemen yansısın. Tüm siteyi temizlemek her
 // sayfanın yeniden üretilmesine (Vercel ISR yazma kotası) yol açtığından yalnızca
 // genel ayarlar (telefon, adres vb.) değişince kullanılır; diğer içerikte bölüm bazlı.
 export function revalidateSite() {
+  revalidateTag(STORE_CACHE_TAG, { expire: 0 });
   revalidatePath("/", "layout");
 }
 
 /** Bir bölümün tüm sayfaları (ör. "/blog" → /blog ve /blog/*) + ana sayfa ve sitemap (yeni sayfa hemen listelensin). */
 export function revalidateSection(base: string) {
+  if (base === "/magaza") revalidateTag(STORE_CACHE_TAG, { expire: 0 });
   revalidatePath(base, "layout");
   revalidatePath("/");
   revalidatePath("/sitemap.xml");
@@ -20,6 +23,7 @@ export function revalidateSection(base: string) {
 
 /** Mağaza kategorisi değişince yalnız o kategorinin sayfaları (+ mağaza ve ana sayfa); tüm mağaza yeniden üretilmez. */
 export function revalidateStoreCategory(slug: string) {
+  revalidateTag(STORE_CACHE_TAG, { expire: 0 });
   revalidatePath(`/magaza/${slug}`, "layout");
   revalidatePath("/magaza");
   revalidatePath("/");
@@ -28,6 +32,7 @@ export function revalidateStoreCategory(slug: string) {
 
 /** Mağaza: tek ürün değişince ürün, kategori, mağaza ana sayfası ve ana sayfa; yoksa tüm mağaza. */
 export function revalidateStore(product?: { category?: string | null; slug?: string | null }) {
+  revalidateTag(STORE_CACHE_TAG, { expire: 0 });
   if (product?.category && product.slug) {
     revalidatePath(`/magaza/${product.category}/${product.slug}`);
     revalidatePath(`/magaza/${product.category}`);

@@ -14,9 +14,9 @@ import CalculatorCta from "@/components/store/CalculatorCta";
 import { renderStoreTokens } from "@/lib/store-content";
 import { productHref } from "@/lib/store-details";
 
-export async function generateStaticParams() {
-  const categories = await getStoreCategories();
-  return categories.map((c) => ({ kategori: c.slug }));
+// Build'de üretilmez; ilk ziyarette üretilip önbelleğe alınır (ISR).
+export function generateStaticParams() {
+  return [];
 }
 
 async function findCategory(params: Promise<{ kategori: string }>) {

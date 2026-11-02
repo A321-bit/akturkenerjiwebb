@@ -1,14 +1,21 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { supabaseAdmin, supabasePublic } from "./supabase";
 import type { StoreCategory, StoreProduct, StoreSettings, StoreSlide } from "./store";
 
-// Mağaza verisi: admin panelden yönetilen store_* tabloları. Hata olursa
-// mağaza boş görünür ama sayfa çökmez.
+// Mağaza verisi: admin panelden yönetilen store_* tabloları.
 //
 // Ürün, kategori ve ayar tablolarında alış maliyeti ve kâr marjı sütunları
 // var; bu yüzden anon (tarayıcıdaki public anahtar) bu tablolara erişemez,
 // burada sunucu tarafı anahtarla okunur. Yalnızca aktif kayıtlar alınır.
 const storeDb = supabaseAdmin();
+
+/** Admin bir ürün ya da kategori değiştirince paylaşılan liste önbelleği bu etiketle silinir. */
+export const STORE_CACHE_TAG = "store-data";
+
+// Ürün listesi her sayfada gerekir; makale metni (content) yalnızca kendi ürün sayfasında.
+const PRODUCT_LIST_COLUMNS =
+  "id,slug,category,name,power,price,list_price,install_included,image,gallery,contents,datasheet,featured,seo_title,seo_description,options";
 
 type CategoryRow = {
   id: number;
@@ -94,29 +101,51 @@ export function mapProduct(r: ProductRow): StoreProduct {
   };
 }
 
-export const getStoreCategories = cache(async (): Promise<StoreCategory[]> => {
-  const { data, error } = await storeDb.from("store_categories").select("*").eq("active", true).order("sort_order").order("id");
-  if (error || !data) return [];
-  return (data as CategoryRow[]).map(mapCategory);
-});
+// Listeler sayfalar arasında paylaşılır: her sayfa üretiminde veritabanından yeniden inmez.
+// Hata önbelleğe alınmaz ve fırlatılır; böylece Vercel sayfanın son sağlam halini sunmaya
+// devam eder. Boş liste dönseydi veritabanı kesintisinde boş sayfa ve boş feed saklanırdı.
+const fetchCategories = unstable_cache(
+  async () => {
+    const { data, error } = await storeDb.from("store_categories").select("*").eq("active", true).order("sort_order").order("id");
+    if (error || !data) throw new Error(`store_categories okunamadı: ${error?.message}`);
+    return data as CategoryRow[];
+  },
+  ["store-categories"],
+  { tags: [STORE_CACHE_TAG], revalidate: 86400 },
+);
+
+const fetchProducts = unstable_cache(
+  async () => {
+    const { data, error } = await storeDb.from("store_products").select(PRODUCT_LIST_COLUMNS).eq("active", true).order("sort_order").order("id");
+    if (error || !data) throw new Error(`store_products okunamadı: ${error?.message}`);
+    return data as unknown as ProductRow[];
+  },
+  ["store-products"],
+  { tags: [STORE_CACHE_TAG], revalidate: 86400 },
+);
+
+export const getStoreCategories = cache(async (): Promise<StoreCategory[]> => (await fetchCategories()).map(mapCategory));
 
 export const getStoreProducts = cache(async (): Promise<StoreProduct[]> => {
-  const [{ data, error }, categories] = await Promise.all([
-    storeDb.from("store_products").select("*").eq("active", true).order("sort_order").order("id"),
-    getStoreCategories(),
-  ]);
-  if (error || !data) return [];
+  const [rows, categories] = await Promise.all([fetchProducts(), getStoreCategories()]);
   // Yayından kaldırılmış kategorideki ürünler de gizlenir.
   const live = new Set(categories.map((c) => c.slug));
-  return (data as ProductRow[]).filter((r) => live.has(r.category)).map(mapProduct);
+  return rows.filter((r) => live.has(r.category)).map(mapProduct);
+});
+
+/** Ürün sayfasının makale metni; listelerde taşınmaz. */
+export const getStoreProductContent = cache(async (slug: string): Promise<string | undefined> => {
+  const { data, error } = await storeDb.from("store_products").select("content").eq("slug", slug).maybeSingle();
+  if (error) throw new Error(`Ürün yazısı okunamadı: ${error.message}`);
+  return opt((data as { content: string | null } | null)?.content);
 });
 
 /** Slug ile ürünler, pasif olanlar dahil (ör. satışa kapalı tekli paneller "Paketi Tamamla"da fiyat kaynağıdır). */
 export const getProductsBySlugs = cache(async (slugs: string[]): Promise<StoreProduct[]> => {
   if (!slugs.length) return [];
-  const { data, error } = await storeDb.from("store_products").select("*").in("slug", slugs);
+  const { data, error } = await storeDb.from("store_products").select(PRODUCT_LIST_COLUMNS).in("slug", slugs);
   if (error || !data) return [];
-  return (data as ProductRow[]).map(mapProduct);
+  return (data as unknown as ProductRow[]).map(mapProduct);
 });
 
 export const getStoreSlides = cache(async (): Promise<StoreSlide[]> => {

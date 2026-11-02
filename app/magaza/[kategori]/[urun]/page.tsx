@@ -8,7 +8,7 @@ import { getApprovedReviews, withRatings } from "@/lib/reviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import GoogleReviews from "@/components/GoogleReviews";
 import { cardProduct, discountPercent, priceLabel } from "@/lib/store";
-import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
+import { getStoreCategories, getStoreProductContent, getStoreProducts } from "@/lib/store-data";
 import { kwOf, productBrand, productGallery, productHref } from "@/lib/store-details";
 import ProductGallery from "@/components/store/ProductGallery";
 import TrackedContactLink from "@/components/TrackedContactLink";
@@ -22,9 +22,10 @@ import ProductBuyBox from "@/components/store/ProductBuyBox";
 import PackageCompleter from "@/components/store/PackageCompleter";
 import { PACKAGE_COMPLETE_CATEGORIES, packageCompleteData } from "@/lib/package-complete-data";
 
-export async function generateStaticParams() {
-  const products = await getStoreProducts();
-  return products.map((p) => ({ kategori: p.category, urun: p.slug }));
+// Build'de ürün sayfası üretilmez; her sayfa ilk ziyarette üretilip önbelleğe alınır (ISR).
+// Her yayında yüzlerce sayfa için veritabanına gidilmesin.
+export function generateStaticParams() {
+  return [];
 }
 
 async function find(params: Promise<{ kategori: string; urun: string }>) {
@@ -62,7 +63,8 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
   const found = await find(params);
   if (!found) notFound();
   const { product, category, products } = found;
-  const [site, reviews, others, completeData, google] = await Promise.all([
+  const [article, site, reviews, others, completeData, google] = await Promise.all([
+    getStoreProductContent(product.slug),
     getSiteSettings(),
     getApprovedReviews(product.slug),
     withRatings(products.filter((p) => p.slug !== product.slug)),
@@ -93,7 +95,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
 
   // Makale henüz yazılmadıysa paket içeriğinden kısa bir açıklama üretilir.
   const description =
-    product.content ??
+    article ??
     [
       category.intro,
       "",
