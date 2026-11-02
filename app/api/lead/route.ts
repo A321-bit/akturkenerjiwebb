@@ -117,6 +117,8 @@ export async function POST(req: Request) {
 
   if (supabaseResult[0].status === "rejected") {
     console.error("[LeadForm] Supabase kaydı başarısız:", supabaseResult[0].reason);
+    // Veritabanı kapalıyken talep e-postayla ulaştıysa müşteriye hata gösterilmez.
+    if (process.env.RESEND_API_KEY && emailResult.status === "fulfilled") return NextResponse.json({ ok: true });
     return NextResponse.json(
       { error: "Talebiniz kaydedilemedi, lütfen tekrar deneyin." },
       { status: 500 }
