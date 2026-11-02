@@ -105,21 +105,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: "/:path*", headers: SITE_HEADERS },
-      // Görsel adları değişmediği sürece içerik de değişmez (yeni görsel yeni adla yüklenir).
-      {
-        source: "/gorsel/:path*",
-        headers: [
-          { key: "Vercel-CDN-Cache-Control", value: "public, max-age=31536000, immutable" },
-          { key: "Cache-Control", value: "public, max-age=2592000" },
-        ],
-      },
       { source: "/admin/:path*", headers: ADMIN_HEADERS },
       { source: "/admin", headers: ADMIN_HEADERS },
       { source: "/api/admin/:path*", headers: ADMIN_HEADERS },
     ];
-  },
-  async rewrites() {
-    return [{ source: "/gorsel/:path*", destination: "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/:path*" }];
   },
   async redirects() {
     return [
