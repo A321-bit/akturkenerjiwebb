@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ImageUp, Loader2, X } from "lucide-react";
 import { supabasePublic } from "@/lib/supabase";
 import { processImageForUpload } from "@/lib/imageProcessing";
+import { cdnThumb } from "@/lib/imageLoader";
 
 export default function GalleryUploadField({
   value,
@@ -59,7 +60,7 @@ export default function GalleryUploadField({
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
           {value.map((url, i) => (
             <div key={url + i} className="relative aspect-[4/3] overflow-hidden rounded-lg border border-line">
-              <Image src={url} alt="" fill className="object-cover" unoptimized />
+              <Image src={cdnThumb(url)} alt="" fill className="object-cover" unoptimized />
               <button
                 type="button"
                 onClick={() => removeAt(i)}

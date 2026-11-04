@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ImageUp, Loader2, X } from "lucide-react";
 import { supabasePublic } from "@/lib/supabase";
 import { processImageForUpload } from "@/lib/imageProcessing";
+import { cdnThumb } from "@/lib/imageLoader";
 
 export default function ImageUploadField({
   value,
@@ -50,7 +51,7 @@ export default function ImageUploadField({
     <div className="flex flex-col gap-2">
       {value && (
         <div className="relative h-32 w-52 overflow-hidden rounded-lg border border-line">
-          <Image src={value} alt="" fill className="object-cover" unoptimized />
+          <Image src={cdnThumb(value)} alt="" fill className="object-cover" unoptimized />
           <button
             type="button"
             onClick={() => onChange(null)}

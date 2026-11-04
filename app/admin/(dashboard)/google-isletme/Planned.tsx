@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Check, Trash2 } from "lucide-react";
+import { cdnThumb } from "@/lib/imageLoader";
 
 // Gönderi planı: taslaklar panelde düzenlenir; onaylanan gönderi Google'a ileri tarihli gider.
 // Onaylanmayan hiçbir gönderi yayınlanmaz.
@@ -104,7 +105,7 @@ function Row({ x, onChange, onError }: { x: Planned; onChange: () => void; onErr
   return (
     <div className={`grid gap-4 rounded-2xl border bg-paper-raised p-4 sm:grid-cols-[150px_1fr] ${x.approved ? "border-volt/40" : "border-line"}`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- Google'a gidecek özgün görsel aynen gösterilir */}
-      {x.photo_url ? <img src={x.photo_url} alt="" className="h-28 w-full rounded-lg object-cover sm:w-[150px]" /> : <div className="flex h-28 items-center justify-center rounded-lg bg-ink/5 text-[12px] text-slate">Görselsiz</div>}
+      {x.photo_url ? <img src={cdnThumb(x.photo_url)} alt="" className="h-28 w-full rounded-lg object-cover sm:w-[150px]" /> : <div className="flex h-28 items-center justify-center rounded-lg bg-ink/5 text-[12px] text-slate">Görselsiz</div>}
       <div>
         <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
           <span className="rounded-full border border-line px-2 py-0.5 font-semibold">{KIND[x.kind] ?? x.kind}</span>

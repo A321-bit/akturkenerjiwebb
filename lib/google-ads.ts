@@ -28,12 +28,6 @@ async function parse<T>(res: Response): Promise<T> {
   return data as T;
 }
 
-/** Servis hesabının erişebildiği reklam hesapları (bağlantı testi). */
-export async function accessibleCustomers(): Promise<string[]> {
-  const res = await fetch(`${API()}/customers:listAccessibleCustomers`, { headers: await headers(false), cache: "no-store" });
-  return (await parse<{ resourceNames?: string[] }>(res)).resourceNames ?? [];
-}
-
 /** GAQL sorgusu (searchStream sonuçları düzleştirilir). */
 export async function adsQuery<T = Record<string, unknown>>(query: string, customer = ADS_CUSTOMER): Promise<T[]> {
   const res = await fetch(`${API()}/customers/${customer}/googleAds:searchStream`, {

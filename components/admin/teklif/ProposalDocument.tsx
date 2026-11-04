@@ -5,6 +5,7 @@ import type { Proposal, ProposalNumbers } from "@/lib/teklif/proposal";
 import { WEATHERS, meanAzimuth, pvLimit, simulateDay, simulateYear, type HourFlow } from "@/lib/teklif/simulate";
 import { ABONE_ADLARI } from "@/lib/elektrik-tarife";
 import type { QuoteSettings } from "@/lib/teklif/pricing";
+import { cdnThumb } from "@/lib/imageLoader";
 
 // Teklif dosyası (A4): koyu zemin, güneş turuncusu ve müşterinin kendi verisinden çizilen grafikler.
 // Kapaktaki güneş halkası çatının gerçek aylık üretimidir. PDF çıktısı ve müşteri linki aynı belgeyi kullanır.
@@ -568,7 +569,7 @@ export default function ProposalDocument({ p, n, company, assets, attachments }:
               <div className="mt-5 grid grid-cols-2 gap-2.5">
                 {rows.map((r, i) => (
                   <figure key={r.id} className={`relative overflow-hidden rounded-xl ${i === 0 ? "col-span-2 h-[74mm]" : i === rows.length - 1 && i % 2 === 1 ? "col-span-2 h-[50mm]" : "h-[50mm]"}`}>
-                    <img src={r.url} alt={r.ad} className="h-full w-full object-cover" />
+                    <img src={cdnThumb(r.url)} alt={r.ad} className="h-full w-full object-cover" />
                     <figcaption className="absolute inset-x-0 bottom-0 px-3 pb-2 pt-8" style={{ background: "linear-gradient(to top, rgba(6,10,20,.92), transparent)" }}>
                       <p className="text-[10.5px] font-semibold leading-snug text-white">{r.ad}</p>
                       <p className="font-mono-data mt-0.5 text-[8.5px]" style={{ color: "#c3ccda" }}>{[r.konum, r.yil].filter(Boolean).join(" · ")}</p>

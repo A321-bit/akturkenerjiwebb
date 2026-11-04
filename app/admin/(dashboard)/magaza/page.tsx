@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Pencil, Percent, Plus, Star, Trash2 } from "lucide-react";
+import { cdnThumb } from "@/lib/imageLoader";
 
 type Row = {
   id: number;
@@ -232,7 +233,7 @@ export default function AdminStoreProductsPage() {
                   <td className="px-2 py-3">
                     <div className="flex items-center gap-3">
                       <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-md bg-paper">
-                        {r.image && <Image src={r.image} alt="" fill sizes="64px" className="object-cover" unoptimized />}
+                        {r.image && <Image src={cdnThumb(r.image)} alt="" fill sizes="64px" className="object-cover" unoptimized />}
                       </span>
                       <span>
                         <span className="block font-semibold text-ink">{r.name}</span>

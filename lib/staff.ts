@@ -17,12 +17,6 @@ export type StaffPerms = {
 
 export const NO_PERMS: StaffPerms = { cost: false, rules: false, allCustomers: false, dashboard: false };
 
-export const ROLE_PRESETS: Record<string, { ad: string; perms: StaffPerms }> = {
-  satis: { ad: "Satış", perms: NO_PERMS },
-  muhendis: { ad: "Mühendis", perms: { ...NO_PERMS, allCustomers: true } },
-  yonetici: { ad: "Yönetici", perms: { cost: true, rules: true, allCustomers: true, dashboard: true } },
-};
-
 export type SessionUser = { kind: "owner" } | { kind: "staff"; id: number; name: string; perms: StaffPerms };
 
 export const ownerPerms: StaffPerms = { cost: true, rules: true, allCustomers: true, dashboard: true };

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ImageIcon, Play, RefreshCw, Send, Trash2, Type, XCircle } from "lucide-react";
 import type { SocialPost } from "@/lib/social";
+import { cdnImage } from "@/lib/imageLoader";
 
 const TYPES = [
   { key: "urun", label: "Ürün / paket" },
@@ -267,7 +268,7 @@ export default function SocialPlanner({ posts }: { posts: SocialPost[] }) {
                 <li key={p.id} className="p-3">
                   <div className="flex flex-wrap items-center gap-3 text-[13.5px]">
                     <img
-                      src={img(p)}
+                      src={cdnImage(img(p))}
                       alt=""
                       width={48}
                       height={48}
@@ -358,7 +359,7 @@ export default function SocialPlanner({ posts }: { posts: SocialPost[] }) {
                   {p.error && <p className="mt-1.5 text-[12.5px] text-red-600">{p.error}</p>}
                   {open === p.id && (
                     <div className="mt-3 grid gap-3 sm:grid-cols-[200px_1fr]">
-                      <img src={img(p, true)} alt="" className="w-full rounded-lg" />
+                      <img src={cdnImage(img(p, true))} alt="" className="w-full rounded-lg" />
                       <div className="flex flex-col gap-2">
                         <textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={12} className="admin-input font-mono text-[12.5px]" />
                         {p.fb_status === "zamanlandi" && (

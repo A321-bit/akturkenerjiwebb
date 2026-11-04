@@ -11,6 +11,9 @@ const SUPABASE_MEDIA = "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/obje
  */
 export const cdnImage = (src: string) => (src.startsWith(SUPABASE_MEDIA) ? `/gorsel/${src.slice(SUPABASE_MEDIA.length)}` : src);
 
+/** Küçük önizleme (admin listeleri, teklif belgeleri): 800 px kopya, CDN'den. */
+export const cdnThumb = (src: string) => cdnImage(src.replace(/-opt\.webp$/, "-opt-800.webp"));
+
 /** Site dışına verilen tam adres (Merchant feed, yapılandırılmış veri): Google ve Meta da CDN'den çeker. */
 export const cdnImageUrl = (src: string) => (src.startsWith(SUPABASE_MEDIA) ? `https://akturkenerji.com${cdnImage(src)}` : src);
 

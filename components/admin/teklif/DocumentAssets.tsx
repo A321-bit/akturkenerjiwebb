@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, CircleAlert, Search, Trash2 } from "lucide-react";
 import FileUploadField from "@/components/admin/FileUploadField";
 import { DEFAULT_REFERENCE_IDS, DEFAULT_SETTINGS, kelimeUyar, type Datasheet, type QuoteSettings } from "@/lib/teklif/pricing";
+import { cdnThumb } from "@/lib/imageLoader";
 
 // Teklif belgeleri: ürün datasheet'leri, teklifte görünecek referanslar, şartlar ve banka hesapları.
 // PDF'ler Supabase Storage'a yüklenir; her değişiklik anında kaydedilir.
@@ -129,7 +130,7 @@ export default function DocumentAssets({ products, projects }: { products: DocPr
             const at = refIds.indexOf(r.id);
             return (
               <button key={r.id} onClick={() => persist({ ...settings, referenceIds: at >= 0 ? refIds.filter((x) => x !== r.id) : [...refIds, r.id] })} className={`relative overflow-hidden rounded-lg border-2 text-left ${at >= 0 ? "border-brand" : "border-transparent opacity-70 hover:opacity-100"}`}>
-                <img src={r.image!} alt={r.title} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                <img src={cdnThumb(r.image!)} alt={r.title} loading="lazy" className="aspect-[4/3] w-full object-cover" />
                 {at >= 0 && <span className="absolute left-1.5 top-1.5 rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-paper">{at + 1}</span>}
                 <span className="block truncate px-1 py-0.5 text-[11px]">{r.title}</span>
               </button>

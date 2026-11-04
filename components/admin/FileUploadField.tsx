@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { FileUp, Loader2, X } from "lucide-react";
 import { supabasePublic } from "@/lib/supabase";
+import { cdnImage } from "@/lib/imageLoader";
 
 // Dosyayı olduğu gibi (işlemeden, filigransız) yükler: datasheet PDF'i,
 // marka logosu (SVG/PNG) gibi. Fotoğraflar için ImageUploadField kullanılır.
@@ -52,7 +53,7 @@ export default function FileUploadField({
         <div className="flex items-center gap-2">
           {preview === "image" ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={value} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
+            <img src={cdnImage(value)} alt="" className="h-12 max-w-[160px] rounded border border-line bg-white object-contain p-1" />
           ) : (
             <a href={value} target="_blank" rel="noopener noreferrer" className="max-w-[320px] truncate text-[13px] text-brand underline">
               {value.split("/").pop()}
