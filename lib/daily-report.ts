@@ -55,6 +55,24 @@ const CLICK_LABELS: Record<string, string> = {
   store_whatsapp_product: "Mağaza ürün WhatsApp",
 };
 
+// Sitenin kendisi: ana sayfalar ve bir görsel açılıyor mu? Ziyaretçi gibi önbellekten okunur, kota harcamaz.
+const HEALTH_PAGES = ["/", "/hizmetlerimiz", "/magaza", "/hesaplama/on-grid", "/iletisim", "/sitemap.xml"];
+async function siteHealth() {
+  const get = async (path: string) => {
+    try {
+      const r = await fetch(SITE + path, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+      return { path, status: r.status, body: path === "/" ? await r.text() : "" };
+    } catch (e) {
+      return { path, status: 0, body: "", error: e instanceof Error ? e.message : String(e) };
+    }
+  };
+  const pages = await Promise.all(HEALTH_PAGES.map(get));
+  const img = pages[0].body.match(/\/gorsel\/[^"'\s)?&]+/)?.[0];
+  const checks = [...pages, ...(img ? [await get(img)] : [])].map(({ path, status }) => ({ path, status }));
+  if (!img) checks.push({ path: "/gorsel (ana sayfada görsel bulunamadı)", status: 0 });
+  return checks;
+}
+
 export async function buildDailyReport() {
   const { start, weekAgo, label, trDate } = today();
   const db = adminClient();
@@ -91,6 +109,7 @@ export async function buildDailyReport() {
       settle(adsReport("last_7d", "akturk")),
       settle(gaDay("today")),
     ]);
+  const health = await siteHealth();
 
   // ── Hesaplamalar
   const leadRows = leads.data ?? [];
@@ -155,6 +174,15 @@ export async function buildDailyReport() {
   const gscWeek = Object.values(gscDays).reduce((s, d) => ({ clicks: s.clicks + d.clicks, impressions: s.impressions + d.impressions }), { clicks: 0, impressions: 0 });
   const topQueries = Object.entries(gscQ).sort((a, b) => b[1].clicks - a[1].clicks || b[1].impressions - a[1].impressions).slice(0, 12);
 
+  // ── Uyarılar: e-postanın en üstünde ve konu satırında görünür.
+  const alerts: string[] = [];
+  const broken = health.filter((h) => h.status !== 200);
+  if (broken.length) alerts.push(`Sitede açılmayan adres var: ${broken.map((h) => `${h.path} (${h.status || "yanıt yok"})`).join(", ")}. Supabase ve Vercel panellerine bakın (docs/BAKIM-REHBERI.md → "Site açılmıyorsa").`);
+  const avgSpend = (gWeek.cost + (mW?.spend ?? 0)) / 7;
+  if (spend > 300 && avgSpend > 0 && spend > avgSpend * 1.6) alerts.push(`Bugünkü reklam harcaması (${tl(spend)}) son 7 gün ortalamasının (${tl(avgSpend)}) çok üstünde. Kampanya bütçelerini kontrol edin.`);
+  if (!gAds.error && !mAds.error && spend === 0 && avgSpend > 50) alerts.push("Bugün hiç reklam harcaması yok; kampanyalar durmuş ya da ödeme yöntemi reddedilmiş olabilir.");
+  if (waitingOver3 > 0) alerts.push(`${waitingOver3} Meta form başvurusu 3 günden uzun süredir aranmayı bekliyor.`);
+
   const loginRows = logins.data ?? [];
   const errors = Object.entries({ leads, meta, events, social, gsc, "Google Ads": gAds, "Meta Ads": mAds, "Google Analytics": ga, logins })
     .filter(([, v]) => v.error).map(([k, v]) => `${k}: ${v.error}`);
@@ -179,6 +207,8 @@ export async function buildDailyReport() {
   <div style="font-size:12px;color:#2f80c4;letter-spacing:.12em;text-transform:uppercase;font-weight:700">Aktürk Enerji · Günlük Rapor</div>
   <h1 style="font-size:22px;margin:4px 0 2px">${esc(label)}</h1>
   <div style="font-size:12.5px;color:#6b7280">Gün başından saat ${time(new Date().toISOString())}'e kadar. Reklam verileri bugünün anlık değerleridir; gece güncellenebilir.</div>
+  ${alerts.length ? `<div style="margin-top:14px;border:1px solid #fca5a5;background:#fef2f2;border-radius:12px;padding:12px 14px"><b style="color:#b91c1c">Dikkat</b><ul style="margin:6px 0 0;padding-left:18px;font-size:13px;color:#7f1d1d">${alerts.map((a) => `<li>${esc(a)}</li>`).join("")}</ul></div>`
+    : `<div style="margin-top:14px;font-size:12.5px;color:#15803d">✓ Site kontrolü: ${health.length} adres sorunsuz açıldı.</div>`}
 
   ${h2("Özet")}
   <table style="width:100%;border-collapse:collapse"><tr>
@@ -254,8 +284,8 @@ export async function buildDailyReport() {
   <p style="font-size:12px;color:#6b7280;margin-top:26px">Detaylar: <a href="${SITE}/admin/reklam-ozeti">Reklam Özeti</a> · <a href="${SITE}/admin/analytics">Google Analytics</a> · <a href="${SITE}/admin/seo">SEO</a> · <a href="${SITE}/admin">Admin</a></p>
   </div></div>`;
 
-  const subject = `Günlük Rapor · ${trDate.split("-").reverse().join(".")} · ${contacts} talep · ${tl(spend)} reklam`;
-  return { subject, html, summary: { contacts, spend, leads: leadRows.length, metaLeads: metaRows.length, wa, calls, errors } };
+  const subject = `${alerts.length ? `⚠ ${alerts.length} uyarı · ` : ""}Günlük Rapor · ${trDate.split("-").reverse().join(".")} · ${contacts} talep · ${tl(spend)} reklam`;
+  return { subject, html, summary: { alerts, contacts, spend, leads: leadRows.length, metaLeads: metaRows.length, wa, calls, errors } };
 }
 
 export async function sendDailyReport(to?: string) {

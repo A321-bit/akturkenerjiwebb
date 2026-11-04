@@ -1,0 +1,42 @@
+# Haftalık veritabanı yedeği (Pazar 03:00 TR). Supabase ücretsiz planda otomatik yedek yoktur.
+# Depo herkese açık olduğu için yedek şifrelenir; şifre olmadan açılamaz.
+# Gerekli GitHub secret'ları (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL     Supabase → Connect → "Session pooler" bağlantı adresi (şifre dahil)
+#   BACKUP_PASSPHRASE   Yedeği açmak için uzun bir parola; bir yere not edin
+# Geri yükleme adımları: docs/BAKIM-REHBERI.md → "Yedekten geri yükleme"
+name: Veritabanı yedeği
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+jobs:
+  yedek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: PostgreSQL 17 istemcisi
+        run: |
+          sudo apt-get install -y -q postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -q postgresql-client-17
+
+      - name: Yedek al ve şifrele
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          test -n "$DB_URL" && test -n "$PASS" || { echo "SUPABASE_DB_URL ve BACKUP_PASSPHRASE secret'ları tanımlı değil."; exit 1; }
+          name="akturk-db-$(date -u +%Y-%m-%d)"
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --schema=public --no-owner --no-privileges -Fc -f "$name.dump"
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 -o "$name.dump.gpg" "$name.dump"
+          rm "$name.dump"
+          ls -lh "$name.dump.gpg"
+          echo "NAME=$name" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: ${{ env.NAME }}.dump.gpg
+          retention-days: 90

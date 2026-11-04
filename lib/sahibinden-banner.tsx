@@ -14,7 +14,7 @@ const H = 620;
 const STRIP = 92;
 const PHOTO_W = 540;
 // Ankara, çok yüzeyli çatılı villa GES projesi (referanslar).
-const PHOTO = "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/references/355e52b2-fe22-4489-835c-3bff3a55e7e5-opt.webp";
+const PHOTO = "https://akturkenerji.com/gorsel/references/355e52b2-fe22-4489-835c-3bff3a55e7e5-opt.webp";
 
 async function dataUrl(url: string, w?: number, h?: number): Promise<string> {
   const buf = Buffer.from(await (await fetch(url)).arrayBuffer());

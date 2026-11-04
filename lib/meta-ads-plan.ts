@@ -4,7 +4,7 @@ import type { LeadCampaignSpec } from "./meta-ads-manage";
 // Form: "Solar-Ges-On-Grid" (fatura aralığı, elektrikli araç, mülk tipi soruları; en iyi sonuç veren form).
 
 export const LEAD_FORM_ID = "928087409617061";
-const IMG = "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/reklam/meta/";
+const IMG = "https://akturkenerji.com/gorsel/reklam/meta/";
 
 // Facebook akış + Reels, Instagram akış/Hikâye/Reels/Keşfet. Audience Network ve FB Hikâye
 // geçmişte pahalıydı (sonuç başı 159–473 TL), dahil değil.
