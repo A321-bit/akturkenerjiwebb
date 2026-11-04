@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: "Güneş Paneli Hesaplama: Kaç kW Gerekir, Ne Kadar Kazandırır?",
     description:
-      "Faturanızı ve çatınızı girin; EPDK tarifesi ve bulunduğunuz ilin güneş verisiyle kaç kW güneş paneli gerektiğini, yıllık tasarrufu ve geri ödeme süresini hesaplayın.",
+      "Faturanızı ve çatınızı girin; EPDK tarifesi ve bulunduğunuz ilin güneş verisiyle kaç kW güneş paneli gerektiğini, aylık üretimi ve yıllık tasarrufu hesaplayın.",
     path: "/hesaplama/on-grid",
   }),
   robots: { index: false, follow: false },
@@ -33,7 +33,7 @@ export default async function OnGridCalculatorPage() {
             Çatınız size ne kadar elektrik üretir, faturanızı ne kadar düşürür?
           </h1>
           <p className="mt-4 max-w-2xl text-[15.5px] leading-relaxed text-paper/75">
-            Dört adımda öğrenin. Hesap; EPDK {TARIFE_TARIHI} elektrik tarifesi, bulunduğunuz ilin uydu tabanlı güneş verisi ve mağazamızdaki güncel paket fiyatlarıyla yapılır.
+            Dört adımda öğrenin. Hesap; EPDK {TARIFE_TARIHI} elektrik tarifesi, bulunduğunuz ilin uydu tabanlı güneş verisi ve tüketiminizle yapılır; kesin fiyat ücretsiz keşif sonrası teklifle verilir.
           </p>
         </div>
       </section>
