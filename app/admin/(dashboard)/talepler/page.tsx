@@ -34,10 +34,11 @@ function describeSource(item: LeadRow): { label: string; sub?: string } {
   return { label: item.source };
 }
 
-const STATUSES = ["Yeni", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"] as const;
+const STATUSES = ["Yeni", "Açmadı Tekrar Aranacak", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"] as const;
 
 const STATUS_STYLES: Record<string, string> = {
   Yeni: "bg-ink/5 text-slate border-line",
+  "Açmadı Tekrar Aranacak": "bg-orange-50 text-orange-700 border-orange-300",
   Arandı: "bg-brand/10 text-brand border-brand/30",
   Ulaşılamadı: "bg-sun/15 text-sun-soft border-sun/40",
   Olumsuz: "bg-red-50 text-red-600 border-red-200",

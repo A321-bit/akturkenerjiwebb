@@ -3,6 +3,8 @@
 /** Personelin seçtiği durumlar ve Meta'ya gidecek CRM aşaması adları (null: gönderilmez). */
 export const LEAD_STATUSES = [
   { key: "Yeni", event: null },
+  // Geçici durum: telefonu açmadı, tekrar aranacak. Sonuç belli olmadığı için Meta'ya gönderilmez.
+  { key: "Açmadı Tekrar Aranacak", event: null },
   { key: "Ulaşılamadı", event: "Ulasilamadi" },
   { key: "İlgisiz", event: "Ilgisiz" },
   { key: "Nitelikli", event: "Nitelikli" },

@@ -27,7 +27,7 @@ type LeadRow = {
   landing_page?: string | null;
 };
 
-const STATUSES = ["Yeni", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"] as const;
+const STATUSES = ["Yeni", "Açmadı Tekrar Aranacak", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"] as const;
 const PERIODS = [
   ["all", "Tümü", Infinity],
   ["30", "Son 30 gün", 30],

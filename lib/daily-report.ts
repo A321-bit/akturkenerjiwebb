@@ -151,7 +151,9 @@ export async function buildDailyReport() {
     q<{ full_name: string | null; phone: string | null; campaign_name: string | null; created_time: string }[]>(
       db.from("meta_leads").select("full_name, phone, campaign_name, created_time").or("status.is.null,status.eq.Yeni").order("created_time")),
     q<{ status: string | null }[]>(db.from("meta_leads").select("status").gte("status_changed_at", start)),
+    q<{ id: string }[]>(db.from("meta_leads").select("id").eq("status", "Açmadı Tekrar Aranacak")),
   ]));
+  const callBack = staff.data?.[2]?.length ?? 0;
   const waiting = staff.data?.[0] ?? [];
   const ageDays = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
   const waitingOver1 = waiting.filter((r) => Date.now() - new Date(r.created_time).getTime() > 86400000).length;
@@ -236,11 +238,12 @@ export async function buildDailyReport() {
   <table style="width:100%;border-collapse:collapse"><tr>
     ${card("Bugün işaretlenen", n0(markedTodayTotal), Object.entries(markedToday).map(([k, v]) => `${esc(k)} ${v}`).join(" · ") || "bugün işaretleme yok")}
     ${card("Aranmayı bekleyen", n0(waiting.length), `24 saati geçen ${waitingOver1} · 3 günü geçen ${waitingOver3}`)}
+    ${card("Tekrar aranacak", n0(callBack), "telefonu açmadı")}
     ${card("Satış (son 30 gün)", n0(metaFunnel["Satış"] ?? 0), "\"Satış\" olarak işaretlenen")}
   </tr></table>
   ${table(["Başvuru", "Bekliyor", "Ad Soyad", "Telefon", "Kampanya"], waiting.slice(0, 15).map((r) => [new Date(r.created_time).toLocaleDateString("tr-TR", { timeZone: TZ }), ageDays(r.created_time) ? `<b style="color:${ageDays(r.created_time) >= 3 ? "#b91c1c" : "#b45309"}">${ageDays(r.created_time)} gün</b>` : "bugün", esc(r.full_name), `<a href="tel:${esc(r.phone)}">${esc(r.phone)}</a>`, esc(r.campaign_name)]), "Aranmayı bekleyen Meta başvurusu yok.")}
   ${waiting.length > 15 ? `<p style="font-size:12.5px;color:#374151">En eski 15 tanesi gösteriliyor; toplam <b>${waiting.length}</b> başvuru bekliyor.</p>` : ""}
-  <p style="font-size:12px;color:#6b7280">Aranan her başvurunun sonucu (Ulaşılamadı, İlgisiz, Nitelikli, Keşif, Teklif, Satış) <a href="${SITE}/admin/meta-formlari">Meta Formları</a> ekranında işaretlenmeli; işaretlenen sonuç Meta'ya gider ve reklamlar satışa dönen kişilere benzeyenleri bulmayı öğrenir.</p>
+  <p style="font-size:12px;color:#6b7280">Aranan her başvurunun sonucu (Açmadı Tekrar Aranacak, Ulaşılamadı, İlgisiz, Nitelikli, Keşif, Teklif, Satış) <a href="${SITE}/admin/meta-formlari">Meta Formları</a> ekranında işaretlenmeli; işaretlenen sonuç Meta'ya gider ve reklamlar satışa dönen kişilere benzeyenleri bulmayı öğrenir.</p>
 
   ${h2("Takip bekleyenler")}
   ${table(["Talep tarihi", "Ad Soyad", "Telefon"], (leadsOpen.data ?? []).map((r) => [new Date(r.created_at).toLocaleDateString("tr-TR", { timeZone: TZ }), esc(r.fullname), esc(r.phone)]), "Durumu \"Yeni\" kalmış eski talep yok.")}

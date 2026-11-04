@@ -21,7 +21,7 @@ type ReklamOzeti = {
 const DAYS = [7, 14, 30, 90];
 const tl = (n: number) => `${n.toLocaleString("tr-TR", { maximumFractionDigits: n < 100 ? 2 : 0 })} TL`;
 const fmt = (n: number) => Math.round(n).toLocaleString("tr-TR");
-const FUNNEL = ["Yeni", "Ulaşılamadı", "İlgisiz", "Nitelikli", "Keşif Planlandı", "Teklif Verildi", "Satış"];
+const FUNNEL = ["Yeni", "Açmadı Tekrar Aranacak", "Ulaşılamadı", "İlgisiz", "Nitelikli", "Keşif Planlandı", "Teklif Verildi", "Satış"];
 const SOURCES: Record<string, string> = { googleCost: "Google Ads", metaSpend: "Meta" };
 
 function Card({ label, value, sub }: { label: string; value: string; sub?: string }) {

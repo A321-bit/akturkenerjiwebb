@@ -10,6 +10,7 @@ import { LEAD_STATUSES, type LeadStatus, type MetaLead } from "@/lib/meta-lead-s
 
 const STYLE: Record<string, string> = {
   Yeni: "bg-ink/5 text-slate border-line",
+  "Açmadı Tekrar Aranacak": "bg-orange-50 text-orange-700 border-orange-300",
   Ulaşılamadı: "bg-sun/15 text-ink border-sun/40",
   İlgisiz: "bg-red-50 text-red-600 border-red-200",
   Nitelikli: "bg-brand/10 text-brand border-brand/30",

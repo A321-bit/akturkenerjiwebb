@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
 import { requireAdmin } from "@/lib/admin-guard";
 
-const VALID_STATUSES = ["Yeni", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"];
+const VALID_STATUSES = ["Yeni", "Açmadı Tekrar Aranacak", "Arandı", "Ulaşılamadı", "Olumsuz", "Olumlu"];
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const denied = await requireAdmin();
