@@ -51,7 +51,7 @@ export function buildMetadata({
       type,
       locale: "tr_TR",
       url,
-      siteName: SITE_NAME,
+      siteName: "Aktürk Enerji",
       title: pageTitle,
       description,
       images,
