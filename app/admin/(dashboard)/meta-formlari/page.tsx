@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Mail, MessageCircle, PhoneCall, RefreshCw, XCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bell, CheckCircle2, Mail, MessageCircle, PhoneCall, RefreshCw, XCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/data";
 import { LEAD_STATUSES, type LeadStatus, type MetaLead } from "@/lib/meta-lead-status";
 
@@ -32,6 +32,23 @@ const intl = (p: string) => {
   return d.startsWith("90") ? d : d.startsWith("0") ? `90${d.slice(1)}` : d.length === 10 ? `90${d}` : d;
 };
 
+/** Kısa iki tonlu uyarı sesi (ses dosyası gerekmez). */
+function beep() {
+  try {
+    const ctx = new AudioContext();
+    [880, 1175].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.2, ctx.currentTime + i * 0.25);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.25 + 0.22);
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + i * 0.25);
+      o.stop(ctx.currentTime + i * 0.25 + 0.23);
+    });
+  } catch {}
+}
+
 export default function MetaLeadsPage() {
   const [leads, setLeads] = useState<MetaLead[] | null>(null);
   const [filter, setFilter] = useState<string>("Tümü");
@@ -58,6 +75,46 @@ export default function MetaLeadsPage() {
   useEffect(() => {
     load(true);
   }, [load]);
+
+  // Ekran açıkken (arka sekmede de) 2 dakikada bir Meta'dan yeni başvuru kontrolü. Yalnız son
+  // gelenler indirilir; yeni başvuru gelince sesli uyarı, masaüstü bildirimi ve sekme başlığı.
+  const leadsRef = useRef<MetaLead[] | null>(null);
+  leadsRef.current = leads;
+  const [notify, setNotify] = useState<NotificationPermission | "unsupported">("default");
+  useEffect(() => {
+    // Sunucuda Notification yok; izin durumu sayfa tarayıcıda açılınca okunur.
+    const t = setTimeout(() => setNotify(typeof Notification === "undefined" ? "unsupported" : Notification.permission), 0);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    const baseTitle = document.title;
+    const check = async () => {
+      const current = leadsRef.current;
+      if (!current) return;
+      const latest = current.reduce((m, l) => (l.created_time > m ? l.created_time : m), "1970-01-01T00:00:00Z");
+      const res = await fetch(`/api/admin/meta-leads?sync=quick&since=${encodeURIComponent(latest)}`, { cache: "no-store" }).catch(() => null);
+      if (!res?.ok) return;
+      const body = (await res.json()) as { leads: MetaLead[] };
+      const known = new Set(current.map((l) => l.id));
+      const fresh = body.leads.filter((l) => !known.has(l.id));
+      if (!fresh.length) return;
+      setLeads((prev) => [...fresh, ...(prev ?? [])]);
+      setMsg(`${fresh.length} yeni başvuru geldi: ${fresh.map((l) => l.full_name || "isimsiz").join(", ")}. Hemen arayın.`);
+      document.title = `(${fresh.length}) Yeni başvuru · ${baseTitle}`;
+      beep();
+      if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+        for (const l of fresh) new Notification("Yeni Meta başvurusu", { body: `${l.full_name ?? "İsimsiz"} · ${l.phone ?? ""} · ${l.city ?? ""}`, tag: l.id });
+      }
+    };
+    const id = setInterval(check, 120_000);
+    const onFocus = () => (document.title = baseTitle);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+      document.title = baseTitle;
+    };
+  }, []);
 
   async function save(lead: MetaLead, patch: { status?: LeadStatus; note?: string }) {
     setSaving(lead.id);
@@ -117,6 +174,24 @@ export default function MetaLeadsPage() {
           <RefreshCw size={14} className={syncing ? "animate-spin" : ""} /> Meta&apos;dan yenile
         </button>
       </div>
+
+      <p className="flex flex-wrap items-center gap-2 text-[12.5px] text-slate">
+        <Bell size={14} /> Bu ekran açık kaldıkça yeni başvurular her 2 dakikada kontrol edilir; gelince sesli uyarı verilir.
+        {notify === "default" && (
+          <button
+            type="button"
+            onClick={() => {
+              beep();
+              Notification.requestPermission().then(setNotify);
+            }}
+            className="rounded-full bg-ink px-3 py-1 text-[12px] font-semibold text-paper"
+          >
+            Masaüstü bildirimlerini aç
+          </button>
+        )}
+        {notify === "granted" && <span className="font-semibold text-volt">Masaüstü bildirimleri açık.</span>}
+        {notify === "denied" && <span>Tarayıcı bildirimleri engelli; tarayıcı ayarlarından izin verin.</span>}
+      </p>
 
       {msg && <p className="rounded-xl bg-paper-raised px-4 py-3 text-[13.5px] text-volt">{msg}</p>}
 

@@ -46,15 +46,18 @@ const EMAIL = ["email", "e-posta"];
 const CITY = ["city", "şehir", "il"];
 const STANDARD = [...NAME, ...FIRST, ...LAST, ...PHONE, ...EMAIL, ...CITY];
 
-/** Sayfadaki bütün formların son 90 günlük başvurularını çeker; yenileri tabloya ekler. */
-export async function syncMetaLeads(): Promise<{ forms: number; fetched: number; fresh: number }> {
+/**
+ * Sayfadaki bütün formların başvurularını çeker; yenileri tabloya ekler. Varsayılan son 90 gün;
+ * Meta Formları ekranının 2 dakikalık otomatik kontrolü `sinceHours` ile yalnız son saatleri çeker.
+ */
+export async function syncMetaLeads({ sinceHours = 90 * 24 }: { sinceHours?: number } = {}): Promise<{ forms: number; fetched: number; fresh: number }> {
   const { pageToken } = await metaAccount();
   const forms = await graph<{ data: { id: string; name: string }[] }>(`${META_PAGE_ID}/leadgen_forms`, {
     fields: "id,name",
     limit: "100",
     access_token: pageToken,
   });
-  const since = Math.floor(Date.now() / 1000) - 90 * 86400;
+  const since = Math.floor(Date.now() / 1000) - sinceHours * 3600;
   const rows = [];
   for (const form of forms.data) {
     let next: string | null = `${GRAPH}/${form.id}/leads?${new URLSearchParams({

@@ -6,7 +6,7 @@ import { ArrowLeft, Building2, Factory, Home, Leaf, Sprout, Sun, Wallet, Zap } f
 import { calculateOnGrid, evMonthlyKwh, FUEL_L_PER_100KM, FUEL_TL_PER_L, EV_KWH_PER_100KM, fuelCostPerYear, leadScore, panelsForRoof, PANEL_WP, type OnGridInput, type PackageOption, type RoofType, type UsageProfile } from "@/lib/ongrid-calc";
 import { ABONE_ADLARI, TARIFE_TARIHI, type AboneGrubu } from "@/lib/elektrik-tarife";
 import type { RoofDrawing } from "./LocationPicker";
-import { CallUs, Choice, ContactStep, Kpi, MonthlyPair, Nav, Panel, PlacePicker, ProductBox, Row, Stepper, Toggle, num, onlyNum, tl, usePlace, useWizard, type CompanyContact, type Place } from "./ui";
+import { CallUs, Choice, ContactStep, Kpi, MonthlyPair, Nav, Panel, PlacePicker, Row, Stepper, Toggle, num, onlyNum, tl, usePlace, useWizard, type CompanyContact, type Place } from "./ui";
 
 const PAGE = "/hesaplama/on-grid";
 
@@ -232,8 +232,8 @@ export default function OnGridCalculator({ packages, contact }: { packages: Pack
             "Çatınıza uygun sistem gücü ve panel sayısı",
             `${konum.ad} güneş verisiyle aylık üretim tahmini`,
             "Aylık tüketim ve üretim dengesi",
-            "Yıllık tasarruf ve geri ödeme süresi",
-            "Önerilen paket ve güncel fiyatı",
+            "Yıllık ve 25 yıllık tasarruf tahmini",
+            "Ücretsiz keşif ve kesin teklif için mühendis görüşmesi",
           ]}
           payload={{
             needType: "On grid hesaplama",
@@ -293,7 +293,7 @@ function Result({
           <div className="grid grid-cols-2 gap-3">
             <Kpi icon={<Wallet size={16} />} label="Yıllık tasarruf" value={tl(r.annualSavingTl)} />
             <Kpi icon={<Zap size={16} />} label="Tüketimi karşılama" value={`%${r.coveragePct}`} />
-            <Kpi icon={<Sun size={16} />} label="Geri ödeme" value={r.paybackYears != null ? `${num(r.paybackYears, 1)} yıl` : "Teklifle netleşir"} />
+            <Kpi icon={<Sun size={16} />} label="25 yılda tasarruf" value={tl(r.savings25Tl)} />
             <Kpi icon={<Leaf size={16} />} label="Yıllık CO₂ azaltımı" value={`${num(r.co2TonsPerYear, 1)} ton`} />
           </div>
         </div>
@@ -309,12 +309,22 @@ function Result({
         </section>
 
         <section className="flex flex-col rounded-2xl border border-line bg-paper-raised p-5">
-          <ProductBox title="Önerilen paket" pkg={r.package} includes="KDV dahil · panel, invertör, konstrüksiyon ve elektrik projesi" empty="Bu güçte hazır paketimiz yok; size özel sistem teklifi hazırlıyoruz." />
+          {/* Fiyat gösterilmez: kesin fiyat yerinde keşiften sonra teklifle verilir (rapordaki rakamla teklif çelişmesin). */}
+          <h3 className="font-semibold text-ink">Önerilen sistem</h3>
+          <p className="mt-2 font-display text-[18px] font-semibold text-ink">
+            {num(r.systemKw, 1)} kW on grid güneş enerjisi sistemi
+          </p>
+          <p className="mt-1 text-[13px] text-slate">
+            {r.panelCount} adet 620 Wp panel · {num(r.dcKwp, 2)} kWp kurulu güç · yılda yaklaşık {num(r.annualProduction)} kWh
+          </p>
+          <p className="mt-2 rounded-lg bg-sun/10 px-3 py-2 text-[12.5px] text-ink">
+            Fiyat, çatınızın yerinde ücretsiz incelenmesinin ardından size özel teklifle netleşir.
+          </p>
           <dl className="mt-4 space-y-1.5 border-t border-line pt-4 text-[13px]">
             <Row k="Bugünkü aylık fatura" v={tl(r.monthlyBillTl)} />
             <Row k="Yıllık tüketim" v={`${num(r.annualKwh)} kWh`} />
             <Row k="Ortalama kWh fiyatı" v={`${num(r.unitPrice, 2)} TL`} />
-            <Row k="25 yılda toplam tasarruf" v={tl(r.savings25Tl)} />
+            <Row k="Yıllık üretim" v={`${num(r.annualProduction)} kWh`} />
           </dl>
         </section>
       </div>
