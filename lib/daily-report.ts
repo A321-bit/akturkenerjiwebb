@@ -53,6 +53,8 @@ const CLICK_LABELS: Record<string, string> = {
   quote_form_submit: "Hızlı teklif gönderimi",
   lead_form_submit: "Teklif formu gönderimi",
   store_whatsapp_product: "Mağaza ürün WhatsApp",
+  blog_product_inline: "Blog içi ürün kartı tıklaması",
+  store_whatsapp_blog: "Blog ürün kartı WhatsApp",
 };
 
 // Sitenin kendisi: ana sayfalar ve bir görsel açılıyor mu? Ziyaretçi gibi önbellekten okunur, kota harcamaz.

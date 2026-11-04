@@ -10,17 +10,25 @@ import CoverMedia from "@/components/CoverMedia";
 import MdxContent from "@/components/MdxContent";
 import { renderStoreTokens } from "@/lib/store-content";
 import { getStoreProducts } from "@/lib/store-data";
+import { relatedProducts } from "@/lib/blog-products";
+import InlineProduct from "@/components/blog/InlineProduct";
+import ProductRail from "@/components/store/ProductRail";
 
-function findMidArticleSplit(content: string): number | null {
+/** Yazıyı ## başlıklarından, verilen oranlara (ör. 1/3, 2/3) en yakın yerlerden böler. */
+function splitAtHeadings(content: string, ratios: number[]): string[] {
   const positions: number[] = [];
   const headingRegex = /\n## /g;
   let match: RegExpExecArray | null;
   while ((match = headingRegex.exec(content))) positions.push(match.index);
-  if (positions.length < 2) return null;
-  const mid = content.length / 2;
-  return positions.reduce((best, p) =>
-    Math.abs(p - mid) < Math.abs(best - mid) ? p : best
-  );
+  const cuts: number[] = [];
+  for (const r of ratios) {
+    const target = content.length * r;
+    const best = positions
+      .filter((p) => p > (cuts.at(-1) ?? 0))
+      .reduce<number | null>((b, p) => (b == null || Math.abs(p - target) < Math.abs(b - target) ? p : b), null);
+    if (best != null) cuts.push(best);
+  }
+  return [0, ...cuts].map((c, i) => content.slice(c, cuts[i] ?? content.length));
 }
 
 // Build'de hiçbir slug önceden üretilmez; her sayfa ilk ziyarette üretilip
@@ -54,14 +62,17 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [post, site] = await Promise.all([getBlogPostBySlug(slug), getSiteSettings()]);
+  const [post, site, products] = await Promise.all([getBlogPostBySlug(slug), getSiteSettings(), getStoreProducts()]);
   if (!post) notFound();
 
   // Yazıdaki canlı fiyat etiketleri ({{fiyat-listesi}}, {{fiyat:slug}}) mağazanın güncel fiyatıyla dolar.
-  const content = post.content.includes("{{") ? renderStoreTokens(post.content, await getStoreProducts()) : post.content;
-  const splitIndex = findMidArticleSplit(content);
-  const firstHalf = splitIndex ? content.slice(0, splitIndex) : content;
-  const secondHalf = splitIndex ? content.slice(splitIndex) : "";
+  const content = post.content.includes("{{") ? renderStoreTokens(post.content, products) : post.content;
+  // Yazı üçe bölünür: 1. bölümden sonra ürün kartı, 2. bölümden sonra "Sizi Arayalım",
+  // 3. bölümden sonra ikinci ürün kartı; en altta ilgili ürünler şeridi.
+  const [firstPart, secondPart = "", thirdPart = ""] = splitAtHeadings(content, [0.3, 0.65]);
+  const related = relatedProducts(post, products);
+  const wa = site.contact.whatsappNumber;
+  const prose = "prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -139,12 +150,18 @@ export default async function BlogPostPage({
         />
       </div>
 
-      <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3">
-        <MdxContent source={firstHalf} />
+      <div className={prose}>
+        <MdxContent source={firstPart} />
       </div>
 
-      {secondHalf && (
+      {related.inline[0] && <InlineProduct product={related.inline[0]} whatsappNumber={wa} />}
+
+      {secondPart && (
         <>
+          <div className={prose}>
+            <MdxContent source={secondPart} />
+          </div>
+
           <div className="not-prose mt-10 flex flex-col items-start gap-3 rounded-2xl border border-volt/30 bg-volt/10 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-display text-[15px] font-semibold leading-snug text-ink">
@@ -159,14 +176,29 @@ export default async function BlogPostPage({
               variant="sun"
               defaultPurpose={post.category}
               className="shrink-0"
-              whatsappNumber={site.contact.whatsappNumber}
+              whatsappNumber={wa}
             />
           </div>
-
-          <div className="prose prose-neutral mt-8 max-w-none prose-headings:font-display prose-headings:font-semibold prose-a:text-brand prose-p:text-slate prose-li:text-slate prose-h2:mt-10 prose-h2:text-xl prose-table:text-[14px] prose-th:bg-paper-raised prose-th:px-3 prose-td:px-3">
-            <MdxContent source={secondHalf} />
-          </div>
         </>
+      )}
+
+      {thirdPart && (
+        <div className={prose}>
+          <MdxContent source={thirdPart} />
+        </div>
+      )}
+
+      {thirdPart && related.inline[1] && <InlineProduct product={related.inline[1]} whatsappNumber={wa} />}
+
+      {related.rail.length > 0 && (
+        <div className="mt-14">
+          <ProductRail
+            title="Bu yazıyla ilgili ürünler"
+            subtitle="Güncel fiyatlı paketler; detay için ürüne tıklayın ya da WhatsApp'tan sorun."
+            products={related.rail}
+            whatsappNumber={wa}
+          />
+        </div>
       )}
 
       <div className="mt-14 rounded-2xl border border-line bg-paper-raised p-6">
