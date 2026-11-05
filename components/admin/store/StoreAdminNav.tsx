@@ -6,6 +6,7 @@ import { ExternalLink } from "lucide-react";
 
 const TABS = [
   { href: "/admin/magaza", label: "Ürünler" },
+  { href: "/admin/magaza/paket-olustur", label: "Paket Oluştur" },
   { href: "/admin/magaza/istatistik", label: "WhatsApp İstatistikleri" },
   { href: "/admin/magaza/sahibinden", label: "Sahibinden İlanları" },
   { href: "/admin/magaza/kategoriler", label: "Kategoriler" },
