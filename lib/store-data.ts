@@ -120,7 +120,7 @@ const fetchProducts = unstable_cache(
     if (error || !data) throw new Error(`store_products okunamadı: ${error?.message}`);
     return data as unknown as ProductRow[];
   },
-  ["store-products-v2"],
+  ["store-products-v3"],
   { tags: [STORE_CACHE_TAG], revalidate: 86400 },
 );
 
@@ -140,7 +140,7 @@ const fetchProductContent = unstable_cache(
     if (error) throw new Error(`Ürün yazısı okunamadı: ${error.message}`);
     return (data as { content: string | null } | null)?.content ?? null;
   },
-  ["store-product-content-v5"],
+  ["store-product-content-v6"],
   { tags: [STORE_CACHE_TAG], revalidate: 86400 },
 );
 
