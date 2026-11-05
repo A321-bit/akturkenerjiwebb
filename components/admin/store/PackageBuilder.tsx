@@ -141,6 +141,7 @@ function Packages({
   const [cat, setCat] = useState<ItemCategory | null>(null);
   const [busy, setBusy] = useState(false);
   const [custom, setCustom] = useState({ name: "", cost: "" });
+  const [pending, setPending] = useState<{ pkgId: number; productId: number; productName: string; lines: string[] } | null>(null);
 
   const open = (p: ProductPackage) =>
     setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), contents: (p.contents ?? []).join("\n"), rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
@@ -202,41 +203,44 @@ function Packages({
     return pkg;
   }
 
+  // Ürüne bağlama iki adımlı: önce paket kaydedilir (iş kaybolmaz), sonra sayfa içinde onay istenir.
+  // Tarayıcının confirm() penceresi kullanılmaz: çok kez açılınca tarayıcı engelleyebiliyor ve
+  // engellendiğinde hiçbir uyarı vermeden "vazgeçildi" sayılıyordu.
   async function link() {
     if (!product) return;
-    // Bağlanamasa bile yapılan iş kaybolmasın: paket önce kaydedilir.
-    // Maliyeti boş satırlar 0 sayılır (maliyeti başka kaleme dahil edilmiş olabilir).
-    if (saleUsd == null && product.margin == null) {
-      if (await save()) setMsg('Paket kaydedildi ama ürüne bağlanmadı: satış fiyatı girilmedi. Satış fiyatını girip tekrar "Kaydet ve ürüne bağla"ya basın.');
-      return;
-    }
-    const before = `şu an alış ${money(product.costUsd)}, satış ${money(product.priceUsd)} (${tl(product.price)})`;
-    const after = newPriceUsd != null
-      ? `yeni alış ${money(Math.round(totalExcl * 100) / 100)} (KDV hariç), satış ${money(newPriceUsd)} (${tl(usdToTl(newPriceUsd, pricing))}), marj %${linkMargin}${markup != null ? " (paketteki satış fiyatından)" : ""}`
-      : `yeni alış ${money(Math.round(totalExcl * 100) / 100)}; marj tanımlı olmadığı için satış fiyatı değişmez`;
-    const changes = [
-      `Sitedeki paket içeriği ${contents.length} maddeyle değiştirilecek (fiyatsız).`,
-      product.optionCount ? `Üründeki ${product.optionCount} seçenek (Ekonomik/Üst vb.) kaldırılacak; ürün tek paket olarak satılacak.` : "",
-      hasInstall(lines) ? "Pakette montaj olduğu için ürün \"kurulum dahil\" işaretlenecek." : "",
-    ].filter(Boolean).join("\n");
-    if (!confirm(`"${product.name}" ürününe bağlanacak ve sitedeki fiyatı güncellenecek.
-
-${before}
-${after}
-
-${changes}
-
-Onaylıyor musunuz?`)) return;
+    setPending(null);
     const pkg = await save();
     if (!pkg) return;
+    // Maliyeti boş satırlar 0 sayılır (maliyeti başka kaleme dahil edilmiş olabilir).
+    if (saleUsd == null && product.margin == null) {
+      setMsg('Paket kaydedildi ama ürüne bağlanmadı: satış fiyatı girilmedi. Satış fiyatını girip tekrar "Kaydet ve ürüne bağla"ya basın.');
+      return;
+    }
+    const lines2 = [
+      `Şu an: alış ${money(product.costUsd)}, satış ${money(product.priceUsd)} (${tl(product.price)})`,
+      newPriceUsd != null
+        ? `Yeni: alış ${money(Math.round(totalExcl * 100) / 100)} (KDV hariç), satış ${money(newPriceUsd)} (${tl(usdToTl(newPriceUsd, pricing))}), marj %${linkMargin}${markup != null ? " (paketteki satış fiyatından)" : ""}`
+        : `Yeni: alış ${money(Math.round(totalExcl * 100) / 100)}; marj tanımlı olmadığı için satış fiyatı değişmez`,
+      `Sitedeki paket içeriği ${contents.length} maddeyle değiştirilecek (fiyatsız).`,
+      product.optionCount ? `Üründeki ${product.optionCount} seçenek (Ekonomik/Üst vb.) kaldırılacak; ürün tek paket olarak satılacak.` : "",
+      hasInstall(lines) ? 'Pakette montaj olduğu için ürün "kurulum dahil" işaretlenecek.' : "",
+    ].filter(Boolean);
+    setMsg("");
+    setPending({ pkgId: pkg.id, productId: product.id, productName: product.name, lines: lines2 });
+  }
+
+  async function confirmLink() {
+    if (!pending) return;
+    const { pkgId, productId, productName } = pending;
+    setPending(null);
     setBusy(true);
-    const r = await call({ action: "link", id: pkg.id, productId: product.id });
+    const r = await call({ action: "link", id: pkgId, productId });
     setBusy(false);
     if (!r) return;
     const p = r.product as { id: number; cost_usd: number | null; price_usd: number | null; price: number | null };
     setProds((ps) => ps.map((x) => (x.id === p.id ? { ...x, costUsd: p.cost_usd != null ? Number(p.cost_usd) : null, priceUsd: p.price_usd != null ? Number(p.price_usd) : null, price: p.price } : x)));
-    setPackages((ps) => ps.map((x) => (x.id === pkg.id ? { ...x, product_id: p.id, linked_at: r.linked_at as string } : x)));
-    setMsg(`Bağlandı: ${product.name} · yeni satış ${money(p.price_usd != null ? Number(p.price_usd) : null)} (${tl(p.price)}).`);
+    setPackages((ps) => ps.map((x) => (x.id === pkgId ? { ...x, product_id: p.id, linked_at: r.linked_at as string } : x)));
+    setMsg(`Bağlandı: ${productName} · yeni satış ${money(p.price_usd != null ? Number(p.price_usd) : null)} (${tl(p.price)}).`);
   }
 
   async function remove() {
@@ -422,6 +426,16 @@ Onaylıyor musunuz?`)) return;
           </div>
         </div>
 
+        {pending && (
+          <div className="rounded-xl border-2 border-brand bg-brand/5 p-4 text-[13.5px]">
+            <p className="font-semibold">Paket kaydedildi. “{pending.productName}” ürününe bağlanacak ve sitedeki fiyatı güncellenecek:</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-slate">{pending.lines.map((l) => <li key={l}>{l}</li>)}</ul>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button disabled={busy} onClick={confirmLink} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 font-semibold text-paper hover:bg-brand-deep disabled:opacity-50"><Check size={16} /> Onaylıyorum, ürüne bağla</button>
+              <button onClick={() => setPending(null)} className="rounded-xl px-4 py-2.5 font-semibold text-slate hover:bg-ink/5">Vazgeç</button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <button disabled={busy} onClick={save} className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-brand disabled:opacity-50"><Save size={16} /> Paketi kaydet</button>
           <button disabled={busy || !product || !d.rows.length} onClick={link} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-[13.5px] font-semibold text-paper hover:bg-brand-deep disabled:opacity-50"><Link2 size={16} /> Kaydet ve ürüne bağla</button>
