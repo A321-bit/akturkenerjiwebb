@@ -91,7 +91,11 @@ export default function PackageBuilder({
           ))}
         </div>
       </div>
-      {msg && <p className="mb-3 rounded-lg bg-sun/15 px-3 py-2 text-[13px] text-ink" onClick={() => setMsg("")}>{msg}</p>}
+      {msg && (
+        <p role="status" onClick={() => setMsg("")} className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-2xl cursor-pointer rounded-xl border border-sun bg-paper px-4 py-3 text-[13.5px] font-medium text-ink shadow-lg">
+          {msg} <span className="ml-1 text-[12px] text-slate">(kapatmak için tıklayın)</span>
+        </p>
+      )}
 
       {tab === "paket" && (
         <Packages
@@ -200,12 +204,20 @@ function Packages({
 
   async function link() {
     if (!product) return;
-    if (blanks) { setMsg("Maliyeti boş satır var; ürüne bağlamadan önce bütün satırların maliyetini girin."); return; }
+    // Bağlanamasa bile yapılan iş kaybolmasın: paket önce kaydedilir.
+    if (blanks || (saleUsd == null && product.margin == null)) {
+      const saved = await save();
+      if (!saved) return;
+      const why = blanks
+        ? `${blanks} satırın maliyeti boş (${lines.filter((l) => l.unitUsd == null).map((l) => l.name).join(", ")}).`
+        : "Satış fiyatı girilmedi.";
+      setMsg(`Paket kaydedildi ama ürüne bağlanmadı: ${why} Tamamlayıp tekrar "Kaydet ve ürüne bağla"ya basın.`);
+      return;
+    }
     const before = `şu an alış ${money(product.costUsd)}, satış ${money(product.priceUsd)} (${tl(product.price)})`;
     const after = newPriceUsd != null
       ? `yeni alış ${money(Math.round(totalExcl * 100) / 100)} (KDV hariç), satış ${money(newPriceUsd)} (${tl(usdToTl(newPriceUsd, pricing))}), marj %${linkMargin}${markup != null ? " (paketteki satış fiyatından)" : ""}`
       : `yeni alış ${money(Math.round(totalExcl * 100) / 100)}; marj tanımlı olmadığı için satış fiyatı değişmez`;
-    if (saleUsd == null && product.margin == null) { setMsg("Ürüne bağlamadan önce satış fiyatını girin."); return; }
     const changes = [
       `Sitedeki paket içeriği ${contents.length} maddeyle değiştirilecek (fiyatsız).`,
       product.optionCount ? `Üründeki ${product.optionCount} seçenek (Ekonomik/Üst vb.) kaldırılacak; ürün tek paket olarak satılacak.` : "",
