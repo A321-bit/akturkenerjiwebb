@@ -156,10 +156,20 @@ export function contentsFromLines(lines: PackageLine[], byId: Map<string, Pick<C
     if (cat === "Hizmet ve kurulum") return SERVICE_LABEL[l.itemId ?? ""] ?? tidy(l.name);
     const name = tidy(l.name);
     const q = l.qty.toLocaleString("tr-TR");
-    if (/kablo/i.test(l.name) && l.qty >= 5) return `${q} m ${name}`;
-    return l.qty === 1 && cat !== "Panel" ? name : `${q} × ${name}`;
+    return /kablo/i.test(l.name) && l.qty >= 5 ? `${q} Metre ${name}` : `${q} Adet ${name}`;
   });
   return [...out, SERVICE_AREA_NOTE];
+}
+
+/**
+ * İçerik maddesini miktar ve ada ayırır: "16 Adet …", "100 Metre …" (eski biçim "16 × …", "100 m …" da okunur).
+ * Miktarsız madde (hizmetler) için null.
+ */
+export function parseContentLine(c: string): { qty: string; unit: "Adet" | "Metre"; name: string } | null {
+  const m = c.match(/^(\d+(?:[.,]\d+)?)\s*(Adet|Metre|×|x|m)\s+(.+)$/i);
+  if (!m) return null;
+  const u = m[2].toLocaleLowerCase("tr");
+  return { qty: m[1], unit: u === "m" || u === "metre" ? "Metre" : "Adet", name: m[3].trim() };
 }
 
 /** İstekten gelen içerik maddelerini temizler. */

@@ -1,6 +1,6 @@
 import { formatTL, type StoreProduct } from "./store";
 import { kwOf, productHref } from "./store-details";
-import { SERVICE_AREA_NOTE, wattOf } from "./package-builder";
+import { parseContentLine, SERVICE_AREA_NOTE, wattOf } from "./package-builder";
 
 /**
  * Paketin panel gücü (kWp): paket içeriğindeki "16 × … 640Wp" satırlarından; seçenekli üründe ya da
@@ -10,8 +10,8 @@ function kwpOf(p: StoreProduct): number {
   if (!p.options.length) {
     let w = 0;
     for (const c of p.contents) {
-      const m = c.match(/^(\d+)\s*[×x]\s*(.+)$/i);
-      if (m) w += Number(m[1]) * wattOf(m[2]);
+      const x = parseContentLine(c);
+      if (x?.unit === "Adet") w += Number(x.qty.replace(",", ".")) * wattOf(x.name);
     }
     if (w > 0) return w / 1000;
   }
@@ -55,9 +55,24 @@ export function renderStoreTokens(md: string, products: StoreProduct[]): string 
     .replace(/\{\{paket-icerigi:([a-z0-9-]+)\}\}/g, (_, slug: string) => {
       const p = products.find((x) => x.slug === slug);
       if (!p?.contents.length) return "";
-      const items = p.contents.filter((c) => c !== SERVICE_AREA_NOTE);
-      const note = p.contents.includes(SERVICE_AREA_NOTE) ? `\n\n${SERVICE_AREA_NOTE}` : "";
-      return `### ${p.name.replace(/\s+Paketi$/, "")} Paket İçerisinde Kullanılan Malzemeler\n\n${items.map((c) => `- ${c}`).join("\n")}${note}`;
+      // Malzemeler (miktarlı) tablo, hizmetler (miktarsız) liste: arama motorları ve yapay zekâ
+      // aramaları yapılandırılmış tablo ve listeleri doğrudan alıntılayabiliyor.
+      const cell = (s: string) => s.replace(/\|/g, "/");
+      const rows: string[] = [];
+      const services: string[] = [];
+      for (const c of p.contents) {
+        if (c === SERVICE_AREA_NOTE) continue;
+        const x = parseContentLine(c);
+        if (x) rows.push(`| ${cell(x.name)} | ${x.qty} ${x.unit} |`);
+        else services.push(`- ${c}`);
+      }
+      const title = p.name.replace(/\s+Paketi$/, "");
+      return [
+        `### ${title} Paket İçerisinde Kullanılan Malzemeler`,
+        rows.length ? `| Malzeme | Miktar |\n| --- | --- |\n${rows.join("\n")}` : "",
+        services.length ? `**Pakete dahil hizmetler**\n\n${services.join("\n")}` : "",
+        p.contents.includes(SERVICE_AREA_NOTE) ? SERVICE_AREA_NOTE : "",
+      ].filter(Boolean).join("\n\n");
     })
     // kWp başına fiyat: güncel TL fiyat ÷ paketin panel gücü (kWp); fiyat ya da kur değişince kendiliğinden güncellenir.
     .replace(/\{\{kw-fiyat:([a-z0-9-]+)\}\}/g, (_, slug: string) => {
