@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus, Save, Search, Trash2, Link2, Check } from "lucide-react";
-import { wattOf, type CostItem, type PackageLine, type ProductPackage } from "@/lib/package-builder";
+import { categoryOf, ITEM_CATEGORIES, wattOf, type CostItem, type ItemCategory, type PackageLine, type ProductPackage } from "@/lib/package-builder";
 import { usdToTl, type PricingSettings } from "@/lib/store-pricing";
 
 export type LinkableProduct = {
@@ -133,6 +133,7 @@ function Packages({
   const empty: Draft = { id: null, name: "", note: "", productId: null, rows: [] };
   const [d, setD] = useState<Draft>(empty);
   const [q, setQ] = useState("");
+  const [cat, setCat] = useState<ItemCategory | null>(null);
   const [busy, setBusy] = useState(false);
   const [custom, setCustom] = useState({ name: "", cost: "" });
 
@@ -142,11 +143,20 @@ function Packages({
   const addItem = (it: CostItem) =>
     setD((s) => ({ ...s, rows: [...s.rows, { itemId: it.id, name: it.name, qty: "1", unit: text(it.cost_usd != null ? it.cost_usd * vat : null) }] }));
 
+  // Kategori seçilince o kategorinin tamamı (tedarikçi grubuna göre sıralı), arama yazılınca eşleşenler.
+  const catCount = useMemo(() => {
+    const c = new Map<ItemCategory, number>();
+    for (const i of items) if (i.active) c.set(categoryOf(i), (c.get(categoryOf(i)) ?? 0) + 1);
+    return c;
+  }, [items]);
   const results = useMemo(() => {
     const words = norm(q).split(" ").filter(Boolean);
-    if (!words.length) return [];
-    return items.filter((i) => i.active && words.every((w) => norm(`${i.name} ${i.code ?? ""} ${i.grp ?? ""}`).includes(w))).slice(0, 30);
-  }, [q, items]);
+    if (!words.length && !cat) return [];
+    return items
+      .filter((i) => i.active && (!cat || categoryOf(i) === cat) && words.every((w) => norm(`${i.name} ${i.code ?? ""} ${i.grp ?? ""}`).includes(w)))
+      .sort((a, b) => (a.grp ?? "").localeCompare(b.grp ?? "", "tr") || a.name.localeCompare(b.name, "tr", { numeric: true }))
+      .slice(0, 300);
+  }, [q, cat, items]);
 
   // Satırlar: birim KDV dahil girilir, KDV hariç saklanır.
   const lines: PackageLine[] = d.rows.map((r) => {
@@ -281,13 +291,21 @@ function Packages({
         </div>
 
         <div className="rounded-xl border border-line bg-paper-raised p-4">
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {ITEM_CATEGORIES.filter((c) => catCount.get(c)).map((c) => (
+              <button key={c} onClick={() => setCat(cat === c ? null : c)} className={`rounded-full px-3 py-1.5 text-[12.5px] font-semibold ${cat === c ? "bg-brand text-paper" : "bg-paper text-slate ring-1 ring-line hover:text-ink"}`}>
+                {c} <span className="opacity-70">{catCount.get(c)}</span>
+              </button>
+            ))}
+          </div>
           <label className="flex items-center gap-2 rounded-lg border border-line bg-paper px-3"><Search size={15} className="text-slate" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ürün ara: 635Wp, Castor 20, solar kablo, konnektör…" className="w-full bg-transparent py-2 text-[13.5px] outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={cat ? `${cat} içinde ara…` : "Ürün ara: 635Wp, Castor 20, solar kablo, konnektör…"} className="w-full bg-transparent py-2 text-[13.5px] outline-none" />
           </label>
           {results.length > 0 && (
-            <ul className="mt-2 max-h-72 divide-y divide-line overflow-y-auto rounded-lg border border-line bg-paper">
-              {results.map((it) => (
-                <li key={it.id}>
+            <ul className="mt-2 max-h-96 overflow-y-auto rounded-lg border border-line bg-paper">
+              {results.map((it, k) => (
+                <li key={it.id} className="border-t border-line first:border-t-0">
+                  {(k === 0 || results[k - 1].grp !== it.grp) && <p className="sticky top-0 bg-paper-raised px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate">{it.grp ?? "Diğer"}</p>}
                   <button onClick={() => addItem(it)} className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] hover:bg-brand/5">
                     <span className="min-w-0"><span className="block truncate font-medium">{it.name}</span><span className="text-[11.5px] text-slate">{it.code ? `${it.code} · ` : ""}{srcLabel(it)}</span></span>
                     <span className={`shrink-0 font-semibold ${it.cost_usd == null ? "text-sun" : ""}`}>{it.cost_usd != null ? money(it.cost_usd * vat) : "fiyat yok"}</span>
@@ -404,10 +422,11 @@ function Compare({ conflicts, vat, call, mergeItems }: { conflicts: CostItem[][]
 function CostList({ items, vat, call, mergeItems }: { items: CostItem[]; vat: number; call: Call; mergeItems: (l: CostItem[]) => void }) {
   const [q, setQ] = useState("");
   const [onlyMissing, setOnlyMissing] = useState(false);
+  const [cat, setCat] = useState("");
   const [edit, setEdit] = useState<Record<string, string>>({});
   const words = norm(q).split(" ").filter(Boolean);
   const list = items
-    .filter((i) => (!onlyMissing || (i.active && i.cost_usd == null)) && words.every((w) => norm(`${i.name} ${i.code ?? ""} ${i.grp ?? ""} ${i.source ?? ""}`).includes(w)))
+    .filter((i) => (!onlyMissing || (i.active && i.cost_usd == null)) && (!cat || categoryOf(i) === cat) && words.every((w) => norm(`${i.name} ${i.code ?? ""} ${i.grp ?? ""} ${i.source ?? ""}`).includes(w)))
     .sort((a, b) => Number(b.active) - Number(a.active) || (a.grp ?? "").localeCompare(b.grp ?? "") || a.name.localeCompare(b.name));
   async function saveCost(it: CostItem) {
     const v = edit[it.id];
@@ -420,6 +439,10 @@ function CostList({ items, vat, call, mergeItems }: { items: CostItem[]; vat: nu
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-3 text-[13px]">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ara: ürün, kod, grup, liste…" className="admin-input w-72" />
+        <select value={cat} onChange={(e) => setCat(e.target.value)} className="admin-input w-48">
+          <option value="">Tüm kategoriler</option>
+          {ITEM_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
         <label className="flex items-center gap-2"><input type="checkbox" checked={onlyMissing} onChange={(e) => setOnlyMissing(e.target.checked)} /> Sadece fiyatı eksik olanlar</label>
         <span className="text-slate">{list.length} kalem</span>
       </div>

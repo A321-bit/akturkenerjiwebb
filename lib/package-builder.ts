@@ -62,3 +62,45 @@ export function cleanLines(raw: unknown): PackageLine[] {
 
 /** Ürün adındaki panel gücü ("635Wp", "640 Wp") → watt; panel değilse 0. */
 export const wattOf = (name: string) => Number(name.match(/(\d{3,4})\s*Wp\b/i)?.[1] ?? 0);
+
+/** Paket ekranındaki ürün kategorileri; kalemin tedarikçi grubundan ve adından çıkarılır (sıra önemli). */
+export const ITEM_CATEGORIES = [
+  "Hizmet ve kurulum",
+  "Panel",
+  "İnverter",
+  "Batarya",
+  "Montaj malzemeleri",
+  "Kablo ve konnektör",
+  "Pano ve aksesuar",
+  "Sulama",
+  "Isı pompası",
+  "Şarj istasyonu",
+  "Aydınlatma",
+  "Rüzgar",
+  "Diğer",
+] as const;
+export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
+
+const RULES: [ItemCategory, RegExp][] = [
+  ["Hizmet ve kurulum", /^HİZMET VE KURULUM$/],
+  ["Isı pompası", /ISI POMPA/],
+  ["Şarj istasyonu", /ŞARJ İSTASYON|ARAÇ ŞARJ|EV CHARGE/],
+  ["Aydınlatma", /AYDINLATMA|\bLED\b/],
+  ["Rüzgar", /RÜZGAR|KANAT|ALTERNATÖR/],
+  ["Sulama", /SULAMA|POMPA|AWES|VANA/],
+  ["Batarya", /BATARYA|BATTARYA|AKÜ|LİTYUM|LFP|DEPOLAMA/],
+  ["Pano ve aksesuar", /[Iİ]NVERTER AKSESUAR/],
+  ["İnverter", /[Iİ]NVERT|EVİRİCİ|ŞARJ KONTROL|MPPT/],
+  ["Panel", /PANEL/],
+  ["Kablo ve konnektör", /KABLO|KONNEKT|MC4/],
+  ["Montaj malzemeleri", /KONSTR|MONTAJ|PROFİL|TUTUCU|SONLANDIRICI|KANCA|VİDA|SOMUN|CIVATA|CİVATA|BALAST|ALTYAPI|CARPORT|EPDM|BAND/],
+  ["Pano ve aksesuar", /PANO|ŞALT|SİGORTA|TOPRAKLAMA|ELEKTRİK MALZ|METER|DONGLE|AKSESUAR|OPTİMİZER|OPTIMIZER/],
+];
+
+export function categoryOf(it: Pick<CostItem, "grp" | "name">): ItemCategory {
+  const g = (it.grp ?? "").toLocaleUpperCase("tr");
+  const n = it.name.toLocaleUpperCase("tr");
+  for (const [cat, re] of RULES) if (re.test(g)) return cat;
+  for (const [cat, re] of RULES) if (re.test(n)) return cat;
+  return "Diğer";
+}
