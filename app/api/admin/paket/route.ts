@@ -99,13 +99,13 @@ export async function POST(req: Request) {
     const { data: pkg } = await db.from("product_packages").select(PACKAGE_FIELDS).eq("id", pkgId).single();
     if (!pkg || !productId) return NextResponse.json({ error: "Paket ya da ürün bulunamadı." }, { status: 404 });
     const lines = cleanLines(pkg.lines);
-    if (lines.some((l) => l.unitUsd == null)) return NextResponse.json({ error: "Maliyeti boş satır var; önce bütün satırların maliyetini girin." }, { status: 400 });
+    // Maliyeti boş satırlar 0 sayılır (maliyeti başka kaleme dahil edilmiş olabilir).
     const contents = cleanContents(pkg.contents);
     if (!contents.length) return NextResponse.json({ error: "Sitede görünecek paket içeriği boş." }, { status: 400 });
     const { data: cur } = await db.from("store_products").select("margin_pct, category").eq("id", productId).single();
     if (!cur) return NextResponse.json({ error: "Ürün bulunamadı." }, { status: 404 });
 
-    const patch: Record<string, unknown> = sanitizeCostFields({ bom: lines.map((l) => ({ name: l.name, qty: l.qty, unit: l.unitUsd })) });
+    const patch: Record<string, unknown> = sanitizeCostFields({ bom: lines.map((l) => ({ name: l.name, qty: l.qty, unit: l.unitUsd ?? 0 })) });
     const cost = Number(patch.cost_usd);
     const s = await getPricingSettings(db);
     const sale = pkg.sale_usd != null ? Number(pkg.sale_usd) : null;

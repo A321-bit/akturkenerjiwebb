@@ -205,13 +205,9 @@ function Packages({
   async function link() {
     if (!product) return;
     // Bağlanamasa bile yapılan iş kaybolmasın: paket önce kaydedilir.
-    if (blanks || (saleUsd == null && product.margin == null)) {
-      const saved = await save();
-      if (!saved) return;
-      const why = blanks
-        ? `${blanks} satırın maliyeti boş (${lines.filter((l) => l.unitUsd == null).map((l) => l.name).join(", ")}).`
-        : "Satış fiyatı girilmedi.";
-      setMsg(`Paket kaydedildi ama ürüne bağlanmadı: ${why} Tamamlayıp tekrar "Kaydet ve ürüne bağla"ya basın.`);
+    // Maliyeti boş satırlar 0 sayılır (maliyeti başka kaleme dahil edilmiş olabilir).
+    if (saleUsd == null && product.margin == null) {
+      if (await save()) setMsg('Paket kaydedildi ama ürüne bağlanmadı: satış fiyatı girilmedi. Satış fiyatını girip tekrar "Kaydet ve ürüne bağla"ya basın.');
       return;
     }
     const before = `şu an alış ${money(product.costUsd)}, satış ${money(product.priceUsd)} (${tl(product.price)})`;
@@ -378,7 +374,7 @@ Onaylıyor musunuz?`)) return;
               <div className="flex justify-between border-t border-line pt-1 text-[15px] font-bold"><dt>KDV dahil</dt><dd>{money(totalIncl)}</dd></div>
               <div className="flex justify-between text-slate"><dt>TL karşılığı</dt><dd>{pricing.rate ? tl(Math.round(totalIncl * pricing.rate)) : "kur yok"}</dd></div>
               {kwp > 0 && <div className="flex justify-between text-slate"><dt>Panel gücü</dt><dd>{kwp.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} kWp · {money(totalIncl / kwp)}/kWp</dd></div>}
-              {blanks > 0 && <p className="pt-1 text-[12.5px] text-sun">{blanks} satırın maliyeti boş, toplama girmedi.</p>}
+              {blanks > 0 && <p className="pt-1 text-[12.5px] text-sun">{blanks} satırın maliyeti boş (0 sayılır).</p>}
             </dl>
           </div>
 
@@ -399,8 +395,7 @@ Onaylıyor musunuz?`)) return;
                 <div className={`flex justify-between border-t border-line pt-1 text-[15px] font-bold ${profit < 0 ? "text-red-600" : ""}`}><dt>Kâr (KDV hariç)</dt><dd>{money(profit)}{pricing.rate ? ` · ${tl(Math.round(profit * pricing.rate))}` : ""}</dd></div>
                 <div className={`flex justify-between font-semibold ${profit < 0 ? "text-red-600" : ""}`}><dt>Kâr marjı (maliyet üzerine)</dt><dd>{pct(markup)}</dd></div>
                 <div className="flex justify-between text-slate"><dt>Satış içindeki kâr payı</dt><dd>{pct(onSale)}</dd></div>
-                {blanks > 0 && <p className="pt-1 text-[12.5px] text-sun">{blanks} satırın maliyeti boş; kâr olduğundan yüksek görünür.</p>}
-              </dl>
+                </dl>
             ) : (
               <p className="mt-3 text-[12.5px] text-slate">Satış fiyatını girince kâr ve marj burada hesaplanır.</p>
             )}
