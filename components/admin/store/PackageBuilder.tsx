@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus, Save, Search, Trash2, Link2, Check } from "lucide-react";
-import { categoryOf, ITEM_CATEGORIES, wattOf, type CostItem, type ItemCategory, type PackageLine, type ProductPackage } from "@/lib/package-builder";
+import { categoryOf, contentsFromLines, hasInstall, ITEM_CATEGORIES, wattOf, type CostItem, type ItemCategory, type PackageLine, type ProductPackage } from "@/lib/package-builder";
 import { usdToTl, type PricingSettings } from "@/lib/store-pricing";
 
 export type LinkableProduct = {
@@ -14,10 +14,11 @@ export type LinkableProduct = {
   priceUsd: number | null;
   price: number | null;
   margin: number | null;
+  optionCount: number;
 };
 
 type Row = { itemId: string | null; name: string; qty: string; unit: string };
-type Draft = { id: number | null; name: string; note: string; productId: number | null; sale: string; rows: Row[] };
+type Draft = { id: number | null; name: string; note: string; productId: number | null; sale: string; contents: string; rows: Row[] };
 
 const money = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
@@ -130,7 +131,7 @@ function Packages({
   mergeItems: (l: CostItem[]) => void;
   setMsg: (m: string) => void;
 }) {
-  const empty: Draft = { id: null, name: "", note: "", productId: null, sale: "", rows: [] };
+  const empty: Draft = { id: null, name: "", note: "", productId: null, sale: "", contents: "", rows: [] };
   const [d, setD] = useState<Draft>(empty);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<ItemCategory | null>(null);
@@ -138,7 +139,7 @@ function Packages({
   const [custom, setCustom] = useState({ name: "", cost: "" });
 
   const open = (p: ProductPackage) =>
-    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
+    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), contents: (p.contents ?? []).join("\n"), rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
   const setRow = (i: number, k: keyof Row, v: string) => setD((s) => ({ ...s, rows: s.rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
   const addItem = (it: CostItem) =>
     setD((s) => ({ ...s, rows: [...s.rows, { itemId: it.id, name: it.name, qty: "1", unit: text(it.cost_usd != null ? it.cost_usd * vat : null) }] }));
@@ -176,13 +177,16 @@ function Packages({
   const markup = profit != null ? (profit / totalExcl) * 100 : null;
   const onSale = profit != null && saleExcl ? (profit / saleExcl) * 100 : null;
   const pct = (n: number | null) => (n == null ? "—" : `%${n.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`);
+  // Sitede görünecek paket içeriği: elle düzenlenmediyse kalemlerden üretilir.
+  const autoContents = contentsFromLines(lines, byId);
+  const contents = d.contents.trim() ? d.contents.split("\n").map((x) => x.trim()).filter(Boolean) : autoContents;
   const linkMargin = markup != null ? Math.round(markup * 100) / 100 : product?.margin ?? null;
   const newPriceUsd = linkMargin != null && totalExcl > 0 ? Math.round(totalExcl * vat * (1 + linkMargin / 100) * 100) / 100 : null;
 
   async function save(): Promise<ProductPackage | null> {
     if (!d.name.trim()) { setMsg("Pakete bir isim verin."); return null; }
     setBusy(true);
-    const r = await call({ action: "savePackage", pkg: { id: d.id, name: d.name, note: d.note, product_id: d.productId, sale_usd: saleUsd, lines } });
+    const r = await call({ action: "savePackage", pkg: { id: d.id, name: d.name, note: d.note, product_id: d.productId, sale_usd: saleUsd, contents, lines } });
     setBusy(false);
     if (!r) return null;
     const pkg = r.pkg as ProductPackage;
@@ -201,7 +205,20 @@ function Packages({
     const after = newPriceUsd != null
       ? `yeni alış ${money(Math.round(totalExcl * 100) / 100)} (KDV hariç), satış ${money(newPriceUsd)} (${tl(usdToTl(newPriceUsd, pricing))}), marj %${linkMargin}${markup != null ? " (paketteki satış fiyatından)" : ""}`
       : `yeni alış ${money(Math.round(totalExcl * 100) / 100)}; marj tanımlı olmadığı için satış fiyatı değişmez`;
-    if (!confirm(`"${product.name}" ürününe bağlanacak ve sitedeki fiyatı güncellenecek.\n\n${before}\n${after}\n\nOnaylıyor musunuz?`)) return;
+    if (saleUsd == null && product.margin == null) { setMsg("Ürüne bağlamadan önce satış fiyatını girin."); return; }
+    const changes = [
+      `Sitedeki paket içeriği ${contents.length} maddeyle değiştirilecek (fiyatsız).`,
+      product.optionCount ? `Üründeki ${product.optionCount} seçenek (Ekonomik/Üst vb.) kaldırılacak; ürün tek paket olarak satılacak.` : "",
+      hasInstall(lines) ? "Pakette montaj olduğu için ürün \"kurulum dahil\" işaretlenecek." : "",
+    ].filter(Boolean).join("\n");
+    if (!confirm(`"${product.name}" ürününe bağlanacak ve sitedeki fiyatı güncellenecek.
+
+${before}
+${after}
+
+${changes}
+
+Onaylıyor musunuz?`)) return;
     const pkg = await save();
     if (!pkg) return;
     setBusy(true);
@@ -329,6 +346,15 @@ function Packages({
             <input inputMode="decimal" value={custom.cost} onChange={(e) => setCustom({ ...custom, cost: e.target.value })} placeholder="KDV dahil $" className="admin-input w-28" />
             <button onClick={addCustom} className="rounded-lg bg-ink px-3 py-2 font-semibold text-paper hover:bg-brand">Listeye ve pakete ekle</button>
           </div>
+        </div>
+
+        <div className="rounded-xl border border-line bg-paper-raised p-4 text-[13.5px]">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="font-semibold">Sitede görünecek paket içeriği <span className="font-normal text-slate">(fiyatsız; ürüne bağlayınca ürün sayfasına yazılır)</span></p>
+            {d.contents.trim() && <button onClick={() => setD({ ...d, contents: "" })} className="text-[12.5px] font-semibold text-brand hover:underline">Kalemlerden yeniden oluştur</button>}
+          </div>
+          <textarea rows={Math.min(14, Math.max(4, contents.length + 1))} value={d.contents.trim() ? d.contents : autoContents.join("\n")} onChange={(e) => setD({ ...d, contents: e.target.value })} className="admin-input font-normal" />
+          <p className="mt-1 text-[12px] text-slate">Her satır bir madde. {d.contents.trim() ? "Elle düzenlendi; kalem ekleyip çıkarırsanız buraya yansımaz." : "Kalemlerden otomatik oluşuyor; isimleri burada düzeltebilirsiniz."}</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

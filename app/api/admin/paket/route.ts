@@ -5,7 +5,7 @@ import { permsOf } from "@/lib/staff";
 import { revalidateStore } from "@/lib/admin-crud";
 import { sanitizeCostFields } from "@/lib/store-cost";
 import { getPricingSettings, recomputePrices } from "@/lib/store-pricing";
-import { cleanLines, COST_ITEM_FIELDS, PACKAGE_FIELDS, type CostItem } from "@/lib/package-builder";
+import { cleanContents, cleanLines, hasInstall, COST_ITEM_FIELDS, PACKAGE_FIELDS, type CostItem } from "@/lib/package-builder";
 
 // Paket Oluştur: maliyet listesi ve paket kayıtları. Maliyet içerdiği için yalnız maliyet yetkisi olan kullanıcı.
 // action: saveItem | choose | savePackage | deletePackage | link
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     if (!name) return NextResponse.json({ error: "Paket adı boş." }, { status: 400 });
     const lines = cleanLines(p.lines);
     const sale = num(p.sale_usd);
-    const row = { name, lines, note: String(p.note ?? "").trim() || null, product_id: num(p.product_id), sale_usd: sale !== null && sale > 0 ? Math.round(sale * 100) / 100 : null, updated_at: now };
+    const row = { name, lines, note: String(p.note ?? "").trim() || null, product_id: num(p.product_id), sale_usd: sale !== null && sale > 0 ? Math.round(sale * 100) / 100 : null, contents: cleanContents(p.contents), updated_at: now };
     const q = p.id ? db.from("product_packages").update(row).eq("id", Number(p.id)) : db.from("product_packages").insert(row);
     const { data, error } = await q.select(PACKAGE_FIELDS).single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -87,8 +87,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  // Paketi mağaza ürününe bağla: satırlar ürünün malzeme listesi olur; alış maliyeti ve
-  // (marj tanımlıysa) satış fiyatı oradan yeniden hesaplanır.
+  // Paketi mağaza ürününe bağla (ürün tek paket olarak satılır):
+  // - satırlar ürünün malzeme listesi (bom) olur, alış maliyeti oradan hesaplanır;
+  // - paketin satış fiyatı girildiyse ürünün marjı o fiyatı verecek şekilde ayarlanır;
+  // - ürünün seçenekleri (Ekonomik/Üst vb.) ve eski liste fiyatı kaldırılır;
+  // - sitedeki "paket içeriği" paketin içerik maddeleriyle (fiyatsız) değiştirilir;
+  // - pakette montaj hizmeti varsa ürün "kurulum dahil" işaretlenir.
   if (body.action === "link") {
     const pkgId = Number(body.id);
     const productId = Number(body.productId);
@@ -96,16 +100,25 @@ export async function POST(req: Request) {
     if (!pkg || !productId) return NextResponse.json({ error: "Paket ya da ürün bulunamadı." }, { status: 404 });
     const lines = cleanLines(pkg.lines);
     if (lines.some((l) => l.unitUsd == null)) return NextResponse.json({ error: "Maliyeti boş satır var; önce bütün satırların maliyetini girin." }, { status: 400 });
+    const contents = cleanContents(pkg.contents);
+    if (!contents.length) return NextResponse.json({ error: "Sitede görünecek paket içeriği boş." }, { status: 400 });
+    const { data: cur } = await db.from("store_products").select("margin_pct, category").eq("id", productId).single();
+    if (!cur) return NextResponse.json({ error: "Ürün bulunamadı." }, { status: 404 });
+
     const patch: Record<string, unknown> = sanitizeCostFields({ bom: lines.map((l) => ({ name: l.name, qty: l.qty, unit: l.unitUsd })) });
-    // Pakette satış fiyatı girildiyse ürünün marjı o fiyatı verecek şekilde ayarlanır
-    // (fiyat = alış × (1+KDV) × (1+marj)); girilmediyse ürünün mevcut marjı geçerli kalır.
     const cost = Number(patch.cost_usd);
+    const s = await getPricingSettings(db);
     const sale = pkg.sale_usd != null ? Number(pkg.sale_usd) : null;
-    if (sale && cost > 0) {
-      const s = await getPricingSettings(db);
-      patch.margin_pct = Math.round((sale / (cost * (1 + s.vatPct / 100)) - 1) * 10000) / 100;
+    if (sale && cost > 0) patch.margin_pct = Math.round((sale / (cost * (1 + s.vatPct / 100)) - 1) * 10000) / 100;
+    else {
+      const { data: c } = await db.from("store_categories").select("margin_pct").eq("slug", cur.category).single();
+      if (cur.margin_pct == null && c?.margin_pct == null && s.defaultMargin == null)
+        return NextResponse.json({ error: "Pakete satış fiyatı girin (ürünün tanımlı marjı yok)." }, { status: 400 });
     }
-    const up = await db.from("store_products").update({ ...patch, updated_at: now }).eq("id", productId);
+    Object.assign(patch, { options: [], list_price: null, list_price_usd: null, contents, updated_at: now });
+    if (hasInstall(lines)) patch.install_included = true;
+
+    const up = await db.from("store_products").update(patch).eq("id", productId);
     if (up.error) return NextResponse.json({ error: up.error.message }, { status: 500 });
     await recomputePrices(db, { ids: [productId] });
     await db.from("product_packages").update({ product_id: productId, linked_at: now }).eq("id", pkgId);

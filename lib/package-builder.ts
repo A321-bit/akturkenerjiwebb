@@ -31,12 +31,14 @@ export type ProductPackage = {
   note: string | null;
   /** Paketin satış fiyatı (USD, KDV dahil); yalnız yönetim panelinde görünür. */
   sale_usd: number | null;
+  /** Sitede ürünün "paket içeriği" olarak görünecek maddeler (fiyatsız). */
+  contents: string[] | null;
   linked_at: string | null;
   updated_at: string;
 };
 
 export const COST_ITEM_FIELDS = "id, code, name, grp, source, unit, currency, list, discount_pct, cost_usd, manual, active, updated_at";
-export const PACKAGE_FIELDS = "id, name, product_id, lines, note, sale_usd, linked_at, updated_at";
+export const PACKAGE_FIELDS = "id, name, product_id, lines, note, sale_usd, contents, linked_at, updated_at";
 
 const toNum = (v: unknown): number | null => {
   if (v === null || v === undefined || v === "") return null;
@@ -105,4 +107,63 @@ export function categoryOf(it: Pick<CostItem, "grp" | "name">): ItemCategory {
   for (const [cat, re] of RULES) if (re.test(g)) return cat;
   for (const [cat, re] of RULES) if (re.test(n)) return cat;
   return "Diğer";
+}
+
+/** Paketin sitede gösterilen içeriğine eklenen hizmet bölgesi notu. */
+export const SERVICE_AREA_NOTE =
+  "Projelendirme, mühendislik ve kurulum hizmeti yalnızca Ankara ilinde pakete dahildir; diğer illerde yapılacak işlemlerde fiyat farkı çıkabilir.";
+
+/** Pakette montaj hizmeti var mı (sitede "kurulum dahil" sayılır). */
+export const hasInstall = (lines: Pick<PackageLine, "itemId" | "name">[]) =>
+  lines.some((l) => (l.itemId?.startsWith("svc:") ?? false) && /montaj/i.test(l.name));
+
+const SERVICE_LABEL: Record<string, string> = {
+  "svc:elektrik-montaj": "Elektrik montaj hizmeti",
+  "svc:nakliye": "Nakliye",
+  "svc:vinc": "Vinç hizmeti",
+};
+const FIXES: [RegExp, string][] = [[/\bTommTech\b/g, "TommaTech"], [/\binverter\b/g, "İnverter"]];
+/** Hizmetlerin sitede görünme sırası (listede olmayanlar sona). */
+const SERVICE_ORDER = ["svc:proje-muhendislik", "svc:cagri-mektubu", "svc:elektrik-proje", "svc:statik-proje", "svc:panel-montaj", "svc:elektrik-montaj", "svc:nakliye", "svc:vinc", "svc:isg", "svc:all-risk"];
+const svcRank = (id: string | null) => { const k = SERVICE_ORDER.indexOf(id ?? ""); return k < 0 ? 99 : k; };
+const CAT_ORDER: ItemCategory[] = ["Panel", "İnverter", "Batarya", "Montaj malzemeleri", "Kablo ve konnektör", "Pano ve aksesuar", "Diğer", "Sulama", "Isı pompası", "Şarj istasyonu", "Aydınlatma", "Rüzgar", "Hizmet ve kurulum"];
+
+function tidy(name: string): string {
+  let n = name.trim().replace(/\s+/g, " ");
+  // Tamamı büyük harf tedarikçi adları cümle düzenine çevrilir.
+  if (n === n.toLocaleUpperCase("tr") && /[A-ZÇĞİÖŞÜ]{4}/.test(n)) {
+    const low = n.toLocaleLowerCase("tr");
+    n = low.charAt(0).toLocaleUpperCase("tr") + low.slice(1);
+  }
+  for (const [re, to] of FIXES) n = n.replace(re, to);
+  return n;
+}
+
+/**
+ * Paket satırlarından sitede görünecek içerik maddeleri (fiyatsız): ürünler adetleriyle, hizmetler adsız
+ * adetsiz; sıra panel → inverter → montaj → kablo → pano → hizmetler; en sonda hizmet bölgesi notu.
+ */
+export function contentsFromLines(lines: PackageLine[], byId: Map<string, Pick<CostItem, "grp" | "name">>): string[] {
+  const rows = lines
+    .filter((l) => l.name && l.qty > 0)
+    .map((l) => {
+      const it = l.itemId ? byId.get(l.itemId) : undefined;
+      const cat = categoryOf(it ?? { grp: null, name: l.name });
+      return { l, cat };
+    })
+    .sort((a, b) => CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat) || svcRank(a.l.itemId) - svcRank(b.l.itemId));
+  const out = rows.map(({ l, cat }) => {
+    if (cat === "Hizmet ve kurulum") return SERVICE_LABEL[l.itemId ?? ""] ?? tidy(l.name);
+    const name = tidy(l.name);
+    const q = l.qty.toLocaleString("tr-TR");
+    if (/kablo/i.test(l.name) && l.qty >= 5) return `${q} m ${name}`;
+    return l.qty === 1 && cat !== "Panel" ? name : `${q} × ${name}`;
+  });
+  return [...out, SERVICE_AREA_NOTE];
+}
+
+/** İstekten gelen içerik maddelerini temizler. */
+export function cleanContents(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((x) => String(x ?? "").trim().slice(0, 300)).filter(Boolean).slice(0, 60);
 }

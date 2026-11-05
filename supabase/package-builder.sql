@@ -36,3 +36,4 @@ notify pgrst, 'reload schema';
 -- Sonradan eklenenler (2026-11-05)
 alter table cost_items add column if not exists active boolean not null default true;
 alter table product_packages add column if not exists sale_usd numeric(12,2);
+alter table product_packages add column if not exists contents jsonb;

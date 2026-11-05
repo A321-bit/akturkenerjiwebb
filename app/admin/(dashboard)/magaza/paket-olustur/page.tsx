@@ -22,7 +22,7 @@ export default async function PaketOlusturPage() {
   }
   const [{ data: packages }, { data: products }, { data: cats }, pricing] = await Promise.all([
     db.from("product_packages").select(PACKAGE_FIELDS).order("updated_at", { ascending: false }),
-    db.from("store_products").select("id, name, category, cost_usd, margin_pct, price_usd, price, active").order("category").order("sort_order"),
+    db.from("store_products").select("id, name, category, cost_usd, margin_pct, price_usd, price, active, options").order("category").order("sort_order"),
     db.from("store_categories").select("slug, name, margin_pct"),
     getPricingSettings(db),
   ]);
@@ -36,6 +36,7 @@ export default async function PaketOlusturPage() {
     costUsd: p.cost_usd != null ? Number(p.cost_usd) : null,
     priceUsd: p.price_usd != null ? Number(p.price_usd) : null,
     price: p.price,
+    optionCount: Array.isArray(p.options) ? p.options.length : 0,
     margin: p.margin_pct != null ? Number(p.margin_pct) : catMargin.get(p.category) ?? pricing.defaultMargin,
   }));
 
