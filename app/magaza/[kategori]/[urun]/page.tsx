@@ -21,6 +21,7 @@ import ReviewForm from "@/components/store/ReviewForm";
 import Stars from "@/components/store/Stars";
 import ProductBuyBox from "@/components/store/ProductBuyBox";
 import PackageCompleter from "@/components/store/PackageCompleter";
+import { SERVICE_AREA_NOTE } from "@/lib/package-builder";
 import { PACKAGE_COMPLETE_CATEGORIES, packageCompleteData } from "@/lib/package-complete-data";
 
 // Build'de ürün sayfası üretilmez; her sayfa ilk ziyarette üretilip önbelleğe alınır (ISR).
@@ -231,6 +232,19 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
               phoneHref={site.contact.phoneHref}
               phoneDisplay={site.contact.phoneDisplay}
             />
+
+            {/* Paket içeriği: makalesi olan üründe açıklamada yer almadığı için burada listelenir. */}
+            {article && product.contents.length > 0 && (
+              <div className="mt-5 rounded-2xl border border-line bg-paper-raised p-5">
+                <h2 className="font-display text-[17px] font-semibold">Paket İçeriği</h2>
+                <ul className="mt-3 space-y-1.5 text-[14px] text-slate">
+                  {product.contents.filter((c) => c !== SERVICE_AREA_NOTE).map((c) => (
+                    <li key={c} className="flex gap-2"><span aria-hidden className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />{c}</li>
+                  ))}
+                </ul>
+                {product.contents.includes(SERVICE_AREA_NOTE) && <p className="mt-3 border-t border-line pt-3 text-[13px] text-slate">{SERVICE_AREA_NOTE}</p>}
+              </div>
+            )}
           </div>
         </section>
       </div>
