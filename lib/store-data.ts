@@ -140,7 +140,7 @@ const fetchProductContent = unstable_cache(
     if (error) throw new Error(`Ürün yazısı okunamadı: ${error.message}`);
     return (data as { content: string | null } | null)?.content ?? null;
   },
-  ["store-product-content-v4"],
+  ["store-product-content-v5"],
   { tags: [STORE_CACHE_TAG], revalidate: 86400 },
 );
 
