@@ -60,6 +60,18 @@ function autoDescription(p: { name: string; price?: number; options: unknown[] }
 
 const fmtRating = (n: number) => n.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
+// Teslimat ve İade sayfasındaki koşulların (14 gün cayma, iade masrafı tüketiciden alınmaz)
+// Google ürün verisindeki karşılığı; sayfa değişirse burası da güncellenmeli.
+const RETURN_POLICY = {
+  "@type": "MerchantReturnPolicy",
+  applicableCountry: "TR",
+  returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+  merchantReturnDays: 14,
+  returnMethod: "https://schema.org/ReturnByMail",
+  returnFees: "https://schema.org/FreeReturn",
+  merchantReturnLink: `${SITE_URL}/magaza/teslimat-ve-iade`,
+};
+
 export default async function ProductPage({ params }: { params: Promise<{ kategori: string; urun: string }> }) {
   const found = await find(params);
   if (!found) notFound();
@@ -150,6 +162,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
                 availability: "https://schema.org/InStock",
                 url,
                 seller: { "@type": "Organization", name: site.name },
+                hasMerchantReturnPolicy: RETURN_POLICY,
               },
             }
           : product.price
@@ -162,6 +175,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
                 itemCondition: "https://schema.org/NewCondition",
                 url,
                 seller: { "@type": "Organization", name: site.name },
+                hasMerchantReturnPolicy: RETURN_POLICY,
               },
             }
           : {}),
