@@ -137,9 +137,17 @@ export async function recomputePrices(db: SupabaseClient, filter: { ids?: number
       patch.price = cheapest?.price ?? null;
       patch.list_price_usd = null;
       patch.list_price = cheapest?.list_price ?? null;
-    } else if (s.rate) {
-      if (priceUsd !== null) patch.price = usdToTl(priceUsd, s);
-      if (listUsd !== null) patch.list_price = usdToTl(listUsd, s);
+    } else {
+      // Liste (üstü çizili) fiyatı satış fiyatından yüksek değilse anlamsızdır; kaldırılır.
+      if (listUsd !== null && priceUsd !== null && listUsd <= priceUsd) {
+        listUsd = null;
+        patch.list_price_usd = null;
+        patch.list_price = null;
+      }
+      if (s.rate) {
+        if (priceUsd !== null) patch.price = usdToTl(priceUsd, s);
+        if (listUsd !== null) patch.list_price = usdToTl(listUsd, s);
+      }
     }
     const optionsChanged = optionsOut !== null && JSON.stringify(optionsOut) !== JSON.stringify(p.options);
     const changed = optionsChanged || Object.entries(patch).some(([k, v]) => num((p as Record<string, unknown>)[k]) !== v);
