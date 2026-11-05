@@ -1,5 +1,6 @@
 import { formatTL, type StoreProduct } from "./store";
 import { kwOf, productHref } from "./store-details";
+import { SERVICE_AREA_NOTE } from "./package-builder";
 
 // Kategori ve ürün yazılarında (markdown) canlı fiyat etiketleri. Yazıda fiyat
 // sabit yazılmaz; sayfa açıldığında mağazadaki güncel fiyat (kurla hesaplanan TL)
@@ -10,6 +11,7 @@ import { kwOf, productHref } from "./store-details";
 //   {{fiyat-listesi:on-grid-paketler:5-25}}  yalnızca o kategoriden (blog yazılarında; orada tüm ürünler gelir)
 //   {{fiyat:<ürün-slug>}}      tek bir paketin satış fiyatı, cümle içinde (ör. "330.000 TL")
 //   {{liste-fiyat:<ürün-slug>}} tek bir paketin üstü çizili liste fiyatı
+//   {{paket-icerigi:<ürün-slug>}} "… Paket İçerisinde Kullanılan Malzemeler" başlığı + paketin malzeme listesi
 
 const EMPTY_LIST =
   "_Bu gruptaki ürünlerimizin fiyatları çok yakında burada olacak. Güncel fiyat için WhatsApp hattımızdan bize yazabilirsiniz._";
@@ -30,6 +32,14 @@ export function renderStoreTokens(md: string, products: StoreProduct[]): string 
         return Number.isNaN(kw) ? min === undefined : kw >= lo && kw <= hi;
       });
       return "\n" + (list.length ? list.map(listLine).join("\n") : EMPTY_LIST) + "\n";
+    })
+    // Paketin yönetim panelindeki malzeme listesi (fiyatsız); hizmet bölgesi notu listenin altında paragraf.
+    .replace(/\{\{paket-icerigi:([a-z0-9-]+)\}\}/g, (_, slug: string) => {
+      const p = products.find((x) => x.slug === slug);
+      if (!p?.contents.length) return "";
+      const items = p.contents.filter((c) => c !== SERVICE_AREA_NOTE);
+      const note = p.contents.includes(SERVICE_AREA_NOTE) ? `\n\n${SERVICE_AREA_NOTE}` : "";
+      return `### ${p.name.replace(/\s+Paketi$/, "")} Paket İçerisinde Kullanılan Malzemeler\n\n${items.map((c) => `- ${c}`).join("\n")}${note}`;
     })
     .replace(/\{\{(fiyat|liste-fiyat):([a-z0-9-]+)\}\}/g, (m, kind: string, slug: string) => {
       const p = products.find((x) => x.slug === slug);
