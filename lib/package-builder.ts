@@ -29,12 +29,14 @@ export type ProductPackage = {
   product_id: number | null;
   lines: PackageLine[];
   note: string | null;
+  /** Paketin satış fiyatı (USD, KDV dahil); yalnız yönetim panelinde görünür. */
+  sale_usd: number | null;
   linked_at: string | null;
   updated_at: string;
 };
 
 export const COST_ITEM_FIELDS = "id, code, name, grp, source, unit, currency, list, discount_pct, cost_usd, manual, active, updated_at";
-export const PACKAGE_FIELDS = "id, name, product_id, lines, note, linked_at, updated_at";
+export const PACKAGE_FIELDS = "id, name, product_id, lines, note, sale_usd, linked_at, updated_at";
 
 const toNum = (v: unknown): number | null => {
   if (v === null || v === undefined || v === "") return null;

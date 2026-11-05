@@ -4,7 +4,7 @@ import { currentUser, requireAdmin } from "@/lib/admin-guard";
 import { permsOf } from "@/lib/staff";
 import { revalidateStore } from "@/lib/admin-crud";
 import { sanitizeCostFields } from "@/lib/store-cost";
-import { recomputePrices } from "@/lib/store-pricing";
+import { getPricingSettings, recomputePrices } from "@/lib/store-pricing";
 import { cleanLines, COST_ITEM_FIELDS, PACKAGE_FIELDS, type CostItem } from "@/lib/package-builder";
 
 // Paket Oluştur: maliyet listesi ve paket kayıtları. Maliyet içerdiği için yalnız maliyet yetkisi olan kullanıcı.
@@ -61,7 +61,8 @@ export async function POST(req: Request) {
     const name = String(p.name ?? "").trim().slice(0, 200);
     if (!name) return NextResponse.json({ error: "Paket adı boş." }, { status: 400 });
     const lines = cleanLines(p.lines);
-    const row = { name, lines, note: String(p.note ?? "").trim() || null, product_id: num(p.product_id), updated_at: now };
+    const sale = num(p.sale_usd);
+    const row = { name, lines, note: String(p.note ?? "").trim() || null, product_id: num(p.product_id), sale_usd: sale !== null && sale > 0 ? Math.round(sale * 100) / 100 : null, updated_at: now };
     const q = p.id ? db.from("product_packages").update(row).eq("id", Number(p.id)) : db.from("product_packages").insert(row);
     const { data, error } = await q.select(PACKAGE_FIELDS).single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -95,7 +96,15 @@ export async function POST(req: Request) {
     if (!pkg || !productId) return NextResponse.json({ error: "Paket ya da ürün bulunamadı." }, { status: 404 });
     const lines = cleanLines(pkg.lines);
     if (lines.some((l) => l.unitUsd == null)) return NextResponse.json({ error: "Maliyeti boş satır var; önce bütün satırların maliyetini girin." }, { status: 400 });
-    const patch = sanitizeCostFields({ bom: lines.map((l) => ({ name: l.name, qty: l.qty, unit: l.unitUsd })) });
+    const patch: Record<string, unknown> = sanitizeCostFields({ bom: lines.map((l) => ({ name: l.name, qty: l.qty, unit: l.unitUsd })) });
+    // Pakette satış fiyatı girildiyse ürünün marjı o fiyatı verecek şekilde ayarlanır
+    // (fiyat = alış × (1+KDV) × (1+marj)); girilmediyse ürünün mevcut marjı geçerli kalır.
+    const cost = Number(patch.cost_usd);
+    const sale = pkg.sale_usd != null ? Number(pkg.sale_usd) : null;
+    if (sale && cost > 0) {
+      const s = await getPricingSettings(db);
+      patch.margin_pct = Math.round((sale / (cost * (1 + s.vatPct / 100)) - 1) * 10000) / 100;
+    }
     const up = await db.from("store_products").update({ ...patch, updated_at: now }).eq("id", productId);
     if (up.error) return NextResponse.json({ error: up.error.message }, { status: 500 });
     await recomputePrices(db, { ids: [productId] });

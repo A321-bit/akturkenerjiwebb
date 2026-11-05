@@ -17,7 +17,7 @@ export type LinkableProduct = {
 };
 
 type Row = { itemId: string | null; name: string; qty: string; unit: string };
-type Draft = { id: number | null; name: string; note: string; productId: number | null; rows: Row[] };
+type Draft = { id: number | null; name: string; note: string; productId: number | null; sale: string; rows: Row[] };
 
 const money = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
@@ -130,7 +130,7 @@ function Packages({
   mergeItems: (l: CostItem[]) => void;
   setMsg: (m: string) => void;
 }) {
-  const empty: Draft = { id: null, name: "", note: "", productId: null, rows: [] };
+  const empty: Draft = { id: null, name: "", note: "", productId: null, sale: "", rows: [] };
   const [d, setD] = useState<Draft>(empty);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<ItemCategory | null>(null);
@@ -138,7 +138,7 @@ function Packages({
   const [custom, setCustom] = useState({ name: "", cost: "" });
 
   const open = (p: ProductPackage) =>
-    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
+    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
   const setRow = (i: number, k: keyof Row, v: string) => setD((s) => ({ ...s, rows: s.rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
   const addItem = (it: CostItem) =>
     setD((s) => ({ ...s, rows: [...s.rows, { itemId: it.id, name: it.name, qty: "1", unit: text(it.cost_usd != null ? it.cost_usd * vat : null) }] }));
@@ -168,12 +168,21 @@ function Packages({
   const kwp = lines.reduce((t, l) => t + l.qty * wattOf(l.name), 0) / 1000;
   const blanks = lines.filter((l) => l.unitUsd == null).length;
   const product = prods.find((p) => p.id === d.productId) ?? null;
-  const newPriceUsd = product?.margin != null && totalExcl > 0 ? Math.round(totalExcl * vat * (1 + product.margin / 100) * 100) / 100 : null;
+  // Satış fiyatı (USD, KDV dahil) girilirse kâr ve marj ondan hesaplanır; ürüne bağlanınca ürün bu fiyattan satılır.
+  const saleUsd = parse(d.sale);
+  const saleTl = saleUsd != null && pricing.rate ? Math.round(saleUsd * pricing.rate) : null;
+  const saleExcl = saleUsd != null ? saleUsd / vat : null;
+  const profit = saleExcl != null && totalExcl > 0 ? saleExcl - totalExcl : null;
+  const markup = profit != null ? (profit / totalExcl) * 100 : null;
+  const onSale = profit != null && saleExcl ? (profit / saleExcl) * 100 : null;
+  const pct = (n: number | null) => (n == null ? "—" : `%${n.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`);
+  const linkMargin = markup != null ? Math.round(markup * 100) / 100 : product?.margin ?? null;
+  const newPriceUsd = linkMargin != null && totalExcl > 0 ? Math.round(totalExcl * vat * (1 + linkMargin / 100) * 100) / 100 : null;
 
   async function save(): Promise<ProductPackage | null> {
     if (!d.name.trim()) { setMsg("Pakete bir isim verin."); return null; }
     setBusy(true);
-    const r = await call({ action: "savePackage", pkg: { id: d.id, name: d.name, note: d.note, product_id: d.productId, lines } });
+    const r = await call({ action: "savePackage", pkg: { id: d.id, name: d.name, note: d.note, product_id: d.productId, sale_usd: saleUsd, lines } });
     setBusy(false);
     if (!r) return null;
     const pkg = r.pkg as ProductPackage;
@@ -190,7 +199,7 @@ function Packages({
     if (blanks) { setMsg("Maliyeti boş satır var; ürüne bağlamadan önce bütün satırların maliyetini girin."); return; }
     const before = `şu an alış ${money(product.costUsd)}, satış ${money(product.priceUsd)} (${tl(product.price)})`;
     const after = newPriceUsd != null
-      ? `yeni alış ${money(Math.round(totalExcl * 100) / 100)} (KDV hariç), satış ${money(newPriceUsd)} (${tl(usdToTl(newPriceUsd, pricing))}), marj %${product.margin}`
+      ? `yeni alış ${money(Math.round(totalExcl * 100) / 100)} (KDV hariç), satış ${money(newPriceUsd)} (${tl(usdToTl(newPriceUsd, pricing))}), marj %${linkMargin}${markup != null ? " (paketteki satış fiyatından)" : ""}`
       : `yeni alış ${money(Math.round(totalExcl * 100) / 100)}; marj tanımlı olmadığı için satış fiyatı değişmez`;
     if (!confirm(`"${product.name}" ürününe bağlanacak ve sitedeki fiyatı güncellenecek.\n\n${before}\n${after}\n\nOnaylıyor musunuz?`)) return;
     const pkg = await save();
@@ -336,6 +345,30 @@ function Packages({
           </div>
 
           <div className="rounded-xl border border-line bg-paper-raised p-4 text-[13.5px]">
+            <p className="mb-2 font-semibold">Satış fiyatı ve kâr <span className="font-normal text-slate">(yalnız bu panelde görünür)</span></p>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[12px] text-slate">Satış (USD, KDV dahil)
+                <input inputMode="decimal" value={d.sale} onChange={(e) => setD({ ...d, sale: e.target.value })} placeholder="örn. 9500" className="admin-input mt-1" />
+              </label>
+              <label className="text-[12px] text-slate">Satış (TL, KDV dahil)
+                <input inputMode="decimal" disabled={!pricing.rate} value={saleTl != null ? saleTl.toLocaleString("tr-TR") : ""} onChange={(e) => { const t = parse(e.target.value.replace(/\./g, "")); setD({ ...d, sale: t != null && pricing.rate ? text(t / pricing.rate) : "" }); }} placeholder={pricing.rate ? "örn. 400.000" : "kur yok"} className="admin-input mt-1" />
+              </label>
+            </div>
+            {profit != null ? (
+              <dl className="mt-3 space-y-1">
+                <div className="flex justify-between"><dt className="text-slate">Satış (KDV hariç)</dt><dd>{money(saleExcl)}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate">Maliyet (KDV hariç)</dt><dd>{money(totalExcl)}</dd></div>
+                <div className={`flex justify-between border-t border-line pt-1 text-[15px] font-bold ${profit < 0 ? "text-red-600" : ""}`}><dt>Kâr (KDV hariç)</dt><dd>{money(profit)}{pricing.rate ? ` · ${tl(Math.round(profit * pricing.rate))}` : ""}</dd></div>
+                <div className={`flex justify-between font-semibold ${profit < 0 ? "text-red-600" : ""}`}><dt>Kâr marjı (maliyet üzerine)</dt><dd>{pct(markup)}</dd></div>
+                <div className="flex justify-between text-slate"><dt>Satış içindeki kâr payı</dt><dd>{pct(onSale)}</dd></div>
+                {blanks > 0 && <p className="pt-1 text-[12.5px] text-sun">{blanks} satırın maliyeti boş; kâr olduğundan yüksek görünür.</p>}
+              </dl>
+            ) : (
+              <p className="mt-3 text-[12.5px] text-slate">Satış fiyatını girince kâr ve marj burada hesaplanır.</p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-line bg-paper-raised p-4 text-[13.5px] md:col-span-2">
             <p className="mb-2 font-semibold">Mağaza ürününe bağla</p>
             <select value={d.productId ?? ""} onChange={(e) => setD({ ...d, productId: e.target.value ? Number(e.target.value) : null })} className="admin-input">
               <option value="">Ürün seçin…</option>
@@ -350,7 +383,7 @@ function Packages({
                 <div className="flex justify-between"><dt className="text-slate">Şu anki alış (KDV hariç)</dt><dd>{money(product.costUsd)}</dd></div>
                 <div className="flex justify-between"><dt className="text-slate">Şu anki satış</dt><dd>{money(product.priceUsd)} · {tl(product.price)}</dd></div>
                 <div className="flex justify-between border-t border-line pt-1"><dt className="text-slate">Yeni alış (KDV hariç)</dt><dd className="font-semibold">{money(totalExcl)}</dd></div>
-                <div className="flex justify-between"><dt className="text-slate">Yeni satış {product.margin != null ? `(marj %${product.margin})` : ""}</dt><dd className="font-semibold">{newPriceUsd != null ? `${money(newPriceUsd)} · ${tl(usdToTl(newPriceUsd, pricing))}` : "marj yok, değişmez"}</dd></div>
+                <div className="flex justify-between"><dt className="text-slate">Yeni satış {linkMargin != null ? `(marj %${linkMargin}${markup != null ? ", paket fiyatı" : ""})` : ""}</dt><dd className="font-semibold">{newPriceUsd != null ? `${money(newPriceUsd)} · ${tl(usdToTl(newPriceUsd, pricing))}` : "marj yok, değişmez"}</dd></div>
               </dl>
             )}
           </div>
