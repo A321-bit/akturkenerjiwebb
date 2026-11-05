@@ -20,7 +20,10 @@ import ProductRail from "@/components/store/ProductRail";
 import ReviewForm from "@/components/store/ReviewForm";
 import Stars from "@/components/store/Stars";
 import ProductBuyBox from "@/components/store/ProductBuyBox";
-import PackageCompleter from "@/components/store/PackageCompleter";import { PACKAGE_COMPLETE_CATEGORIES, packageCompleteData } from "@/lib/package-complete-data";
+import PackageCompleter from "@/components/store/PackageCompleter";
+
+// Fiyatı reklamlarda USD verilen kategoriler: ürün sayfasında TL fiyatın altında USD karşılığı da yazılır.
+const USD_PRICE_CATEGORIES = ["on-grid-paketler"];import { PACKAGE_COMPLETE_CATEGORIES, packageCompleteData } from "@/lib/package-complete-data";
 
 // Build'de ürün sayfası üretilmez; her sayfa ilk ziyarette üretilip önbelleğe alınır (ISR).
 // Her yayında yüzlerce sayfa için veritabanına gidilmesin.
@@ -225,6 +228,7 @@ export default async function ProductPage({ params }: { params: Promise<{ katego
               url={url}
               price={product.price}
               listPrice={product.listPrice}
+              priceUsd={USD_PRICE_CATEGORIES.includes(product.category) && !product.options.length ? product.priceUsd : undefined}
               options={product.options}
               whatsappNumber={site.contact.whatsappNumber}
               phoneHref={site.contact.phoneHref}

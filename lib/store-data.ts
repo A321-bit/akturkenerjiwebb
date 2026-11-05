@@ -15,7 +15,7 @@ export const STORE_CACHE_TAG = "store-data";
 
 // Ürün listesi her sayfada gerekir; makale metni (content) yalnızca kendi ürün sayfasında.
 const PRODUCT_LIST_COLUMNS =
-  "id,slug,category,name,power,price,list_price,install_included,image,gallery,contents,datasheet,featured,seo_title,seo_description,options";
+  "id,slug,category,name,power,price,price_usd,list_price,install_included,image,gallery,contents,datasheet,featured,seo_title,seo_description,options";
 
 type CategoryRow = {
   id: number;
@@ -37,6 +37,7 @@ type ProductRow = {
   name: string;
   power: string;
   price: number | null;
+  price_usd: number | null;
   list_price: number | null;
   install_included: boolean;
   image: string | null;
@@ -84,6 +85,7 @@ export function mapProduct(r: ProductRow): StoreProduct {
     name: r.name,
     power: r.power,
     price: opt(r.price),
+    priceUsd: opt(r.price_usd),
     listPrice: opt(r.list_price),
     installIncluded: r.install_included,
     image: opt(r.image),
@@ -120,7 +122,7 @@ const fetchProducts = unstable_cache(
     if (error || !data) throw new Error(`store_products okunamadı: ${error?.message}`);
     return data as unknown as ProductRow[];
   },
-  ["store-products-v3"],
+  ["store-products-v4"],
   { tags: [STORE_CACHE_TAG], revalidate: 86400 },
 );
 

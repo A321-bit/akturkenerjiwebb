@@ -17,6 +17,7 @@ export default function ProductBuyBox({
   url,
   price,
   listPrice,
+  priceUsd,
   options,
   whatsappNumber,
   phoneHref,
@@ -27,6 +28,8 @@ export default function ProductBuyBox({
   url: string;
   price?: number;
   listPrice?: number;
+  /** Verilirse TL fiyatın altında USD karşılığı gösterilir (seçenekli üründe gösterilmez). */
+  priceUsd?: number;
   options: StoreProductOption[];
   whatsappNumber: string;
   phoneHref: string;
@@ -86,6 +89,11 @@ export default function ProductBuyBox({
         {shownPrice != null ? formatTL(shownPrice) : "Fiyat için sorun"}
       </p>
       <p className="text-[13px] font-medium text-slate">KDV Dahil</p>
+      {priceUsd != null && !option && (
+        <p className="mt-1 text-[14px] text-slate">
+          <strong className="text-ink">{Math.round(priceUsd).toLocaleString("tr-TR")} $</strong> KDV dahil · TL tutarı güncel döviz kuruyla hesaplanır
+        </p>
+      )}
 
       <TrackedContactLink
         method="whatsapp"

@@ -25,6 +25,8 @@ export type StoreProduct = {
   power: string;
   /** İndirimli satış fiyatı (KDV dahil). */
   price?: number;
+  /** Satış fiyatı (USD, KDV dahil); TL fiyat bundan güncel kurla hesaplanır. */
+  priceUsd?: number;
   /** Liste fiyatı; satış fiyatından yüksekse üstü çizili gösterilir. */
   listPrice?: number;
   installIncluded: boolean;
