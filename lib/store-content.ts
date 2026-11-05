@@ -29,6 +29,8 @@ function kwpOf(p: StoreProduct): number {
 //   {{fiyat:<ürün-slug>}}      tek bir paketin satış fiyatı, cümle içinde (ör. "330.000 TL")
 //   {{liste-fiyat:<ürün-slug>}} tek bir paketin üstü çizili liste fiyatı
 //   {{kw-fiyat:<ürün-slug>}}   kWp başına fiyat (güncel TL fiyat ÷ panel gücü), cümle içinde
+//   {{panel-adet:<slug>}} "16" · {{panel-gucu:<slug>}} "640 W" · {{kwp:<slug>}} "10,24 kWp" · {{inverter:<slug>}} inverter adı
+//                              (hepsi paketin içerik listesinden; paket değişince yazı da değişir)
 //   {{paket-icerigi:<ürün-slug>}} "… Paket İçerisinde Kullanılan Malzemeler" başlığı + paketin malzeme listesi
 
 const EMPTY_LIST =
@@ -73,6 +75,21 @@ export function renderStoreTokens(md: string, products: StoreProduct[]): string 
         services.length ? `**Pakete dahil hizmetler**\n\n${services.join("\n")}` : "",
         p.contents.includes(SERVICE_AREA_NOTE) ? SERVICE_AREA_NOTE : "",
       ].filter(Boolean).join("\n\n");
+    })
+    // Paket içeriğinden canlı panel/inverter bilgisi: paket değişip ürüne bağlanınca yazı kendiliğinden güncellenir.
+    .replace(/\{\{(panel-adet|panel-gucu|kwp|inverter):([a-z0-9-]+)\}\}/g, (_, kind: string, slug: string) => {
+      const p = products.find((x) => x.slug === slug);
+      if (!p) return "";
+      const panels = p.contents.map(parseContentLine).filter((x): x is NonNullable<typeof x> => x?.unit === "Adet" && wattOf(x.name) > 0);
+      const count = panels.reduce((t, x) => t + Number(x.qty), 0);
+      if (kind === "panel-adet") return count ? String(count) : "";
+      if (kind === "panel-gucu") return panels[0] ? `${wattOf(panels[0].name)} W` : "";
+      if (kind === "kwp") {
+        const kwp = kwpOf(p);
+        return kwp ? `${kwp.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} kWp` : "";
+      }
+      const inv = p.contents.map((c) => parseContentLine(c)?.name ?? c).find((n) => /[iİ]nvert/i.test(n) && !/aksesuar/i.test(n));
+      return inv ?? "";
     })
     // kWp başına fiyat: güncel TL fiyat ÷ paketin panel gücü (kWp); fiyat ya da kur değişince kendiliğinden güncellenir.
     .replace(/\{\{kw-fiyat:([a-z0-9-]+)\}\}/g, (_, slug: string) => {
