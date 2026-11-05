@@ -31,6 +31,7 @@ function kwpOf(p: StoreProduct): number {
 //   {{kw-fiyat:<ürün-slug>}}   kWp başına fiyat (güncel TL fiyat ÷ panel gücü), cümle içinde
 //   {{panel-adet:<slug>}} "16" · {{panel-gucu:<slug>}} "640 W" · {{kwp:<slug>}} "10,24 kWp" · {{inverter:<slug>}} inverter adı
 //                              (hepsi paketin içerik listesinden; paket değişince yazı da değişir)
+//   {{batarya-kwh:<slug>}} "15,7 kWh" · {{batarya-adet:<slug>}} "3" · {{batarya:<slug>}} batarya modülü adı
 //   {{paket-icerigi:<ürün-slug>}} "… Paket İçerisinde Kullanılan Malzemeler" başlığı + paketin malzeme listesi
 
 const EMPTY_LIST =
@@ -90,6 +91,23 @@ export function renderStoreTokens(md: string, products: StoreProduct[]): string 
       }
       const inv = p.contents.map((c) => parseContentLine(c)?.name ?? c).find((n) => /[iİ]nvert/i.test(n) && !/aksesuar/i.test(n));
       return inv ?? "";
+    })
+    // Batarya: içerikteki batarya satırlarından ("3 Adet LFP Batarya Modüler - 51.2V 102Ah" ya da "… 5 kWh").
+    .replace(/\{\{(batarya-kwh|batarya-adet|batarya):([a-z0-9-]+)\}\}/g, (_, kind: string, slug: string) => {
+      const p = products.find((x) => x.slug === slug);
+      if (!p) return "";
+      const bats = p.contents.map(parseContentLine).filter((x): x is NonNullable<typeof x> => x?.unit === "Adet" && /batarya|battery|lityum|lfp/i.test(x.name) && !/kablo/i.test(x.name));
+      if (!bats.length) return "";
+      if (kind === "batarya") return bats[0].name;
+      if (kind === "batarya-adet") return String(bats.reduce((t, x) => t + Number(x.qty), 0));
+      const num = (s: string) => Number(s.replace(",", "."));
+      const kwh = bats.reduce((t, x) => {
+        const vah = x.name.match(/(\d+(?:[.,]\d+)?)\s*V\b.*?(\d+(?:[.,]\d+)?)\s*Ah/i);
+        const k = x.name.match(/(\d+(?:[.,]\d+)?)\s*kWh/i);
+        const per = vah ? (num(vah[1]) * num(vah[2])) / 1000 : k ? num(k[1]) : 0;
+        return t + per * Number(x.qty);
+      }, 0);
+      return kwh ? `${kwh.toLocaleString("tr-TR", { maximumFractionDigits: 1 })} kWh` : "";
     })
     // kWp başına fiyat: güncel TL fiyat ÷ paketin panel gücü (kWp); fiyat ya da kur değişince kendiliğinden güncellenir.
     .replace(/\{\{kw-fiyat:([a-z0-9-]+)\}\}/g, (_, slug: string) => {

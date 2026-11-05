@@ -122,7 +122,7 @@ const SERVICE_LABEL: Record<string, string> = {
   "svc:nakliye": "Nakliye",
   "svc:vinc": "Vinç hizmeti",
 };
-const FIXES: [RegExp, string][] = [[/\bTommTech\b/g, "TommaTech"], [/\binverter\b/g, "İnverter"]];
+const FIXES: [RegExp, string][] = [[/\bTommTech\b/g, "TommaTech"], [/\binverter\b/g, "İnverter"], [/İnveter\b/g, "İnverter"]];
 /** Hizmetlerin sitede görünme sırası (listede olmayanlar sona). */
 const SERVICE_ORDER = ["svc:proje-muhendislik", "svc:cagri-mektubu", "svc:elektrik-proje", "svc:statik-proje", "svc:panel-montaj", "svc:elektrik-montaj", "svc:nakliye", "svc:vinc", "svc:isg", "svc:all-risk"];
 const svcRank = (id: string | null) => { const k = SERVICE_ORDER.indexOf(id ?? ""); return k < 0 ? 99 : k; };
