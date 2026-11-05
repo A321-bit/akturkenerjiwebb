@@ -1,6 +1,23 @@
 import { formatTL, type StoreProduct } from "./store";
 import { kwOf, productHref } from "./store-details";
-import { SERVICE_AREA_NOTE } from "./package-builder";
+import { SERVICE_AREA_NOTE, wattOf } from "./package-builder";
+
+/**
+ * Paketin panel gücü (kWp): paket içeriğindeki "16 × … 640Wp" satırlarından; seçenekli üründe ya da
+ * içerikte panel satırı yoksa ürünün güç alanından (ör. "10 kW").
+ */
+function kwpOf(p: StoreProduct): number {
+  if (!p.options.length) {
+    let w = 0;
+    for (const c of p.contents) {
+      const m = c.match(/^(\d+)\s*[×x]\s*(.+)$/i);
+      if (m) w += Number(m[1]) * wattOf(m[2]);
+    }
+    if (w > 0) return w / 1000;
+  }
+  const kw = kwOf(p);
+  return Number.isFinite(kw) ? kw : 0;
+}
 
 // Kategori ve ürün yazılarında (markdown) canlı fiyat etiketleri. Yazıda fiyat
 // sabit yazılmaz; sayfa açıldığında mağazadaki güncel fiyat (kurla hesaplanan TL)
@@ -11,6 +28,7 @@ import { SERVICE_AREA_NOTE } from "./package-builder";
 //   {{fiyat-listesi:on-grid-paketler:5-25}}  yalnızca o kategoriden (blog yazılarında; orada tüm ürünler gelir)
 //   {{fiyat:<ürün-slug>}}      tek bir paketin satış fiyatı, cümle içinde (ör. "330.000 TL")
 //   {{liste-fiyat:<ürün-slug>}} tek bir paketin üstü çizili liste fiyatı
+//   {{kw-fiyat:<ürün-slug>}}   kWp başına fiyat (güncel TL fiyat ÷ panel gücü), cümle içinde
 //   {{paket-icerigi:<ürün-slug>}} "… Paket İçerisinde Kullanılan Malzemeler" başlığı + paketin malzeme listesi
 
 const EMPTY_LIST =
@@ -40,6 +58,12 @@ export function renderStoreTokens(md: string, products: StoreProduct[]): string 
       const items = p.contents.filter((c) => c !== SERVICE_AREA_NOTE);
       const note = p.contents.includes(SERVICE_AREA_NOTE) ? `\n\n${SERVICE_AREA_NOTE}` : "";
       return `### ${p.name.replace(/\s+Paketi$/, "")} Paket İçerisinde Kullanılan Malzemeler\n\n${items.map((c) => `- ${c}`).join("\n")}${note}`;
+    })
+    // kWp başına fiyat: güncel TL fiyat ÷ paketin panel gücü (kWp); fiyat ya da kur değişince kendiliğinden güncellenir.
+    .replace(/\{\{kw-fiyat:([a-z0-9-]+)\}\}/g, (_, slug: string) => {
+      const p = products.find((x) => x.slug === slug);
+      const kwp = p ? kwpOf(p) : 0;
+      return p?.price && kwp > 0 ? formatTL(Math.round(p.price / kwp / 10) * 10) : "";
     })
     .replace(/\{\{(fiyat|liste-fiyat):([a-z0-9-]+)\}\}/g, (m, kind: string, slug: string) => {
       const p = products.find((x) => x.slug === slug);
