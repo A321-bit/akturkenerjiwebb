@@ -96,7 +96,7 @@ export function renderStoreTokens(md: string, products: StoreProduct[]): string 
     .replace(/\{\{(batarya-kwh|batarya-adet|batarya):([a-z0-9-]+)\}\}/g, (_, kind: string, slug: string) => {
       const p = products.find((x) => x.slug === slug);
       if (!p) return "";
-      const bats = p.contents.map(parseContentLine).filter((x): x is NonNullable<typeof x> => x?.unit === "Adet" && /batarya|battery|lityum|lfp/i.test(x.name) && !/kablo/i.test(x.name));
+      const bats = p.contents.map(parseContentLine).filter((x): x is NonNullable<typeof x> => x?.unit === "Adet" && /batarya|battery|lityum|lfp/i.test(x.name) && !/kablo|bms/i.test(x.name));
       if (!bats.length) return "";
       if (kind === "batarya") return bats[0].name;
       if (kind === "batarya-adet") return String(bats.reduce((t, x) => t + Number(x.qty), 0));
