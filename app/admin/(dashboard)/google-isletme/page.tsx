@@ -282,6 +282,10 @@ function Posts({ loc }: { loc: Location }) {
   const [photoUrl, setPhotoUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [isOffer, setIsOffer] = useState(false);
+  const [offer, setOffer] = useState({ title: "", start: "", end: "", couponCode: "", terms: "" });
+  const setO = (k: keyof typeof offer) => (e: { target: { value: string } }) => setOffer((o) => ({ ...o, [k]: e.target.value }));
+  const offerOk = !isOffer || (offer.title.trim() && offer.start && offer.end && offer.end >= offer.start);
 
   const load = useCallback(() => {
     getJson<{ posts: Post[] }>(`/api/admin/gbp?view=posts&account=${loc.account}&location=${loc.name}`)
@@ -294,10 +298,11 @@ function Posts({ loc }: { loc: Location }) {
     setBusy(true);
     setMsg(null);
     try {
-      await act({ action: "post", account: loc.account, location: loc.name, summary, url, photoUrl });
+      await act({ action: "post", account: loc.account, location: loc.name, summary, url, photoUrl, ...(isOffer ? { offer } : {}) });
       setSummary("");
       setUrl("");
       setPhotoUrl("");
+      setOffer({ title: "", start: "", end: "", couponCode: "", terms: "" });
       setMsg("Gönderi Google'a iletildi. İncelemeden sonra yayınlanır.");
       load();
     } catch (e) {
@@ -324,7 +329,22 @@ function Posts({ loc }: { loc: Location }) {
         <p className="text-right text-[11.5px] text-slate">{summary.length} / 1500</p>
         <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Bağlantı (isteğe bağlı), https://akturkenerji.com/..." className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px] outline-none focus:border-brand" />
         <input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="Fotoğraf adresi (isteğe bağlı), https://..." className="mt-2 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px] outline-none focus:border-brand" />
-        <button disabled={busy || !summary.trim()} onClick={publish} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-[13.5px] font-semibold text-paper hover:bg-brand-deep disabled:opacity-40">
+        <label className="mt-3 flex items-center gap-2 text-[13.5px]">
+          <input type="checkbox" checked={isOffer} onChange={(e) => setIsOffer(e.target.checked)} /> Teklif olarak paylaş (kupon kodu, tarih aralığı)
+        </label>
+        {isOffer && (
+          <div className="mt-2 grid gap-2">
+            <input value={offer.title} onChange={setO("title")} maxLength={58} placeholder="Teklif başlığı" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px] outline-none focus:border-brand" />
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-[12px] text-slate">Başlangıç<input type="date" value={offer.start} onChange={setO("start")} className="mt-0.5 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px] text-ink outline-none focus:border-brand" /></label>
+              <label className="text-[12px] text-slate">Bitiş<input type="date" value={offer.end} onChange={setO("end")} className="mt-0.5 w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px] text-ink outline-none focus:border-brand" /></label>
+            </div>
+            <input value={offer.couponCode} onChange={setO("couponCode")} maxLength={58} placeholder="Kupon kodu (isteğe bağlı)" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px] outline-none focus:border-brand" />
+            <textarea value={offer.terms} onChange={setO("terms")} rows={3} placeholder="Şartlar ve koşullar (isteğe bağlı)" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-[13.5px] outline-none focus:border-brand" />
+            <p className="text-[11.5px] text-slate">Teklifte bağlantı alanı &quot;Çevrimiçi kullan&quot; bağlantısı olarak gösterilir.</p>
+          </div>
+        )}
+        <button disabled={busy || !summary.trim() || !offerOk} onClick={publish} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-[13.5px] font-semibold text-paper hover:bg-brand-deep disabled:opacity-40">
           <Send size={14} /> {busy ? "Gönderiliyor…" : "Google'da yayınla"}
         </button>
         {msg && <p className="mt-2 text-[13px] text-slate">{msg}</p>}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
 import { adminClient } from "@/lib/data";
-import { createPost, deletePost, deleteReply, disconnect, isConnected, listLocations, listPosts, listReviews, performance, replyReview, searchKeywords } from "@/lib/gbp";
+import { type GbpOffer, createPost, deletePost, deleteReply, disconnect, isConnected, listLocations, listPosts, listReviews, performance, replyReview, searchKeywords } from "@/lib/gbp";
 
 // Admin panel Google İşletme sayfasının veri ucu. Yayınlama işlemleri (yanıt, gönderi)
 // yalnızca oturum açmış adminin tıklamasıyla gelir.
@@ -71,7 +71,13 @@ export async function POST(req: Request) {
         const url = text(b.url, 500);
         const photoUrl = text(b.photoUrl, 500);
         if ([url, photoUrl].some((u) => u && !u.startsWith("https://"))) return NextResponse.json({ error: "Bağlantılar https:// ile başlamalı." }, { status: 400 });
-        await createPost(b.account, b.location, { summary, url: url || undefined, photoUrl: photoUrl || undefined });
+        let offer: GbpOffer | undefined;
+        if (b.offer) {
+          const DAY = /^\d{4}-\d{2}-\d{2}$/;
+          offer = { title: text(b.offer.title, 58), start: text(b.offer.start, 10), end: text(b.offer.end, 10), couponCode: text(b.offer.couponCode, 58) || undefined, terms: text(b.offer.terms, 5000) || undefined };
+          if (!offer.title || !DAY.test(offer.start) || !DAY.test(offer.end) || offer.end < offer.start) return NextResponse.json({ error: "Teklif için başlık ve geçerli başlangıç/bitiş tarihi gerekli." }, { status: 400 });
+        }
+        await createPost(b.account, b.location, { summary, url: url || undefined, photoUrl: photoUrl || undefined, offer });
         break;
       }
       case "deletePost":

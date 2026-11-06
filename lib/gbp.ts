@@ -246,15 +246,31 @@ export async function listPosts(account: string, location: string): Promise<GbpP
   return all.map((p) => ({ name: p.name, summary: p.summary, createTime: p.createTime, state: p.state, searchUrl: p.searchUrl, photo: p.media?.[0]?.googleUrl ?? p.media?.[0]?.sourceUrl, ctaUrl: p.callToAction?.url }));
 }
 
-/** Gönderi oluşturur; scheduledTime verilirse Google ileri tarihte yayınlar (durum: SCHEDULED). */
-export function createPost(account: string, location: string, p: { summary: string; url?: string; photoUrl?: string; scheduledTime?: string }) {
+/** Teklif gönderisi: başlık, tarih aralığı (YYYY-MM-DD, iki uç dahil), isteğe bağlı kupon kodu ve şartlar. */
+export type GbpOffer = { title: string; start: string; end: string; couponCode?: string; terms?: string };
+
+const gDate = (s: string) => {
+  const [year, month, day] = s.split("-").map(Number);
+  return { year, month, day };
+};
+
+/** Gönderi oluşturur; scheduledTime verilirse Google ileri tarihte yayınlar (durum: SCHEDULED). offer verilirse "Teklif" türünde paylaşılır. */
+export function createPost(account: string, location: string, p: { summary: string; url?: string; photoUrl?: string; scheduledTime?: string; offer?: GbpOffer }) {
+  const o = p.offer;
   return api<{ name: string; state?: string }>(`https://mybusiness.googleapis.com/v4/${account}/${location}/localPosts`, {
     method: "POST",
     body: JSON.stringify({
       languageCode: "tr",
-      topicType: "STANDARD",
+      topicType: o ? "OFFER" : "STANDARD",
       summary: p.summary,
-      ...(p.url ? { callToAction: { actionType: "LEARN_MORE", url: p.url } } : {}),
+      ...(o
+        ? {
+            event: { title: o.title, schedule: { startDate: gDate(o.start), endDate: gDate(o.end) } },
+            offer: { ...(o.couponCode ? { couponCode: o.couponCode } : {}), ...(p.url ? { redeemOnlineUrl: p.url } : {}), ...(o.terms ? { termsConditions: o.terms } : {}) },
+          }
+        : p.url
+          ? { callToAction: { actionType: "LEARN_MORE", url: p.url } }
+          : {}),
       ...(p.photoUrl ? { media: [{ mediaFormat: "PHOTO", sourceUrl: p.photoUrl }] } : {}),
       ...(p.scheduledTime ? { scheduledTime: p.scheduledTime } : {}),
     }),
