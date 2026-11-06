@@ -122,7 +122,7 @@ const fetchProducts = unstable_cache(
     if (error || !data) throw new Error(`store_products okunamadı: ${error?.message}`);
     return data as unknown as ProductRow[];
   },
-  ["store-products-v8"],
+  ["store-products-v9"],
   { tags: [STORE_CACHE_TAG], revalidate: 86400 },
 );
 
