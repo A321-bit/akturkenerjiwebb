@@ -156,10 +156,15 @@ export function contentsFromLines(lines: PackageLine[], byId: Map<string, Pick<C
     if (cat === "Hizmet ve kurulum") return SERVICE_LABEL[l.itemId ?? ""] ?? tidy(l.name);
     const name = tidy(l.name);
     const q = l.qty.toLocaleString("tr-TR");
-    return /kablo/i.test(l.name) && l.qty >= 5 ? `${q} Metre ${name}` : `${q} Adet ${name}`;
+    return isMeterCable(l.name) ? `${q} Metre ${name}` : `${q} Adet ${name}`;
   });
-  return [...out, SERVICE_AREA_NOTE];
+  // Hizmet bölgesi notu yalnız pakette montaj hizmeti varsa (kurulum dahil paketler).
+  return hasInstall(lines) ? [...out, SERVICE_AREA_NOTE] : out;
 }
+
+/** Metreyle satılan kablo mu (solar kablo, NYY, "6 mm²", "5x10"…)? Kablo setleri ve güç kablosu takımları adet sayılır. */
+export const isMeterCable = (name: string) =>
+  /kablo/i.test(name) && !/set|takım|güç kablosu|arası/i.test(name) && /\d\s*mm|nyy|pv1|pvi1|h1z2z2|\d\s*x\s*\d/i.test(name);
 
 /**
  * İçerik maddesini miktar ve ada ayırır: "16 Adet …", "100 Metre …" (eski biçim "16 × …", "100 m …" da okunur).
