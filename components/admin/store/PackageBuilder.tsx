@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus, Save, Search, Trash2, Link2, Check } from "lucide-react";
-import { categoryOf, contentsFromLines, hasInstall, ITEM_CATEGORIES, wattOf, type CostItem, type ItemCategory, type PackageLine, type ProductPackage } from "@/lib/package-builder";
+import { categoryOf, contentsFromLines, hasInstall, parseContentLine, SERVICE_AREA_NOTE, ITEM_CATEGORIES, wattOf, type CostItem, type ItemCategory, type PackageLine, type ProductPackage } from "@/lib/package-builder";
 import { usdToTl, type PricingSettings } from "@/lib/store-pricing";
 
 export type LinkableProduct = {
@@ -143,8 +143,18 @@ function Packages({
   const [custom, setCustom] = useState({ name: "", cost: "" });
   const [pending, setPending] = useState<{ pkgId: number; productId: number; productName: string; lines: string[] } | null>(null);
 
+  // Kayıtlı içerik, satırlardan otomatik üretilenle aynıysa (elle düzenlenmemişse) otomatik modda açılır;
+  // böylece adet/kalem değişince içerik de kendiliğinden güncellenir. Elle düzenlenmişse olduğu gibi kalır.
   const open = (p: ProductPackage) =>
-    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), contents: (p.contents ?? []).join("\n"), rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
+    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), contents: isAutoContents(p) ? "" : (p.contents ?? []).join("\n"), rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
+  // Eski kayıtlar eski kurallarla (×, m, her pakette Ankara notu) üretildiği için karşılaştırma biçimden bağımsız yapılır.
+  const isAutoContents = (p: ProductPackage) => {
+    if (!p.contents?.length) return true;
+    const key = (c: string) => { const x = parseContentLine(c); return x ? `${Number(x.qty.replace(",", "."))}|${x.name}` : c; };
+    const saved = p.contents.filter((c) => c !== SERVICE_AREA_NOTE).map(key).join("\n");
+    const auto = contentsFromLines(p.lines, byId).filter((c) => c !== SERVICE_AREA_NOTE).map(key).join("\n");
+    return saved === auto;
+  };
   const setRow = (i: number, k: keyof Row, v: string) => setD((s) => ({ ...s, rows: s.rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
   const addItem = (it: CostItem) =>
     setD((s) => ({ ...s, rows: [...s.rows, { itemId: it.id, name: it.name, qty: "1", unit: text(it.cost_usd != null ? it.cost_usd * vat : null) }] }));
