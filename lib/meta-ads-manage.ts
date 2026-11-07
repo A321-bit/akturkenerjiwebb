@@ -179,3 +179,10 @@ export async function setMetaAdSetBudget(adSetId: string, amountTl: number) {
   if (!(amountTl >= 20 && amountTl <= 5000)) throw new Error("Günlük bütçe 20–5.000 TL arasında olmalı.");
   await call("POST", adSetId, { daily_budget: String(Math.round(amountTl * 100)) });
 }
+
+/** Kampanyanın reklam setleri ve günlük bütçeleri (TL). CRM'den bütçe değiştirmek için. */
+export async function listCampaignAdSets(campaignId: string) {
+  if (!/^\d+$/.test(campaignId)) throw new Error("Geçersiz kampanya.");
+  const r = await call<{ data: { id: string; name: string; daily_budget?: string; effective_status?: string }[] }>("GET", `${campaignId}/adsets`, { fields: "id,name,daily_budget,effective_status", limit: "50" });
+  return r.data.map((a) => ({ id: a.id, name: a.name, status: a.effective_status ?? "", dailyBudget: a.daily_budget ? Number(a.daily_budget) / 100 : null }));
+}

@@ -1,7 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { googleAdsReport } from "@/lib/google-ads";
+import { googleAdsReport, setCampaignStatus, setDailyBudget } from "@/lib/google-ads";
+import { listCampaignAdSets, setMetaAdSetBudget, setMetaCampaignStatus } from "@/lib/meta-ads-manage";
+import { createPost, deletePost, isConnected, listLocations, listPosts, listReviews, performance, replyReview, type GbpOffer } from "@/lib/gbp";
 import { adsReport, type AdsPeriod } from "@/lib/meta-ads";
 import { buildDailyReport } from "@/lib/daily-report";
 
@@ -85,6 +87,22 @@ export async function GET(req: Request) {
     return NextResponse.json({ products: prods.data, packages });
   }
 
+  if (r === "gbp") {
+    const conn = await settle(isConnected());
+    if (!conn.data) return NextResponse.json({ connected: false });
+    const locs = await listLocations();
+    const loc = locs[0];
+    if (!loc) return NextResponse.json({ connected: true, location: null });
+    const [posts, reviews, perf] = await Promise.all([settle(listPosts(loc.account, loc.name)), settle(listReviews(loc.account, loc.name)), settle(performance(loc.name))]);
+    return NextResponse.json({ connected: true, location: loc, posts: posts.data ?? [], reviews: reviews.data, performance: perf.data, errors: [posts.error, reviews.error, perf.error].filter(Boolean) });
+  }
+
+  if (r === "meta-adsets") {
+    const id = url.searchParams.get("kampanya") ?? "";
+    const res = await settle(listCampaignAdSets(id));
+    return res.data ? NextResponse.json({ adsets: res.data }) : NextResponse.json({ error: res.error }, { status: 500 });
+  }
+
   if (r === "rapor") {
     const rep = await settle(buildDailyReport());
     if (!rep.data) return NextResponse.json({ error: rep.error }, { status: 500 });
@@ -92,4 +110,62 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({ error: "Bilinmeyen kaynak." }, { status: 400 });
+}
+
+// CRM'den yönetim işlemleri: yalnız CRM'de oturum açmış yetkili kullanıcının tıklamasıyla gelir.
+const ACCOUNT = /^accounts\/\d+$/;
+const LOCATION = /^locations\/\d+$/;
+const REVIEW = /^accounts\/\d+\/locations\/\d+\/reviews\/[\w-]+$/;
+const POST_NAME = /^accounts\/\d+\/locations\/\d+\/localPosts\/[\w-]+$/;
+
+export async function POST(req: Request) {
+  if (!authorized(req)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  const b = await req.json().catch(() => null);
+  const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+  try {
+    switch (b?.action) {
+      case "google-durum":
+        if (!["ENABLED", "PAUSED"].includes(b.status)) break;
+        await setCampaignStatus(String(b.campaignId), b.status);
+        return NextResponse.json({ ok: true });
+      case "google-butce":
+        await setDailyBudget(String(b.budgetResource), Number(b.amount));
+        return NextResponse.json({ ok: true });
+      case "meta-durum":
+        if (!["ACTIVE", "PAUSED"].includes(b.status)) break;
+        await setMetaCampaignStatus(String(b.campaignId), b.status);
+        return NextResponse.json({ ok: true });
+      case "meta-butce":
+        await setMetaAdSetBudget(String(b.adSetId), Number(b.amount));
+        return NextResponse.json({ ok: true });
+      case "gbp-gonderi": {
+        const summary = text(b.summary, 1500);
+        const link = text(b.url, 500);
+        const photoUrl = text(b.photoUrl, 500);
+        if (!ACCOUNT.test(b.account) || !LOCATION.test(b.location) || !summary) return NextResponse.json({ error: "Gönderi metni gerekli." }, { status: 400 });
+        if ([link, photoUrl].some((u) => u && !u.startsWith("https://"))) return NextResponse.json({ error: "Bağlantılar https:// ile başlamalı." }, { status: 400 });
+        let offer: GbpOffer | undefined;
+        if (b.offer) {
+          const DAY = /^\d{4}-\d{2}-\d{2}$/;
+          offer = { title: text(b.offer.title, 58), start: text(b.offer.start, 10), end: text(b.offer.end, 10), couponCode: text(b.offer.couponCode, 58) || undefined, terms: text(b.offer.terms, 5000) || undefined };
+          if (!offer.title || !DAY.test(offer.start) || !DAY.test(offer.end) || offer.end < offer.start) return NextResponse.json({ error: "Teklif için başlık ve geçerli tarih aralığı gerekli." }, { status: 400 });
+        }
+        await createPost(b.account, b.location, { summary, url: link || undefined, photoUrl: photoUrl || undefined, offer });
+        return NextResponse.json({ ok: true });
+      }
+      case "gbp-gonderi-sil":
+        if (!POST_NAME.test(b.post)) break;
+        await deletePost(b.post);
+        return NextResponse.json({ ok: true });
+      case "gbp-yanit": {
+        const comment = text(b.comment, 4000);
+        if (!REVIEW.test(b.review) || !comment) return NextResponse.json({ error: "Yanıt metni gerekli." }, { status: 400 });
+        await replyReview(b.review, comment);
+        return NextResponse.json({ ok: true });
+      }
+    }
+    return NextResponse.json({ error: "Geçersiz işlem." }, { status: 400 });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
+  }
 }
