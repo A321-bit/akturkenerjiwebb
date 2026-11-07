@@ -65,6 +65,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ products: data });
   }
 
+  if (r === "paketler") {
+    // Mağaza paketleri + Paket Oluştur reçeteleri (malzeme, adet, maliyet). Yalnız CRM yönetimi için.
+    const [prods, pkgs, items] = await Promise.all([
+      db.from("store_products").select("id, slug, category, name, power, price, price_usd, list_price, install_included, image, contents, options, featured, active").order("sort_order").order("id"),
+      db.from("product_packages").select("id, name, product_id, lines, sale_usd, note, updated_at"),
+      db.from("cost_items").select("id, name, unit, grp, cost_usd").eq("active", true),
+    ]);
+    if (prods.error) return NextResponse.json({ error: prods.error.message }, { status: 500 });
+    const byId = new Map((items.data ?? []).map((i) => [i.id as string, i]));
+    const packages = (pkgs.data ?? []).map((p) => {
+      const lines = ((p.lines ?? []) as { itemId: string | null; name: string; qty: number; unitUsd: number | null }[]).map((l) => {
+        const it = l.itemId ? byId.get(l.itemId) : undefined;
+        const unitUsd = l.unitUsd ?? (it?.cost_usd != null ? Number(it.cost_usd) : null);
+        return { name: l.name || it?.name || "", qty: Number(l.qty) || 0, unit: it?.unit ?? null, group: it?.grp ?? null, unitUsd };
+      });
+      return { id: p.id, name: p.name, product_id: p.product_id, sale_usd: p.sale_usd, note: p.note, updated_at: p.updated_at, lines, cost_usd: lines.reduce((t, l) => t + l.qty * (l.unitUsd ?? 0), 0) };
+    });
+    return NextResponse.json({ products: prods.data, packages });
+  }
+
   if (r === "rapor") {
     const rep = await settle(buildDailyReport());
     if (!rep.data) return NextResponse.json({ error: rep.error }, { status: 500 });
