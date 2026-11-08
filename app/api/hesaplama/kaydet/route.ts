@@ -1,5 +1,6 @@
 import { ensureCustomers } from "@/lib/crm-server";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { notifyCrm } from "@/lib/crm-notify";
 import { randomBytes } from "node:crypto";
 import { adminClient } from "@/lib/data";
 import { rateLimit } from "@/lib/rate-limit";
@@ -60,5 +61,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Kaydedilemedi, lütfen tekrar deneyin." }, { status: 500 });
   }
   await ensureCustomers([{ name: fullname, phone, email: str(body.email, 120), province: str(body.province, 40), source: `calculator ${body.type}` }]);
+  after(() => notifyCrm("hesaplama"));
   return NextResponse.json({ ok: true, token: report_token });
 }

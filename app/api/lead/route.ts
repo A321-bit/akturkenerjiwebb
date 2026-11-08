@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
+import { notifyCrm } from "@/lib/crm-notify";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { rateLimit } from "@/lib/rate-limit";
@@ -102,6 +103,7 @@ export async function POST(req: Request) {
   // olsa da talep kaybolmuyor; ama Supabase başarısız olursa müşteriye
   // "alındı" diye yanlış bir onay vermemek için isteği hata olarak döndürüyoruz.
   const supabaseResult = await Promise.allSettled([sendToSupabase(lead)]);
+  if (supabaseResult[0].status === "fulfilled") after(() => notifyCrm("lead"));
 
   const [sheetsResult, emailResult] = await Promise.allSettled([
     sendToGoogleSheets(lead),

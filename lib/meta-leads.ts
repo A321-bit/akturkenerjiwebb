@@ -1,4 +1,5 @@
 import { ensureCustomers } from "@/lib/crm-server";
+import { notifyCrm } from "./crm-notify";
 import { createHash } from "node:crypto";
 import { Resend } from "resend";
 import { adminClient } from "./data";
@@ -109,6 +110,7 @@ export async function syncMetaLeads({ sinceHours = 90 * 24 }: { sinceHours?: num
     await ensureCustomers(rows.map((r) => ({ name: r.full_name, phone: r.phone, email: r.email, province: r.city, source: "meta", at: r.created_time })));
   }
   if (fresh.length) await notifyNewLeads(fresh).catch((e) => console.error("[MetaLeads] Bildirim e-postası başarısız:", e));
+  if (fresh.length) await notifyCrm("meta");
   return { forms: forms.data.length, fetched: rows.length, fresh: fresh.length };
 }
 
