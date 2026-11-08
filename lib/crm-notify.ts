@@ -1,6 +1,6 @@
 // Aktürk CRM'e "yeni talep var" bildirimi. CRM talebi müşteri + satış hunisi kartı olarak aktarır.
 // Kullanıcının isteğini yavaşlatmamak için yanıttan sonra (after) çağrılır; hata talebi etkilemez.
-const CRM_URL = (process.env.CRM_URL ?? "https://akturk-crm.vercel.app").replace(/\/$/, "");
+const CRM_URL = (process.env.CRM_URL ?? "https://crm.akturkenerji.com").replace(/\/$/, "");
 
 export async function notifyCrm(reason: string) {
   const secret = process.env.CRM_BRIDGE_SECRET ?? "";
