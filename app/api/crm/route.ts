@@ -1,7 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
-import { googleAdsReport, setCampaignStatus, setDailyBudget } from "@/lib/google-ads";
+import { adsQuery, googleAdsReport, setCampaignStatus, setDailyBudget } from "@/lib/google-ads";
+import { listAds } from "@/lib/google-ads-manage";
 import { listCampaignAdSets, setMetaAdSetBudget, setMetaCampaignStatus } from "@/lib/meta-ads-manage";
 import { createPost, deletePost, isConnected, listLocations, listPosts, listReviews, performance, replyReview, type GbpOffer } from "@/lib/gbp";
 import { adsReport, type AdsPeriod } from "@/lib/meta-ads";
@@ -52,6 +53,21 @@ export async function GET(req: Request) {
       leads: leads.data ?? [], meta: meta.data ?? [], calculations: calcs.data ?? [],
       errors: [leads.error, meta.error, calcs.error].filter(Boolean).map((e) => e!.message),
     });
+  }
+
+  // Google reklamlarının hedef adresleri, açılış sayfası performansı ve dönüşüm takibi (yalnız okuma)
+  if (r === "reklam-hedef") {
+    const days = [7, 14, 30, 90].includes(Number(url.searchParams.get("gun"))) ? Number(url.searchParams.get("gun")) : 30;
+    const during = days === 7 ? "LAST_7_DAYS" : days === 14 ? "LAST_14_DAYS" : days === 30 ? "LAST_30_DAYS" : null;
+    const range = during ? `segments.date DURING ${during}` : `segments.date >= '${new Date(Date.now() - days * 864e5).toISOString().slice(0, 10)}'`;
+    const [ads, landing, campaigns, actions, byAction] = await Promise.all([
+      settle(listAds()),
+      settle(adsQuery(`SELECT landing_page_view.unexpanded_final_url, metrics.clicks, metrics.impressions, metrics.cost_micros, metrics.conversions FROM landing_page_view WHERE ${range}`)),
+      settle(adsQuery(`SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type, metrics.clicks, metrics.impressions, metrics.cost_micros, metrics.conversions, metrics.all_conversions FROM campaign WHERE ${range} AND campaign.status != 'REMOVED'`)),
+      settle(adsQuery("SELECT conversion_action.id, conversion_action.name, conversion_action.status, conversion_action.category, conversion_action.type, conversion_action.primary_for_goal, conversion_action.counting_type FROM conversion_action WHERE conversion_action.status != 'REMOVED'")),
+      settle(adsQuery(`SELECT segments.conversion_action_name, metrics.all_conversions, metrics.conversions FROM customer WHERE ${range}`)),
+    ]);
+    return NextResponse.json({ days, ads: ads.data, landing: landing.data, campaigns: campaigns.data, actions: actions.data, byAction: byAction.data, errors: [ads.error, landing.error, campaigns.error, actions.error, byAction.error].filter(Boolean) });
   }
 
   if (r === "reklam") {
