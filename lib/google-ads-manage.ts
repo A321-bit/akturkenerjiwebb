@@ -256,3 +256,13 @@ export function removeAssetLink(resource: string) {
   if (!m || !resource.startsWith(`${C}/`)) throw new Error("Geçersiz uzantı.");
   return adsMutate(m[1], [{ remove: resource }]);
 }
+
+/** Dönüşüm işlemi: birincil (teklif stratejisi bunu hedefler) / ikincil ve görünürlük. */
+export function setConversionAction(conversionId: string, o: { primary?: boolean; status?: "ENABLED" | "HIDDEN" }) {
+  const update: Record<string, unknown> = { resourceName: `${C}/conversionActions/${id(conversionId)}` };
+  const mask: string[] = [];
+  if (o.primary !== undefined) { update.primaryForGoal = o.primary; mask.push("primary_for_goal"); }
+  if (o.status) { update.status = o.status; mask.push("status"); }
+  if (!mask.length) throw new Error("Değişiklik yok.");
+  return adsMutate("conversionActions", [{ update, updateMask: mask.join(",") }]);
+}

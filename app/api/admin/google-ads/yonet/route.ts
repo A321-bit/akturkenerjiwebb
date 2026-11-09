@@ -17,6 +17,7 @@ import {
   removeNegative,
   setAdStatus,
   setKeywordStatus,
+  setConversionAction,
 } from "@/lib/google-ads-manage";
 import { requireAdmin } from "@/lib/admin-guard";
 
@@ -69,6 +70,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("sitelink-ekle"), campaignId: z.string(), text: z.string(), d1: z.string(), d2: z.string(), url: z.string() }),
   z.object({ action: z.literal("callout-ekle"), campaignId: z.string(), text: z.string() }),
   z.object({ action: z.literal("uzanti-kaldir"), resource: z.string() }),
+  z.object({ action: z.literal("donusum"), id: z.string(), primary: z.boolean().optional(), status: z.enum(["ENABLED", "HIDDEN"]).optional() }),
 ]);
 
 export async function POST(req: Request) {
@@ -88,6 +90,7 @@ export async function POST(req: Request) {
     else if (d.action === "reklam-ekle") await createRsa(d.adGroupId, d.rsa);
     else if (d.action === "sitelink-ekle") await addSitelink(d.campaignId, d);
     else if (d.action === "callout-ekle") await addCallout(d.campaignId, d.text);
+    else if (d.action === "donusum") await setConversionAction(d.id, { primary: d.primary, status: d.status });
     else await removeAssetLink(d.resource);
     return NextResponse.json({ ok: true });
   } catch (e) {
