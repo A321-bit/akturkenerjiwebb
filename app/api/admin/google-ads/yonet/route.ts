@@ -20,6 +20,7 @@ import {
   setConversionAction,
 } from "@/lib/google-ads-manage";
 import { requireAdmin } from "@/lib/admin-guard";
+import { adsQuery } from "@/lib/google-ads";
 
 // Admin "Google Ads": listeler (GET ?liste=…&gun=N) ve işlemler (POST). /api/admin altı proxy ile korunur.
 export const dynamic = "force-dynamic";
@@ -41,6 +42,8 @@ export async function GET(req: Request) {
         return NextResponse.json(await listAds());
       case "uzantilar":
         return NextResponse.json(await listAssets());
+      case "donusumler":
+        return NextResponse.json(await adsQuery("SELECT conversion_action.id, conversion_action.name, conversion_action.status, conversion_action.primary_for_goal, conversion_action.category FROM conversion_action WHERE conversion_action.status != 'REMOVED'"));
       default:
         return NextResponse.json({ error: "Geçersiz liste." }, { status: 400 });
     }
