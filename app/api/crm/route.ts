@@ -30,7 +30,7 @@ const settle = async <T,>(p: Promise<T>) => {
 };
 
 const LEAD_COLS = "id, created_at, fullname, phone, email, need_type, bill_range, province, form_page, source, status, notes, utm_source, utm_medium, utm_campaign, ad_click_id";
-const META_COLS = "id, created_time, full_name, phone, email, city, campaign_name, adset_name, platform, status, note";
+const META_COLS = "id, created_time, full_name, phone, email, city, campaign_name, adset_name, ad_name, form_name, platform, status, note, answers";
 const CALC_COLS =
   "id, created_at, type, fullname, phone, email, province, recommended_product, estimated_value, score, status, notes, utm_source, ad_click_id, results->systemKw, results->panelCount, results->monthlyBillTl, results->annualSavingTl, results->paybackYears";
 const PERIOD: Record<number, AdsPeriod> = { 7: "last_7d", 14: "last_14d", 30: "last_30d", 90: "last_90d" };
