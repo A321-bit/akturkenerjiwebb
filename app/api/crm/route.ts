@@ -7,6 +7,7 @@ import { listCampaignAdSets, setMetaAdSetBudget, setMetaCampaignStatus } from "@
 import { createPost, deletePost, isConnected, listLocations, listPosts, listReviews, performance, replyReview, type GbpOffer } from "@/lib/gbp";
 import { adsReport, type AdsPeriod } from "@/lib/meta-ads";
 import { buildDailyReport } from "@/lib/daily-report";
+import { sendLeadStage } from "@/lib/meta-leads";
 
 // Aktürk CRM köprüsü (crm.akturkenerji.com → site). Yalnız sunucudan sunucuya, paylaşılan gizli anahtarla.
 // Herkese açık sayfa değildir; önbellek/ISR harcamaz. Veri çıkışını sınırlamak için yalnız gereken kolonlar
@@ -53,6 +54,19 @@ export async function GET(req: Request) {
       leads: leads.data ?? [], meta: meta.data ?? [], calculations: calcs.data ?? [],
       errors: [leads.error, meta.error, calcs.error].filter(Boolean).map((e) => e!.message),
     });
+  }
+
+  // CRM'in Meta webhook'u: tek anlık form başvurusunu Meta'dan okur (token yalnız sitede durur)
+  if (r === "meta-lead") {
+    const id = url.searchParams.get("id") ?? "";
+    if (!/^\d{5,25}$/.test(id)) return NextResponse.json({ error: "Geçersiz numara." }, { status: 400 });
+    const token = process.env.META_ACCESS_TOKEN;
+    if (!token) return NextResponse.json({ error: "Meta bağlı değil." }, { status: 500 });
+    const g = (path: string, fields: string) => fetch(`https://graph.facebook.com/v23.0/${path}?${new URLSearchParams({ fields, access_token: token })}`, { cache: "no-store" }).then((x) => x.json());
+    const lead = await g(id, "id,created_time,ad_name,adset_name,campaign_name,form_id,platform,field_data");
+    if (lead?.error) return NextResponse.json({ error: lead.error.message ?? "Meta hatası" }, { status: 502 });
+    const form = lead.form_id ? await g(String(lead.form_id), "name").catch(() => null) : null;
+    return NextResponse.json({ ...lead, form_name: form?.name ?? null });
   }
 
   // Google reklamlarının hedef adresleri, açılış sayfası performansı ve dönüşüm takibi (yalnız okuma)
@@ -140,6 +154,14 @@ export async function POST(req: Request) {
   const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
   try {
     switch (b?.action) {
+      case "meta-durum": {
+        // CRM'deki talep durumu → Meta Dönüşümler API (CRM olayı)
+        const leadId = text(b.leadId, 25);
+        const event = text(b.event, 40);
+        if (!/^\d{5,25}$/.test(leadId) || !/^[A-Za-z_]{3,40}$/.test(event)) break;
+        const r2 = await sendLeadStage({ id: leadId, phone: text(b.phone, 30) || null, email: text(b.email, 200) || null }, event);
+        return NextResponse.json({ ok: true, events_received: r2.events_received });
+      }
       case "google-durum":
         if (!["ENABLED", "PAUSED"].includes(b.status)) break;
         await setCampaignStatus(String(b.campaignId), b.status);
