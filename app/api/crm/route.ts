@@ -1,7 +1,7 @@
 import { calcAnswers } from "@/lib/calc-answers";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { adminClient } from "@/lib/data";
+import { adminClient, getReferences, getSiteSettings, SITE_URL } from "@/lib/data";
 import { adsQuery, googleAdsReport, setCampaignStatus, setDailyBudget } from "@/lib/google-ads";
 import { listAds } from "@/lib/google-ads-manage";
 import { listCampaignAdSets, setMetaAdSetBudget, setMetaCampaignStatus } from "@/lib/meta-ads-manage";
@@ -63,6 +63,16 @@ export async function GET(req: Request) {
   }
 
   // CRM'in Meta webhook'u: tek anlık form başvurusunu Meta'dan okur (token yalnız sitede durur)
+  // CRM Teklif Stüdyosu: fiyat kuralları ve belge ayarları (ilk kurulumda CRM'e kopyalanır), referanslar ve firma bilgisi
+  if (r === "studyo") {
+    const [{ data: qs }, refs, site] = await Promise.all([db.from("quote_settings").select("data").eq("id", 1).maybeSingle(), getReferences(), getSiteSettings()]);
+    return NextResponse.json({
+      settings: qs?.data ?? null,
+      references: refs.map((x) => ({ id: x.id, title: x.title, image: x.image ?? null, location: x.location ?? null, year: x.year ?? null })),
+      company: { name: site.name, phone: site.contact.phoneDisplay, email: site.contact.email, address: site.contact.addressLine, web: SITE_URL.replace(/^https?:\/\//, "") },
+    });
+  }
+
   if (r === "meta-lead") {
     const id = url.searchParams.get("id") ?? "";
     if (!/^\d{5,25}$/.test(id)) return NextResponse.json({ error: "Geçersiz numara." }, { status: 400 });
