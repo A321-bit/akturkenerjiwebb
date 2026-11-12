@@ -1,3 +1,4 @@
+import { calcAnswers } from "@/lib/calc-answers";
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/data";
@@ -33,7 +34,7 @@ const settle = async <T,>(p: Promise<T>) => {
 const LEAD_COLS = "id, created_at, fullname, phone, email, need_type, bill_range, province, form_page, source, status, notes, utm_source, utm_medium, utm_campaign, ad_click_id";
 const META_COLS = "id, created_time, full_name, phone, email, city, campaign_name, adset_name, ad_name, form_name, platform, status, note, answers";
 const CALC_COLS =
-  "id, created_at, type, fullname, phone, email, province, recommended_product, estimated_value, score, status, notes, utm_source, ad_click_id, results->systemKw, results->panelCount, results->monthlyBillTl, results->annualSavingTl, results->paybackYears";
+  "id, created_at, type, fullname, phone, email, province, recommended_product, estimated_value, score, status, notes, utm_source, ad_click_id, inputs, results";
 const PERIOD: Record<number, AdsPeriod> = { 7: "last_7d", 14: "last_14d", 30: "last_30d", 90: "last_90d" };
 
 export async function GET(req: Request) {
@@ -51,7 +52,12 @@ export async function GET(req: Request) {
       db.from("calculations").select(CALC_COLS).gt("created_at", since).order("created_at", { ascending: false }).limit(500),
     ]);
     return NextResponse.json({
-      leads: leads.data ?? [], meta: meta.data ?? [], calculations: calcs.data ?? [],
+      leads: leads.data ?? [], meta: meta.data ?? [],
+      // Hesaplayıcıda girilen bilgiler "soru: cevap" olarak; ham girdi/sonuç gönderilmez
+      calculations: ((calcs.data ?? []) as { type: string | null; inputs: unknown; results: unknown }[]).map(({ inputs, results, ...c }) => {
+        const r = (results ?? {}) as Record<string, unknown>;
+        return { ...c, systemKw: r.systemKw ?? null, panelCount: r.panelCount ?? null, monthlyBillTl: (inputs as Record<string, unknown> | null)?.monthlyBillTl ?? r.monthlyBillTl ?? null, annualSavingTl: r.annualSavingTl ?? null, paybackYears: r.paybackYears ?? null, answers: calcAnswers(c.type, inputs, results) };
+      }),
       errors: [leads.error, meta.error, calcs.error].filter(Boolean).map((e) => e!.message),
     });
   }
