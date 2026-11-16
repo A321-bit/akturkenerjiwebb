@@ -266,3 +266,15 @@ export function setConversionAction(conversionId: string, o: { primary?: boolean
   if (!mask.length) throw new Error("Değişiklik yok.");
   return adsMutate("conversionActions", [{ update, updateMask: mask.join(",") }]);
 }
+
+const GOAL_CATEGORIES = ["GET_DIRECTIONS", "ENGAGEMENT", "PAGE_VIEW", "CONTACT", "PHONE_CALL_LEAD", "SUBMIT_LEAD_FORM", "REQUEST_QUOTE"];
+const GOAL_ORIGINS = ["WEBSITE", "GOOGLE_HOSTED", "CALL_FROM_ADS", "STORE", "APP", "YOUTUBE_HOSTED"];
+
+/**
+ * Hesap düzeyi dönüşüm hedefi (kategori + kaynak): teklif stratejisi bu hedefi kullanır mı (biddable).
+ * Google'ın yönettiği "Yerel işlemler" dönüşümleri tek tek değiştirilemez; hedef düzeyinde kapatılır.
+ */
+export function setCustomerGoal(category: string, origin: string, biddable: boolean) {
+  if (!GOAL_CATEGORIES.includes(category) || !GOAL_ORIGINS.includes(origin)) throw new Error("Geçersiz hedef.");
+  return adsMutate("customerConversionGoals", [{ update: { resourceName: `${C}/customerConversionGoals/${category}~${origin}`, biddable }, updateMask: "biddable" }]);
+}

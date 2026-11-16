@@ -18,6 +18,7 @@ import {
   setAdStatus,
   setKeywordStatus,
   setConversionAction,
+  setCustomerGoal,
 } from "@/lib/google-ads-manage";
 import { requireAdmin } from "@/lib/admin-guard";
 import { adsQuery } from "@/lib/google-ads";
@@ -44,6 +45,8 @@ export async function GET(req: Request) {
         return NextResponse.json(await listAssets());
       case "donusumler":
         return NextResponse.json(await adsQuery("SELECT conversion_action.id, conversion_action.name, conversion_action.status, conversion_action.primary_for_goal, conversion_action.category FROM conversion_action WHERE conversion_action.status != 'REMOVED'"));
+      case "hedefler":
+        return NextResponse.json(await adsQuery("SELECT customer_conversion_goal.category, customer_conversion_goal.origin, customer_conversion_goal.biddable FROM customer_conversion_goal"));
       default:
         return NextResponse.json({ error: "Geçersiz liste." }, { status: 400 });
     }
@@ -93,6 +96,7 @@ export async function POST(req: Request) {
     else if (d.action === "reklam-ekle") await createRsa(d.adGroupId, d.rsa);
     else if (d.action === "sitelink-ekle") await addSitelink(d.campaignId, d);
     else if (d.action === "callout-ekle") await addCallout(d.campaignId, d.text);
+    else if (d.action === "hedef") await setCustomerGoal(d.category, d.origin, !!d.biddable);
     else if (d.action === "donusum") await setConversionAction(d.id, { primary: d.primary, status: d.status });
     else await removeAssetLink(d.resource);
     return NextResponse.json({ ok: true });
