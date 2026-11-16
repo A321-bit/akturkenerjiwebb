@@ -86,7 +86,9 @@ export function mapProduct(r: ProductRow): StoreProduct {
     power: r.power,
     price: opt(r.price),
     priceUsd: opt(r.price_usd),
-    listPrice: opt(r.list_price),
+    // Üstü çizili (liste) fiyat sitede gösterilmez (kullanıcı kararı, 2026-11-16).
+    // Admin panelde alan durur; ziyaretçiye yalnız satış fiyatı gider.
+    listPrice: undefined,
     installIncluded: r.install_included,
     image: opt(r.image),
     gallery: r.gallery ?? [],
@@ -99,7 +101,7 @@ export function mapProduct(r: ProductRow): StoreProduct {
     // Yalnızca satış bilgisi: seçeneğin alış maliyeti ziyaretçiye gitmez.
     options: (r.options ?? [])
       .filter((o) => o.label)
-      .map((o) => ({ label: String(o.label), price: opt(o.price ?? null), listPrice: opt(o.list_price ?? null) })),
+      .map((o) => ({ label: String(o.label), price: opt(o.price ?? null), listPrice: undefined })),
   };
 }
 
