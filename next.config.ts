@@ -74,6 +74,10 @@ const RETIRED_POST_REDIRECTS: [string, string][] = [
   ["/blog/muteahhitler-icin-ges-proje-entegrasyonu", "/hizmetlerimiz/muteahhit-ges"],
   ["/blog/tarimsal-sulama-gunes-enerjisi-pompa", "/hizmetlerimiz/tarimsal-sulama"],
   ["/blog/villa-cati-kac-kwp-ges-sistemi", "/hizmetlerimiz/villa-cati-ges"],
+  // 2026-11-16: villa hizmet sayfasıyla aynı aramayı hedefleyen iki yazı
+  // (kullanıcı onayı). Geri almak için: id 11 → 2026-03-02, id 52 → 2026-07-31.
+  ["/blog/villa-cati-ges-kurulum-maliyeti-2026-fiyat-rehberi", "/hizmetlerimiz/villa-cati-ges"],
+  ["/blog/mustakil-ev-icin-gunes-paneli-ev-tipi-ges-kurulumu", "/hizmetlerimiz/villa-cati-ges"],
 ];
 
 // Admin sayfaları başka sitelere gömülemez, önbelleğe alınmaz, arama motorlarına kapalıdır.
