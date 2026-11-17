@@ -3,9 +3,9 @@ export const LEGAL_NAME = "Akturk Yenilenebilir Enerji Teknolojileri San. Tic. L
 
 const REGISTRY = {
   mersis: "",
-  vergiDairesi: "",
-  vergiNo: "",
-  ticaretSicil: "",
+  vergiDairesi: "Yıldırım Beyazıt",
+  vergiNo: "0420370429",
+  ticaretSicil: "411384",
   etbis: "",
 };
 
