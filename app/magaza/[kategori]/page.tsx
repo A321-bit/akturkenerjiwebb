@@ -13,6 +13,7 @@ import MdxContent from "@/components/MdxContent";
 import CalculatorCta from "@/components/store/CalculatorCta";
 import { renderStoreTokens } from "@/lib/store-content";
 import { productHref } from "@/lib/store-details";
+import { brandsIn } from "@/lib/store-brands";
 
 // Build'de üretilmez; ilk ziyarette üretilip önbelleğe alınır (ISR).
 export function generateStaticParams() {
@@ -110,6 +111,21 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
           showCategoryFilter={false}
           narrow
         />
+
+        {(brandsIn(products).length > 0 || category.slug === "inverter") && (
+          <nav aria-label="Markalar" className="flex flex-wrap gap-2">
+            {category.slug === "inverter" && (
+              <Link href="/magaza/hibrit-inverter-fiyatlari" className="rounded-full border border-ink bg-ink px-3 py-1.5 text-[13.5px] font-medium text-paper hover:bg-sun hover:text-ink">
+                Güce göre hibrit inverter fiyatları
+              </Link>
+            )}
+            {brandsIn(products).map((b) => (
+              <Link key={b.slug} href={`/magaza/marka/${b.slug}`} className="rounded-full border border-line px-3 py-1.5 text-[13.5px] font-medium text-ink hover:border-ink">
+                {b.name} {category.name.toLocaleLowerCase("tr")}
+              </Link>
+            ))}
+          </nav>
+        )}
 
         {/* Kategori açıklaması ürünlerin altında: önce ürünler görünsün, uzun
             SEO yazısı (markdown) aşağıda okunsun. */}

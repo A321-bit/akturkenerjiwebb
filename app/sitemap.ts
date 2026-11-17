@@ -1,3 +1,4 @@
+import { STORE_BRANDS, brandProducts } from "@/lib/store-brands";
 import type { MetadataRoute } from "next";
 import { SITE_URL, getServices, getReferences, getBlogPosts } from "@/lib/data";
 import { getStoreCategories, getStoreProducts } from "@/lib/store-data";
@@ -58,6 +59,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/magaza/iletisim",
     "/magaza/teslimat-ve-iade",
     "/magaza/off-grid-hesaplama",
+    "/magaza/hibrit-inverter-fiyatlari",
+    ...STORE_BRANDS.filter((b) => brandProducts(b, storeProducts).length).map((b) => `/magaza/marka/${b.slug}`),
     ...storeCategories.filter((c) => storeProducts.some((p) => p.category === c.slug)).map((c) => `/magaza/${c.slug}`),
     ...storeProducts.map(productHref),
   ].map((route) => ({ url: `${SITE_URL}${route}` }));
