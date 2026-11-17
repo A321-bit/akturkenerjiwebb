@@ -3,18 +3,22 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronRight, LayoutList } from "lucide-react";
+import { BadgeCheck, ChevronDown, ChevronRight, LayoutList } from "lucide-react";
 import { categoryIcon } from "./category-icons";
 
 export type SidebarCategory = { slug: string; name: string; icon: string; count: number };
+export type SidebarBrand = { slug: string; name: string; count: number };
 
 // Klasik e-ticaret düzeni: solda dikey kategori menüsü. Mobilde
 // "Kategoriler" butonuna dönüşür.
 export default function StoreSidebar({
   categories,
   attached = false,
+  brands = [],
 }: {
   categories: SidebarCategory[];
+  /** Marka sayfalarına bağlantılar (/magaza/marka/…). */
+  brands?: SidebarBrand[];
   /** Ana sayfada üst menünün hemen altına yapışık durur (üst köşeler düz). */
   attached?: boolean;
 }) {
@@ -50,6 +54,26 @@ export default function StoreSidebar({
             );
           })}
       </div>
+      {brands.length > 0 && (
+        <div className="border-t border-line py-1">
+          <p className="px-4 pb-1 pt-3 text-[12px] font-semibold uppercase tracking-wide text-slate-soft">Markalar</p>
+          {brands.map((b) => {
+            const active = pathname === `/magaza/marka/${b.slug}`;
+            return (
+              <Link
+                key={b.slug}
+                href={`/magaza/marka/${b.slug}`}
+                onClick={() => setOpen(false)}
+                className={`group flex items-center gap-3 px-4 py-2 text-[14px] font-medium transition-colors ${active ? "bg-ink text-paper" : "text-ink hover:bg-paper"}`}
+              >
+                <BadgeCheck size={16} className={active ? "text-sun" : "text-brand"} />
+                <span className="flex-1">{b.name}</span>
+                <span className={`text-[12px] ${active ? "text-paper/70" : "text-slate-soft"}`}>{b.count}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 

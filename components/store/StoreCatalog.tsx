@@ -5,6 +5,8 @@ import ProductCard from "./ProductCard";
 import type { StoreCategory, StoreProduct } from "@/lib/store";
 
 type Sort = "onerilen" | "artan" | "azalan";
+export type CatalogBrand = { slug: string; name: string; prefix: string };
+const lower = (s: string) => s.toLocaleLowerCase("tr");
 
 export default function StoreCatalog({
   products,
@@ -12,6 +14,7 @@ export default function StoreCatalog({
   whatsappNumber,
   showCategoryFilter = true,
   narrow = false,
+  brands = [],
 }: {
   products: StoreProduct[];
   categories: StoreCategory[];
@@ -19,18 +22,23 @@ export default function StoreCatalog({
   showCategoryFilter?: boolean;
   /** Yanında kategori menüsü olan dar alanda en fazla 3 sütun. */
   narrow?: boolean;
+  /** Kategori sayfasında markaya göre daraltma (ürün adı markayla başlar). */
+  brands?: CatalogBrand[];
 }) {
   const [category, setCategory] = useState<string>("tumu");
   const [sort, setSort] = useState<Sort>("onerilen");
+  const [brand, setBrand] = useState<string>("tumu");
+  const activeBrand = brands.find((b) => b.slug === brand);
 
   const usedCategories = categories.filter((c) => products.some((p) => p.category === c.slug));
   const list = useMemo(() => {
     let l = products.filter((p) => category === "tumu" || p.category === category);
+    if (activeBrand) l = l.filter((p) => lower(p.name).startsWith(lower(activeBrand.prefix)));
     if (sort !== "onerilen") {
       l = [...l].sort((a, b) => ((a.price ?? 1e12) - (b.price ?? 1e12)) * (sort === "artan" ? 1 : -1));
     }
     return l;
-  }, [products, category, sort]);
+  }, [products, category, sort, activeBrand]);
 
   const chip = (active: boolean) =>
     `whitespace-nowrap rounded-full border px-3.5 py-2 text-[13.5px] font-semibold transition-colors ${
@@ -48,6 +56,17 @@ export default function StoreCatalog({
             {usedCategories.map((c) => (
               <button key={c.slug} type="button" onClick={() => setCategory(c.slug)} className={chip(category === c.slug)}>
                 {c.name}
+              </button>
+            ))}
+          </div>
+        ) : brands.length > 1 ? (
+          <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="group" aria-label="Markaya göre filtrele">
+            <button type="button" onClick={() => setBrand("tumu")} className={chip(brand === "tumu")}>
+              Tüm markalar
+            </button>
+            {brands.map((b) => (
+              <button key={b.slug} type="button" onClick={() => setBrand(b.slug)} className={chip(brand === b.slug)} aria-pressed={brand === b.slug}>
+                {b.name}
               </button>
             ))}
           </div>

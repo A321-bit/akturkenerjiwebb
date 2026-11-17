@@ -110,6 +110,7 @@ export default async function StoreCategoryPage({ params }: { params: Promise<{ 
           whatsappNumber={site.contact.whatsappNumber}
           showCategoryFilter={false}
           narrow
+          brands={brandsIn(products).map((b) => ({ slug: b.slug, name: b.name, prefix: b.prefix }))}
         />
 
         {(brandsIn(products).length > 0 || category.slug === "inverter") && (
