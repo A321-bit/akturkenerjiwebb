@@ -15,19 +15,6 @@ export default async function StoreLayout({ children }: { children: React.ReactN
     getStoreSettings(),
   ]);
 
-  const searchData = {
-    categories: categories.map((c) => ({ slug: c.slug, name: c.name })),
-    products: products.map((p) => ({
-      slug: p.slug,
-      category: p.category,
-      name: p.name,
-      power: p.power,
-      price: p.price,
-      // Arama sonucunda "… TL'den başlayan" yazabilmek için yalnızca seçenek sayısı kadar boş kayıt.
-      options: p.options.map(() => ({ label: "" })),
-      image: p.image,
-    })),
-  };
   const sidebar = categories.map((c) => ({
     slug: c.slug,
     name: c.name,
@@ -41,7 +28,6 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         whatsappNumber={site.contact.whatsappNumber}
         phoneHref={site.contact.phoneHref}
         phoneDisplay={site.contact.phoneDisplay}
-        searchData={searchData}
       />
       <StoreShell sidebar={<StoreSidebar categories={sidebar} />}>{children}</StoreShell>
       <StoreFooter settings={site} categories={categories} text={store.footerText} />

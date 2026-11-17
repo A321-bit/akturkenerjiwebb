@@ -26,15 +26,33 @@ export type StoreSearchData = {
   products: { slug: string; category: string; name: string; power: string; price?: number; options: { label: string }[]; image?: string }[];
 };
 
-export default function StoreSearch({ data, className = "" }: { data: StoreSearchData; className?: string }) {
+// Veri sayfaya gömülmez (sayfa boyutu ve ISR yazım kotası); arama kutusu ilk kullanıldığında
+// /api/magaza-arama'dan bir kez indirilir ve iki arama kutusu (masaüstü/mobil) aynı isteği paylaşır.
+let pending: Promise<StoreSearchData> | null = null;
+const EMPTY: StoreSearchData = { categories: [], products: [] };
+function loadSearchData(): Promise<StoreSearchData> {
+  pending ??= fetch("/api/magaza-arama")
+    .then((r) => (r.ok ? (r.json() as Promise<StoreSearchData>) : Promise.reject(new Error(String(r.status)))))
+    .catch(() => {
+      pending = null;
+      return EMPTY;
+    });
+  return pending;
+}
+
+export default function StoreSearch({ className = "" }: { className?: string }) {
   const router = useRouter();
+  const [data, setData] = useState<StoreSearchData | null>(null);
+  const ensureData = () => {
+    if (!data) void loadSearchData().then(setData);
+  };
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
   const results = useMemo(() => {
     const terms = norm(q).split(/\s+/).filter(Boolean);
-    if (terms.length === 0) return { cats: [], prods: [] };
+    if (terms.length === 0 || !data) return { cats: [], prods: [] };
     const match = (text: string) => terms.every((t) => norm(text).replace(/\s+/g, " ").includes(t) || norm(text).replace(/\s+/g, "").includes(t));
     return {
       cats: data.categories.filter((c) => match(c.name)).slice(0, 3),
@@ -70,8 +88,12 @@ export default function StoreSearch({ data, className = "" }: { data: StoreSearc
           onChange={(e) => {
             setQ(e.target.value);
             setOpen(true);
+            ensureData();
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setOpen(true);
+            ensureData();
+          }}
           placeholder="Paket ara: 10 kW, hibrit, sulama..."
           aria-label="Mağazada ara"
           className="w-full rounded-full border border-line bg-paper-raised py-2.5 pl-10 pr-4 text-[14px] text-ink outline-none placeholder:text-slate-soft focus:border-brand"
@@ -80,7 +102,7 @@ export default function StoreSearch({ data, className = "" }: { data: StoreSearc
 
       {open && q.trim() && (
         <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-[0_20px_44px_-20px_rgba(11,20,32,0.45)]">
-          {!hasResults && <p className="px-4 py-4 text-[14px] text-slate">Sonuç bulunamadı.</p>}
+          {!hasResults && <p className="px-4 py-4 text-[14px] text-slate">{data ? "Sonuç bulunamadı." : "Aranıyor..."}</p>}
           {results.cats.map((c) => (
             <Link
               key={c.slug}
