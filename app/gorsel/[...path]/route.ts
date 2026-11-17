@@ -3,15 +3,20 @@
 // Burada önbellek başlığını biz veriyoruz: her dosya Supabase'den bölge başına bir kez iner.
 // Görsel adları değişmez (yeni görsel yeni adla yüklenir), bu yüzden süre uzun.
 const MEDIA = "https://tzibyocqotqcowebswlq.supabase.co/storage/v1/object/public/media/";
+const MEDYA = "https://medya.akturkenerji.com/";
 
 export async function GET(_req: Request, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
   if (!path.length || path.some((p) => p === ".." || p === ".")) return new Response("Bulunamadı", { status: 404 });
 
-  const url = MEDIA + path.map(encodeURIComponent).join("/");
-  // Supabase yoğunlukta geçici 429 (istek sınırı) ya da 5xx veriyor; artan aralıkla iki kez daha denenir.
-  let upstream: Response | null = null;
-  for (const wait of [0, 400, 1200]) {
+  const rel = path.map(encodeURIComponent).join("/");
+  const url = MEDIA + rel;
+  // Önce Cloudflare R2 önbelleği (cloudflare/medya-worker.js): dosya Supabase'den yalnız bir kez iner.
+  // Vercel önbelleği bölge bölge tutulduğu için doğrudan Supabase'e gitmek aynı dosyayı haftada ~14 kez indiriyordu.
+  let upstream: Response | null = await fetch(MEDYA + rel, { cache: "no-store" }).catch(() => null);
+  if (upstream && !upstream.ok) upstream = null;
+  // R2 erişilemezse Supabase; yoğunlukta geçici 429 ya da 5xx verirse artan aralıkla iki kez daha denenir.
+  for (const wait of upstream ? [] : [0, 400, 1200]) {
     if (wait) await new Promise((r) => setTimeout(r, wait));
     upstream = await fetch(url, { cache: "no-store" }).catch(() => null);
     if (upstream?.ok || upstream?.status === 404 || upstream?.status === 400) break;
