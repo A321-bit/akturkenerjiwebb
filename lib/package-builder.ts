@@ -33,12 +33,15 @@ export type ProductPackage = {
   sale_usd: number | null;
   /** Sitede ürünün "paket içeriği" olarak görünecek maddeler (fiyatsız). */
   contents: string[] | null;
+  /** Sahibinden ilan başlığı (en çok 60 karakter) ve kısa ilan açıklaması. */
+  listing_title: string | null;
+  listing_text: string | null;
   linked_at: string | null;
   updated_at: string;
 };
 
 export const COST_ITEM_FIELDS = "id, code, name, grp, source, unit, currency, list, discount_pct, cost_usd, manual, active, updated_at";
-export const PACKAGE_FIELDS = "id, name, product_id, lines, note, sale_usd, contents, linked_at, updated_at";
+export const PACKAGE_FIELDS = "id, name, product_id, lines, note, sale_usd, contents, listing_title, listing_text, linked_at, updated_at";
 
 const toNum = (v: unknown): number | null => {
   if (v === null || v === undefined || v === "") return null;

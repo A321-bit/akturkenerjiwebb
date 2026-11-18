@@ -18,7 +18,7 @@ export type LinkableProduct = {
 };
 
 type Row = { itemId: string | null; name: string; qty: string; unit: string };
-type Draft = { id: number | null; name: string; note: string; productId: number | null; sale: string; contents: string; rows: Row[] };
+type Draft = { id: number | null; name: string; note: string; productId: number | null; sale: string; contents: string; listingTitle: string; listingText: string; rows: Row[] };
 
 const money = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " $";
@@ -135,7 +135,7 @@ function Packages({
   mergeItems: (l: CostItem[]) => void;
   setMsg: (m: string) => void;
 }) {
-  const empty: Draft = { id: null, name: "", note: "", productId: null, sale: "", contents: "", rows: [] };
+  const empty: Draft = { id: null, name: "", note: "", productId: null, sale: "", contents: "", listingTitle: "", listingText: "", rows: [] };
   const [d, setD] = useState<Draft>(empty);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<ItemCategory | null>(null);
@@ -146,7 +146,7 @@ function Packages({
   // Kayıtlı içerik, satırlardan otomatik üretilenle aynıysa (elle düzenlenmemişse) otomatik modda açılır;
   // böylece adet/kalem değişince içerik de kendiliğinden güncellenir. Elle düzenlenmişse olduğu gibi kalır.
   const open = (p: ProductPackage) =>
-    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), contents: isAutoContents(p) ? "" : (p.contents ?? []).join("\n"), rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
+    setD({ id: p.id, name: p.name, note: p.note ?? "", productId: p.product_id, sale: text(p.sale_usd != null ? Number(p.sale_usd) : null), contents: isAutoContents(p) ? "" : (p.contents ?? []).join("\n"), listingTitle: p.listing_title ?? "", listingText: p.listing_text ?? "", rows: p.lines.map((l) => ({ itemId: l.itemId, name: l.name, qty: String(l.qty).replace(".", ","), unit: text(l.unitUsd != null ? l.unitUsd * vat : null) })) });
   // Eski kayıtlar eski kurallarla (×, m, her pakette Ankara notu) üretildiği için karşılaştırma biçimden bağımsız yapılır.
   const isAutoContents = (p: ProductPackage) => {
     if (!p.contents?.length) return true;
@@ -201,7 +201,7 @@ function Packages({
   async function save(): Promise<ProductPackage | null> {
     if (!d.name.trim()) { setMsg("Pakete bir isim verin."); return null; }
     setBusy(true);
-    const r = await call({ action: "savePackage", pkg: { id: d.id, name: d.name, note: d.note, product_id: d.productId, sale_usd: saleUsd, contents, lines } });
+    const r = await call({ action: "savePackage", pkg: { id: d.id, name: d.name, note: d.note, product_id: d.productId, sale_usd: saleUsd, contents, listing_title: d.listingTitle, listing_text: d.listingText, lines } });
     setBusy(false);
     if (!r) return null;
     const pkg = r.pkg as ProductPackage;
@@ -301,6 +301,16 @@ function Packages({
           </label>
           <label className="text-[12.5px] font-semibold text-slate">Not
             <input value={d.note} onChange={(e) => setD({ ...d, note: e.target.value })} placeholder="İsteğe bağlı" className="admin-input mt-1" />
+          </label>
+        </div>
+
+        <div className="grid gap-3 rounded-xl border border-line p-3">
+          <p className="text-[12.5px] font-semibold text-slate">Sahibinden ilanı <span className="font-normal">(Mağaza → Sahibinden ekranı bu metni kullanır; kısa ve öz)</span></p>
+          <label className="text-[12.5px] font-semibold text-slate">Başlık <span className="font-normal">{d.listingTitle.length}/60</span>
+            <input value={d.listingTitle} maxLength={60} onChange={(e) => setD({ ...d, listingTitle: e.target.value })} placeholder="Örn. 6,2 kW Solar Paket Lityum Akülü Bağ Evi" className="admin-input mt-1" />
+          </label>
+          <label className="text-[12.5px] font-semibold text-slate">Açıklama
+            <textarea value={d.listingText} onChange={(e) => setD({ ...d, listingText: e.target.value })} rows={10} placeholder="Kısa ilan açıklaması (web adresi, telefon ve e-posta yazmayın)" className="admin-input mt-1 font-normal" />
           </label>
         </div>
 
