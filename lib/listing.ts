@@ -51,17 +51,17 @@ function inverterKw(p: StoreProduct): number | null {
 function specCard(p: StoreProduct, kwp: number | null): string[] {
   const kwh = batteryKwh(p);
   const lines: string[] = [];
-  if (kwp) lines.push(`Panel gücü: ${tr1(kwp)} kWp`);
-  if (kwh) lines.push(`Lityum batarya: ${tr1(kwh)} kWh`);
   const inv = inverterKw(p);
-  if (inv) lines.push(`İnverter gücü: ${tr1(inv)} kW (aynı anda çalışabilecek yük)`);
+  if (inv) lines.push(`Paket gücü (inverter): ${tr1(inv)} kW, aynı anda çalışabilecek yük`);
+  if (kwp) lines.push(`Toplam panel gücü: ${tr1(kwp)} kWp`);
+  if (kwh) lines.push(`Lityum batarya: ${tr1(kwh)} kWh`);
   const wind = p.contents.some((x) => /rüzgar türbini|rüzgâr türbini/i.test(x));
   if (kwp) lines.push(`Günlük ortalama güneş üretimi: yaklaşık ${tr1(Math.round(((kwp * 1475) / 365) * 10) / 10)} kWh (Ankara, yıllık ortalama)${wind ? "; rüzgâr türbininin üretimi bölgenin rüzgârına göre buna eklenir" : ""}`);
   lines.push("Ürünler orijinal ve faturalı");
   return lines;
 }
 
-const COMPARE = "Güneş paketlerini karşılaştırırken üç rakama bakın: panel gücü (kWp), batarya kapasitesi (kWh) ve inverter gücü (kW). Yukarıdaki değerler bu paketin gerçek değerleridir.";
+const COMPARE = "Aynı kW'lık paketleri karşılaştırırken toplam panel gücüne (kWp) ve batarya kapasitesine (kWh) de bakın; gece kullanımını ve günlük üretimi bu iki değer belirler.";
 
 function production(kwp: number | null): string | null {
   if (!kwp) return null;
