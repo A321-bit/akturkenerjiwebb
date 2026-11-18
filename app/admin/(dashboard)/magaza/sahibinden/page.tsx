@@ -9,36 +9,11 @@ import SahibindenListings, { type ListingItem } from "@/components/admin/store/S
 // kopyala-yapıştır ile ilan verilir.
 export const dynamic = "force-dynamic";
 
-// Kasım 2026 ilan turu (sahibinden taraması 18.11.2026): 2 on grid (rakip neredeyse yok), 3 hibrit (kış kesintileri),
-// 3 off grid (bağ evi / konteyner / çiftlik), 2 rüzgâr + güneş (pazarda yalnız çıplak türbin var, paket yok).
-// Fark: başlıkta gerçek panel kWp ve batarya kWh ("günlük 10 kW" gibi belirsiz başlıklara karşı şeffaf etiket).
-const PICKS = [
-  "3-kw-off-grid-gunes-paneli-paketi",
-  "2-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali",
-  "10-kw-on-grid-gunes-paneli-paketi",
-  "5-kw-hibrit-5-kwh-lityum-paket",
-  "5-kw-off-grid-gunes-paneli-paketi",
-  "5-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali",
-  "5-kw-on-grid-gunes-paneli-paketi",
-  "10-kw-hibrit-10-kwh-lityum-paket",
-  "12-kw-trifaze-off-grid-gunes-paneli-paketi",
-  "15-kw-hibrit-15-kwh-lityum-paket",
-];
-
-// En çok 60 karakter. Pazardaki alışkanlık: paket gücü = inverter gücü ("6.2 kW Solar Paket"); başlık bununla başlar.
-// Rüzgâr paketlerinde güç, paket adındaki gibi (türbin + güneş) yazılır.
-const TITLES: Record<string, string> = {
-  "3-kw-off-grid-gunes-paneli-paketi": "3 kW Solar Paket Bağ Evi İçin Lityum Akülü Güneş Enerjisi",
-  "2-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali": "2 kW Rüzgar Türbini + Güneş Paneli Paket Gece Gündüz Üretim",
-  "10-kw-on-grid-gunes-paneli-paketi": "10 kW On Grid Güneş Enerjisi Paketi Faturanızı Düşürün",
-  "5-kw-hibrit-5-kwh-lityum-paket": "6 kW Hibrit Solar Paket Lityum Akülü Kesintide Elektrik Var",
-  "5-kw-off-grid-gunes-paneli-paketi": "5 kW Solar Paket 10 kWh Lityum Akü Konteyner ve Bağ Evi",
-  "5-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali": "Rüzgar + Güneş 5 kW Hibrit Paket 2 kW Türbin 10 kWh Lityum",
-  "5-kw-on-grid-gunes-paneli-paketi": "5 kW On Grid Solar Paket Müstakil Ev Çatı GES TOPCon Panel",
-  "10-kw-hibrit-10-kwh-lityum-paket": "10 kW Trifaze Hibrit Solar Paket 12 kWh Lityum Batarya Villa",
-  "12-kw-trifaze-off-grid-gunes-paneli-paketi": "12 kW Trifaze Solar Paket Çiftlik Ahır Süt Tankı Lityum Akü",
-  "15-kw-hibrit-15-kwh-lityum-paket": "15 kW Trifaze Hibrit Güneş Enerjisi Paketi 15 kWh Lityum",
-};
+// İlan metinleri Paket Oluştur'daki "Sahibinden ilanı" alanından gelir (kısa açıklama; ilan sırası = ORDER).
+// Kasım 2026 turu: 2 on grid, 3 hibrit, 3 off grid (Exelon), 2 rüzgâr + güneş. Başlıklar inverter gücüyle başlar.
+const ORDER = [10, 16, 2, 14, 11, 17, 13, 15, 12, 7];
+const PICKS: string[] = [];
+const TITLES: Record<string, string> = {};
 
 /** Paket Oluştur'da sahibinden başlığı/açıklaması yazılmış paketler (listenin en başında). */
 async function packageListings(products: Awaited<ReturnType<typeof getStoreProducts>>): Promise<ListingItem[]> {
@@ -56,7 +31,7 @@ async function packageListings(products: Awaited<ReturnType<typeof getStoreProdu
       `<p style="text-align:center"><img src="${SITE_URL}/akturk-enerji-sahibinden.jpg" alt="Aktürk Enerji" width="685" style="max-width:100%;height:auto" /></p>`,
       ...text.split("\n").map((l) => (l.trim() ? `<p><span style="font-family:'roboto',sans-serif;font-size:11pt">${esc(l)}</span></p>` : "<p>&nbsp;</p>")),
     ].join("");
-    return { slug: `paket-${p.id}`, name: p.name, category: "Paket Oluştur", pick: i, title: p.listing_title ?? p.name, description: text, price: tl != null ? formatTL(tl) : "Satış fiyatı girilmemiş", html };
+    return { slug: `paket-${p.id}`, name: p.name, category: "Paket Oluştur", pick: ORDER.indexOf(p.id) < 0 ? 40 + i : ORDER.indexOf(p.id), title: p.listing_title ?? p.name, description: text, price: tl != null ? formatTL(tl) : "Satış fiyatı girilmemiş", html };
   });
 }
 
@@ -70,5 +45,5 @@ export default async function SahibindenPage() {
     })
     .filter((x): x is ListingItem => x !== null)
     .sort((a, b) => (a.pick < 0 ? 999 : a.pick) - (b.pick < 0 ? 999 : b.pick));
-  return <SahibindenListings items={[...pkgItems, ...items]} />;
+  return <SahibindenListings items={[...pkgItems.sort((a, b) => a.pick - b.pick), ...items]} />;
 }
