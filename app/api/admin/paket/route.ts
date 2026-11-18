@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     if (!name) return NextResponse.json({ error: "Paket adı boş." }, { status: 400 });
     const lines = cleanLines(p.lines);
     const sale = num(p.sale_usd);
-    const row = { name, lines, note: String(p.note ?? "").trim() || null, product_id: num(p.product_id), sale_usd: sale !== null && sale > 0 ? Math.round(sale * 100) / 100 : null, contents: cleanContents(p.contents), listing_title: String(p.listing_title ?? "").trim().slice(0, 60) || null, listing_text: String(p.listing_text ?? "").trim().slice(0, 4000) || null, updated_at: now };
+    const row = { name, lines, note: String(p.note ?? "").trim() || null, product_id: num(p.product_id), sale_usd: sale !== null && sale > 0 ? Math.round(sale * 100) / 100 : null, contents: cleanContents(p.contents), listing_title: String(p.listing_title ?? "").trim().slice(0, 64) || null, listing_text: String(p.listing_text ?? "").trim().slice(0, 4000) || null, updated_at: now };
     const q = p.id ? db.from("product_packages").update(row).eq("id", Number(p.id)) : db.from("product_packages").insert(row);
     const { data, error } = await q.select(PACKAGE_FIELDS).single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -306,8 +306,8 @@ function Packages({
 
         <div className="grid gap-3 rounded-xl border border-line p-3">
           <p className="text-[12.5px] font-semibold text-slate">Sahibinden ilanı <span className="font-normal">(Mağaza → Sahibinden ekranı bu metni kullanır; kısa ve öz)</span></p>
-          <label className="text-[12.5px] font-semibold text-slate">Başlık <span className="font-normal">{d.listingTitle.length}/60</span>
-            <input value={d.listingTitle} maxLength={60} onChange={(e) => setD({ ...d, listingTitle: e.target.value })} placeholder="Örn. 6,2 kW Solar Paket Lityum Akülü Bağ Evi" className="admin-input mt-1" />
+          <label className="text-[12.5px] font-semibold text-slate">Başlık <span className="font-normal">{d.listingTitle.length}/64</span>
+            <input value={d.listingTitle} maxLength={64} onChange={(e) => setD({ ...d, listingTitle: e.target.value })} placeholder="Örn. 6,2 kW Solar Paket Lityum Akülü Bağ Evi" className="admin-input mt-1" />
           </label>
           <label className="text-[12.5px] font-semibold text-slate">Açıklama
             <textarea value={d.listingText} onChange={(e) => setD({ ...d, listingText: e.target.value })} rows={10} placeholder="Kısa ilan açıklaması (web adresi, telefon ve e-posta yazmayın)" className="admin-input mt-1 font-normal" />

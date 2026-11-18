@@ -8,7 +8,7 @@ import { kwOf } from "./store-details";
 
 export type Listing = { title: string; description: string; price: string };
 
-const TITLE_MAX = 60;
+const TITLE_MAX = 64;
 const num = (s: string) => parseFloat(s.replace(/\./g, "").replace(",", "."));
 const tr1 = (n: number) => n.toLocaleString("tr-TR", { maximumFractionDigits: 1 });
 

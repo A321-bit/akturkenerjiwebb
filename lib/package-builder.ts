@@ -33,7 +33,7 @@ export type ProductPackage = {
   sale_usd: number | null;
   /** Sitede ürünün "paket içeriği" olarak görünecek maddeler (fiyatsız). */
   contents: string[] | null;
-  /** Sahibinden ilan başlığı (en çok 60 karakter) ve kısa ilan açıklaması. */
+  /** Sahibinden ilan başlığı (en çok 64 karakter) ve kısa ilan açıklaması. */
   listing_title: string | null;
   listing_text: string | null;
   linked_at: string | null;

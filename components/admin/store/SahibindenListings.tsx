@@ -11,7 +11,7 @@ function CopyBox({ label, value, rows, onChange }: { label: string; value: strin
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2">
         <span className="text-[13px] font-semibold">{label}</span>
-        {rows == null && <span className="text-[12px] text-slate">{value.length}/60</span>}
+        {rows == null && <span className="text-[12px] text-slate">{value.length}/64</span>}
         <span className="flex-1" />
         <button
           type="button"
