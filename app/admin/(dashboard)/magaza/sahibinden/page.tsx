@@ -7,32 +7,34 @@ import SahibindenListings, { type ListingItem } from "@/components/admin/store/S
 // kopyala-yapıştır ile ilan verilir.
 export const dynamic = "force-dynamic";
 
-// Kasım 2026 ilan turu: kış sezonu (bağ evi / şebekesiz, rüzgâr sezonu, kesinti yedeği). Listenin başında gösterilir.
+// Kasım 2026 ilan turu (sahibinden taraması 18.11.2026): 2 on grid (rakip neredeyse yok), 3 hibrit (kış kesintileri),
+// 3 off grid (bağ evi / konteyner / çiftlik), 2 rüzgâr + güneş (pazarda yalnız çıplak türbin var, paket yok).
+// Fark: başlıkta gerçek panel kWp ve batarya kWh ("günlük 10 kW" gibi belirsiz başlıklara karşı şeffaf etiket).
 const PICKS = [
   "3-kw-off-grid-gunes-paneli-paketi",
-  "5-kw-off-grid-gunes-paneli-paketi",
-  "1-2-kw-off-grid-gunes-paneli-paketi",
-  "10-2-kw-off-grid-gunes-paneli-paketi",
   "2-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali",
-  "5-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali",
+  "10-kw-on-grid-gunes-paneli-paketi",
   "5-kw-hibrit-5-kwh-lityum-paket",
+  "5-kw-off-grid-gunes-paneli-paketi",
+  "5-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali",
+  "5-kw-on-grid-gunes-paneli-paketi",
   "10-kw-hibrit-10-kwh-lityum-paket",
   "12-kw-trifaze-off-grid-gunes-paneli-paketi",
-  "5-5-hp-4-kw-tarimsal-sulama-paketi",
+  "15-kw-hibrit-15-kwh-lityum-paket",
 ];
 
-// Sahibinden aramasında aranan kelimelerle başlık (en çok 60 karakter); marka adı başlıkta yer kaplamasın.
+// En çok 60 karakter. Kullanım yeri + tip + gerçek panel/batarya değerleri; marka adı başlıkta yer kaplamaz.
 const TITLES: Record<string, string> = {
-  "3-kw-off-grid-gunes-paneli-paketi": "3 kW Off Grid Güneş Paneli Paketi Lityum Akülü Bağ Evi",
-  "5-kw-off-grid-gunes-paneli-paketi": "5 kW Off Grid Güneş Enerjisi Paketi 10 kWh Lityum Bağ Evi",
-  "1-2-kw-off-grid-gunes-paneli-paketi": "1,2 kW Off Grid Güneş Paneli Seti Lityum Akü Konteyner",
-  "10-2-kw-off-grid-gunes-paneli-paketi": "10 kW Off Grid Güneş Paneli Paketi Müstakil Ev Çiftlik",
-  "2-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali": "Rüzgar Türbini + Güneş Paneli 2 kW Hibrit Paket Lityum",
-  "5-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali": "5 kW Rüzgar Türbini Güneş Paneli Hibrit Sistem Lityum",
-  "5-kw-hibrit-5-kwh-lityum-paket": "5 kW Hibrit Güneş Paneli + 5 kWh Lityum Akü Kesinti Yedeği",
-  "10-kw-hibrit-10-kwh-lityum-paket": "10 kW Trifaze Hibrit Güneş Enerjisi 12 kWh Lityum Batarya",
-  "12-kw-trifaze-off-grid-gunes-paneli-paketi": "12 kW Trifaze Off Grid Güneş Paketi Çiftlik Ahır Pompa",
-  "5-5-hp-4-kw-tarimsal-sulama-paketi": "Güneş Enerjili Tarımsal Sulama Paketi 5,5 HP Pompa Sürücü",
+  "3-kw-off-grid-gunes-paneli-paketi": "Bağ Evi Off Grid 3 kW · 2,5 kWp Panel + 5,2 kWh Lityum Akü",
+  "2-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali": "Rüzgar Türbini + Güneş Paneli Hibrit 2 kW · 5 kWh Lityum",
+  "10-kw-on-grid-gunes-paneli-paketi": "On Grid Çatı GES 10 kW · 10,2 kWp Panel + Montaj Seti",
+  "5-kw-hibrit-5-kwh-lityum-paket": "Kesinti Yedekli 5 kW Hibrit GES · 5,6 kWp + 5 kWh Lityum",
+  "5-kw-off-grid-gunes-paneli-paketi": "Konteyner ve Bağ Evi Off Grid 5 kW · 5 kWp + 10 kWh Lityum",
+  "5-kw-ruzgar-gunes-hibrit-paket-lityum-bataryali": "Rüzgar + Güneş Hibrit 5 kW · 2 kW Türbin + 10 kWh Lityum",
+  "5-kw-on-grid-gunes-paneli-paketi": "Müstakil Ev On Grid Çatı GES 5 kW · 5,6 kWp TOPCon Panel",
+  "10-kw-hibrit-10-kwh-lityum-paket": "Villa 10 kW Trifaze Hibrit GES · 10,6 kWp + 12 kWh Lityum",
+  "12-kw-trifaze-off-grid-gunes-paneli-paketi": "Süt Tankı Çiftlik Off Grid 12 kW Trifaze · 14 kWh Lityum",
+  "15-kw-hibrit-15-kwh-lityum-paket": "Villa ve İşletme 15 kW Trifaze Hibrit · 15,4 kWp + 15,7 kWh",
 };
 
 export default async function SahibindenPage() {

@@ -17,11 +17,51 @@ function panelKwp(p: StoreProduct): number | null {
   for (const c of p.contents) {
     const t = c.match(/toplam\s+([\d.,]+)\s*kWp/i);
     if (t) return num(t[1]);
-    const m = c.match(/(\d+)\s*(?:adet|×|x)\s*(\d{3})\s*W/i);
+    const m = c.match(/(\d+)\s*(?:adet\b|×|x\b)[^;]*?(\d{3})\s*W/i);
     if (m) return (Number(m[1]) * Number(m[2])) / 1000;
   }
   return null;
 }
+
+/** Paket içeriğinden toplam batarya kapasitesi (kWh): "(toplam 10,2 kWh)", "(5,12 kWh)" ya da "3 Adet ... 51.2V 102Ah". */
+function batteryKwh(p: StoreProduct): number | null {
+  for (const c of p.contents) {
+    if (!/batarya|akü|lfp|lifepo4/i.test(c)) continue;
+    const t = c.match(/\(\s*(?:toplam\s+)?([\d.,]+)\s*kWh\s*\)/i);
+    if (t) return num(t[1]);
+    const m = c.match(/(\d+)\s*adet\b[^;]*?([\d.,]+)\s*V\s*(\d+)\s*Ah/i);
+    if (m) return (Number(m[1]) * parseFloat(m[2].replace(",", ".")) * Number(m[3])) / 1000;
+  }
+  return null;
+}
+
+/** Paket içeriğindeki inverterin gücü (kW): "Pro 5 kW", "N6K 6 kW", "ProX 6.2K", "15.0K". Bulunamazsa null. */
+function inverterKw(p: StoreProduct): number | null {
+  // "İnverter" büyük İ ile yazılınca /inverter/i eşleşmez; "nvert" kökü aranır.
+  const c = p.contents.find((x) => /nvert(?:er|ör)/i.test(x) && !/kablo|sürücü/i.test(x));
+  if (!c) return null;
+  const m = c.match(/([\d]+(?:[.,]\d+)?)\s*kW\b/i) ?? c.match(/(\d+(?:[.,]\d)?)\s*K\b/);
+  return m ? parseFloat(m[1].replace(",", ".")) : null;
+}
+
+/**
+ * "Enerji kimlik kartı": ilanın en üstünde gerçek panel gücü, batarya kapasitesi, inverter gücü ve günlük üretim.
+ * Pazarda "günlük 10 kW" gibi belirsiz ifadeler yaygın; alıcı ilanları bu dört rakamla karşılaştırabilsin.
+ */
+function specCard(p: StoreProduct, kwp: number | null): string[] {
+  const kwh = batteryKwh(p);
+  const lines: string[] = [];
+  if (kwp) lines.push(`Panel gücü: ${tr1(kwp)} kWp`);
+  if (kwh) lines.push(`Lityum batarya: ${tr1(kwh)} kWh`);
+  const inv = inverterKw(p);
+  if (inv) lines.push(`İnverter gücü: ${tr1(inv)} kW (aynı anda çalışabilecek yük)`);
+  const wind = p.contents.some((x) => /rüzgar türbini|rüzgâr türbini/i.test(x));
+  if (kwp) lines.push(`Günlük ortalama güneş üretimi: yaklaşık ${tr1(Math.round(((kwp * 1475) / 365) * 10) / 10)} kWh (Ankara, yıllık ortalama)${wind ? "; rüzgâr türbininin üretimi bölgenin rüzgârına göre buna eklenir" : ""}`);
+  lines.push("Ürünler orijinal ve faturalı");
+  return lines;
+}
+
+const COMPARE = "Güneş paketlerini karşılaştırırken üç rakama bakın: panel gücü (kWp), batarya kapasitesi (kWh) ve inverter gücü (kW). Yukarıdaki değerler bu paketin gerçek değerleridir.";
 
 function production(kwp: number | null): string | null {
   if (!kwp) return null;
@@ -85,6 +125,10 @@ export function buildListing(p: StoreProduct, category: StoreCategory, site: Sit
   const description = [
     `AKTÜRK ENERJİ | ${p.name.toLocaleUpperCase("tr")}`,
     "",
+    "ENERJİ KİMLİK KARTI",
+    ...specCard(p, kwp).map((s) => `• ${s}`),
+    COMPARE,
+    "",
     category.intro,
     "",
     "PAKET İÇERİĞİ",
@@ -144,6 +188,9 @@ export function buildListingHtml(p: StoreProduct, category: StoreCategory, site:
       { center: true },
     ),
     heading(p.name, GREEN),
+    heading("ENERJİ KİMLİK KARTI", RED),
+    list(specCard(p, kwp)),
+    para(COMPARE, { center: true, size: "10pt" }),
     heading("PAKET İÇERİĞİ"),
     list(contents),
     ...(runs.length ? [heading("NELERİ ÇALIŞTIRIR?"), list(runs)] : []),
