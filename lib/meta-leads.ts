@@ -37,15 +37,21 @@ async function graph<T>(path: string, params: Record<string, string>): Promise<T
   return data as T;
 }
 
-const pick = (fields: Field[], ...names: string[]) => fields.find((f) => names.includes(f.name))?.values?.[0] ?? null;
-// Standart alanlar; bazı formlarda (ör. ajansın kurduğu) aynı alan farklı adla gelir.
-const NAME = ["full_name", "full name", "ad_soyad", "ad soyad", "isim"];
-const FIRST = ["first_name", "first name"];
-const LAST = ["last_name", "last name"];
-const PHONE = ["phone_number", "phone", "telefon", "telefon_numarası"];
-const EMAIL = ["email", "e-posta"];
-const CITY = ["city", "şehir", "il"];
+// Alan adını sadeleştirir: Türkçe formlar "adı_soyadı", "telefon_numarası" gibi adlar gönderir.
+const norm = (s: string) => s.toLocaleLowerCase("tr").replace(/ı/g, "i").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[\s-]+/g, "_");
+const pick = (fields: Field[], ...names: string[]) => {
+  const want = names.map(norm);
+  return fields.find((f) => want.includes(norm(f.name)))?.values?.[0] ?? null;
+};
+// Standart alanlar; bazı formlarda (ör. ajansın kurduğu ya da dili Türkçe olan) aynı alan farklı adla gelir.
+const NAME = ["full_name", "ad_soyad", "adi_soyadi", "ad_soyadi", "isim", "isim_soyisim"];
+const FIRST = ["first_name", "adi"];
+const LAST = ["last_name", "soyadi"];
+const PHONE = ["phone_number", "phone", "telefon", "telefon_numarasi"];
+const EMAIL = ["email", "e_posta"];
+const CITY = ["city", "sehir", "il"];
 const STANDARD = [...NAME, ...FIRST, ...LAST, ...PHONE, ...EMAIL, ...CITY];
+const isStandard = (name: string) => STANDARD.includes(norm(name));
 
 /**
  * Sayfadaki bütün formların başvurularını çeker; yenileri tabloya ekler. Varsayılan son 90 gün;
@@ -90,7 +96,7 @@ export async function syncMetaLeads({ sinceHours = 90 * 24 }: { sinceHours?: num
           phone: pick(f, ...PHONE),
           email: pick(f, ...EMAIL),
           city: pick(f, ...CITY),
-          answers: f.filter((x) => !STANDARD.includes(x.name)).map((x) => ({ name: x.name, value: (x.values ?? []).join(", ") })),
+          answers: f.filter((x) => !isStandard(x.name)).map((x) => ({ name: x.name, value: (x.values ?? []).join(", ") })),
         });
       }
       next = body.paging?.next ?? null;
